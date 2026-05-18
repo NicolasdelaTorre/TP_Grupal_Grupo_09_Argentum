@@ -4,12 +4,12 @@
 #include <list>
 #include <string>
 
-#include "../common/queue.h"
-#include "../common/thread.h"
+#include "../../common/queue.h"
+#include "../../common/thread.h"
 
 #include "client_handler.h"
 #include "monitor_clientes.h"
-#include "protocolo_server.h"
+#include "../Protocolo/protocolo_server.h"
 
 class Aceptador: public Thread {
 private:

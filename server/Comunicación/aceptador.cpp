@@ -16,7 +16,7 @@ void Aceptador::run() {
 }
 
 void Aceptador::reap() {
-    clientes.remove_if([this](auto* cliente) {
+    clientes.remove_if([this](const auto& cliente) {
         bool clienteDesconectado = cliente->clienteDesconectado();
         if (clienteDesconectado) {
             protocolo.eliminarCliente(cliente->idCliente);

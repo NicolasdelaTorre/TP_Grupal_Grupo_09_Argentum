@@ -4,10 +4,10 @@
 #include <atomic>
 #include <string>
 
-#include "../common/queue.h"
+#include "../../common/queue.h"
 
 #include "monitor_clientes.h"
-#include "protocolo_server.h"
+#include "../Protocolo/protocolo_server.h"
 #include "receiver.h"
 #include "sender.h"
 

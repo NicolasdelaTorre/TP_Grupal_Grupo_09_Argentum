@@ -1,13 +1,13 @@
 #include "gameloop.h"
 
 Gameloop::Gameloop(Queue<std::string>& comandos, MonitorClientes& queuesClientes):
-        comandos(comandos), queuesClientes(queuesClientes), juegoTerminado(false) {}
+        comandos(comandos), queuesClientes(queuesClientes), juegoTerminado(false), juego(10, 10) {}
 
 void Gameloop::run() {
     while (!juegoTerminado) {
         std::string comando;
         while (comandos.try_pop(comando)) {
-            // Procesar comandos
+            
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(200));

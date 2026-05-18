@@ -5,13 +5,20 @@
 #include <string>
 #include <vector>
 
-#include "../common/socket.h"
+#include "../../common/liberror.h"
+#include "../../common/socket.h"
 
 class ProtocoloServer {
 private:
     Socket socketServer;
     std::map<int, Socket> socketClientes;
     int contadorClientes;
+
+    /*
+    * Deserializa el mensaje para enviar el usuario recien llegado al servidor.
+    * Devuelve 1 en caso de exito o 0 si se cerro el socket del cliente.
+    */
+    int devolverUsuario(std::string& mensaje, const int idCliente);
 
 public:
     explicit ProtocoloServer(const char* puerto);

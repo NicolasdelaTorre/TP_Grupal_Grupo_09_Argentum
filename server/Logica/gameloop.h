@@ -3,16 +3,18 @@
 
 #include <string>
 
-#include "../common/queue.h"
-#include "../common/thread.h"
+#include "../../common/queue.h"
+#include "../../common/thread.h"
 
-#include "monitor_clientes.h"
+#include "../Comunicación/monitor_clientes.h"
+#include "juego.h"
 
 class Gameloop: public Thread {
 private:
     Queue<std::string>& comandos;
     MonitorClientes& queuesClientes;
     bool juegoTerminado;
+    Juego juego;
 
 public:
     Gameloop(Queue<std::string>& comandos, MonitorClientes& queuesClientes);

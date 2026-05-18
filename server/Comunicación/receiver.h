@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include "../common/queue.h"
-#include "../common/thread.h"
+#include "../../common/queue.h"
+#include "../../common/thread.h"
 
-#include "protocolo_server.h"
+#include "../Protocolo/protocolo_server.h"
 
 class Receiver: public Thread {
 private:

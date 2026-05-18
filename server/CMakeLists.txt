@@ -1,23 +1,36 @@
 target_sources(taller_server
     PRIVATE
-    # .cpp files
-    aceptador.cpp
-    client_handler.cpp
-    gameloop.cpp
-    main.cpp
-    monitor_clientes.cpp
-    protocolo_server.cpp
-    receiver.cpp
-    sender.cpp
-    servidor.cpp
+        main.cpp
+        servidor.cpp
+        Comunicación/aceptador.cpp
+        Comunicación/client_handler.cpp
+        Comunicación/monitor_clientes.cpp
+        Comunicación/receiver.cpp
+        Comunicación/sender.cpp
+        Logica/jugador.cpp
+        Logica/mapa.cpp
+        Logica/juego.cpp
+        Logica/gameloop.cpp
+        Protocolo/protocolo_server.cpp
     PUBLIC
-    # .h files
-    aceptador.h
-    client_handler.h
-    gameloop.h
-    monitor_clientes.h
-    protocolo_server.h
-    receiver.h
-    sender.h
-    servidor.h
+        servidor.h
+        Comunicación/aceptador.h
+        Comunicación/client_handler.h
+        Comunicación/monitor_clientes.h
+        Comunicación/receiver.h
+        Comunicación/sender.h
+        Logica/jugador.h
+        Logica/mapa.h
+        Logica/juego.h
+        Logica/gameloop.h
+        Protocolo/comandos.h
+        Protocolo/protocolo_server.h
+    )
+
+target_include_directories(taller_server
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Comunicación
+        ${CMAKE_CURRENT_SOURCE_DIR}/Logica
+        ${CMAKE_CURRENT_SOURCE_DIR}/Protocolo
     )
