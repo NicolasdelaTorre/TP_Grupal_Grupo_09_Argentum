@@ -7,6 +7,7 @@
 
 #include "../../common/liberror.h"
 #include "../../common/protocolo_util.h"
+
 #include "comandos.h"
 
 ProtocoloServer::ProtocoloServer(const char* puerto):
@@ -32,8 +33,8 @@ int ProtocoloServer::esperarCliente() {
 void ProtocoloServer::eliminarCliente(const int idCliente) {
     auto it = socketClientes.find(idCliente);
     if (it != socketClientes.end()) {
-        // Se utiliza shutdown porque existe la posibilidad de que se este intentado recibir un
-        // mensaje a traves del socket.
+        // Se utiliza shutdown porque existe la posibilidad de que se este intentado
+        // recibir un mensaje a traves del socket.
         it->second.shutdown(SHUT_RDWR);
         socketClientes.erase(it);
     }
@@ -58,7 +59,8 @@ int ProtocoloServer::recibirMensaje(std::string& mensaje, const int idCliente) {
         case static_cast<uint8_t>(Comando::LLEGADA_USUARIO):
             return devolverUsuario(mensaje, idCliente);
         default:
-            // throw std::runtime_error("Error Protocolo: comando del cliente desconocido");
+            // throw std::runtime_error("Error Protocolo: comando del cliente
+            // desconocido");
             return 0;
     }
 }

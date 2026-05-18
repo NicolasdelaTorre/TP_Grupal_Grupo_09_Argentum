@@ -6,9 +6,7 @@ Gameloop::Gameloop(Queue<std::string>& comandos, MonitorClientes& queuesClientes
 void Gameloop::run() {
     while (!juegoTerminado) {
         std::string comando;
-        while (comandos.try_pop(comando)) {
-            
-        }
+        while (comandos.try_pop(comando)) {}
 
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }

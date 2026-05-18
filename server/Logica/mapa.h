@@ -10,15 +10,15 @@ typedef struct Celda {
 } Celda;
 
 class Mapa {
-    private:
-        uint16_t ancho;
-        uint16_t alto;
-        std::vector<Celda> celdas;
+private:
+    uint16_t ancho;
+    uint16_t alto;
+    std::vector<Celda> celdas;
 
-    public:
-        Mapa(uint16_t ancho, uint16_t alto);
+public:
+    Mapa(uint16_t ancho, uint16_t alto);
 
-        //void agregarJugador();
+    // void agregarJugador();
 };
 
 #endif

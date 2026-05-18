@@ -15,11 +15,11 @@ typedef struct DatosJugador {
 } DatosJugador;
 
 class Jugador {
-    private:
-        DatosJugador datos;
+private:
+    DatosJugador datos;
 
-    public:
-        Jugador(const std::string& nombre);
+public:
+    explicit Jugador(const std::string& nombre);
 };
 
 #endif

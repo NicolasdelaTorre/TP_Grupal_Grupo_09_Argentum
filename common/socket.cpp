@@ -332,9 +332,11 @@ int Socket::recvall(void* data, unsigned int sz) {
              * y haber notificado el error.
              *
              * Nosotros podemos entonces meramente
-             *  - lanzar excepción si recibimos algunos bytes pero no todos los pedidos
+             *  - lanzar excepción si recibimos algunos bytes pero no todos los
+             * pedidos
              *  - propagar la excepción `Socket::recvsome` si esto falló.
-             *  - retornar end of stream (0) si es lo q recibimos de `Socket::recvsome`
+             *  - retornar end of stream (0) si es lo q recibimos de
+             * `Socket::recvsome`
              * */
             assert(s == 0);
             if (received)
@@ -352,7 +354,6 @@ int Socket::recvall(void* data, unsigned int sz) {
 
     return sz;
 }
-
 
 int Socket::sendall(const void* data, unsigned int sz) {
     unsigned int sent = 0;

@@ -15,25 +15,27 @@ private:
     int contadorClientes;
 
     /*
-    * Deserializa el mensaje para enviar el usuario recien llegado al servidor.
-    * Devuelve 1 en caso de exito o 0 si se cerro el socket del cliente.
-    */
+     * Deserializa el mensaje para enviar el usuario recien llegado al servidor.
+     * Devuelve 1 en caso de exito o 0 si se cerro el socket del cliente.
+     */
     int devolverUsuario(std::string& mensaje, const int idCliente);
 
 public:
     explicit ProtocoloServer(const char* puerto);
 
     /*
-     * Se queda esperando a la llegada de un cliente o hasta que se cierre el socket del servidor.
-     * Devuelve el id del cliente o 0 si se cerró el socket del servidor.
+     * Se queda esperando a la llegada de un cliente o hasta que se cierre el
+     * socket del servidor. Devuelve el id del cliente o 0 si se cerró el socket
+     * del servidor.
      */
     int esperarCliente();
 
     void eliminarCliente(const int idCliente);
 
     /*
-     * Recibe un mensaje del cliente y guarda los datos importantes en el string con el formato:
-     * dato1.dato2 . Devuelve 1 en caso de exito o 0 si se cerro el socket del cliente.
+     * Recibe un mensaje del cliente y guarda los datos importantes en el string
+     * con el formato: dato1.dato2 . Devuelve 1 en caso de exito o 0 si se cerro
+     * el socket del cliente.
      */
     int recibirMensaje(std::string& mensaje, const int idCliente);
 

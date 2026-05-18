@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-Juego::Juego(uint16_t ancho, uint16_t alto) : mapa(ancho, alto) {}
+Juego::Juego(uint16_t ancho, uint16_t alto): mapa(ancho, alto) {}
 
 void Juego::procesarComando(const int idJugador, const std::string& comando) {
     size_t pocisionComando = comando.find('.');
@@ -15,6 +15,6 @@ void Juego::procesarComando(const int idJugador, const std::string& comando) {
     if (tipoDato == "usuario") {
         std::string usuario = comando.substr(pocisionComando + 1);
         jugadores.emplace(idJugador, Jugador(usuario));
-        //mapa.agregarJugador();
+        // mapa.agregarJugador();
     }
 }

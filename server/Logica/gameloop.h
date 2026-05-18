@@ -5,8 +5,8 @@
 
 #include "../../common/queue.h"
 #include "../../common/thread.h"
-
 #include "../Comunicación/monitor_clientes.h"
+
 #include "juego.h"
 
 class Gameloop: public Thread {

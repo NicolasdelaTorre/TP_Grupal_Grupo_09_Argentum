@@ -6,10 +6,10 @@
 
 #include "../../common/queue.h"
 #include "../../common/thread.h"
+#include "../Protocolo/protocolo_server.h"
 
 #include "client_handler.h"
 #include "monitor_clientes.h"
-#include "../Protocolo/protocolo_server.h"
 
 class Aceptador: public Thread {
 private:
@@ -19,8 +19,8 @@ private:
     MonitorClientes& queuesClientes;
 
     /*
-     * Verifica si un cliente se fue del juego. En ese caso, se debe eliminar el clientHandler de la
-     * lista de clientes.
+     * Verifica si un cliente se fue del juego. En ese caso, se debe eliminar el
+     * clientHandler de la lista de clientes.
      */
     void reap();
 

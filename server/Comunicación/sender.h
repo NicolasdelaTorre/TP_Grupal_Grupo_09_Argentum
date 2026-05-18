@@ -5,7 +5,6 @@
 
 #include "../../common/queue.h"
 #include "../../common/thread.h"
-
 #include "../Protocolo/protocolo_server.h"
 
 class Sender: public Thread {

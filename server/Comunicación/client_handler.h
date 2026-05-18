@@ -5,9 +5,9 @@
 #include <string>
 
 #include "../../common/queue.h"
+#include "../Protocolo/protocolo_server.h"
 
 #include "monitor_clientes.h"
-#include "../Protocolo/protocolo_server.h"
 #include "receiver.h"
 #include "sender.h"
 
@@ -21,8 +21,8 @@ private:
 public:
     const int idCliente;
     /*
-     * Crea un objeto para recibir mensajes del cliente y otro para enviar mensajes por parte del
-     * servidor.
+     * Crea un objeto para recibir mensajes del cliente y otro para enviar
+     * mensajes por parte del servidor.
      */
     ClientHandler(ProtocoloServer& protocolo, Queue<std::string>& comandos,
                   MonitorClientes& queueCliente, const int idCliente);
