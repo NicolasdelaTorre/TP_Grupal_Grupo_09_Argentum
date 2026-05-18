@@ -15,6 +15,8 @@ private:
     uint16_t alto;
     std::vector<Celda> celdas;
 
+    void inicializarMapa();
+
 public:
     Mapa(uint16_t ancho, uint16_t alto);
 
