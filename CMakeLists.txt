@@ -30,7 +30,7 @@ add_library(taller_common STATIC)
 
 # add the source files that make the lib
 # HEY!! TODO XXX: add more subfolders here
-add_subdirectory(common/)
+add_subdirectory(common)
 
 
 # set compiler warnings to the targets
@@ -40,7 +40,7 @@ set_project_warnings(taller_common ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 # Say where the headers will be found required by library target
 # Make this PUBLIC so any dependant linking lib will inherit this
 # location (so our dependants will not have to explicitly request this)
-target_include_directories(taller_common PUBLIC .)
+target_include_directories(taller_common PUBLIC tp-grupal-template)
 
 # HEY!! TODO XXX: you need to install some runtime and dev libraries *before*
 # compiling the client/editor code.
@@ -186,11 +186,11 @@ if(TALLER_TESTS)
 
     # Say where to find the xoz headers
     # HEY!! TODO XXX: add more subfolders here
-    target_include_directories(taller_tests PUBLIC .)
+    target_include_directories(taller_tests PUBLIC tp-grupal-template)
 
     # Add the source files to the taller_tests target
     # HEY!! TODO XXX: add more subfolders here
-    add_subdirectory(tests/)
+    add_subdirectory(tests)
 
     # Set the compiler warnings to the tests target (but be a little lesser strict)
     set_project_warnings(taller_tests ${TALLER_MAKE_WARNINGS_AS_ERRORS} TRUE)

@@ -4,11 +4,10 @@
 #include <string>
 
 #include "../common/queue.h"
-
-#include "aceptador.h"
-#include "gameloop.h"
-#include "monitor_clientes.h"
-#include "protocolo_server.h"
+#include "Comunicación/aceptador.h"
+#include "Comunicación/monitor_clientes.h"
+#include "Logica/gameloop.h"
+#include "Protocolo/protocolo_server.h"
 
 class Servidor {
 private:

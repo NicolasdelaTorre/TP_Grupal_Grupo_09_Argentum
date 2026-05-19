@@ -48,17 +48,17 @@ public:
      * (`Socket::Socket(const char*, const char*)`) como para ser usado
      * por un servidor (`Socket::Socket(const char*)`).
      *
-     * Muchas librerías de muchos lenguajes ofrecen una única formal de inicializar
-     * los sockets y luego métodos (post-inicialización) para establecer
-     * la conexión o ponerlo en escucha.
+     * Muchas librerías de muchos lenguajes ofrecen una única formal de
+     * inicializar los sockets y luego métodos (post-inicialización) para
+     * establecer la conexión o ponerlo en escucha.
      *
      * Otras librerías/lenguajes van por tener una inicialización para
      * el socket activo y otra para el pasivo.
      *
      * Este TDA va por ese lado.
      *
-     * Para `Socket::Socket(const char*, const char*)`,  <hostname>/<servname> es la dirección
-     * de la máquina remota a la cual se quiere conectar.
+     * Para `Socket::Socket(const char*, const char*)`,  <hostname>/<servname> es
+     * la dirección de la máquina remota a la cual se quiere conectar.
      *
      * Para `Socket::Socket(const char*)`, buscara una dirección local válida
      * para escuchar y aceptar conexiones automáticamente en el <servname> dado.

@@ -152,7 +152,6 @@ Resolver::~Resolver() {
         freeaddrinfo(this->result);
 }
 
-
 void Resolver::chk_addr_or_fail() const {
     if (result == nullptr) {
         throw std::runtime_error("addresses list is invalid (null), "
