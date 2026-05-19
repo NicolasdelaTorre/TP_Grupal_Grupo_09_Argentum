@@ -20,6 +20,12 @@ private:
 
 public:
     explicit Jugador(const std::string& nombre);
+
+    void cambiarPosicion(const std::string& direccion);
+
+    int16_t getX();
+
+    int16_t getY();
 };
 
 #endif

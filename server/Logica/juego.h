@@ -12,6 +12,9 @@ private:
     Mapa mapa;
     std::unordered_map<int, Jugador> jugadores;
 
+    void procesarMovimiento(const int idJugador, const std::string& comando,
+                            size_t pocisionComando);
+
 public:
     Juego(uint16_t ancho, uint16_t alto);
 

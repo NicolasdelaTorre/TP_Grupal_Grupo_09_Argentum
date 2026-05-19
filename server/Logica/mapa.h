@@ -2,6 +2,7 @@
 #define MAPA_H
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 typedef struct Celda {
@@ -20,7 +21,9 @@ private:
 public:
     Mapa(uint16_t ancho, uint16_t alto);
 
-    // void agregarJugador();
+    void agregarJugador();
+
+    bool moverJugador(const std::string& direccion, int16_t x, int16_t y);
 };
 
 #endif

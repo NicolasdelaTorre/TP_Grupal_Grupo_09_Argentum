@@ -15,6 +15,30 @@ void Juego::procesarComando(const int idJugador, const std::string& comando) {
     if (tipoDato == "usuario") {
         std::string usuario = comando.substr(pocisionComando + 1);
         jugadores.emplace(idJugador, Jugador(usuario));
-        // mapa.agregarJugador();
+        mapa.agregarJugador();
+    } else if (tipoDato == "movimiento") {
+        procesarMovimiento(idJugador, comando, pocisionComando);
     }
+}
+
+void Juego::procesarMovimiento(const int idJugador, const std::string& comando,
+                               size_t pocisionComando) {
+    auto itJugador = jugadores.find(idJugador);
+    if (itJugador == jugadores.end()) {
+        throw std::runtime_error("Error Juego: jugador no encontrado");
+    }
+
+    size_t pocisionDireccion = comando.find('.', pocisionComando + 1);
+    if (pocisionDireccion == std::string::npos) {
+        throw std::runtime_error("Error Juego: comando del cliente mal formado");
+    }
+
+    std::string direccion =
+            comando.substr(pocisionComando + 1, pocisionDireccion - pocisionComando - 1);
+    if (mapa.moverJugador(direccion, itJugador->second.getX(), itJugador->second.getY())) {
+        // algo deberiamos hacer para mostrar algo en el juego
+        return;
+    }
+
+    itJugador->second.cambiarPosicion(direccion);
 }

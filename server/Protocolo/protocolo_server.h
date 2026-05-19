@@ -20,6 +20,12 @@ private:
      */
     int devolverUsuario(std::string& mensaje, const int idCliente);
 
+    /*
+     * Deserializa el mensaje para enviar el movimiento del cliente al servidor.
+     * Devuelve 1 en caso de exito o 0 si se cerro el socket del cliente.
+     */
+    int devolverMovimiento(std::string& mensaje, const int idCliente);
+
 public:
     explicit ProtocoloServer(const char* puerto);
 

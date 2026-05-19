@@ -58,10 +58,10 @@ int ProtocoloServer::recibirMensaje(std::string& mensaje, const int idCliente) {
     switch (mensajeRecibido[0]) {
         case static_cast<uint8_t>(Comando::LLEGADA_USUARIO):
             return devolverUsuario(mensaje, idCliente);
+        case static_cast<uint8_t>(Comando::MOVIMIENTO):
+            return devolverMovimiento(mensaje, idCliente);
         default:
-            // throw std::runtime_error("Error Protocolo: comando del cliente
-            // desconocido");
-            return 0;
+            throw std::runtime_error("Error Protocolo: comando del cliente desconocido");
     }
 }
 
@@ -93,6 +93,44 @@ int ProtocoloServer::devolverUsuario(std::string& mensaje, const int idCliente) 
 
     mensaje += "usuario.";
     mensaje.assign(mensajeRecibido.begin(), mensajeRecibido.end());
+
+    return 1;
+}
+
+int ProtocoloServer::devolverMovimiento(std::string& mensaje, const int idCliente) {
+    mensaje += "movimiento.";
+    std::vector<char> mensajeRecibido(1);
+
+    auto it = socketClientes.find(idCliente);
+    if (it == socketClientes.end()) {
+        // El cliente se desconecto
+        return 0;
+    }
+
+    int bytesRecibidos = it->second.recvall(mensajeRecibido.data(), 1);
+
+    if (!bytesRecibidos) {
+        // Se cerro el socket del cliente.
+        return 0;
+    }
+
+    uint8_t direccion = mensajeRecibido[0];
+    switch (direccion) {
+        case static_cast<uint8_t>(Comando::ARRIBA):
+            mensaje += "arriba";
+            break;
+        case static_cast<uint8_t>(Comando::ABAJO):
+            mensaje += "abajo";
+            break;
+        case static_cast<uint8_t>(Comando::IZQUIERDA):
+            mensaje += "izquierda";
+            break;
+        case static_cast<uint8_t>(Comando::DERECHA):
+            mensaje += "derecha";
+            break;
+        default:
+            throw std::runtime_error("Error Protocolo: direccion del cliente desconocida");
+    }
 
     return 1;
 }
