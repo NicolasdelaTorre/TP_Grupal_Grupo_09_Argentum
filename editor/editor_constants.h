@@ -1,0 +1,47 @@
+#ifndef ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
+#define ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
+
+#define CELL_DISPLAY_SIZE 16
+#define TARGET_CELL_SCREEN_PX 32
+
+#ifndef EDITOR_SAVE_MAP_PATH
+#define EDITOR_SAVE_MAP_PATH "../server/assets/maps"
+#endif
+
+#ifndef EDITOR_TEMPLATES_PATH
+#define EDITOR_TEMPLATES_PATH "assets/templates"
+#endif
+
+#ifndef EDITOR_TEMPLATES_CITIES_PATH
+#define EDITOR_TEMPLATES_CITIES_PATH EDITOR_TEMPLATES_PATH "/cities"
+#endif
+
+#ifndef EDITOR_TEMPLATES_FORESTS_PATH
+#define EDITOR_TEMPLATES_FORESTS_PATH EDITOR_TEMPLATES_PATH "/forests"
+#endif
+
+#define SAVE_MAP EDITOR_SAVE_MAP_PATH
+#define TEMPLATES_PATH EDITOR_TEMPLATES_PATH
+#define TEMPLATES_CITIES_PATH EDITOR_TEMPLATES_CITIES_PATH
+#define TEMPLATES_FORESTS_PATH EDITOR_TEMPLATES_FORESTS_PATH
+
+#define DATA_TYPE (Qt::UserRole + 1)
+#define DATA_ID (Qt::UserRole + 2)
+#define DATA_SUBTYPE (Qt::UserRole + 3)
+#define DATA_WIDTH (Qt::UserRole + 4)
+#define DATA_HEIGHT (Qt::UserRole + 5)
+
+#define PLAYER_SPAWN_TYPE "player_spawn"
+#define OBSTACLE_TYPE "obstacle"
+#define CITY_ZONE_TYPE "city_zone"
+#define FOREST_ZONE_TYPE "forest_zone"
+
+#define ZONE_TYPE_CITY "city"
+#define ZONE_TYPE_FOREST "forest"
+
+#define MIN_ZOOM 0.3
+#define MAX_ZOOM 3.0
+#define ZOOM_SCALE 0.1
+#define INITIAL_ZOOM 1.0
+
+#endif

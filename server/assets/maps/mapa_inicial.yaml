@@ -1,0 +1,49 @@
+version: 1
+map:
+  id: mapa_inicial
+  name: Mapa Inicial
+  width: 100
+  height: 100
+player_spawn:
+  position: [43, 42]
+obstacles:
+  - id: obstacle_2
+    type: piedra_grande
+    position: [39, 46]
+    size: [3, 4]
+  - id: obstacle_1
+    type: tree
+    position: [52, 45]
+    size: [1, 4]
+zones:
+  - id: zone_2
+    type: forest
+    template: bosque_aranas
+    area:
+      x: 12
+      y: 60
+      width: 35
+      height: 20
+    spawns:
+      - creature: spider
+        max_population: 10
+      - creature: goblin
+        max_population: 8
+  - id: zone_1
+    type: city
+    template: nix
+    area:
+      x: 53
+      y: 50
+      width: 25
+      height: 20
+    fixed_npcs:
+      - type: priest
+        name: Sacerdote
+        position: [58, 55]
+      - type: merchant
+        name: Comerciante
+        position: [63, 55]
+      - type: banker
+        name: Banquero
+        position: [68, 55]
