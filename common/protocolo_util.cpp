@@ -8,7 +8,8 @@ bool ProtocoloUtil::socketCerrado(const LibError& error) {
     std::string errorMensaje = error.what();
 
     return errorMensaje.find("socket sent only") != std::string::npos ||
-           errorMensaje.find("socket received only") != std::string::npos;
+           errorMensaje.find("socket received only") != std::string::npos ||
+           errorMensaje.find("socket accept failed") != std::string::npos;
 }
 
 uint16_t ProtocoloUtil::leerLongitud(const std::vector<char>& bytes) {

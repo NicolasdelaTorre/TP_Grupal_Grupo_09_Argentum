@@ -2,3 +2,4 @@ build/
 .vscode/
 buildclear/
 tags.*
+libSDL2pp

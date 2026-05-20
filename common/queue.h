@@ -24,7 +24,7 @@ struct ClosedQueue: public std::runtime_error {
  * On a closed queue, any method will raise ClosedQueue.
  *
  * */
-template <typename T, class C = std::deque<T>>
+template <typename T, class C = std::deque<T> >
 class Queue {
 private:
     std::queue<T, C> q;
@@ -39,6 +39,7 @@ private:
 public:
     Queue(): max_size(UINT_MAX - 1), closed(false) {}
     explicit Queue(const unsigned int max_size): max_size(max_size), closed(false) {}
+
 
     bool try_push(T const& val) {
         std::unique_lock<std::mutex> lck(mtx);
@@ -96,6 +97,7 @@ public:
         q.push(val);
     }
 
+
     T pop() {
         std::unique_lock<std::mutex> lck(mtx);
 
@@ -146,6 +148,7 @@ private:
 
 public:
     explicit Queue(const unsigned int max_size): max_size(max_size), closed(false) {}
+
 
     bool try_push(void* const& val) {
         std::unique_lock<std::mutex> lck(mtx);
@@ -203,6 +206,7 @@ public:
         q.push(val);
     }
 
+
     void* pop() {
         std::unique_lock<std::mutex> lck(mtx);
 
@@ -239,16 +243,19 @@ private:
     Queue& operator=(const Queue&) = delete;
 };
 
+
 template <typename T>
 class Queue<T*>: private Queue<void*> {
 public:
     explicit Queue(const unsigned int max_size): Queue<void*>(max_size) {}
+
 
     bool try_push(T* const& val) { return Queue<void*>::try_push(val); }
 
     bool try_pop(T*& val) { return Queue<void*>::try_pop((void*&)val); }
 
     void push(T* const& val) { return Queue<void*>::push(val); }
+
 
     T* pop() { return (T*)Queue<void*>::pop(); }
 
