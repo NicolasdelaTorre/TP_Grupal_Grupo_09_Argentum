@@ -4,36 +4,31 @@
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
 
-// Esta comentado para que no se queje el pre commit
-// using namespace SDL2pp;
-using SDL2pp::Renderer;
-using SDL2pp::SDL;
-using SDL2pp::Window;
+#include "client.h"
 
-int main() try {
-    // Initialize SDL library
-    SDL sdl(SDL_INIT_VIDEO);
+using namespace SDL2pp;
 
-    // Create main window: 640x480 dimensions, resizable, "SDL2pp demo" title
-    Window window("SDL2pp demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
-                  SDL_WINDOW_RESIZABLE);
+int main(int argc, char* argv[])
+{
 
-    // Create accelerated video renderer with default driver
-    Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
+	try {
 
-    // Clear screen
-    renderer.Clear();
+		if (argc != 3)
+		{
+			std::cerr << "Usage: " << argv[0] << " <hostname or IP> <servicename or port>" << std::endl;
+			return 1;
+		}
 
-    // Show rendered frame
-    renderer.Present();
+		const char* hostname = argv[1];
+		const char* servicename = argv[2];
 
-    // 5 second delay
-    SDL_Delay(5000);
+		client client(hostname, servicename);
+		client.run();
 
-    // Here all resources are automatically released and library deinitialized
-    return 0;
-} catch (std::exception& e) {
-    // If case of error, print it and exit with error
-    std::cerr << e.what() << std::endl;
-    return 1;
+		return 0;
+	} catch (std::exception& e) {
+		// If case of error, print it and exit with error
+		std::cerr << e.what() << std::endl;
+		return 1;
+	}
 }
