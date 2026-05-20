@@ -4,12 +4,23 @@
 
 #ifndef TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_RECEIVER_H
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_RECEIVER_H
+#include <string>
+
+#include "../common/queue.h"
 #include "../common/thread.h"
 
+#include "client_protocol.h"
 
-class client_receiver : public Thread
-{
+class client_receiver: public Thread {
+private:
+    client_protocol& protocol;
+    Queue<std::string>& server_queue;
+
+public:
+    client_receiver(client_protocol& protocol, Queue<std::string>& server_queue);
+
+    virtual void run() override;
 };
 
 
-#endif //TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_RECEIVER_H
+#endif  // TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_RECEIVER_H

@@ -92,7 +92,7 @@ int ProtocoloServer::devolverUsuario(std::string& mensaje, const int idCliente) 
     }
 
     mensaje += "usuario.";
-    mensaje.assign(mensajeRecibido.begin(), mensajeRecibido.end());
+    mensaje += mensajeRecibido.data();
 
     return 1;
 }

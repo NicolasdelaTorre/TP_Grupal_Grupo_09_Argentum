@@ -4,16 +4,20 @@
 
 #ifndef TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_PROTOCOL_H
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_PROTOCOL_H
-#include "../common/socket.h"
-#include "../common/common_protocol.h"
+#include <string>
+#include <vector>
 
-class client_protocol
-{
+#include "../common/common_protocol.h"
+#include "../common/socket.h"
+
+class client_protocol {
     common_protocol protocol;
 
-    public:
+public:
     explicit client_protocol(Socket skt);
+
+    int send(const std::string& data);
 };
 
 
-#endif //TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_PROTOCOL_H
+#endif  // TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_PROTOCOL_H

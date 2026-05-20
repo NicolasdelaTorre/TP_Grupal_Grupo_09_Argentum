@@ -6,29 +6,32 @@
 
 #include "client.h"
 
-using namespace SDL2pp;
+// Esta comentado para que no se queje el pre commit
+// using namespace SDL2pp;
+using SDL2pp::Renderer;
+using SDL2pp::SDL;
+using SDL2pp::Window;
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 
-	try {
+    try {
 
-		if (argc != 3)
-		{
-			std::cerr << "Usage: " << argv[0] << " <hostname or IP> <servicename or port>" << std::endl;
-			return 1;
-		}
+        if (argc != 3) {
+            std::cerr << "Usage: " << argv[0] << " <hostname or IP> <servicename or port>"
+                      << std::endl;
+            return 1;
+        }
 
-		const char* hostname = argv[1];
-		const char* servicename = argv[2];
+        const char* hostname = argv[1];
+        const char* servicename = argv[2];
 
-		client client(hostname, servicename);
-		client.run();
+        client client(hostname, servicename);
+        client.run();
 
-		return 0;
-	} catch (std::exception& e) {
-		// If case of error, print it and exit with error
-		std::cerr << e.what() << std::endl;
-		return 1;
-	}
+        return 0;
+    } catch (std::exception& e) {
+        // If case of error, print it and exit with error
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
 }

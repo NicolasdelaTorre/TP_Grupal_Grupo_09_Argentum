@@ -4,12 +4,13 @@
 
 #ifndef TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_H
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_H
-#include "client_protocol.h"
 #include <string>
 
+#include "../common/queue.h"
+
+#include "client_protocol.h"
 #include "client_receiver.h"
 #include "client_sender.h"
-#include "../common/queue.h"
 
 
 class client {
@@ -28,4 +29,4 @@ public:
 };
 
 
-#endif //TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_H
+#endif  // TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_H
