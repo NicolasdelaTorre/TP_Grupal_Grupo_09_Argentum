@@ -6,11 +6,9 @@
 #include <SDL2pp/Font.hh>
 #include <SDL2pp/SDL2pp.hh>
 
+#include "../common/DTOs.h"
 // Resultado del login
-struct LoginResult {
-    std::string username;
-    bool confirmed;  // true = presionó Enter, false = cerró la ventana
-};
+
 
 class LoginScreen {
 public:

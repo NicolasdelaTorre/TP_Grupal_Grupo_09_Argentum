@@ -9,14 +9,19 @@
 
 #include "../common/common_protocol.h"
 #include "../common/socket.h"
+#include "../common/DTOs.h"
 
 class client_protocol {
     common_protocol protocol;
 
 public:
-    explicit client_protocol(Socket skt);
+    explicit client_protocol(Socket& skt);
 
-    int send(const std::string& data);
+    int send_username(const std::string& data);
+
+    void send_message(const Command& command);
+
+    ServerMessageType receive_message();
 };
 
 

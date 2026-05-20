@@ -10,4 +10,9 @@ enum Command{};
 
 enum ServerMessageType{};
 
+struct LoginResult {
+    std::string username;
+    bool confirmed;  // true = presionó Enter, false = cerró la ventana
+};
+
 #endif //TP_GRUPAL_GRUPO_09_ARGENTUM_DTOS_H
