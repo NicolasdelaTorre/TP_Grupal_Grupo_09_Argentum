@@ -20,7 +20,7 @@ int ProtocoloServer::esperarCliente() {
         int idCliente = contadorClientes;
 
         // El id del cliente indica el orden de llegada al servidor.
-        socketClientes.emplace(idCliente, std::move(socketCliente));
+        socketClientes.emplace(idCliente, common_protocol(std::move(socketCliente)));
 
         return idCliente;
     } catch (const LibError& error) {
@@ -35,7 +35,7 @@ void ProtocoloServer::eliminarCliente(const int idCliente) {
     if (it != socketClientes.end()) {
         // Se utiliza shutdown porque existe la posibilidad de que se este intentado
         // recibir un mensaje a traves del socket.
-        it->second.shutdown(SHUT_RDWR);
+        socketClientes[idCliente].shutdown();
         socketClientes.erase(it);
     }
 }
@@ -48,9 +48,10 @@ int ProtocoloServer::recibirMensaje(std::string& mensaje, const int idCliente) {
         return 0;
     }
 
-    int bytesRecibidos = it->second.recvall(mensajeRecibido.data(), 1);
+    //int bytesRecibidos = it->second.recvall(mensajeRecibido.data(), 1);
+    u_int8_t byte_recibido = it->second.receive_byte();
 
-    if (!bytesRecibidos) {
+    if (!byte_recibido) {
         // Se cerro el socket del cliente.
         return 0;
     }
@@ -73,23 +74,26 @@ int ProtocoloServer::devolverUsuario(std::string& mensaje, const int idCliente) 
         return 0;
     }
 
-    int bytesRecibidos = it->second.recvall(mensajeRecibido.data(), 2);
+    //int bytesRecibidos = it->second.recvall(mensajeRecibido.data(), 2);
+    u_int16_t longitudNombre = it->second.receive_two_bytes_number();
 
-    if (!bytesRecibidos) {
+    if (!longitudNombre) {
         // Se cerro el socket del cliente.
         return 0;
     }
 
-    uint16_t longitudNombre = ProtocoloUtil::leerLongitud(mensajeRecibido);
+    //uint16_t longitudNombre = ProtocoloUtil::leerLongitud(mensajeRecibido);
 
-    mensajeRecibido.resize(longitudNombre);
+    //mensajeRecibido.resize(longitudNombre);
 
-    bytesRecibidos = it->second.recvall(mensajeRecibido.data(), longitudNombre);
+    //bytesRecibidos = it->second.recvall(mensajeRecibido.data(), longitudNombre);
 
-    if (!bytesRecibidos) {
+    std::string nombreUsuario = it->second.receive_message(longitudNombre);
+
+    /*if (!nombreUsuario) {
         // Se cerro el socket del cliente.
         return 0;
-    }
+    }*/
 
     mensaje += "usuario.";
     mensaje += mensajeRecibido.data();
@@ -107,9 +111,9 @@ int ProtocoloServer::devolverMovimiento(std::string& mensaje, const int idClient
         return 0;
     }
 
-    int bytesRecibidos = it->second.recvall(mensajeRecibido.data(), 1);
+    u_int8_t byte_recibido = it->second.receive_byte();
 
-    if (!bytesRecibidos) {
+    if (!byte_recibido) {
         // Se cerro el socket del cliente.
         return 0;
     }
@@ -152,17 +156,18 @@ int ProtocoloServer::enviarMensaje(const std::string& mensaje, const int idClien
 
         std::vector<char> mensajeAEnviar;
 
-        int bytesEnviados = it->second.sendall(mensajeAEnviar.data(), mensajeAEnviar.size());
-
+        //int bytesEnviados = it->second.sendall(mensajeAEnviar.data(), mensajeAEnviar.size());
+        it->second.send_message(mensaje);
+        /*
         if (!bytesEnviados) {
             // Se cerro el socket del cliente.
             return 0;
-        }
+        }*/
 
-        return 1;
+        return 0;
     } catch (const LibError& error) {
         if (ProtocoloUtil::socketCerrado(error))
-            return 0;
+            return 1;
         throw;
     }
 }
@@ -171,7 +176,7 @@ void ProtocoloServer::desconectarServidor() { socketServer.shutdown(SHUT_RDWR); 
 
 ProtocoloServer::~ProtocoloServer() {
     for (auto& socket: socketClientes) {
-        socket.second.close();
+        socket.second.shutdown();
     }
     socketServer.close();
 }

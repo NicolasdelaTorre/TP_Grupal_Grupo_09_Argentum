@@ -7,11 +7,12 @@
 
 #include "../../common/liberror.h"
 #include "../../common/socket.h"
+#include "../../common/common_protocol.h"
 
 class ProtocoloServer {
 private:
     Socket socketServer;
-    std::map<int, Socket> socketClientes;
+    std::map<int, common_protocol> socketClientes;
     int contadorClientes;
 
     /*
