@@ -18,3 +18,11 @@ void MonitorClientes::broadcast(const std::string& mensaje) {
         cliente.second->push(mensaje);
     }
 }
+
+void MonitorClientes::enviarACliente(int idCliente, const std::string& mensaje) {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = Clientes.find(idCliente);
+    if (it != Clientes.end()) {
+        it->second->push(mensaje);
+    }
+}

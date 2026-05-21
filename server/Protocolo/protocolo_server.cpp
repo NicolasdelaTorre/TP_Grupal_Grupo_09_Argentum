@@ -6,9 +6,8 @@
 #include <sys/socket.h>
 
 #include "../../common/liberror.h"
+#include "../../common/message_types.h"
 #include "../../common/protocolo_util.h"
-
-#include "comandos.h"
 
 ProtocoloServer::ProtocoloServer(const char* puerto):
         socketServer(puerto), socketClientes(), contadorClientes(0) {}
@@ -56,9 +55,9 @@ int ProtocoloServer::recibirMensaje(std::string& mensaje, const int idCliente) {
     }
 
     switch (mensajeRecibido[0]) {
-        case static_cast<uint8_t>(Comando::LLEGADA_USUARIO):
+        case static_cast<uint8_t>(ClientMsg::LLEGADA_USUARIO):
             return devolverUsuario(mensaje, idCliente);
-        case static_cast<uint8_t>(Comando::MOVIMIENTO):
+        case static_cast<uint8_t>(ClientMsg::MOVIMIENTO):
             return devolverMovimiento(mensaje, idCliente);
         default:
             throw std::runtime_error("Error Protocolo: comando del cliente desconocido");
@@ -116,16 +115,16 @@ int ProtocoloServer::devolverMovimiento(std::string& mensaje, const int idClient
 
     uint8_t direccion = mensajeRecibido[0];
     switch (direccion) {
-        case static_cast<uint8_t>(Comando::ARRIBA):
+        case static_cast<uint8_t>(ClientMsg::ARRIBA):
             mensaje += "arriba";
             break;
-        case static_cast<uint8_t>(Comando::ABAJO):
+        case static_cast<uint8_t>(ClientMsg::ABAJO):
             mensaje += "abajo";
             break;
-        case static_cast<uint8_t>(Comando::IZQUIERDA):
+        case static_cast<uint8_t>(ClientMsg::IZQUIERDA):
             mensaje += "izquierda";
             break;
-        case static_cast<uint8_t>(Comando::DERECHA):
+        case static_cast<uint8_t>(ClientMsg::DERECHA):
             mensaje += "derecha";
             break;
         default:
@@ -143,19 +142,20 @@ int ProtocoloServer::enviarMensaje(const std::string& mensaje, const int idClien
             return 0;
         }
 
-        size_t posicionAccion = mensaje.find(':');
+        std::vector<uint8_t> buf;
 
-        if (posicionAccion == std::string::npos) {
-            throw std::runtime_error(
-                    "Error Protocolo: mensaje del servidor con formato incorrecto");
+        if (mensaje == "LOGIN_OK") {
+            buf.push_back(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
+        } else if (mensaje == "LOGIN_FAIL") {
+            buf.push_back(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
+        } else {
+            // Tipo de mensaje desconocido — ignorar sin tirar excepción
+            return 1;
         }
 
-        std::vector<char> mensajeAEnviar;
-
-        int bytesEnviados = it->second.sendall(mensajeAEnviar.data(), mensajeAEnviar.size());
-
+        int bytesEnviados = it->second.sendall(buf.data(), buf.size());
         if (!bytesEnviados) {
-            // Se cerro el socket del cliente.
+            // Se cerro el socket del cliente
             return 0;
         }
 

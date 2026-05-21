@@ -37,6 +37,18 @@ void client::run() {
 
     protocol.send(result.username);
 
+    sender.start();
+    receiver.start();
+
+    // Esperar LOGIN_OK del servidor
+    std::string respuesta = server_queue.pop();
+    std::cout << "Servidor respondio: " << respuesta << std::endl;
+
+    events_queue.close();  // desbloquea al sender que está esperando en pop()
+    protocol.close();      // desbloquea al receiver que está esperando en recv()
+    sender.join();
+    receiver.join();
+
     // ── Acá arranca el juego ───────────────────────────────
     // GameClient game(result.username);
     // game.run();

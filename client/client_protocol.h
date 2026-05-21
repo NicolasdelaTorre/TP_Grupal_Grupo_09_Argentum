@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../common/common_protocol.h"
+#include "../common/message_types.h"
 #include "../common/socket.h"
 
 class client_protocol {
@@ -16,7 +17,17 @@ class client_protocol {
 public:
     explicit client_protocol(Socket skt);
 
+    // Enviar nombre de usuario al conectarse
     int send(const std::string& data);
+
+    // Enviar movimiento: direction debe ser ARRIBA, ABAJO, IZQUIERDA o DERECHA
+    void send_move(ClientMsg direction);
+
+    // Leer el tipo del próximo mensaje que mandó el servidor
+    ServerMsg recv_msg_type();
+
+    // Cierra el socket — desbloquea cualquier recv pendiente
+    void close();
 };
 
 

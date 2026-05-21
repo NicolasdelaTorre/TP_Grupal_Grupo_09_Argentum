@@ -23,7 +23,6 @@ target_sources(taller_server
         Logica/mapa.h
         Logica/juego.h
         Logica/gameloop.h
-        Protocolo/comandos.h
         Protocolo/protocolo_server.h
     )
 
