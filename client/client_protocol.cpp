@@ -10,14 +10,13 @@
 
 #include <netinet/in.h>
 
-client_protocol::client_protocol(Socket skt): protocol(std::move(skt)) {}
+client_protocol::client_protocol(Socket& skt): protocol(std::move(skt)) {}
 
 int client_protocol::send(const std::string& data) {
     uint8_t opcode = static_cast<uint8_t>(ClientMsg::LLEGADA_USUARIO);
     uint16_t len = htons(static_cast<uint16_t>(data.size()));
-    protocol.send(&opcode, 1);
-    protocol.send(&len, 2);
-    protocol.send(data.data(), data.size());
+    protocol.sendByte(opcode);
+    protocol.send_message(data);
     return 1;
 }
 
@@ -26,14 +25,22 @@ void client_protocol::send_move(ClientMsg direction) {
         static_cast<uint8_t>(ClientMsg::MOVIMIENTO),
         static_cast<uint8_t>(direction)
     };
-    protocol.send(buf, 2);
+    protocol.sendByte(buf[0]);
+    protocol.sendByte(buf[1]);
 }
 
 ServerMsg client_protocol::recv_msg_type() {
-    uint8_t opcode = 0;
-    if (protocol.recv(&opcode, 1) == 0)
-        throw std::runtime_error("connection closed");
+    uint8_t opcode = protocol.receive_byte();
     return static_cast<ServerMsg>(opcode);
 }
 
-void client_protocol::close() { protocol.close(); }
+void client_protocol::close() { protocol.shutdown(); }
+
+
+int client_protocol::send_username(const std::string& data) {
+    protocol.sendByte(0x01);
+    protocol.send_message(data);
+}
+
+void client_protocol::send_message(const Command& command) {}
+    

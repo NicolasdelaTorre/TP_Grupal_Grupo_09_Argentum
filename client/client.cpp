@@ -30,12 +30,12 @@ void client::run() {
     LoginResult result = login.run();
 
     if (!result.confirmed) {
-        return;  // el usuario cerró la ventana
+        return;  
     }
 
     std::cout << "Bienvenido: " << result.username << std::endl;
 
-    protocol.send(result.username);
+    protocol.send_username(result.username);
 
     sender.start();
     receiver.start();

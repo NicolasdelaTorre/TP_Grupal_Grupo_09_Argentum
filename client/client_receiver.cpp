@@ -4,7 +4,7 @@
 
 #include "client_receiver.h"
 
-client_receiver::client_receiver(client_protocol& protocol, Queue<std::string>& server_queue):
+client_receiver::client_receiver(client_protocol& protocol, Queue<ServerMessageType>& server_queue):
         protocol(protocol), server_queue(server_queue) {}
 
 void client_receiver::run() {
@@ -13,10 +13,10 @@ void client_receiver::run() {
             ServerMsg type = protocol.recv_msg_type();
             switch (type) {
                 case ServerMsg::LOGIN_OK:
-                    server_queue.push("LOGIN_OK");
+                    server_queue.push(ServerMessageType::LOGIN_OK);
                     break;
                 case ServerMsg::LOGIN_FAIL:
-                    server_queue.push("LOGIN_FAIL");
+                    server_queue.push(ServerMessageType::LOGIN_FAIL);
                     break;
                 default:
                     // Tipos aún no manejados — ignorar por ahora

@@ -8,18 +8,21 @@
 
 #include "../common/queue.h"
 #include "../common/thread.h"
+#include "../common/DTOs.h"
 
 #include "client_protocol.h"
 
 class client_receiver: public Thread {
 private:
     client_protocol& protocol;
-    Queue<std::string>& server_queue;
+    Queue<ServerMessageType>& server_queue;
 
 public:
-    client_receiver(client_protocol& protocol, Queue<std::string>& server_queue);
+    client_receiver(client_protocol& protocol, Queue<ServerMessageType>& server_queue);
 
     virtual void run() override;
+
+    bool is_alive() const override { return _is_alive; }
 };
 
 

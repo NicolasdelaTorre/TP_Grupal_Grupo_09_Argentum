@@ -4,8 +4,9 @@
 
 #include "client_sender.h"
 
-client_sender::client_sender(client_protocol& protocol, Queue<std::string>& events_queue):
+client_sender::client_sender(client_protocol& protocol, Queue<Command>& events_queue):
         protocol(protocol), events_queue(events_queue) {}
+
 
 // Formato de eventos esperados en la queue: "ARRIBA", "ABAJO", "IZQUIERDA", "DERECHA"
 void client_sender::run() {

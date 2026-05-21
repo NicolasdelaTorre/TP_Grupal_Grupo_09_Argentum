@@ -10,12 +10,13 @@
 #include "../common/common_protocol.h"
 #include "../common/message_types.h"
 #include "../common/socket.h"
+#include "../common/DTOs.h"
 
 class client_protocol {
     common_protocol protocol;
 
 public:
-    explicit client_protocol(Socket skt);
+    explicit client_protocol(Socket& skt);
 
     // Enviar nombre de usuario al conectarse
     int send(const std::string& data);
@@ -28,6 +29,12 @@ public:
 
     // Cierra el socket — desbloquea cualquier recv pendiente
     void close();
+    
+    int send_username(const std::string& data);
+
+    void send_message(const Command& command);
+
+    ServerMessageType receive_message();
 };
 
 
