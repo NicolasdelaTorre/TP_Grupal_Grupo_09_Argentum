@@ -15,7 +15,9 @@ class common_protocol {
 public:
     explicit common_protocol(Socket skt);
 
-    int send(const char* data, size_t size);
+    int send(const void* data, size_t size);
+    int recv(void* data, size_t size);
+    void close();
 };
 
 

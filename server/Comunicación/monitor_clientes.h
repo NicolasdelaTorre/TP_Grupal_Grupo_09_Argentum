@@ -19,6 +19,9 @@ public:
     void eliminarQueue(const int idCliente);
 
     void broadcast(const std::string& mensaje);
+
+    // Envía un mensaje solo al cliente con ese id. No hace nada si el id no existe.
+    void enviarACliente(int idCliente, const std::string& mensaje);
 };
 
 #endif
