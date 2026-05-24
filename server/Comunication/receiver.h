@@ -5,16 +5,16 @@
 
 #include "../../common/queue.h"
 #include "../../common/thread.h"
-#include "../Protocolo/protocolo_server.h"
+#include "../Protocol/protocol_server.h"
 
 class Receiver: public Thread {
 private:
-    ProtocoloServer& protocolo;
-    Queue<std::string>& comandos;
+    ProtocolServer& protocol;
+    Queue<std::string>& commands;
     const int idCliente;
 
 public:
-    Receiver(ProtocoloServer& protocolo, Queue<std::string>& comandos, const int idCliente);
+    Receiver(ProtocolServer& protocol, Queue<std::string>& commands, const int idCliente);
 
     virtual void run() override;
 };

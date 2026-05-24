@@ -3,19 +3,18 @@
 #include <QMessageBox>
 
 #include "dialogs/new_map_dialog.h"
+
 #include "editor_constants.h"
 #include "ui_EditorWindow.h"
 // ventana del editor
 EditorWindow::EditorWindow(QWidget* parent):
-        QMainWindow(parent),
-        ui_(new Ui::EditorWindow),
-        tool_group_(new QButtonGroup(this)) {
+        QMainWindow(parent), ui_(new Ui::EditorWindow), tool_group_(new QButtonGroup(this)) {
     ui_->setupUi(this);
 
     if (!templates_.load()) {
         QMessageBox::critical(this, QStringLiteral("Error"),
-                             QStringLiteral("No se pudieron cargar los templates en %1.")
-                                     .arg(QStringLiteral(TEMPLATES_PATH)));
+                              QStringLiteral("No se pudieron cargar los templates en %1.")
+                                      .arg(QStringLiteral(TEMPLATES_PATH)));
     }
 
     map_canvas_ = new MapCanvas(templates_, ui_->mapCanvasHost);
@@ -55,7 +54,7 @@ void EditorWindow::setupTemplates() {
     }
     for (const auto& forest: templates_.forests()) {
         ui_->comboForestTemplate->addItem(QString::fromStdString(forest.name),
-                                         QString::fromStdString(forest.id));
+                                          QString::fromStdString(forest.id));
     }
 }
 // setup herramientas
@@ -67,8 +66,7 @@ void EditorWindow::setupTools() {
     tool_group_->addButton(ui_->btnToolCity);
     tool_group_->addButton(ui_->btnToolForest);
 
-    ui_->comboObstacleType->addItems(
-            {QStringLiteral("tree"), QStringLiteral("piedra_grande")});
+    ui_->comboObstacleType->addItems({QStringLiteral("tree"), QStringLiteral("piedra_grande")});
     // conectar los botones a la herramienta seleccionada
     connect(ui_->btnToolSpawn, &QPushButton::clicked, this,
             [this]() { selectTool(EditorTool::PlayerSpawn); });

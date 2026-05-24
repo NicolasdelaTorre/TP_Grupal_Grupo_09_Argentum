@@ -1,7 +1,5 @@
 #include "map_canvas.h"
 
-#include <algorithm>
-
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QGraphicsRectItem>
@@ -13,9 +11,11 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <algorithm>
 
-#include "map/yaml_map_io.h"
 #include "dialogs/forest_spawn_dialog.h"
+#include "map/yaml_map_io.h"
+
 #include "editor_constants.h"
 #include "verificator.h"
 
@@ -91,14 +91,14 @@ void MapCanvas::applyInitialView() {
     const double fit_scale = std::min(fit_scale_x, fit_scale_y);
 
     // escala de la vista para que cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
-    const double target_scale =
-            static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
-    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
+    const double target_scale = static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
+    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño
+    // TARGET_CELL_SCREEN_PX
     const double scale = std::max(fit_scale, target_scale);
 
     // escalar vista
     view_->scale(scale, scale);
-    // escalar zoom 
+    // escalar zoom
     current_zoom_ = scale;
     view_->centerOn(scene_width / 2.0, scene_height / 2.0);
 }
@@ -162,26 +162,26 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
     QString error;
     // poner respecitvo item
     switch (active_tool_.tool) {
-    case EditorTool::PlayerSpawn:
-        controller_->placePlayerSpawn(cell_x, cell_y, error);
-        break;
-    case EditorTool::Obstacle:
-        if (!controller_->placeObstacle(active_tool_, cell_x, cell_y, error)) {
-            QMessageBox::warning(this, QStringLiteral("Obstáculo"), error);
-        }
-        break;
-    case EditorTool::CityZone:
-        placeCityAt(cell_x, cell_y);
-        break;
-    case EditorTool::ForestZone:
-        if (!drawing_zone_) {
-            drawing_zone_ = true;
-            zone_start_cell_ = QPoint(cell_x, cell_y);
-            clearZonePreview();
-        }
-        break;
-    default:
-        break;
+        case EditorTool::PlayerSpawn:
+            controller_->placePlayerSpawn(cell_x, cell_y, error);
+            break;
+        case EditorTool::Obstacle:
+            if (!controller_->placeObstacle(active_tool_, cell_x, cell_y, error)) {
+                QMessageBox::warning(this, QStringLiteral("Obstáculo"), error);
+            }
+            break;
+        case EditorTool::CityZone:
+            placeCityAt(cell_x, cell_y);
+            break;
+        case EditorTool::ForestZone:
+            if (!drawing_zone_) {
+                drawing_zone_ = true;
+                zone_start_cell_ = QPoint(cell_x, cell_y);
+                clearZonePreview();
+            }
+            break;
+        default:
+            break;
     }
 }
 // manejar movimiento del mouse
@@ -198,10 +198,10 @@ void MapCanvas::handleMouseMove(const QPoint& view_pos) {
 
     const QRect rect = normalizedCellRect(zone_start_cell_, QPoint(cell_x, cell_y));
     clearZonePreview();
-    zone_preview_ = scene_->addRect(rect.x() * CELL_DISPLAY_SIZE, rect.y() * CELL_DISPLAY_SIZE,
-                                   rect.width() * CELL_DISPLAY_SIZE,
-                                   rect.height() * CELL_DISPLAY_SIZE,
-                                   QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
+    zone_preview_ =
+            scene_->addRect(rect.x() * CELL_DISPLAY_SIZE, rect.y() * CELL_DISPLAY_SIZE,
+                            rect.width() * CELL_DISPLAY_SIZE, rect.height() * CELL_DISPLAY_SIZE,
+                            QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
     zone_preview_->setZValue(5);
 }
 // colocar ciudad en celda
@@ -255,8 +255,8 @@ void MapCanvas::finishForestZoneDraw(int end_cell_x, int end_cell_y) {
     // colocar zona de bosque
     QString error;
     const auto spawns = dialog.selected_spawns();
-    if (!controller_->placeForestZone(active_tool_, rect.x(), rect.y(), rect.width(),
-                                      rect.height(), spawns, error)) {
+    if (!controller_->placeForestZone(active_tool_, rect.x(), rect.y(), rect.width(), rect.height(),
+                                      spawns, error)) {
         QMessageBox::warning(this, QStringLiteral("Bosque"), error);
     }
 }
@@ -312,8 +312,7 @@ bool MapCanvas::eventFilter(QObject* obj, QEvent* event) {
 }
 // guardar mapa
 bool MapCanvas::saveMap() {
-    const auto document =
-            controller_->buildDocument(map_id_, map_name_, map_width_, map_height_);
+    const auto document = controller_->buildDocument(map_id_, map_name_, map_width_, map_height_);
     // validar documento
     Verificator verificator(document);
     QString error_title;

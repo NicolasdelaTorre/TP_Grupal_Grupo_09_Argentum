@@ -7,19 +7,21 @@
 
 #include <string>
 
+#include "../common/DTOs.h"
 #include "../common/queue.h"
 #include "../common/thread.h"
-#include "../common/DTOs.h"
 
 #include "client_protocol.h"
 
 class client_sender: public Thread {
 private:
     client_protocol& protocol;
-    Queue<Command>& events_queue;
+    // Queue<Command>& events_queue;
+    Queue<std::string>& events_queue;
 
 public:
-    client_sender(client_protocol& protocol, Queue<Command>& events_queue);
+    // client_sender(client_protocol& protocol, Queue<Command>& events_queue);
+    client_sender(client_protocol& protocol, Queue<std::string>& events_queue);
 
     void run() override;
 

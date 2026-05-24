@@ -30,7 +30,7 @@ void client::run() {
     LoginResult result = login.run();
 
     if (!result.confirmed) {
-        return;  
+        return;
     }
 
     std::cout << "Bienvenido: " << result.username << std::endl;

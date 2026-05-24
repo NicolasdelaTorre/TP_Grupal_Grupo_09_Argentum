@@ -2,10 +2,11 @@
 #define ARGENTUM_EDITOR_DIALOGS_FOREST_SPAWN_DIALOG_H
 
 #include <QDialog>
+#include <string>
 #include <vector>
 
-#include "map/map_data.h"
 #include "assets/templates/template_registry.h"
+#include "map/map_data.h"
 
 class QCheckBox;
 class QSpinBox;
@@ -14,7 +15,7 @@ class ForestSpawnDialog: public QDialog {
     Q_OBJECT
 
 public:
-    ForestSpawnDialog(const ForestTemplate& forest_template, QWidget* parent = nullptr);
+    explicit ForestSpawnDialog(const ForestTemplate& forest_template, QWidget* parent = nullptr);
 
     std::vector<CreatureSpawn> selected_spawns() const;
 

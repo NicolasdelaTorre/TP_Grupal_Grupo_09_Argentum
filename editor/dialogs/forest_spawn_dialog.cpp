@@ -7,8 +7,7 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
-ForestSpawnDialog::ForestSpawnDialog(const ForestTemplate& forest_template,
-                                     QWidget* parent):
+ForestSpawnDialog::ForestSpawnDialog(const ForestTemplate& forest_template, QWidget* parent):
         QDialog(parent) {
     setWindowTitle(QStringLiteral("Criaturas del bosque"));
     resize(420, 320);

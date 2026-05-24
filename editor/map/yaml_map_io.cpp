@@ -19,7 +19,8 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
         if (document.player_spawn.placed) {
             out << YAML::Key << "player_spawn" << YAML::Value << YAML::BeginMap;
             out << YAML::Key << "position" << YAML::Value;
-            out << YAML::Flow << YAML::BeginSeq << document.player_spawn.x << document.player_spawn.y << YAML::EndSeq;
+            out << YAML::Flow << YAML::BeginSeq << document.player_spawn.x
+                << document.player_spawn.y << YAML::EndSeq;
             out << YAML::EndMap;
         }
 
@@ -32,7 +33,8 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 out << YAML::Key << "position" << YAML::Value;
                 out << YAML::Flow << YAML::BeginSeq << obstacle.x << obstacle.y << YAML::EndSeq;
                 out << YAML::Key << "size" << YAML::Value;
-                out << YAML::Flow << YAML::BeginSeq << obstacle.width << obstacle.height << YAML::EndSeq;
+                out << YAML::Flow << YAML::BeginSeq << obstacle.width << obstacle.height
+                    << YAML::EndSeq;
                 out << YAML::EndMap;
             }
             out << YAML::EndSeq;

@@ -5,6 +5,7 @@
 #include <QMainWindow>
 
 #include "assets/templates/template_registry.h"
+
 #include "map_canvas.h"
 #include "tool_info.h"
 

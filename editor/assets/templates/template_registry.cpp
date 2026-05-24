@@ -1,5 +1,6 @@
 #include "template_registry.h"
 
+#include <algorithm>
 #include <filesystem>
 
 #include <yaml-cpp/yaml.h>
@@ -39,21 +40,15 @@ const std::vector<CityTemplate>& TemplateRegistry::cities() const { return citie
 const std::vector<ForestTemplate>& TemplateRegistry::forests() const { return forests_; }
 
 const CityTemplate* TemplateRegistry::find_city(const std::string& id) const {
-    for (const auto& city: cities_) {
-        if (city.id == id) {
-            return &city;
-        }
-    }
-    return nullptr;
+    const auto it = std::find_if(cities_.begin(), cities_.end(),
+                                 [&id](const CityTemplate& city) { return city.id == id; });
+    return it != cities_.end() ? &(*it) : nullptr;
 }
 
 const ForestTemplate* TemplateRegistry::find_forest(const std::string& id) const {
-    for (const auto& forest: forests_) {
-        if (forest.id == id) {
-            return &forest;
-        }
-    }
-    return nullptr;
+    const auto it = std::find_if(forests_.begin(), forests_.end(),
+                                 [&id](const ForestTemplate& forest) { return forest.id == id; });
+    return it != forests_.end() ? &(*it) : nullptr;
 }
 
 bool TemplateRegistry::load_city_file(const std::string& path) {

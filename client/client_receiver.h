@@ -6,9 +6,9 @@
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_RECEIVER_H
 #include <string>
 
+#include "../common/DTOs.h"
 #include "../common/queue.h"
 #include "../common/thread.h"
-#include "../common/DTOs.h"
 
 #include "client_protocol.h"
 

@@ -5,9 +5,11 @@
 #include <QGraphicsScene>
 #include <QHash>
 #include <QString>
+#include <vector>
 
-#include "map/map_data.h"
 #include "assets/templates/template_registry.h"
+#include "map/map_data.h"
+
 #include "item_builder.h"
 #include "tool_info.h"
 

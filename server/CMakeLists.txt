@@ -1,35 +1,35 @@
 target_sources(taller_server
     PRIVATE
         main.cpp
-        servidor.cpp
-        Comunicación/aceptador.cpp
-        Comunicación/client_handler.cpp
-        Comunicación/monitor_clientes.cpp
-        Comunicación/receiver.cpp
-        Comunicación/sender.cpp
-        Logica/jugador.cpp
-        Logica/mapa.cpp
-        Logica/juego.cpp
-        Logica/gameloop.cpp
-        Protocolo/protocolo_server.cpp
+        server.cpp
+        Comunication/acceptor.cpp
+        Comunication/client_handler.cpp
+        Comunication/client_monitor.cpp
+        Comunication/receiver.cpp
+        Comunication/sender.cpp
+        Logic/player.cpp
+        Logic/map.cpp
+        Logic/game.cpp
+        Logic/gameloop.cpp
+        Protocol/protocol_server.cpp
     PUBLIC
-        servidor.h
-        Comunicación/aceptador.h
-        Comunicación/client_handler.h
-        Comunicación/monitor_clientes.h
-        Comunicación/receiver.h
-        Comunicación/sender.h
-        Logica/jugador.h
-        Logica/mapa.h
-        Logica/juego.h
-        Logica/gameloop.h
-        Protocolo/protocolo_server.h
+        server.h
+        Comunication/acceptor.h
+        Comunication/client_handler.h
+        Comunication/client_monitor.h
+        Comunication/receiver.h
+        Comunication/sender.h
+        Logic/player.h
+        Logic/map.h
+        Logic/game.h
+        Logic/gameloop.h
+        Protocol/protocol_server.h
     )
 
 target_include_directories(taller_server
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/Comunicación
-        ${CMAKE_CURRENT_SOURCE_DIR}/Logica
-        ${CMAKE_CURRENT_SOURCE_DIR}/Protocolo
+        ${CMAKE_CURRENT_SOURCE_DIR}/Comunication
+        ${CMAKE_CURRENT_SOURCE_DIR}/Logic
+        ${CMAKE_CURRENT_SOURCE_DIR}/Protocol
     )

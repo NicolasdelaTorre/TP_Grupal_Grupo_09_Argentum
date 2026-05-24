@@ -13,10 +13,10 @@ void client_receiver::run() {
             ServerMsg type = protocol.recv_msg_type();
             switch (type) {
                 case ServerMsg::LOGIN_OK:
-                    server_queue.push(ServerMessageType::LOGIN_OK);
+                    server_queue.push("LOGIN_OK");
                     break;
                 case ServerMsg::LOGIN_FAIL:
-                    server_queue.push(ServerMessageType::LOGIN_FAIL);
+                    server_queue.push("LOGIN_FAIL");
                     break;
                 default:
                     // Tipos aún no manejados — ignorar por ahora

@@ -4,10 +4,11 @@
 
 #include "common_protocol.h"
 
-#include <sys/socket.h>
 #include <utility>
-#include <arpa/inet.h>
 #include <vector>
+
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 
 common_protocol::common_protocol(Socket skt): skt(std::move(skt)) {}

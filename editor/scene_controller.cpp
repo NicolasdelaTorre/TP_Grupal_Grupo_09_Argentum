@@ -17,9 +17,7 @@ QString SceneController::nextObstacleId() {
     return QStringLiteral("obstacle_%1").arg(next_obstacle_id_++);
 }
 
-QString SceneController::nextZoneId() {
-    return QStringLiteral("zone_%1").arg(next_zone_id_++);
-}
+QString SceneController::nextZoneId() { return QStringLiteral("zone_%1").arg(next_zone_id_++); }
 
 // obtener item en celda
 QGraphicsItem* SceneController::topLevelItemAtCell(int cell_x, int cell_y) const {
@@ -54,7 +52,7 @@ bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y
 
     const QString id = nextObstacleId();
     auto* item = item_builder_.buildObstacle(id, tool.obstacle_type, tool.obstacle_width,
-                                           tool.obstacle_height);
+                                             tool.obstacle_height);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(2);
     scene_->addItem(item);
@@ -81,8 +79,7 @@ bool SceneController::placeCityZone(const ToolInfo& tool, int cell_x, int cell_y
 }
 
 bool SceneController::placeForestZone(const ToolInfo& tool, int cell_x, int cell_y, int width,
-                                      int height,
-                                      const std::vector<CreatureSpawn>& spawns,
+                                      int height, const std::vector<CreatureSpawn>& spawns,
                                       QString& error, const QString& zone_id) {
     if (tool.forest_template_id.isEmpty()) {
         error = QStringLiteral("Seleccioná un template de bosque.");
@@ -98,8 +95,8 @@ bool SceneController::placeForestZone(const ToolInfo& tool, int cell_x, int cell
     }
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
-    auto* item = item_builder_.buildZone(id, ZONE_TYPE_FOREST, tool.forest_template_id, width,
-                                       height);
+    auto* item =
+            item_builder_.buildZone(id, ZONE_TYPE_FOREST, tool.forest_template_id, width, height);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(1);
     scene_->addItem(item);

@@ -3,3 +3,4 @@ build/
 buildclear/
 tags.*
 libSDL2pp
+server/f.txt

@@ -5,8 +5,9 @@
 #include <QGraphicsView>
 #include <QWidget>
 
-#include "map/map_data.h"
 #include "assets/templates/template_registry.h"
+#include "map/map_data.h"
+
 #include "editor_constants.h"
 #include "scene_controller.h"
 #include "tool_info.h"
