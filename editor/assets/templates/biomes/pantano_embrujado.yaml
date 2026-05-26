@@ -1,0 +1,11 @@
+template_id: pantano_embrujado
+name: "Pantano embrujado"
+default_size:
+  width: 35
+  height: 25
+color: "#6B8E23"
+allowed_creatures:
+  - zombie
+  - spider
+  - skeleton
+  - goblin

@@ -1,0 +1,13 @@
+template_id: ullathorpe
+name: "Ullathorpe"
+default_size:
+  width: 40
+  height: 30
+color: "#3A6FB0"
+fixed_npcs:
+  - { type: priest, name: "Sacerdote", position: [8, 8] }
+  - { type: merchant, name: "Comerciante", position: [14, 8] }
+  - { type: merchant, name: "Comerciante", position: [20, 8] }
+  - { type: merchant, name: "Comerciante", position: [26, 8] }
+  - { type: banker, name: "Banquero", position: [32, 8] }
+

@@ -10,8 +10,8 @@ target_sources(taller_editor
         verificator.cpp
         map/yaml_map_io.cpp
         assets/templates/template_registry.cpp
-        dialogs/new_map_dialog.cpp
-        dialogs/forest_spawn_dialog.cpp
+        dialogs/biome_spawn_dialog.cpp
+        dialogs/new_environment_dialog.cpp
     PUBLIC
     # .h files
         editor_window.h
@@ -24,8 +24,8 @@ target_sources(taller_editor
         map/map_data.h
         map/yaml_map_io.h
         assets/templates/template_registry.h
-        dialogs/new_map_dialog.h
-        dialogs/forest_spawn_dialog.h
+        dialogs/biome_spawn_dialog.h
+        dialogs/new_environment_dialog.h
     )
 
 target_include_directories(taller_editor
@@ -37,6 +37,9 @@ target_compile_definitions(taller_editor
     PRIVATE
         EDITOR_TEMPLATES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates"
         EDITOR_TEMPLATES_CITIES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/cities"
-        EDITOR_TEMPLATES_FORESTS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/forests"
+        EDITOR_TEMPLATES_BIOMES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/biomes"
+        EDITOR_TEMPLATES_OBSTACLES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/obstacles"
+        EDITOR_TEMPLATES_ENTRIES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/entries"
+        EDITOR_TEMPLATES_WALLS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/walls"
         EDITOR_SAVE_MAP_PATH="${CMAKE_SOURCE_DIR}/server/assets/maps"
     )

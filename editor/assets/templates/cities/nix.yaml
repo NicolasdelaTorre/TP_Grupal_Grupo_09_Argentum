@@ -3,6 +3,7 @@ name: "Nix"
 default_size:
   width: 25
   height: 20
+color: "#5BC0EB"
 fixed_npcs:
   - { type: priest, name: "Sacerdote", position: [5, 5] }
   - { type: merchant, name: "Comerciante", position: [10, 5] }

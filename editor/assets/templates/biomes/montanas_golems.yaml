@@ -1,0 +1,8 @@
+template_id: rocosas
+name: "Rocosa"
+default_size:
+  width: 40
+  height: 30
+color: "#888B8D"
+allowed_creatures:
+  - golem

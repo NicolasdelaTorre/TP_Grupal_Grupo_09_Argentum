@@ -1,0 +1,6 @@
+template_id: roca
+name: "Roca"
+size:
+  width: 3
+  height: 3
+color: "#7A7A7A"

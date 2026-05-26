@@ -38,14 +38,179 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="pageNewMap">
+       <layout class="QVBoxLayout" name="newMapLayout">
+        <item>
+         <widget class="QLabel" name="labelNewMapTitle">
+          <property name="text">
+           <string>Nuevo mapa</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="newMapTopSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="newMapFormRow">
+          <item>
+           <spacer name="newMapFormLeftSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QFormLayout" name="newMapForm">
+            <item row="0" column="0">
+             <widget class="QLabel" name="labelNewMapId">
+              <property name="text">
+               <string>Id</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="inputNewMapId">
+              <property name="text">
+               <string>mapa_inicial</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="labelNewMapName">
+              <property name="text">
+               <string>Nombre</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="inputNewMapName">
+              <property name="text">
+               <string>Mapa Inicial</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="labelNewMapSize">
+              <property name="text">
+               <string>Tamaño</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="comboNewMapSize"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="newMapFormRightSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="newMapMidSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="newMapButtonsRow">
+          <item>
+           <spacer name="newMapButtonsLeftSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnNewMapCancel">
+            <property name="text">
+             <string>Cancelar</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnNewMapCreate">
+            <property name="text">
+             <string>Crear</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="newMapButtonsRightSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="pageEditor">
        <layout class="QHBoxLayout" name="editorLayout">
         <item>
          <widget class="QWidget" name="toolsPanel" native="true">
           <property name="minimumSize">
            <size>
-            <width>220</width>
+            <width>185</width>
             <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>215</width>
+            <height>16777215</height>
            </size>
           </property>
           <layout class="QVBoxLayout" name="toolsLayout">
@@ -53,6 +218,23 @@
             <widget class="QPushButton" name="btnBack">
              <property name="text">
               <string>Volver al menú</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnBackToMainMap">
+             <property name="text">
+              <string>Volver al mapa principal</string>
+             </property>
+             <property name="visible">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelEditingTarget">
+             <property name="text">
+              <string>Editando: mapa principal</string>
              </property>
             </widget>
            </item>
@@ -81,33 +263,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboObstacleType"/>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="spinObstacleWidth">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>50</number>
-             </property>
-             <property name="value">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="spinObstacleHeight">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>50</number>
-             </property>
-             <property name="value">
-              <number>1</number>
-             </property>
-            </widget>
+            <widget class="QComboBox" name="comboObstacleTemplate"/>
            </item>
            <item>
             <widget class="QPushButton" name="btnToolObstacle">
@@ -140,22 +296,79 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="labelForest">
+            <widget class="QLabel" name="labelBiome">
              <property name="text">
-              <string>Bosque</string>
+              <string>Bioma</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboForestTemplate"/>
+            <widget class="QComboBox" name="comboBiomeTemplate"/>
            </item>
            <item>
-            <widget class="QPushButton" name="btnToolForest">
+            <widget class="QPushButton" name="btnToolBiome">
              <property name="text">
-              <string>Colocar bosque</string>
+              <string>Colocar bioma</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelEntry">
+             <property name="text">
+              <string>Entrada</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboEntryTemplate"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnToolEntry">
+             <property name="text">
+              <string>Colocar entrada</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelWall">
+             <property name="text">
+              <string>Pared</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboWallTemplate"/>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnToolWall">
+             <property name="text">
+              <string>Colocar pared</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelEnvironments">
+             <property name="text">
+              <string>Entornos</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="listEnvironments">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>120</height>
+              </size>
              </property>
             </widget>
            </item>

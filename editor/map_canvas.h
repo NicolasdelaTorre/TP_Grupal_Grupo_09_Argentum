@@ -1,6 +1,7 @@
 #ifndef ARGENTUM_EDITOR_MAP_CANVAS_H
 #define ARGENTUM_EDITOR_MAP_CANVAS_H
 
+#include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QWidget>
@@ -10,6 +11,11 @@
 #include "editor_constants.h"
 #include "scene_controller.h"
 #include "tool_info.h"
+
+enum class EditingMode {
+    MainMap,
+    Environment,
+};
 
 class MapCanvas: public QWidget {
     Q_OBJECT
@@ -24,12 +30,22 @@ public:
     QString map_name() const;
     int map_width() const;
     int map_height() const;
+    EditingMode editing_mode() const;
+
+    MapDocument buildDocument() const;
+    void loadFromDocument(const MapDocument& document, EditingMode mode);
+
+    bool placeEntryItem(const QString& entry_id, const QString& environment_id,
+                        const QString& template_id, int cell_x, int cell_y);
 
 signals:
     void statusMessage(const QString& message);
+    void entryPlacementRequested(const QString& template_id, int cell_x, int cell_y);
+    void entryDeleted(const QString& environment_id);
+    void saveRequested();
 
 public slots:
-    bool saveMap();
+    void onSaveClicked();
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
@@ -46,11 +62,17 @@ private:
     int map_height_ = 0;
     ToolInfo active_tool_;
     double current_zoom_ = INITIAL_ZOOM;
+    EditingMode editing_mode_ = EditingMode::MainMap;
 
     bool drawing_zone_ = false;
     QPoint zone_start_cell_;
     QGraphicsRectItem* zone_preview_ = nullptr;
+    QGraphicsPixmapItem* biome_tint_item_ = nullptr;
+    QGraphicsRectItem* env_floor_item_ = nullptr;
+    QGraphicsPixmapItem* env_exterior_item_ = nullptr;
+    QString env_floor_color_;
 
+    void initializeScene(const QString& map_id, const QString& map_name, int width, int height);
     void drawGrid();
     void applyInitialView();
     void cellFromViewPos(const QPoint& view_pos, int& cell_x, int& cell_y) const;
@@ -58,11 +80,17 @@ private:
     void handleRightPress(const QPoint& view_pos);
     void handleMouseMove(const QPoint& view_pos);
     void placeCityAt(int cell_x, int cell_y);
-    void finishForestZoneDraw(int end_cell_x, int end_cell_y);
+    void placeObstacleAt(int cell_x, int cell_y);
+    void placeWallAt(int cell_x, int cell_y);
+    void requestEntryAt(int cell_x, int cell_y);
+    void finishBiomeZoneDraw(int end_cell_x, int end_cell_y);
     void clearZonePreview();
     QRect normalizedCellRect(const QPoint& a, const QPoint& b) const;
     void zoomIn();
     void zoomOut();
+    void rebuildBiomeTint();
+    void rebuildEnvironmentLayers();
+    bool isToolAllowed(EditorTool tool) const;
 };
 
 #endif

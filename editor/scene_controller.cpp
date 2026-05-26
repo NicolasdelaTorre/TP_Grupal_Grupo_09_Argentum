@@ -7,10 +7,21 @@
 SceneController::SceneController(QGraphicsScene* scene, const TemplateRegistry& templates):
         scene_(scene), templates_(templates) {}
 
+QColor SceneController::resolveZoneColor(const std::string& template_color, bool is_city) const {
+    if (!template_color.empty()) {
+        QColor parsed(QString::fromStdString(template_color));
+        if (parsed.isValid()) {
+            return parsed;
+        }
+    }
+    return is_city ? QColor(180, 220, 255) : QColor(80, 160, 80);
+}
+
 void SceneController::reset() {
-    forest_spawns_.clear();
+    biome_spawns_.clear();
     next_obstacle_id_ = 1;
     next_zone_id_ = 1;
+    next_wall_id_ = 1;
 }
 
 QString SceneController::nextObstacleId() {
@@ -19,6 +30,10 @@ QString SceneController::nextObstacleId() {
 
 QString SceneController::nextZoneId() {
     return QStringLiteral("zone_%1").arg(next_zone_id_++);
+}
+
+QString SceneController::nextWallId() {
+    return QStringLiteral("wall_%1").arg(next_wall_id_++);
 }
 
 // obtener item en celda
@@ -42,21 +57,36 @@ bool SceneController::placePlayerSpawn(int cell_x, int cell_y, QString& error) {
     Q_UNUSED(error);
     auto* item = item_builder_.buildPlayerSpawn(QStringLiteral("player_spawn"));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
+    item->setZValue(Z_PLAYER_SPAWN);
     scene_->addItem(item);
     return true;
 }
 
 bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error) {
-    if (tool.obstacle_width <= 0 || tool.obstacle_height <= 0) {
-        error = QStringLiteral("El tamaño del obstáculo debe ser mayor a cero.");
+    if (tool.obstacle_template_id.isEmpty()) {
+        error = QStringLiteral("Seleccioná un template de obstáculo.");
         return false;
     }
 
+    const auto* obstacle = templates_.find_obstacle(tool.obstacle_template_id.toStdString());
+    if (!obstacle) {
+        error = QStringLiteral("Template de obstáculo inválido.");
+        return false;
+    }
+
+    QColor fill(120, 90, 60);
+    if (!obstacle->color.empty()) {
+        QColor parsed(QString::fromStdString(obstacle->color));
+        if (parsed.isValid()) {
+            fill = parsed;
+        }
+    }
+
     const QString id = nextObstacleId();
-    auto* item = item_builder_.buildObstacle(id, tool.obstacle_type, tool.obstacle_width,
-                                           tool.obstacle_height);
+    auto* item = item_builder_.buildObstacle(id, QString::fromStdString(obstacle->id),
+                                             obstacle->width, obstacle->height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
-    item->setZValue(2);
+    item->setZValue(Z_OBSTACLE);
     scene_->addItem(item);
     return true;
 }
@@ -72,24 +102,84 @@ bool SceneController::placeCityZone(const ToolInfo& tool, int cell_x, int cell_y
         return false;
     }
 
+    const auto* city = templates_.find_city(tool.city_template_id.toStdString());
+    const QColor fill = resolveZoneColor(city ? city->color : std::string(), true);
+
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
-    auto* item = item_builder_.buildZone(id, ZONE_TYPE_CITY, tool.city_template_id, width, height);
+    auto* item = item_builder_.buildZone(id, ZONE_TYPE_CITY, tool.city_template_id, width, height,
+                                         fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
-    item->setZValue(1);
+    item->setZValue(Z_CITY_ZONE);
     scene_->addItem(item);
     return true;
 }
 
-bool SceneController::placeForestZone(const ToolInfo& tool, int cell_x, int cell_y, int width,
+bool SceneController::placeEntry(const QString& entry_id, const QString& environment_id,
+                                  const QString& template_id, int cell_x, int cell_y,
+                                  QString& error) {
+    if (template_id.isEmpty()) {
+        error = QStringLiteral("Seleccioná un template de entrada.");
+        return false;
+    }
+
+    const auto* tpl = templates_.find_entry(template_id.toStdString());
+    if (!tpl) {
+        error = QStringLiteral("Template de entrada inválido.");
+        return false;
+    }
+
+    QColor fill(120, 90, 60);
+    if (!tpl->color.empty()) {
+        QColor parsed(QString::fromStdString(tpl->color));
+        if (parsed.isValid()) {
+            fill = parsed;
+        }
+    }
+
+    auto* item = item_builder_.buildEntry(entry_id, QString::fromStdString(tpl->id),
+                                          environment_id, tpl->width, tpl->height, fill);
+    item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
+    item->setZValue(Z_ENTRY);
+    scene_->addItem(item);
+    return true;
+}
+
+bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
+                                const QString& wall_id) {
+    if (tool.wall_template_id.isEmpty()) {
+        error = QStringLiteral("Seleccioná un template de pared.");
+        return false;
+    }
+
+    const auto* wall_tpl = templates_.find_wall(tool.wall_template_id.toStdString());
+    if (!wall_tpl) {
+        error = QStringLiteral("Template de pared inválido.");
+        return false;
+    }
+
+    QColor fill(120, 120, 120);
+    if (!wall_tpl->color.empty()) {
+        QColor parsed(QString::fromStdString(wall_tpl->color));
+        if (parsed.isValid()) {
+            fill = parsed;
+        }
+    }
+
+    const QString id = wall_id.isEmpty() ? nextWallId() : wall_id;
+    auto* item = item_builder_.buildWall(id, QString::fromStdString(wall_tpl->id), wall_tpl->width,
+                                         wall_tpl->height, fill);
+    item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
+    item->setZValue(Z_WALL);
+    scene_->addItem(item);
+    return true;
+}
+
+bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_y, int width,
                                       int height,
                                       const std::vector<CreatureSpawn>& spawns,
                                       QString& error, const QString& zone_id) {
-    if (tool.forest_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de bosque.");
-        return false;
-    }
-    if (spawns.empty()) {
-        error = QStringLiteral("Seleccioná al menos una criatura con cantidad mayor a cero.");
+    if (tool.biome_template_id.isEmpty()) {
+        error = QStringLiteral("Seleccioná un template de bioma.");
         return false;
     }
     if (width <= 0 || height <= 0) {
@@ -97,34 +187,47 @@ bool SceneController::placeForestZone(const ToolInfo& tool, int cell_x, int cell
         return false;
     }
 
+    const auto* biome = templates_.find_biome(tool.biome_template_id.toStdString());
+    const QColor fill = resolveZoneColor(biome ? biome->color : std::string(), false);
+
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
-    auto* item = item_builder_.buildZone(id, ZONE_TYPE_FOREST, tool.forest_template_id, width,
-                                       height);
+    auto* item = item_builder_.buildZone(id, ZONE_TYPE_BIOME, tool.biome_template_id, width,
+                                       height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
-    item->setZValue(1);
+    item->setZValue(Z_BIOME_ZONE);
     scene_->addItem(item);
-    forest_spawns_.insert(id, spawns);
+    biome_spawns_.insert(id, spawns);
     return true;
 }
 
 // eliminar item en celda
-void SceneController::deleteAtCell(int cell_x, int cell_y) {
+DeletedItem SceneController::deleteAtCell(int cell_x, int cell_y) {
+    DeletedItem result;
     auto* item = topLevelItemAtCell(cell_x, cell_y);
     if (!item) {
-        return;
+        return result;
     }
 
-    const QString zone_id = item->data(DATA_ID).toString();
-    if (item->data(DATA_TYPE).toString() == FOREST_ZONE_TYPE) {
-        forest_spawns_.remove(zone_id);
+    const QString item_id = item->data(DATA_ID).toString();
+    const QString item_type = item->data(DATA_TYPE).toString();
+
+    result.deleted = true;
+    result.type = item_type;
+    result.id = item_id;
+
+    if (item_type == BIOME_ZONE_TYPE) {
+        biome_spawns_.remove(item_id);
+    } else if (item_type == ENTRY_TYPE) {
+        result.environment_id = item->data(DATA_ENVIRONMENT_ID).toString();
     }
 
     scene_->removeItem(item);
     delete item;
+    return result;
 }
 
-const QHash<QString, std::vector<CreatureSpawn>>& SceneController::forest_spawns() const {
-    return forest_spawns_;
+const QHash<QString, std::vector<CreatureSpawn>>& SceneController::biome_spawns() const {
+    return biome_spawns_;
 }
 
 // construir documento con datos del mapa
@@ -165,19 +268,44 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             continue;
         }
 
-        if (type == CITY_ZONE_TYPE || type == FOREST_ZONE_TYPE) {
+        if (type == ENTRY_TYPE) {
+            Entry entry;
+            entry.id = item->data(DATA_ID).toString().toStdString();
+            entry.type = item->data(DATA_SUBTYPE).toString().toStdString();
+            entry.environment_id = item->data(DATA_ENVIRONMENT_ID).toString().toStdString();
+            entry.x = cell_x;
+            entry.y = cell_y;
+            entry.width = item->data(DATA_WIDTH).toInt();
+            entry.height = item->data(DATA_HEIGHT).toInt();
+            document.entries.push_back(entry);
+            continue;
+        }
+
+        if (type == WALL_TYPE) {
+            Wall wall;
+            wall.id = item->data(DATA_ID).toString().toStdString();
+            wall.template_id = item->data(DATA_SUBTYPE).toString().toStdString();
+            wall.x = cell_x;
+            wall.y = cell_y;
+            wall.width = item->data(DATA_WIDTH).toInt();
+            wall.height = item->data(DATA_HEIGHT).toInt();
+            document.walls.push_back(wall);
+            continue;
+        }
+
+        if (type == CITY_ZONE_TYPE || type == BIOME_ZONE_TYPE) {
             Zone zone;
             zone.id = item->data(DATA_ID).toString().toStdString();
-            zone.type = (type == CITY_ZONE_TYPE) ? ZONE_TYPE_CITY : ZONE_TYPE_FOREST;
+            zone.type = (type == CITY_ZONE_TYPE) ? ZONE_TYPE_CITY : ZONE_TYPE_BIOME;
             zone.template_id = item->data(DATA_SUBTYPE).toString().toStdString();
             zone.area_x = cell_x;
             zone.area_y = cell_y;
             zone.area_width = item->data(DATA_WIDTH).toInt();
             zone.area_height = item->data(DATA_HEIGHT).toInt();
 
-            if (type == FOREST_ZONE_TYPE) {
-                const auto it = forest_spawns_.find(item->data(DATA_ID).toString());
-                if (it != forest_spawns_.end()) {
+            if (type == BIOME_ZONE_TYPE) {
+                const auto it = biome_spawns_.find(item->data(DATA_ID).toString());
+                if (it != biome_spawns_.end()) {
                     zone.spawns = it.value();
                 }
             }
