@@ -4,6 +4,8 @@
 
 #ifndef TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_H
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_CLIENT_H
+
+
 #include <string>
 
 #include "../common/queue.h"
