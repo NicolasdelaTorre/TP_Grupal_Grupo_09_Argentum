@@ -77,17 +77,21 @@ bool GameScreen::handleEvents(float dt) {
     player.moving = (dx != 0 || dy != 0);
 
     // Mover si el tile destino no está bloqueado
+    
     float newX = player.x + dx;
     float newY = player.y + dy;
+    
 
-    if (map.inBounds((int)newX, (int)player.y) &&
-        !map.at((int)newX, (int)player.y).blocked)
+    int tileX = (int)(newX + HEAD_OFFSET);
+    int tileY = (int)(newY + FEET_OFFSET);
+
+    if (map.inBounds(tileX, (int)(player.y + FEET_OFFSET)) &&
+        !map.at(tileX, (int)(player.y + FEET_OFFSET)).blocked)
         player.x = newX;
 
-    if (map.inBounds((int)player.x, (int)newY) &&
-        !map.at((int)player.x, (int)newY).blocked)
+    if (map.inBounds((int)(player.x + HEAD_OFFSET), tileY) &&
+        !map.at((int)(player.x + HEAD_OFFSET), tileY).blocked)
         player.y = newY;
-
     return true;
 }
 
