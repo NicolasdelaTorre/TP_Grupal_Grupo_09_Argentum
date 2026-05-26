@@ -14,9 +14,7 @@
 #include "verificator.h"
 
 EditorWindow::EditorWindow(QWidget* parent):
-        QMainWindow(parent),
-        ui_(new Ui::EditorWindow),
-        tool_group_(new QButtonGroup(this)) {
+        QMainWindow(parent), ui_(new Ui::EditorWindow), tool_group_(new QButtonGroup(this)) {
     ui_->setupUi(this);
 
     if (!templates_.load()) {

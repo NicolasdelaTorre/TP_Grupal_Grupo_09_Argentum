@@ -62,30 +62,33 @@ bool Verificator::check_player_spawn(QString& error_title, QString& error_messag
 }
 
 bool Verificator::check_obstacles(QString& error_title, QString& error_message) const {
-    for (const auto& obstacle: document_.obstacles) {
-        if (obstacle.x < 0 || obstacle.y < 0 ||
-            obstacle.x + obstacle.width > document_.map.width ||
-            obstacle.y + obstacle.height > document_.map.height) {
-            error_title = QStringLiteral("Obstáculo inválido");
-            error_message =
-                    QStringLiteral("El obstáculo '%1' está fuera de los límites del mapa.")
-                            .arg(QString::fromStdString(obstacle.id));
-            return false;
-        }
+    const auto it = std::find_if(document_.obstacles.begin(), document_.obstacles.end(),
+                                 [this](const auto& obstacle) {
+                                     return obstacle.x < 0 || obstacle.y < 0 ||
+                                            obstacle.x + obstacle.width > document_.map.width ||
+                                            obstacle.y + obstacle.height > document_.map.height;
+                                 });
+    if (it != document_.obstacles.end()) {
+        error_title = QStringLiteral("Obstáculo inválido");
+        error_message = QStringLiteral("El obstáculo '%1' está fuera de los límites del mapa.")
+                                .arg(QString::fromStdString(it->id));
+        return false;
     }
     return true;
 }
 
 bool Verificator::check_zones(QString& error_title, QString& error_message) const {
-    for (const auto& zone: document_.zones) {
-        if (zone.area_x < 0 || zone.area_y < 0 ||
-            zone.area_x + zone.area_width > document_.map.width ||
-            zone.area_y + zone.area_height > document_.map.height) {
-            error_title = QStringLiteral("Zona inválida");
-            error_message = QStringLiteral("La zona '%1' está fuera de los límites del mapa.")
-                                     .arg(QString::fromStdString(zone.id));
-            return false;
-        }
+    const auto it =
+            std::find_if(document_.zones.begin(), document_.zones.end(), [this](const auto& zone) {
+                return zone.area_x < 0 || zone.area_y < 0 ||
+                       zone.area_x + zone.area_width > document_.map.width ||
+                       zone.area_y + zone.area_height > document_.map.height;
+            });
+    if (it != document_.zones.end()) {
+        error_title = QStringLiteral("Zona inválida");
+        error_message = QStringLiteral("La zona '%1' está fuera de los límites del mapa.")
+                                .arg(QString::fromStdString(it->id));
+        return false;
     }
     return true;
 }

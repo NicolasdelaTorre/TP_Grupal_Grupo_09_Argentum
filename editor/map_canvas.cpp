@@ -1,5 +1,6 @@
 #include "map_canvas.h"
 
+<<<<<<< HEAD
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -8,6 +9,8 @@
 #include <vector>
 
 #include <QColor>
+=======
+>>>>>>> origin/main
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QGraphicsRectItem>
@@ -22,8 +25,15 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <algorithm>
 
+<<<<<<< HEAD
 #include "dialogs/biome_spawn_dialog.h"
+=======
+#include "dialogs/forest_spawn_dialog.h"
+#include "map/yaml_map_io.h"
+
+>>>>>>> origin/main
 #include "editor_constants.h"
 
 MapCanvas::MapCanvas(const TemplateRegistry& templates, QWidget* parent):
@@ -122,14 +132,14 @@ void MapCanvas::applyInitialView() {
     const double fit_scale = std::min(fit_scale_x, fit_scale_y);
 
     // escala de la vista para que cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
-    const double target_scale =
-            static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
-    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
+    const double target_scale = static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
+    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño
+    // TARGET_CELL_SCREEN_PX
     const double scale = std::max(fit_scale, target_scale);
 
     // escalar vista
     view_->scale(scale, scale);
-    // escalar zoom 
+    // escalar zoom
     current_zoom_ = scale;
     view_->centerOn(scene_width / 2.0, scene_height / 2.0);
 }
@@ -285,6 +295,7 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
     QString error;
     // poner respecitvo item
     switch (active_tool_.tool) {
+<<<<<<< HEAD
     case EditorTool::PlayerSpawn:
         controller_->placePlayerSpawn(cell_x, cell_y, error);
         break;
@@ -309,6 +320,28 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
         break;
     default:
         break;
+=======
+        case EditorTool::PlayerSpawn:
+            controller_->placePlayerSpawn(cell_x, cell_y, error);
+            break;
+        case EditorTool::Obstacle:
+            if (!controller_->placeObstacle(active_tool_, cell_x, cell_y, error)) {
+                QMessageBox::warning(this, QStringLiteral("Obstáculo"), error);
+            }
+            break;
+        case EditorTool::CityZone:
+            placeCityAt(cell_x, cell_y);
+            break;
+        case EditorTool::ForestZone:
+            if (!drawing_zone_) {
+                drawing_zone_ = true;
+                zone_start_cell_ = QPoint(cell_x, cell_y);
+                clearZonePreview();
+            }
+            break;
+        default:
+            break;
+>>>>>>> origin/main
     }
 }
 
@@ -344,11 +377,19 @@ void MapCanvas::handleMouseMove(const QPoint& view_pos) {
 
     const QRect rect = normalizedCellRect(zone_start_cell_, QPoint(cell_x, cell_y));
     clearZonePreview();
+<<<<<<< HEAD
     zone_preview_ = scene_->addRect(rect.x() * CELL_DISPLAY_SIZE, rect.y() * CELL_DISPLAY_SIZE,
                                    rect.width() * CELL_DISPLAY_SIZE,
                                    rect.height() * CELL_DISPLAY_SIZE,
                                    QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
     zone_preview_->setZValue(Z_ZONE_PREVIEW);
+=======
+    zone_preview_ =
+            scene_->addRect(rect.x() * CELL_DISPLAY_SIZE, rect.y() * CELL_DISPLAY_SIZE,
+                            rect.width() * CELL_DISPLAY_SIZE, rect.height() * CELL_DISPLAY_SIZE,
+                            QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
+    zone_preview_->setZValue(5);
+>>>>>>> origin/main
 }
 // colocar ciudad en celda
 void MapCanvas::placeCityAt(int cell_x, int cell_y) {
@@ -450,10 +491,17 @@ void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     }
     // colocar zona de bioma
     QString error;
+<<<<<<< HEAD
     if (!controller_->placeBiomeZone(active_tool_, rect.x(), rect.y(), rect.width(),
                                       rect.height(), spawns, error)) {
         QMessageBox::warning(this, QStringLiteral("Biome"), error);
         return;
+=======
+    const auto spawns = dialog.selected_spawns();
+    if (!controller_->placeForestZone(active_tool_, rect.x(), rect.y(), rect.width(), rect.height(),
+                                      spawns, error)) {
+        QMessageBox::warning(this, QStringLiteral("Bosque"), error);
+>>>>>>> origin/main
     }
     rebuildBiomeTint();
 }
@@ -514,6 +562,33 @@ bool MapCanvas::eventFilter(QObject* obj, QEvent* event) {
 
     return QWidget::eventFilter(obj, event);
 }
+<<<<<<< HEAD
+=======
+// guardar mapa
+bool MapCanvas::saveMap() {
+    const auto document = controller_->buildDocument(map_id_, map_name_, map_width_, map_height_);
+    // validar documento
+    Verificator verificator(document);
+    QString error_title;
+    QString error_message;
+    if (!verificator.validate(error_title, error_message)) {
+        QMessageBox::warning(this, error_title, error_message);
+        return false;
+    }
+    // guardar documento
+    const QString path = QStringLiteral("%1/%2.yaml").arg(SAVE_MAP, map_id_);
+    if (!YamlMapIO::save(document, path.toStdString())) {
+        QMessageBox::warning(this, QStringLiteral("Error"),
+                             QStringLiteral("No se pudo guardar el YAML."));
+        return false;
+    }
+
+    QMessageBox::information(this, QStringLiteral("Guardado"),
+                             QStringLiteral("Mapa guardado en:\n%1").arg(path));
+    return true;
+}
+
+>>>>>>> origin/main
 void MapCanvas::zoomIn() {
     double new_zoom = current_zoom_ + ZOOM_SCALE;
     if (new_zoom > MAX_ZOOM) {

@@ -96,7 +96,13 @@ if(TALLER_CLIENT OR TALLER_EDITOR)
         URL https://github.com/libSDL2pp/libSDL2pp/archive/cc198c9a5657048bee67ece82de620b2d5661084.zip
     )
 
-    FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf libSDL2pp)
+    set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(SDL2 SDL2_image SDL2_mixer SDL2_ttf)
+
+    set(SDL2PP_WITH_TTF ON CACHE BOOL "" FORCE)
+    set(SDL2PP_WITH_IMAGE ON CACHE BOOL "" FORCE)
+    set(SDL2PP_WITH_MIXER ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(libSDL2pp)
 endif()
 
 # Program section
@@ -118,7 +124,7 @@ if(TALLER_CLIENT)
     target_include_directories(taller_client PRIVATE ${libSDL2pp_SOURCE_DIR})
 
     # Link the taller_common lib target
-    target_link_libraries(taller_client PRIVATE taller_common SDL2pp::SDL2pp)
+    target_link_libraries(taller_client PRIVATE taller_common SDL2pp::SDL2pp SDL2_ttf::SDL2_ttf)
 endif()
 
 if(TALLER_SERVER)
@@ -180,6 +186,7 @@ endif()
 if(TALLER_TESTS)
     # Let's use google test
     include(FetchContent)
+    set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
     FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip

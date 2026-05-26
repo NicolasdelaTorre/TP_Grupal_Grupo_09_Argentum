@@ -1,5 +1,6 @@
 #include "template_registry.h"
 
+#include <algorithm>
 #include <filesystem>
 
 #include <yaml-cpp/yaml.h>
@@ -76,12 +77,9 @@ const std::vector<EntryTemplate>& TemplateRegistry::entries() const { return ent
 const std::vector<WallTemplate>& TemplateRegistry::walls() const { return walls_; }
 
 const CityTemplate* TemplateRegistry::find_city(const std::string& id) const {
-    for (const auto& city: cities_) {
-        if (city.id == id) {
-            return &city;
-        }
-    }
-    return nullptr;
+    const auto it = std::find_if(cities_.begin(), cities_.end(),
+                                 [&id](const CityTemplate& city) { return city.id == id; });
+    return it != cities_.end() ? &(*it) : nullptr;
 }
 
 const BiomeTemplate* TemplateRegistry::find_biome(const std::string& id) const {

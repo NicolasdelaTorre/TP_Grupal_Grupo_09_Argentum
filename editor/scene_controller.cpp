@@ -28,9 +28,7 @@ QString SceneController::nextObstacleId() {
     return QStringLiteral("obstacle_%1").arg(next_obstacle_id_++);
 }
 
-QString SceneController::nextZoneId() {
-    return QStringLiteral("zone_%1").arg(next_zone_id_++);
-}
+QString SceneController::nextZoneId() { return QStringLiteral("zone_%1").arg(next_zone_id_++); }
 
 QString SceneController::nextWallId() {
     return QStringLiteral("wall_%1").arg(next_wall_id_++);
