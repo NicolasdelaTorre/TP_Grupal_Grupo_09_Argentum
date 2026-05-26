@@ -53,7 +53,7 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
         return 0;
     }
 
-    switch (messageReceived[0]) {
+    switch (byteReceived) {
         case static_cast<uint8_t>(ClientMsg::USER_ARRIVAL):
             return returnUser(message, clientId);
         case static_cast<uint8_t>(ClientMsg::MOVEMENT):
@@ -88,7 +88,6 @@ int ProtocolServer::returnUser(std::string& message, const int clientId) {
 
 int ProtocolServer::returnMovement(std::string& message, const int clientId) {
     message += "movement.";
-    std::vector<char> messageReceived(1);
 
     auto it = clientSockets.find(clientId);
     if (it == clientSockets.end()) {
@@ -103,8 +102,7 @@ int ProtocolServer::returnMovement(std::string& message, const int clientId) {
         return 0;
     }
 
-    uint8_t direction = messageReceived[0];
-    switch (direction) {
+    switch (receivedByte) {
         case static_cast<uint8_t>(ClientMsg::TOP):
             message += "top";
             break;
@@ -132,20 +130,13 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
             return 0;
         }
 
-        std::vector<uint8_t> buffer;
-
         if (message == "LOGIN_OK") {
-            buffer.push_back(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
+            it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
         } else if (message == "LOGIN_FAIL") {
-            buffer.push_back(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
+            it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
         } else {
-            // Unknown message type. Ignore without throwing an exception.
-            return 1;
+            throw std::runtime_error("Protocol Error: unknown server's command");
         }
-
-        std::vector<char> messageToSend;
-
-        it->second.send_message(message);
 
         return 0;
     } catch (const LibError& error) {

@@ -16,6 +16,8 @@ private:
     bool gameFinished;
     Game game;
 
+    void processCommand(const std::string& command);
+
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues);
 

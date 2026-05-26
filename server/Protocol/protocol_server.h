@@ -27,6 +27,12 @@ private:
      */
     int returnMovement(std::string& message, const int clientId);
 
+    /*
+     * Serializes the message to send a player's movement to the client.
+     * Returns 1 on success or 0 if the client's socket was closed.
+     */
+    int sendMovement(const std::string& message, const int clientId);
+
 public:
     explicit ProtocolServer(const char* port);
 

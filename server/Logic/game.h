@@ -12,13 +12,12 @@ private:
     Map map;
     std::unordered_map<int, Player> players;
 
-    void processMovement(const int playerId, const std::string& command,
-                         size_t commandPosition);
+    bool processMovement(const int playerId, const std::string& direction);
 
 public:
     Game(uint16_t width, uint16_t height);
 
-    void processCommand(const int playerId, const std::string& command);
+    bool processCommand(const int playerId, const std::string& command);
 };
 
 #endif
