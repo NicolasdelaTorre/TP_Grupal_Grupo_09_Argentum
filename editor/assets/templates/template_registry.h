@@ -35,6 +35,8 @@ struct ObstacleTemplate {
     int width = 1;
     int height = 1;
     std::string color;
+    // ruta absoluta a la textura del obstáculo (opcional). Si está vacía, se usa color.
+    std::string texture;
 };
 
 struct EnvironmentSizeOption {

@@ -1,6 +1,7 @@
 template_id: piedra_grande
 name: "Piedra grande"
 size:
-  width: 5
-  height: 4
+  width: 3
+  height: 2
 color: "#5F5F5F"
+texture: "roca_01_ajustada.png"

@@ -205,6 +205,17 @@ bool TemplateRegistry::load_obstacle_file(const std::string& path) {
             obstacle.color = colorNode.as<std::string>();
         }
 
+        // texture: nombre de archivo dentro de assets/images. Se resuelve a ruta absoluta
+        // así el ItemBuilder no necesita conocer rutas del proyecto.
+        if (const auto textureNode = root["texture"]) {
+            const auto filename = textureNode.as<std::string>();
+            if (!filename.empty()) {
+                const std::filesystem::path resolved =
+                        std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
+                obstacle.texture = resolved.string();
+            }
+        }
+
         obstacles_.push_back(obstacle);
         return true;
     } catch (const YAML::Exception&) {

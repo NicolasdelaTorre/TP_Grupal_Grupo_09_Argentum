@@ -82,7 +82,8 @@ bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y
 
     const QString id = nextObstacleId();
     auto* item = item_builder_.buildObstacle(id, QString::fromStdString(obstacle->id),
-                                             obstacle->width, obstacle->height, fill);
+                                             obstacle->width, obstacle->height, fill,
+                                             QString::fromStdString(obstacle->texture));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_OBSTACLE);
     scene_->addItem(item);
