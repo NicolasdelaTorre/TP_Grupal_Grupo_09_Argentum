@@ -2,13 +2,23 @@
 
 #include <algorithm>
 
-GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath):
+GameScreen::GameScreen(SDL2pp::Renderer& renderer,
+                       const std::string& assetsPath,
+                       Queue<std::string>& events_queue):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
-        map(makeTestMap()) {
-    player.x = map.width / 2.0f;
-    player.y = map.height / 2.0f;
+        map(makeTestMap()),
+        events_queue(events_queue) {
+    // El tile "lógico" del jugador es donde están sus pies, calculado con
+    // (player.x + HEAD_OFFSET, player.y + FEET_OFFSET). Restamos los offsets
+    // para que el tile de los pies caiga en el centro del mapa, alineado
+    // con la posición que el servidor le asigna en Map::addPlayer().
+    player.x = map.width / 2.0f - HEAD_OFFSET;
+    player.y = map.height / 2.0f - FEET_OFFSET;
+
+    lastTileX = (int)(player.x + HEAD_OFFSET);
+    lastTileY = (int)(player.y + FEET_OFFSET);
 }
 
 bool GameScreen::run() {
@@ -94,7 +104,25 @@ bool GameScreen::handleEvents(float dt) {
     if (map.inBounds((int)(player.x + HEAD_OFFSET), tileY) &&
         !map.at((int)(player.x + HEAD_OFFSET), tileY).blocked)
         player.y = newY;
+
+    // Si cambiamos de tile, le avisamos al server
+    notifyTileChange();
     return true;
+}
+
+void GameScreen::notifyTileChange() {
+    int curTileX = (int)(player.x + HEAD_OFFSET);
+    int curTileY = (int)(player.y + FEET_OFFSET);
+
+    if (curTileX != lastTileX) {
+        events_queue.push(curTileX > lastTileX ? "RIGHT" : "LEFT");
+    }
+    if (curTileY != lastTileY) {
+        events_queue.push(curTileY > lastTileY ? "BOTTOM" : "TOP");
+    }
+
+    lastTileX = curTileX;
+    lastTileY = curTileY;
 }
 
 void GameScreen::update(float dt) {

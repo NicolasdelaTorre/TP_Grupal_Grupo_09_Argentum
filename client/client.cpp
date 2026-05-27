@@ -1,5 +1,7 @@
 #include "client.h"
 
+#include <iostream>
+
 #include <SDL.h>
 #include <SDL2pp/SDL2pp.hh>
 #include <SDL2pp/SDLTTF.hh>
@@ -17,8 +19,6 @@ client::client(const char* hostname, const char* port, bool fullscreen):
 
 
 void client::run() {
-
-
     SDL2pp::SDL sdl(SDL_INIT_VIDEO);
     SDL2pp::SDLTTF ttf;
     SDL2pp::SDLImage img(IMG_INIT_PNG);
@@ -27,36 +27,40 @@ void client::run() {
                           SDL_WINDOW_SHOWN | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
     SDL2pp::Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    // Login
+    // Pantalla de login: el usuario ingresa su nombre
     LoginScreen login(renderer, "AO_IMGS");
     LoginResult result = login.run();
     if (!result.confirmed)
         return;
 
-
-    GameScreen game(renderer, "AO_IMGS");
-    game.run();
-
-    std::cout << "Bienvenido: " << result.username.data() << std::endl;
-
+    // Enviamos el username al servidor y arrancamos los threads de red
     protocol.send_username(result.username);
-
     sender.start();
     receiver.start();
 
-    // Esperar LOGIN_OK del servidor
-    std::string respuesta = server_queue.pop();
-    std::cout << "Servidor respondio: " << respuesta << std::endl;
+    // Esperamos la respuesta del servidor: primero LOGIN_OK / LOGIN_FAIL
+    std::string loginResponse = server_queue.pop();
+    if (loginResponse != "LOGIN_OK") {
+        std::cerr << "Login failed: " << loginResponse << std::endl;
+        events_queue.close();
+        protocol.close();
+        sender.join();
+        receiver.join();
+        return;
+    }
 
-    ServerMessageType msg = server_queue.pop();
-    std::cout << "Servidor respondio: " << msg << std::endl;
+    // Después del LOGIN_OK el servidor manda el mapa. Por ahora lo descartamos;
+    // el cliente sigue usando un mapa hardcodeado en makeTestMap().
+    server_queue.pop();
 
-    events_queue.close();  // desbloquea al sender que está esperando en pop()
-    protocol.close();      // desbloquea al receiver que está esperando en recv()
+    // Login aceptado — corremos el juego pasándole la queue para que las teclas
+    // de movimiento crucen al sender → servidor.
+    GameScreen game(renderer, "AO_IMGS", events_queue);
+    game.run();
+
+    // Cleanup ordenado: cerramos queues/socket para desbloquear los threads
+    events_queue.close();
+    protocol.close();
     sender.join();
     receiver.join();
-
-    // ── Acá arranca el juego ───────────────────────────────
-    // GameClient game(result.username);
-    // game.run();
 }

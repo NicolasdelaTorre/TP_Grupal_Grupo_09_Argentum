@@ -31,7 +31,8 @@ void Gameloop::processCommand(const std::string& command) {
 
     if (cmd == "user") {
         checkToSend += "LOGIN_";
-    } else if (cmd == "move") {
+    } else if (cmd == "movement") {
+        // El protocolo arma el string como "movement.<direccion>"
         checkToSend += "MOVE_";
     } else {
         std::cout << "Unknown command in gameloop: " << cmd << std::endl;

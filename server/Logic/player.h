@@ -4,28 +4,26 @@
 #include <cstdint>
 #include <string>
 
-typedef struct Position {
-    int16_t x;
-    int16_t y;
-} Position;
+#include "../../common/position.h"
 
-typedef struct PlayerData {
-    const std::string& name;
-    Position position;
-} PlayerData;
-
+// Entidad jugador en el mundo del juego. Es dueña única de su posición y
+// (a futuro) de su vida, mana, oro, etc. El Game valida los movimientos
+// contra el mapa y los otros jugadores antes de mutar este estado.
 class Player {
 private:
-    PlayerData data;
+    std::string name;
+    Position position;
 
 public:
-    explicit Player(const std::string& name);
+    Player(std::string name, Position position);
 
-    void changePosition(const std::string& direction);
+    // Mueve al jugador a una nueva posición. El Game ya validó que es legal.
+    void move(Position newPosition);
 
-    int16_t getX();
-
-    int16_t getY();
+    const std::string& getName() const;
+    Position getPosition() const;
+    int16_t getX() const;
+    int16_t getY() const;
 };
 
 #endif

@@ -137,6 +137,10 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
                     std::vector<char>(mapSerialized.begin() + 1, mapSerialized.end()));
         } else if (message == "LOGIN_FAIL") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
+        } else if (message == "MOVE_OK") {
+            it->second.sendByte(static_cast<uint8_t>(ServerMsg::MOVE_OK));
+        } else if (message == "MOVE_FAIL") {
+            it->second.sendByte(static_cast<uint8_t>(ServerMsg::MOVE_FAIL));
         } else {
             throw std::runtime_error("Protocol Error: unknown server's command");
         }

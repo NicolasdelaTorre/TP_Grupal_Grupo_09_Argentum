@@ -4,7 +4,8 @@ Server::Server(const char* port):
         protocol(port),
         clientCommands(),
         clientQueues(),
-        map(2, 2),
+        // Mapa 10x10 hardcodeado; se reemplaza por carga YAML en el sprint siguiente
+        map(10, 10),
         gameloop(clientCommands, clientQueues, map, protocol),
         acceptor(protocol, clientCommands, clientQueues) {
     protocol.serializeMap(map);
