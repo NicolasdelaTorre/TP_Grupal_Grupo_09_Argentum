@@ -1,0 +1,6 @@
+template_id: pared_piedra
+name: Pared de piedra
+size:
+  width: 1
+  height: 1
+color: "#7A7A7A"

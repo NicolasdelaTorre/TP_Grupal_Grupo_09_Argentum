@@ -1,0 +1,9 @@
+template_id: cementerio
+name: "Cementerio"
+default_size:
+  width: 25
+  height: 20
+color: "#7D8C8C"
+allowed_creatures:
+  - skeleton
+  - zombie

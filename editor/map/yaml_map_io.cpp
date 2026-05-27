@@ -54,7 +54,7 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 out << YAML::Key << "height" << YAML::Value << zone.area_height;
                 out << YAML::EndMap;
 
-                if (zone.type == "forest" && !zone.spawns.empty()) {
+                if (zone.type == "biome" && !zone.spawns.empty()) {
                     out << YAML::Key << "spawns" << YAML::Value << YAML::BeginSeq;
                     for (const auto& spawn: zone.spawns) {
                         out << YAML::BeginMap;
@@ -76,6 +76,83 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                         out << YAML::EndMap;
                     }
                     out << YAML::EndSeq;
+                }
+
+                out << YAML::EndMap;
+            }
+            out << YAML::EndSeq;
+        }
+
+        if (!document.entries.empty()) {
+            out << YAML::Key << "entries" << YAML::Value << YAML::BeginSeq;
+            for (const auto& entry: document.entries) {
+                out << YAML::BeginMap;
+                out << YAML::Key << "id" << YAML::Value << entry.id;
+                out << YAML::Key << "type" << YAML::Value << entry.type;
+                out << YAML::Key << "environment" << YAML::Value << entry.environment_id;
+                out << YAML::Key << "position" << YAML::Value;
+                out << YAML::Flow << YAML::BeginSeq << entry.x << entry.y << YAML::EndSeq;
+                out << YAML::Key << "size" << YAML::Value;
+                out << YAML::Flow << YAML::BeginSeq << entry.width << entry.height
+                    << YAML::EndSeq;
+                out << YAML::EndMap;
+            }
+            out << YAML::EndSeq;
+        }
+
+        if (!document.environments.empty()) {
+            out << YAML::Key << "environments" << YAML::Value << YAML::BeginSeq;
+            for (const auto& env: document.environments) {
+                out << YAML::BeginMap;
+                out << YAML::Key << "id" << YAML::Value << env.id;
+                out << YAML::Key << "name" << YAML::Value << env.name;
+                out << YAML::Key << "type" << YAML::Value << env.type;
+                out << YAML::Key << "size" << YAML::Value;
+                out << YAML::Flow << YAML::BeginSeq << env.width << env.height << YAML::EndSeq;
+
+                if (env.player_spawn.placed) {
+                    out << YAML::Key << "player_spawn" << YAML::Value << YAML::BeginMap;
+                    out << YAML::Key << "position" << YAML::Value;
+                    out << YAML::Flow << YAML::BeginSeq << env.player_spawn.x << env.player_spawn.y
+                        << YAML::EndSeq;
+                    out << YAML::EndMap;
+                }
+
+                if (!env.obstacles.empty()) {
+                    out << YAML::Key << "obstacles" << YAML::Value << YAML::BeginSeq;
+                    for (const auto& obstacle: env.obstacles) {
+                        out << YAML::BeginMap;
+                        out << YAML::Key << "id" << YAML::Value << obstacle.id;
+                        out << YAML::Key << "type" << YAML::Value << obstacle.type;
+                        out << YAML::Key << "position" << YAML::Value;
+                        out << YAML::Flow << YAML::BeginSeq << obstacle.x << obstacle.y
+                            << YAML::EndSeq;
+                        out << YAML::Key << "size" << YAML::Value;
+                        out << YAML::Flow << YAML::BeginSeq << obstacle.width << obstacle.height
+                            << YAML::EndSeq;
+                        out << YAML::EndMap;
+                    }
+                    out << YAML::EndSeq;
+                }
+
+                if (!env.walls.empty()) {
+                    out << YAML::Key << "walls" << YAML::Value << YAML::BeginSeq;
+                    for (const auto& wall: env.walls) {
+                        out << YAML::BeginMap;
+                        out << YAML::Key << "id" << YAML::Value << wall.id;
+                        out << YAML::Key << "template" << YAML::Value << wall.template_id;
+                        out << YAML::Key << "position" << YAML::Value;
+                        out << YAML::Flow << YAML::BeginSeq << wall.x << wall.y << YAML::EndSeq;
+                        out << YAML::Key << "size" << YAML::Value;
+                        out << YAML::Flow << YAML::BeginSeq << wall.width << wall.height
+                            << YAML::EndSeq;
+                        out << YAML::EndMap;
+                    }
+                    out << YAML::EndSeq;
+                }
+
+                if (!env.floor_color.empty()) {
+                    out << YAML::Key << "floor_color" << YAML::Value << env.floor_color;
                 }
 
                 out << YAML::EndMap;

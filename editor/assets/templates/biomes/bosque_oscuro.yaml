@@ -1,0 +1,10 @@
+template_id: bosque_oscuro
+name: "Bosque oscuro"
+default_size:
+  width: 40
+  height: 25
+color: "#2E4A2E"
+allowed_creatures:
+  - zombie
+  - skeleton
+  - spider

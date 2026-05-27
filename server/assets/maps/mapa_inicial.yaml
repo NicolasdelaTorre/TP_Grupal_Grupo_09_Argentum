@@ -5,45 +5,432 @@ map:
   width: 100
   height: 100
 player_spawn:
-  position: [43, 42]
+  position: [77, 48]
 obstacles:
-  - id: obstacle_2
-    type: piedra_grande
-    position: [39, 46]
-    size: [3, 4]
-  - id: obstacle_1
-    type: tree
-    position: [52, 45]
-    size: [1, 4]
+  - id: obstacle_6
+    type: roca
+    position: [4, 55]
+    size: [3, 3]
 zones:
   - id: zone_2
-    type: forest
-    template: bosque_aranas
-    area:
-      x: 12
-      y: 60
-      width: 35
-      height: 20
-    spawns:
-      - creature: spider
-        max_population: 10
-      - creature: goblin
-        max_population: 8
-  - id: zone_1
     type: city
-    template: nix
+    template: ullathorpe
     area:
-      x: 53
-      y: 50
-      width: 25
-      height: 20
+      x: 54
+      y: 67
+      width: 40
+      height: 30
     fixed_npcs:
       - type: priest
         name: Sacerdote
-        position: [58, 55]
+        position: [62, 75]
       - type: merchant
         name: Comerciante
-        position: [63, 55]
+        position: [68, 75]
+      - type: merchant
+        name: Comerciante
+        position: [74, 75]
+      - type: merchant
+        name: Comerciante
+        position: [80, 75]
       - type: banker
         name: Banquero
-        position: [68, 55]
+        position: [86, 75]
+  - id: zone_1
+    type: biome
+    template: explanada
+    area:
+      x: 11
+      y: 38
+      width: 80
+      height: 25
+  - id: zone_2
+    type: biome
+    template: bosque_aranas
+    area:
+      x: 5
+      y: 7
+      width: 35
+      height: 24
+    spawns:
+      - creature: spider
+        max_population: 12
+  - id: zone_3
+    type: biome
+    template: pantano_embrujado
+    area:
+      x: 44
+      y: 1
+      width: 19
+      height: 34
+    spawns:
+      - creature: zombie
+        max_population: 15
+  - id: zone_4
+    type: biome
+    template: rocosas
+    area:
+      x: 74
+      y: 0
+      width: 26
+      height: 27
+    spawns:
+      - creature: golem
+        max_population: 14
+  - id: zone_6
+    type: biome
+    template: rocosas
+    area:
+      x: 67
+      y: 0
+      width: 7
+      height: 13
+  - id: zone_7
+    type: biome
+    template: bosque_aranas
+    area:
+      x: 2
+      y: 72
+      width: 34
+      height: 26
+    spawns:
+      - creature: spider
+        max_population: 10
+  - id: zone_15
+    type: city
+    template: lindos
+    area:
+      x: 13
+      y: 40
+      width: 15
+      height: 12
+    fixed_npcs:
+      - type: priest
+        name: Sacerdote
+        position: [17, 44]
+      - type: merchant
+        name: Comerciante
+        position: [23, 44]
+      - type: banker
+        name: Banquero
+        position: [27, 46]
+entries:
+  - id: entry_1
+    type: cueva
+    environment: env_1
+    position: [49, 4]
+    size: [2, 2]
+environments:
+  - id: env_1
+    name: Cueva pantano
+    type: cueva
+    size: [30, 30]
+    player_spawn:
+      position: [13, 3]
+    obstacles:
+      - id: obstacle_5
+        type: piedra_pequenia
+        position: [7, 6]
+        size: [2, 2]
+      - id: obstacle_4
+        type: piedra_pequenia
+        position: [13, 10]
+        size: [2, 2]
+      - id: obstacle_2
+        type: piedra_grande
+        position: [6, 14]
+        size: [5, 4]
+    walls:
+      - id: wall_76
+        template: pared_clara
+        position: [17, 3]
+        size: [1, 1]
+      - id: wall_75
+        template: pared_clara
+        position: [17, 2]
+        size: [1, 1]
+      - id: wall_74
+        template: pared_clara
+        position: [17, 2]
+        size: [1, 1]
+      - id: wall_73
+        template: pared_clara
+        position: [17, 1]
+        size: [1, 1]
+      - id: wall_72
+        template: pared_clara
+        position: [16, 1]
+        size: [1, 1]
+      - id: wall_71
+        template: pared_clara
+        position: [15, 1]
+        size: [1, 1]
+      - id: wall_70
+        template: pared_clara
+        position: [14, 1]
+        size: [1, 1]
+      - id: wall_69
+        template: pared_clara
+        position: [13, 1]
+        size: [1, 1]
+      - id: wall_68
+        template: pared_clara
+        position: [12, 1]
+        size: [1, 1]
+      - id: wall_67
+        template: pared_clara
+        position: [11, 1]
+        size: [1, 1]
+      - id: wall_66
+        template: pared_clara
+        position: [10, 1]
+        size: [1, 1]
+      - id: wall_65
+        template: pared_clara
+        position: [10, 2]
+        size: [1, 1]
+      - id: wall_64
+        template: pared_clara
+        position: [10, 3]
+        size: [1, 1]
+      - id: wall_63
+        template: pared_clara
+        position: [10, 4]
+        size: [1, 1]
+      - id: wall_62
+        template: pared_clara
+        position: [9, 4]
+        size: [1, 1]
+      - id: wall_61
+        template: pared_clara
+        position: [8, 4]
+        size: [1, 1]
+      - id: wall_60
+        template: pared_clara
+        position: [7, 4]
+        size: [1, 1]
+      - id: wall_59
+        template: pared_clara
+        position: [6, 4]
+        size: [1, 1]
+      - id: wall_58
+        template: pared_clara
+        position: [5, 4]
+        size: [1, 1]
+      - id: wall_57
+        template: pared_clara
+        position: [17, 4]
+        size: [1, 1]
+      - id: wall_56
+        template: pared_clara
+        position: [17, 5]
+        size: [1, 1]
+      - id: wall_55
+        template: pared_clara
+        position: [17, 8]
+        size: [1, 1]
+      - id: wall_54
+        template: pared_clara
+        position: [17, 6]
+        size: [1, 1]
+      - id: wall_53
+        template: pared_clara
+        position: [17, 7]
+        size: [1, 1]
+      - id: wall_52
+        template: pared_clara
+        position: [17, 9]
+        size: [1, 1]
+      - id: wall_51
+        template: pared_clara
+        position: [17, 10]
+        size: [1, 1]
+      - id: wall_50
+        template: pared_clara
+        position: [17, 11]
+        size: [1, 1]
+      - id: wall_46
+        template: pared_clara
+        position: [17, 14]
+        size: [1, 1]
+      - id: wall_45
+        template: pared_clara
+        position: [17, 12]
+        size: [1, 1]
+      - id: wall_44
+        template: pared_clara
+        position: [17, 13]
+        size: [1, 1]
+      - id: wall_43
+        template: pared_clara
+        position: [17, 15]
+        size: [1, 1]
+      - id: wall_42
+        template: pared_clara
+        position: [17, 16]
+        size: [1, 1]
+      - id: wall_41
+        template: pared_clara
+        position: [17, 17]
+        size: [1, 1]
+      - id: wall_40
+        template: pared_clara
+        position: [17, 18]
+        size: [1, 1]
+      - id: wall_39
+        template: pared_clara
+        position: [17, 19]
+        size: [1, 1]
+      - id: wall_38
+        template: pared_clara
+        position: [16, 20]
+        size: [1, 1]
+      - id: wall_37
+        template: pared_clara
+        position: [17, 20]
+        size: [1, 1]
+      - id: wall_36
+        template: pared_clara
+        position: [15, 20]
+        size: [1, 1]
+      - id: wall_35
+        template: pared_clara
+        position: [13, 20]
+        size: [1, 1]
+      - id: wall_34
+        template: pared_clara
+        position: [12, 20]
+        size: [1, 1]
+      - id: wall_33
+        template: pared_clara
+        position: [15, 20]
+        size: [1, 1]
+      - id: wall_32
+        template: pared_clara
+        position: [14, 20]
+        size: [1, 1]
+      - id: wall_31
+        template: pared_clara
+        position: [12, 20]
+        size: [1, 1]
+      - id: wall_30
+        template: pared_clara
+        position: [11, 20]
+        size: [1, 1]
+      - id: wall_29
+        template: pared_clara
+        position: [10, 20]
+        size: [1, 1]
+      - id: wall_28
+        template: pared_clara
+        position: [9, 20]
+        size: [1, 1]
+      - id: wall_27
+        template: pared_clara
+        position: [8, 20]
+        size: [1, 1]
+      - id: wall_26
+        template: pared_clara
+        position: [7, 20]
+        size: [1, 1]
+      - id: wall_25
+        template: pared_clara
+        position: [6, 20]
+        size: [1, 1]
+      - id: wall_24
+        template: pared_clara
+        position: [5, 20]
+        size: [1, 1]
+      - id: wall_23
+        template: pared_clara
+        position: [4, 20]
+        size: [1, 1]
+      - id: wall_22
+        template: pared_clara
+        position: [4, 20]
+        size: [1, 1]
+      - id: wall_21
+        template: pared_clara
+        position: [4, 19]
+        size: [1, 1]
+      - id: wall_20
+        template: pared_clara
+        position: [4, 18]
+        size: [1, 1]
+      - id: wall_19
+        template: pared_clara
+        position: [4, 17]
+        size: [1, 1]
+      - id: wall_18
+        template: pared_clara
+        position: [4, 16]
+        size: [1, 1]
+      - id: wall_17
+        template: pared_clara
+        position: [4, 15]
+        size: [1, 1]
+      - id: wall_16
+        template: pared_clara
+        position: [4, 14]
+        size: [1, 1]
+      - id: wall_15
+        template: pared_clara
+        position: [4, 13]
+        size: [1, 1]
+      - id: wall_14
+        template: pared_clara
+        position: [4, 12]
+        size: [1, 1]
+      - id: wall_13
+        template: pared_clara
+        position: [4, 11]
+        size: [1, 1]
+      - id: wall_12
+        template: pared_clara
+        position: [4, 11]
+        size: [1, 1]
+      - id: wall_11
+        template: pared_clara
+        position: [4, 9]
+        size: [1, 1]
+      - id: wall_10
+        template: pared_clara
+        position: [4, 10]
+        size: [1, 1]
+      - id: wall_9
+        template: pared_clara
+        position: [4, 10]
+        size: [1, 1]
+      - id: wall_8
+        template: pared_clara
+        position: [4, 8]
+        size: [1, 1]
+      - id: wall_7
+        template: pared_clara
+        position: [4, 10]
+        size: [1, 1]
+      - id: wall_6
+        template: pared_clara
+        position: [4, 8]
+        size: [1, 1]
+      - id: wall_5
+        template: pared_clara
+        position: [4, 7]
+        size: [1, 1]
+      - id: wall_4
+        template: pared_clara
+        position: [4, 6]
+        size: [1, 1]
+      - id: wall_3
+        template: pared_clara
+        position: [4, 5]
+        size: [1, 1]
+      - id: wall_2
+        template: pared_clara
+        position: [4, 5]
+        size: [1, 1]
+      - id: wall_1
+        template: pared_clara
+        position: [4, 4]
+        size: [1, 1]
+    floor_color: "#3A2A20"

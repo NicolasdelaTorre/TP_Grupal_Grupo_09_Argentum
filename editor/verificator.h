@@ -18,6 +18,8 @@ private:
     bool check_player_spawn(QString& error_title, QString& error_message) const;
     bool check_obstacles(QString& error_title, QString& error_message) const;
     bool check_zones(QString& error_title, QString& error_message) const;
+    bool check_entries(QString& error_title, QString& error_message) const;
+    bool check_environments(QString& error_title, QString& error_message) const;
 };
 
 #endif
