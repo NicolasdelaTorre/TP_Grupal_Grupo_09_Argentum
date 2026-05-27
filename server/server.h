@@ -7,6 +7,7 @@
 #include "Comunication/acceptor.h"
 #include "Comunication/client_monitor.h"
 #include "Logic/gameloop.h"
+#include "Logic/map.h"
 #include "Protocol/protocol_server.h"
 
 class Server {
@@ -14,6 +15,7 @@ private:
     ProtocolServer protocol;
     Queue<std::string> clientCommands;
     ClientMonitor clientQueues;
+    Map map;
     Gameloop gameloop;
     Acceptor acceptor;
 

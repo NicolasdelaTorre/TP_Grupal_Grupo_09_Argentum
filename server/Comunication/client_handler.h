@@ -22,7 +22,8 @@ public:
     const int clientId;
 
     /*
-     * Create an object to receive messages from the client and another to send messages on behalf of the server.
+     * Create an object to receive messages from the client and another to send messages on behalf
+     * of the server.
      */
     ClientHandler(ProtocolServer& protocol, Queue<std::string>& commands,
                   ClientMonitor& clientMonitor, const int clientId);

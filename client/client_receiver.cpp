@@ -10,6 +10,7 @@ client_receiver::client_receiver(client_protocol& protocol, Queue<ServerMessageT
 void client_receiver::run() {
     try {
         while (should_keep_running()) {
+            ServerMessageType message;
             ServerMsg type = protocol.recv_msg_type();
             switch (type) {
                 case ServerMsg::LOGIN_OK:
@@ -17,6 +18,10 @@ void client_receiver::run() {
                     break;
                 case ServerMsg::LOGIN_FAIL:
                     server_queue.push("LOGIN_FAIL");
+                    break;
+                case ServerMsg::MAP:
+                    message = protocol.receive_message();
+                    server_queue.push(message);
                     break;
                 default:
                     // Tipos aún no manejados — ignorar por ahora

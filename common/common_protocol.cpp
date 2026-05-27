@@ -32,11 +32,9 @@ u_int16_t common_protocol::receive_two_bytes_number() {
     return ntohs(net_number);
 }
 
-void common_protocol::send_message(const std::string& message) {
-    const u_int16_t len = htons(message.size());
-    skt.sendall(&len, sizeof(uint16_t));
-    const std::vector<u_int8_t> data(message.begin(), message.end());
-    skt.sendall(data.data(), data.size());
+void common_protocol::send_message(std::vector<char> message) {
+    // const std::vector<u_int8_t> data(message.begin(), message.end());
+    skt.sendall(message.data(), message.size());
 }
 
 std::string common_protocol::receive_message(const size_t size) {

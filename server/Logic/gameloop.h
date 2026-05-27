@@ -6,6 +6,7 @@
 #include "../../common/queue.h"
 #include "../../common/thread.h"
 #include "../Comunication/client_monitor.h"
+#include "../Protocol/protocol_server.h"
 
 #include "game.h"
 
@@ -15,11 +16,13 @@ private:
     ClientMonitor& clientQueues;
     bool gameFinished;
     Game game;
+    ProtocolServer& protocol;
 
     void processCommand(const std::string& command);
 
 public:
-    Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues);
+    Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
+             ProtocolServer& protocol);
 
     virtual void run() override;
 

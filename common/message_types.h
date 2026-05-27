@@ -13,11 +13,13 @@ enum class ClientMsg : uint8_t {
 
 // Mensajes Servidor → Cliente
 enum class ServerMsg : uint8_t {
-    LOGIN_OK = 0x83,            // [opcode]
-    LOGIN_FAIL = 0x84,          // [opcode]
-    MOVE_OK = 0x85,             // [opcode]
-    MOVE_FAIL = 0x86,           // [opcode]
     POSICION_JUGADORES = 0x80,  // [opcode][cant:2][[id:1][x:2][y:2]...]
     STATS_JUGADOR = 0x81,       // [opcode][vida:2][mana:2][exp:4][nivel:1][oro:4]
     CHAT_MSG = 0x82,            // [opcode][len:2][texto]
+    MAP = 0x83,                 // [opcode][width:2][height:2][CellCount:2]
+                                // [[textureId:2][obstacleId:2][safeZone:1]]... (en row-major order)
+    LOGIN_OK = 0x84,            // [opcode]
+    LOGIN_FAIL = 0x85,          // [opcode]
+    MOVE_OK = 0x86,             // [opcode]
+    MOVE_FAIL = 0x87            // [opcode]
 };

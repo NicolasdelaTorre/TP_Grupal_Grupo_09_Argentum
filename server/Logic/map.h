@@ -5,10 +5,13 @@
 #include <string>
 #include <vector>
 
-typedef struct Cell {
+struct Cell {
+    uint16_t textureId;
+    uint16_t obstacleId;  // 0 if there is no obstacle
     bool isWalkable;
     bool occupiedByPlayer;
-} Cell;
+    bool safeZone;
+};
 
 class Map {
 private:
@@ -24,6 +27,14 @@ public:
     void addPlayer();
 
     bool movePlayer(const std::string& direction, int16_t x, int16_t y);
+
+    uint16_t getWidth() const;
+
+    uint16_t getHeight() const;
+
+    uint16_t getCellCount() const;
+
+    Cell getCell(size_t index) const;
 };
 
 #endif

@@ -6,6 +6,7 @@
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_DTOS_H
 
 #include <string>
+#include <vector>
 
 // enum class Command { ... };
 using Command = std::string;
@@ -14,7 +15,7 @@ using Command = std::string;
 using ServerMessageType = std::string;
 
 struct LoginResult {
-    std::string username;
+    std::vector<char> username;
     bool confirmed;  // true = presionó Enter, false = cerró la ventana
 };
 

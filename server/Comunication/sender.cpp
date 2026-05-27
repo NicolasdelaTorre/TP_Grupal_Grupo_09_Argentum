@@ -1,7 +1,6 @@
 #include "sender.h"
 
-Sender::Sender(ProtocolServer& protocol, Queue<std::string>& clientMessages,
-               const int clientId):
+Sender::Sender(ProtocolServer& protocol, Queue<std::string>& clientMessages, const int clientId):
         protocol(protocol),
         clientMessages(clientMessages),
         clientConnected(true),

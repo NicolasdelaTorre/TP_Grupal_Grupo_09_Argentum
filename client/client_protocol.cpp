@@ -12,7 +12,7 @@
 
 client_protocol::client_protocol(Socket skt): protocol(std::move(skt)) {}
 
-int client_protocol::send(const std::string& data) {
+int client_protocol::send(const std::vector<char>& data) {
     uint8_t opcode = static_cast<uint8_t>(ClientMsg::USER_ARRIVAL);
     // uint16_t len = htons(static_cast<uint16_t>(data.size()));
     protocol.sendByte(opcode);
@@ -34,14 +34,21 @@ ServerMsg client_protocol::recv_msg_type() {
 void client_protocol::close() { protocol.shutdown(); }
 
 
-int client_protocol::send_username(const std::string& data) {
+int client_protocol::send_username(const std::vector<char>& data) {
     protocol.sendByte(0x01);
+    protocol.send_two_bytes_number(static_cast<uint16_t>(data.size()));
     protocol.send_message(data);
 
     return 0;
 }
 
-void client_protocol::send_message(const Command& command) {
+void client_protocol::send_message(const std::vector<char>& command) {
     // Dummy
     protocol.send_message(command);
+}
+
+ServerMessageType client_protocol::receive_message() {
+    // Dummy
+    protocol.receive_byte();
+    return protocol.receive_message(25);
 }

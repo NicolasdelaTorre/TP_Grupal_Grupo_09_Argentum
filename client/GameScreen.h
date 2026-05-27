@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include <SDL2pp/SDL2pp.hh>
+
 #include "map_renderer.h"
 
 static constexpr float FEET_OFFSET = 1.0f;
@@ -15,10 +18,10 @@ public:
 
 private:
     SDL2pp::Renderer& renderer;
-    TextureCache      cache;
-    MapRenderer       mapRenderer;
-    GameMap           map;
-    Player            player;
+    TextureCache cache;
+    MapRenderer mapRenderer;
+    GameMap map;
+    Player player;
 
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);
@@ -27,7 +30,5 @@ private:
     void update(float dt);
 
     // ── Render ────────────────────────────────────────────────
-    void render(); 
-
-    }
-;
+    void render();
+};

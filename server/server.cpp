@@ -4,8 +4,11 @@ Server::Server(const char* port):
         protocol(port),
         clientCommands(),
         clientQueues(),
-        gameloop(clientCommands, clientQueues),
-        acceptor(protocol, clientCommands, clientQueues) {}
+        map(2, 2),
+        gameloop(clientCommands, clientQueues, map, protocol),
+        acceptor(protocol, clientCommands, clientQueues) {
+    protocol.serializeMap(map);
+}
 
 void Server::startGame() {
     gameloop.start();
