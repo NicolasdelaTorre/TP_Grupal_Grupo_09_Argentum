@@ -10,14 +10,14 @@
 #include "../../common/protocol_util.h"
 
 ProtocolServer::ProtocolServer(const char* port):
-        socketServer(port), clientSockets(), clientCounter(0) {}
+        socketServer(port), clientSockets(), clientCounter(0), mapSerialized() {}
 
 int ProtocolServer::waitClient() {
     try {
         Socket clientSocket = socketServer.accept();
         clientCounter++;
         int clientId = clientCounter;
-        
+
         // The client's id indicates the order of arrival to the server.
         clientSockets.emplace(clientId, common_protocol(std::move(clientSocket)));
 
@@ -32,7 +32,8 @@ int ProtocolServer::waitClient() {
 void ProtocolServer::deleteClient(const int clientId) {
     auto it = clientSockets.find(clientId);
     if (it != clientSockets.end()) {
-        // We utilize shutdown because there is a possibility that a message is being received through the socket.
+        // We utilize shutdown because there is a possibility that a message is being received
+        // through the socket.
         it->second.shutdown();
         clientSockets.erase(it);
     }
@@ -64,7 +65,6 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
 }
 
 int ProtocolServer::returnUser(std::string& message, const int clientId) {
-    std::vector<char> messageReceived(2);
     auto it = clientSockets.find(clientId);
     if (it == clientSockets.end()) {
         // The client has disconnected
@@ -132,6 +132,9 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
 
         if (message == "LOGIN_OK") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
+            it->second.sendByte(mapSerialized[0]);
+            it->second.send_message(
+                    std::vector<char>(mapSerialized.begin() + 1, mapSerialized.end()));
         } else if (message == "LOGIN_FAIL") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
         } else {
@@ -143,6 +146,34 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
         if (ProtocolUtil::closedSocket(error))
             return 1;
         throw;
+    }
+}
+
+void ProtocolServer::serializeMap(const Map& map) {
+    mapSerialized.push_back(static_cast<uint8_t>(ServerMsg::MAP));
+
+    uint16_t width = map.getWidth();
+    uint16_t height = map.getHeight();
+
+    mapSerialized.push_back((uint8_t)htons(width));
+    mapSerialized.push_back((uint8_t)width);
+    mapSerialized.push_back((uint8_t)htons(height));
+    mapSerialized.push_back((uint8_t)height);
+
+    uint16_t cellCount = map.getCellCount();
+    mapSerialized.push_back((uint8_t)htons(cellCount));
+    mapSerialized.push_back((uint8_t)cellCount);
+
+    for (size_t i = 0; i < cellCount; i++) {
+        Cell cell = map.getCell(i);
+
+        mapSerialized.push_back((uint8_t)htons(cell.textureId));
+        mapSerialized.push_back((uint8_t)cell.textureId);
+
+        mapSerialized.push_back((uint8_t)htons(cell.obstacleId));
+        mapSerialized.push_back((uint8_t)cell.obstacleId);
+
+        mapSerialized.push_back((uint8_t)cell.safeZone);
     }
 }
 

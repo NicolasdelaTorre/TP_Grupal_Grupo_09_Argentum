@@ -19,7 +19,8 @@ private:
     ClientMonitor& clientMonitor;
 
     /*
-     * Verify if a client has left the game. In that case, the clientHandler must be removed from the list of clients.
+     * Verify if a client has left the game. In that case, the clientHandler must be removed from
+     * the list of clients.
      */
     void reap();
 
@@ -29,8 +30,7 @@ private:
     void clear();
 
 public:
-    Acceptor(ProtocolServer& protocol, Queue<std::string>& commands,
-              ClientMonitor& clientMonitor);
+    Acceptor(ProtocolServer& protocol, Queue<std::string>& commands, ClientMonitor& clientMonitor);
 
     virtual void run() override;
 

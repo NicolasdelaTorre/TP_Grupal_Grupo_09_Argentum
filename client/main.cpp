@@ -26,9 +26,8 @@ int main(int argc, char* argv[]) {
         const char* servicename = argv[2];
         bool fullscreen = false;
         if (argv[3] && std::string(argv[3]) == "--fullscreen") {
-            fullscreen = true; 
+            fullscreen = true;
         }
-
 
 
         client cli = client(hostname, servicename, fullscreen);

@@ -1,7 +1,7 @@
 #include "acceptor.h"
 
 Acceptor::Acceptor(ProtocolServer& protocol, Queue<std::string>& commands,
-                    ClientMonitor& clientMonitor):
+                   ClientMonitor& clientMonitor):
         protocol(protocol), clients(), commands(commands), clientMonitor(clientMonitor) {}
 
 void Acceptor::run() {

@@ -1,7 +1,12 @@
 #include "gameloop.h"
 
-Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues):
-        commands(commands), clientQueues(clientQueues), gameFinished(false), game(10, 10) {}
+Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
+                   ProtocolServer& protocol):
+        commands(commands),
+        clientQueues(clientQueues),
+        gameFinished(false),
+        game(map),
+        protocol(protocol) {}
 
 void Gameloop::run() {
     while (!gameFinished) {
@@ -29,7 +34,7 @@ void Gameloop::processCommand(const std::string& command) {
     } else if (cmd == "move") {
         checkToSend += "MOVE_";
     } else {
-       std::cout << "Unknown command in gameloop: " << cmd << std::endl;
+        std::cout << "Unknown command in gameloop: " << cmd << std::endl;
     }
 
     if (game.processCommand(idPlayer, command.substr(posId + 1))) {

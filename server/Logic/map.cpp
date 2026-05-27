@@ -1,6 +1,7 @@
 #include "map.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
     cells.resize(width * height);
@@ -9,8 +10,11 @@ Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
 
 void Map::initializeMap() {
     for (auto& cell: cells) {
+        cell.textureId = 0;
+        cell.obstacleId = 0;
         cell.isWalkable = true;
         cell.occupiedByPlayer = false;
+        cell.safeZone = false;
     }
 }
 
@@ -64,4 +68,18 @@ bool Map::movePlayer(const std::string& direction, int16_t x, int16_t y) {
 
     // Movement successful
     return true;
+}
+
+uint16_t Map::getWidth() const { return width; }
+
+uint16_t Map::getHeight() const { return height; }
+
+uint16_t Map::getCellCount() const { return cells.size(); }
+
+Cell Map::getCell(size_t index) const {
+    if (index >= cells.size()) {
+        throw std::out_of_range("Map Error: cell index out of range");
+    }
+
+    return cells[index];
 }

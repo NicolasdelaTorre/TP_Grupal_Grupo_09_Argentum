@@ -19,7 +19,7 @@ public:
     explicit client_protocol(Socket skt);
 
     // Enviar nombre de usuario al conectarse
-    int send(const std::string& data);
+    int send(const std::vector<char>& data);
 
     // Enviar movimiento: direction debe ser ARRIBA, ABAJO, IZQUIERDA o DERECHA
     void send_move(ClientMsg direction);
@@ -30,9 +30,9 @@ public:
     // Cierra el socket — desbloquea cualquier recv pendiente
     void close();
 
-    int send_username(const std::string& data);
+    int send_username(const std::vector<char>& data);
 
-    void send_message(const Command& command);
+    void send_message(const std::vector<char>& command);
 
     ServerMessageType receive_message();
 };

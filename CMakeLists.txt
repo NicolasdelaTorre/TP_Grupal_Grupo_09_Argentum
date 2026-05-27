@@ -124,7 +124,7 @@ if(TALLER_CLIENT)
     target_include_directories(taller_client PRIVATE ${libSDL2pp_SOURCE_DIR})
 
     # Link the taller_common lib target
-    target_link_libraries(taller_client PRIVATE taller_common SDL2pp::SDL2pp SDL2_ttf::SDL2_ttf)
+    target_link_libraries(taller_client PRIVATE taller_common SDL2pp::SDL2pp SDL2_image::SDL2_image SDL2_ttf::SDL2_ttf)
 endif()
 
 if(TALLER_SERVER)

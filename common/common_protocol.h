@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 #include <sys/types.h>
 
@@ -27,7 +28,7 @@ public:
 
     u_int16_t receive_two_bytes_number();
 
-    void send_message(const std::string& message);
+    void send_message(std::vector<char> message);
 
     std::string receive_message(size_t size);
 

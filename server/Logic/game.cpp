@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-Game::Game(uint16_t width, uint16_t height): map(width, height) {}
+Game::Game(Map& map): map(map) {}
 
 bool Game::processCommand(const int playerId, const std::string& command) {
     size_t commandPosition = command.find('.');
