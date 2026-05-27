@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
     try {
 
-        if (argc != 3) {
+        if (argc < 3) {
             std::cerr << "Usage: " << argv[0] << " <hostname or IP> <servicename or port>"
                       << std::endl;
             return 1;
@@ -24,9 +24,14 @@ int main(int argc, char* argv[]) {
 
         const char* hostname = argv[1];
         const char* servicename = argv[2];
+        bool fullscreen = false;
+        if (argv[3] && std::string(argv[3]) == "--fullscreen") {
+            fullscreen = true; 
+        }
 
 
-        client cli = client(hostname, servicename);
+
+        client cli = client(hostname, servicename, fullscreen);
         cli.run();
 
         return 0;

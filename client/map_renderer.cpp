@@ -45,7 +45,7 @@ void MapRenderer::drawTile(TileType type, int screenX, int screenY) {
             renderer.Copy(cache.get("Tiles_pasto.png"),  src, dst); break;
         case TileType::WATER:
             renderer.Copy(cache.get("Tiles_agua.png"),   src, dst); break;
-            case TileType::DIRT:
+        case TileType::DIRT:
             renderer.Copy(cache.get("Tiles_tierra.png"), src, dst); break;
         default:
             // Tile vacío, no dibujamos nada

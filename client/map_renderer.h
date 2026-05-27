@@ -84,8 +84,8 @@ private:
 // ── Mapa hardcodeado ──────────────────────────────────────────
 inline GameMap makeTestMap() {
     GameMap map;
-    map.width  = 20;
-    map.height = 20;
+    map.width  = 200;
+    map.height = 200;
     map.tiles.resize(map.width * map.height);
 
     for (int y = 0; y < map.height; y++) {

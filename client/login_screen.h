@@ -1,40 +1,51 @@
 #pragma once
 
-#include <string>
-
-#include <SDL2/SDL_events.h>
-#include <SDL2pp/Font.hh>
 #include <SDL2pp/SDL2pp.hh>
-
+#include <string>
 #include "../common/DTOs.h"
-// Resultado del login
+/*
+struct LoginResult {
+    std::string username;
+    bool        confirmed = false;
+};*/
+
+
 
 
 class LoginScreen {
 public:
-    explicit LoginScreen(SDL2pp::Renderer& renderer);
-
-    // Corre el loop hasta que el usuario confirme o cierre.
-    // Retorna el username ingresado.
+    explicit LoginScreen(SDL2pp::Renderer& renderer,
+                         const std::string& assetsPath);
     LoginResult run();
 
 private:
     SDL2pp::Renderer& renderer;
-    SDL2pp::Font fontTitle;
-    SDL2pp::Font fontInput;
-    SDL2pp::Font fontHint;
+    SDL2pp::SDLTTF    ttf;
+    SDL2pp::Font      font;
+    SDL2pp::Texture   background;
 
     std::string inputText;
-    bool running;
-    bool confirmed;
+    bool        running   = true;
+    bool        confirmed = false;
 
-    static constexpr int SCREEN_W = 640;
-    static constexpr int SCREEN_H = 400;
-    static constexpr int MAX_USERNAME = 20;
-    static constexpr float CURSOR_BLINK = 0.5f;  // segundos
+    // Posición del campo de nombre sobre el PNG (escala 1:1 a 512x512)
+    // El panel está centrado en pantalla — estos son offsets desde el centro
+    // Campo NOMBRE: x=60-186, y=118-140 en el PNG de 512x512
+    static constexpr int PNG_W       = 512;
+    static constexpr int PNG_H       = 512;
+    static constexpr int FIELD_X     = 120;   // inicio campo en PNG
+    static constexpr int FIELD_Y     = 198;  // inicio campo en PNG
+    static constexpr int FIELD_W     = 122;  // ancho campo
+    static constexpr int FIELD_H     = 20;   // alto campo
+    static constexpr int MAX_LENGTH  = 20;
+    static constexpr float SCALE     = 1.3f;
+    static constexpr int   PNG_W_SCL = (int)(PNG_W * SCALE);  
+    static constexpr int   PNG_H_SCL = (int)(PNG_H * SCALE);  
 
-    float cursorTimer = 0.0f;
-    bool cursorVisible = true;
+    // Cursor parpadeante
+    float cursorTimer   = 0.0f;
+    bool  cursorVisible = true;
+    static constexpr float CURSOR_BLINK = 0.5f;
 
     void handleEvents();
     void handleKeyDown(const SDL_KeyboardEvent& key);
@@ -42,5 +53,6 @@ private:
     void update(float dt);
     void render();
 
-    SDL2pp::Texture makeText(SDL2pp::Font& font, const std::string& text, SDL_Color color) const;
+    // Convierte coordenada del PNG a coordenada de pantalla
+    SDL2pp::Rect pngToScreen(int x, int y, int w, int h);
 };
