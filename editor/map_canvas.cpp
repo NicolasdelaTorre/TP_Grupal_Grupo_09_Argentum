@@ -72,6 +72,9 @@ void MapCanvas::initializeScene(const QString& map_id, const QString& map_name, 
     drawing_zone_ = false;
     clearZonePreview();
     biome_tint_item_ = nullptr;
+    // scene_->clear() ya destruyó los items de textura; los punteros del vector quedaron
+    // dangling, así que limpiamos el vector (no hace falta llamar delete).
+    biome_texture_items_.clear();
     env_floor_item_ = nullptr;
     env_exterior_item_ = nullptr;
     // Ancho y alto de la escena
@@ -661,13 +664,22 @@ void MapCanvas::rebuildBiomeTint() {
         return;
     }
 
+    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena,
+    // así que primero los removemos y después delete (orden importante para evitar leaks
+    // si la escena tuviera ownership exclusivo).
+    for (auto* item: biome_texture_items_) {
+        scene_->removeItem(item);
+        delete item;
+    }
+    biome_texture_items_.clear();
+
     const int W = map_width_;
     const int H = map_height_;
 
     QImage img(W, H, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
 
-    // recolectar zonas de bioma y su color
+    // recolectar zonas de bioma, color y textura (si tiene)
     struct BiomeZone {
         int x = 0;
         int y = 0;
@@ -675,6 +687,7 @@ void MapCanvas::rebuildBiomeTint() {
         int h = 0;
         double speed = 1.0;
         QColor color;
+        QString texture_path;
     };
     std::vector<BiomeZone> zones;
     for (auto* item: scene_->items()) {
@@ -689,7 +702,8 @@ void MapCanvas::rebuildBiomeTint() {
         z.speed = std::max(1.0, std::sqrt(static_cast<double>(z.w * z.h)));
         const auto* tpl = templates_.find_biome(item->data(DATA_SUBTYPE).toString().toStdString());
         z.color = QColor(QString::fromStdString(tpl->color));
-   
+        z.texture_path = QString::fromStdString(tpl->texture);
+
         zones.push_back(z);
     }
 
@@ -761,16 +775,40 @@ void MapCanvas::rebuildBiomeTint() {
         }
     }
 
-    // alpha suave
+    // Resolver textura por bioma. Un QPixmap nulo en el slot indica "este bioma no tiene
+    // textura, usar tinte de color".
+    std::vector<QPixmap> biome_pixmaps(zones.size());
+    for (size_t i = 0; i < zones.size(); ++i) {
+        const QString& path = zones[i].texture_path;
+        if (!path.isEmpty()) {
+            biome_pixmaps[i].load(path);
+        }
+    }
+
+    // Para celdas con textura: instanciar un QGraphicsPixmapItem por celda (sin estirar,
+    // queda 1:1 si pixmap.size() == CELL_DISPLAY_SIZE x CELL_DISPLAY_SIZE). Los QPixmap
+    // se comparten implícitamente entre items, así que la huella de memoria es chica.
+    // Para celdas sin textura: tinte de color con alpha 90 (comportamiento original).
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             const int o = owner[static_cast<size_t>(y) * W + x];
             if (o < 0) {
                 continue;
             }
-            QColor c = zones[o].color;
-            c.setAlpha(90);
-            img.setPixelColor(x, y, c);
+            const QPixmap& pm = biome_pixmaps[o];
+            if (!pm.isNull()) {
+                auto* tile = scene_->addPixmap(pm);
+                tile->setTransformationMode(Qt::SmoothTransformation);
+                tile->setPos(x * CELL_DISPLAY_SIZE, y * CELL_DISPLAY_SIZE);
+                // Por debajo del tinte de color (z=-1.5) y por encima del background
+                // (z=-2), así no oculta ni pisa otras capas.
+                tile->setZValue(-1.7);
+                biome_texture_items_.push_back(tile);
+            } else {
+                QColor c = zones[o].color;
+                c.setAlpha(90);
+                img.setPixelColor(x, y, c);
+            }
         }
     }
 

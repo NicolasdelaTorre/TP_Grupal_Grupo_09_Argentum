@@ -1,6 +1,7 @@
 template_id: arbusto
 name: "Arbusto"
 size:
-  width: 2
+  width: 1
   height: 1
 color: "#5BA84A"
+texture: "personaje_abajo_izquierda.png"

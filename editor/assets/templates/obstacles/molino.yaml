@@ -1,0 +1,7 @@
+template_id: molino
+name: "Molino"
+size:
+  width: 3
+  height: 3
+color: "#1F4F1F"
+texture: "molino_recortado.png"

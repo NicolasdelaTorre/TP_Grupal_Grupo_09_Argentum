@@ -26,6 +26,8 @@ struct BiomeTemplate {
     int default_width = 0;
     int default_height = 0;
     std::string color;
+    // ruta absoluta a la textura del bioma (opcional). Si está vacía, se usa color.
+    std::string texture;
     std::vector<std::string> allowed_creatures;
 };
 

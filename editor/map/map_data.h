@@ -24,6 +24,7 @@ struct Obstacle {
     int y = 0;
     int width = 1;
     int height = 1;
+    std::string texture;
 };
 
 struct CreatureSpawn {
@@ -48,6 +49,7 @@ struct Zone {
     int area_height = 0;
     std::vector<CreatureSpawn> spawns;
     std::vector<NpcInstance> fixed_npcs;
+    std::string texture;
 };
 
 struct Entry {

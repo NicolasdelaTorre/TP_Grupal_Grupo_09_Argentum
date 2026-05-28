@@ -6,6 +6,8 @@
 #include <QGraphicsView>
 #include <QWidget>
 
+#include <vector>
+
 #include "assets/templates/template_registry.h"
 #include "map/map_data.h"
 
@@ -69,6 +71,9 @@ private:
     QPoint zone_start_cell_;
     QGraphicsRectItem* zone_preview_ = nullptr;
     QGraphicsPixmapItem* biome_tint_item_ = nullptr;
+    // Items renderizados por celda para los biomas que tienen textura. Se reconstruyen
+    // en cada rebuildBiomeTint().
+    std::vector<QGraphicsPixmapItem*> biome_texture_items_;
     QGraphicsRectItem* env_floor_item_ = nullptr;
     QGraphicsPixmapItem* env_exterior_item_ = nullptr;
     QString env_floor_color_;
