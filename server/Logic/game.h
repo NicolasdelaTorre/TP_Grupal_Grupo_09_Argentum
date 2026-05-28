@@ -3,23 +3,20 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "../../common/position.h"
 
 #include "map.h"
 #include "player.h"
 
-// Orquestador del juego. Es el único componente con la "verdad" sobre qué
-// jugadores existen y dónde están parados. El Map es solo datos estáticos
-// y los Player son entidades dueñas de su propio estado — el Game las junta.
 class Game {
 private:
     Map& map;
+    Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
 
-    // Busca una posición libre para spawnear un jugador nuevo.
-    // Intenta primero el centro del mapa, sino cae a la primera celda
-    // caminable y desocupada. Tira excepción si no encuentra ninguna.
+    // Encuentra una posición libre para spawnear. Tira excepción si no hay ninguna.
     Position findSpawnPosition() const;
 
     // True si ningún jugador está parado en pos.
@@ -28,9 +25,15 @@ private:
     bool processMovement(int playerId, const std::string& direction);
 
 public:
-    explicit Game(Map& map);
+    Game(Map& map, Position playerSpawn);
 
     bool processCommand(int playerId, const std::string& command);
+
+    Position getPlayerPosition(int playerId) const;
+    const std::string& getPlayerName(int playerId) const;
+    bool hasPlayer(int playerId) const;
+    std::vector<int> getPlayerIds() const;
+    void removePlayer(int playerId);
 };
 
 #endif

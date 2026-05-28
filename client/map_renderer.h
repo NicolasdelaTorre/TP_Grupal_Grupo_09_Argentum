@@ -71,26 +71,3 @@ private:
     void drawTile(TileType type, int screenX, int screenY);
 };
 
-// ── Mapa hardcodeado ──────────────────────────────────────────
-// Mapa chico (10x10) para testear out-of-bounds rápido contra el server.
-// Se reemplaza por el mapa que envía el servidor en sprints siguientes.
-inline GameMap makeTestMap() {
-    GameMap map;
-    map.width = 10;
-    map.height = 10;
-    map.tiles.resize(map.width * map.height);
-
-    for (int y = 0; y < map.height; y++) {
-        for (int x = 0; x < map.width; x++) {
-            TileData& tile = map.at(x, y);
-            if (x == 0 || y == 0 || x == map.width - 1 || y == map.height - 1) {
-                // Borde bloqueado con agua
-                tile.floor = TileType::WATER;
-                tile.blocked = true;
-            } else {
-                tile.floor = TileType::GRASS;
-            }
-        }
-    }
-    return map;
-}

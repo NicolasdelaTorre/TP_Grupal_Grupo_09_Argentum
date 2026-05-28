@@ -10,7 +10,9 @@
 #include "../../common/protocol_util.h"
 
 ProtocolServer::ProtocolServer(const char* port):
-        socketServer(port), clientSockets(), clientCounter(0), mapSerialized() {}
+        socketServer(port), clientSockets(), clientCounter(0), mapRef(nullptr) {}
+
+void ProtocolServer::setMap(const Map& map) { mapRef = &map; }
 
 int ProtocolServer::waitClient() {
     try {
@@ -123,61 +125,127 @@ int ProtocolServer::returnMovement(std::string& message, const int clientId) {
 }
 
 int ProtocolServer::sendMessage(const std::string& message, const int clientId) {
+    // Convención: 1 = ok, 0 = cliente desconectado (matchea con el chequeo del Sender).
     try {
         auto it = clientSockets.find(clientId);
         if (it == clientSockets.end()) {
-            // The client has disconnected
-            return 0;
+            return 0;  // cliente ya no está en el mapa de sockets
         }
 
-        if (message == "LOGIN_OK") {
-            it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
-            it->second.sendByte(mapSerialized[0]);
-            it->second.send_message(
-                    std::vector<char>(mapSerialized.begin() + 1, mapSerialized.end()));
+        // LOGIN_OK trae spawn: parseamos "LOGIN_OK:x:y"
+        if (message.rfind("LOGIN_OK", 0) == 0) {
+            sendLoginOk(it->second, message);
         } else if (message == "LOGIN_FAIL") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
+        } else if (message == "MAP") {
+            sendMap(it->second);
         } else if (message == "MOVE_OK") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::MOVE_OK));
         } else if (message == "MOVE_FAIL") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::MOVE_FAIL));
+        } else if (message.rfind("NEW_PLAYER:", 0) == 0) {
+            sendNewPlayer(it->second, message);
+        } else if (message.rfind("PLAYER_MOVED:", 0) == 0) {
+            sendPlayerMoved(it->second, message);
+        } else if (message.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
+            sendPlayerDisconnected(it->second, message);
         } else {
-            throw std::runtime_error("Protocol Error: unknown server's command");
+            throw std::runtime_error("Protocol Error: unknown server's command: " + message);
         }
 
-        return 0;
+        return 1;
     } catch (const LibError& error) {
         if (ProtocolUtil::closedSocket(error))
-            return 1;
+            return 0;  // socket cerrado mid-send
         throw;
     }
 }
 
-void ProtocolServer::serializeMap(const Map& map) {
-    mapSerialized.push_back(static_cast<uint8_t>(ServerMsg::MAP));
+void ProtocolServer::sendLoginOk(common_protocol& client, const std::string& message) {
+    // Formato: "LOGIN_OK:<x>:<y>"
+    size_t firstColon = message.find(':');
+    size_t secondColon = message.find(':', firstColon + 1);
+    if (firstColon == std::string::npos || secondColon == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed LOGIN_OK message: " + message);
+    }
+    int16_t x = static_cast<int16_t>(std::stoi(message.substr(firstColon + 1, secondColon - firstColon - 1)));
+    int16_t y = static_cast<int16_t>(std::stoi(message.substr(secondColon + 1)));
 
-    uint16_t width = map.getWidth();
-    uint16_t height = map.getHeight();
+    client.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
+    client.send_two_bytes_number(static_cast<uint16_t>(x));
+    client.send_two_bytes_number(static_cast<uint16_t>(y));
+}
 
-    mapSerialized.push_back((uint8_t)htons(width));
-    mapSerialized.push_back((uint8_t)width);
-    mapSerialized.push_back((uint8_t)htons(height));
-    mapSerialized.push_back((uint8_t)height);
+void ProtocolServer::sendNewPlayer(common_protocol& client, const std::string& message) {
+    // Formato: "NEW_PLAYER:<id>:<x>:<y>:<name>"
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    size_t c3 = message.find(':', c2 + 1);
+    size_t c4 = message.find(':', c3 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos ||
+        c4 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed NEW_PLAYER message: " + message);
+    }
+    uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+    int16_t x = static_cast<int16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
+    int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
+    std::string name = message.substr(c4 + 1);
 
-    uint16_t cellCount = map.getCellCount();
-    mapSerialized.push_back((uint8_t)htons(cellCount));
-    mapSerialized.push_back((uint8_t)cellCount);
+    client.sendByte(static_cast<uint8_t>(ServerMsg::NEW_PLAYER));
+    client.send_two_bytes_number(id);
+    client.send_two_bytes_number(static_cast<uint16_t>(x));
+    client.send_two_bytes_number(static_cast<uint16_t>(y));
+    client.send_two_bytes_number(static_cast<uint16_t>(name.size()));
+    client.send_message(std::vector<char>(name.begin(), name.end()));
+}
 
-    for (size_t i = 0; i < cellCount; i++) {
+void ProtocolServer::sendPlayerMoved(common_protocol& client, const std::string& message) {
+    // Formato: "PLAYER_MOVED:<id>:<x>:<y>"
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    size_t c3 = message.find(':', c2 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed PLAYER_MOVED message: " + message);
+    }
+    uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+    int16_t x = static_cast<int16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
+    int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1)));
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_MOVED));
+    client.send_two_bytes_number(id);
+    client.send_two_bytes_number(static_cast<uint16_t>(x));
+    client.send_two_bytes_number(static_cast<uint16_t>(y));
+}
+
+void ProtocolServer::sendPlayerDisconnected(common_protocol& client, const std::string& message) {
+    // Formato: "PLAYER_DISCONNECTED:<id>"
+    size_t c1 = message.find(':');
+    if (c1 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed PLAYER_DISCONNECTED message: " +
+                                 message);
+    }
+    uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1)));
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_DISCONNECTED));
+    client.send_two_bytes_number(id);
+}
+
+void ProtocolServer::sendMap(common_protocol& client) {
+    if (mapRef == nullptr) {
+        throw std::runtime_error("Protocol Error: sendMap called but no Map registered");
+    }
+    const Map& map = *mapRef;
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::MAP));
+    client.send_two_bytes_number(map.getWidth());
+    client.send_two_bytes_number(map.getHeight());
+    client.send_two_bytes_number(map.getCellCount());
+
+    for (size_t i = 0; i < map.getCellCount(); i++) {
         Cell cell = map.getCell(i);
-
-        mapSerialized.push_back((uint8_t)htons(cell.textureId));
-        mapSerialized.push_back((uint8_t)cell.textureId);
-
-        mapSerialized.push_back((uint8_t)htons(cell.obstacleId));
-        mapSerialized.push_back((uint8_t)cell.obstacleId);
-
-        mapSerialized.push_back((uint8_t)cell.safeZone);
+        client.send_two_bytes_number(cell.textureId);
+        client.send_two_bytes_number(cell.obstacleId);
+        client.sendByte(cell.safeZone ? 1 : 0);
     }
 }
 

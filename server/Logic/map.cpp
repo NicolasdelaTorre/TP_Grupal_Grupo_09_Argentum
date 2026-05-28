@@ -7,6 +7,14 @@ Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
     initializeMap();
 }
 
+Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells):
+        width(width), height(height), cells(std::move(cells)) {
+    if (this->cells.size() != static_cast<size_t>(width) * height) {
+        throw std::invalid_argument(
+                "Map Error: cells vector size does not match width * height");
+    }
+}
+
 void Map::initializeMap() {
     for (auto& cell: cells) {
         cell.textureId = 0;

@@ -3,8 +3,7 @@
 
 #include <cstdint>
 
-// Coordenada (x, y) en tiles sobre el mapa. Usada por Player, NPC e items
-// del juego que necesiten una posición discreta.
+// Coordenada (x, y) en tiles sobre el mapa
 struct Position {
     int16_t x;
     int16_t y;

@@ -1,9 +1,11 @@
 #include "game.h"
 
+#include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 
-Game::Game(Map& map): map(map) {}
+Game::Game(Map& map, Position playerSpawn): map(map), playerSpawn(playerSpawn) {}
 
 bool Game::processCommand(int playerId, const std::string& command) {
     size_t commandPosition = command.find('.');
@@ -29,21 +31,20 @@ bool Game::processCommand(int playerId, const std::string& command) {
 }
 
 Position Game::findSpawnPosition() const {
-    // Primer intento: centro del mapa
-    int16_t centerX = static_cast<int16_t>(map.getWidth() / 2);
-    int16_t centerY = static_cast<int16_t>(map.getHeight() / 2);
-    Position center{centerX, centerY};
-
-    if (map.isWalkable(center.x, center.y) && isPositionFree(center)) {
-        return center;
-    }
-
-    // Fallback: primera celda caminable y desocupada
-    for (uint16_t y = 0; y < map.getHeight(); y++) {
-        for (uint16_t x = 0; x < map.getWidth(); x++) {
-            Position pos{static_cast<int16_t>(x), static_cast<int16_t>(y)};
-            if (map.isWalkable(pos.x, pos.y) && isPositionFree(pos)) {
-                return pos;
+    // Búsqueda en espiral cuadrada desde el spawn del YAML.
+    // radius=0 es el spawn, radius=1 sus 8 vecinos, radius=2 los 16 de la siguiente capa, etc.
+    int maxRadius = std::max(map.getWidth(), map.getHeight());
+    for (int radius = 0; radius < maxRadius; radius++) {
+        for (int offsetY = -radius; offsetY <= radius; offsetY++) {
+            for (int offsetX = -radius; offsetX <= radius; offsetX++) {
+                // Solo la frontera del cuadrado (las interiores ya las chequeamos en radios anteriores).
+                if (radius > 0 && std::abs(offsetX) != radius && std::abs(offsetY) != radius)
+                    continue;
+                Position candidate{static_cast<int16_t>(playerSpawn.x + offsetX),
+                                   static_cast<int16_t>(playerSpawn.y + offsetY)};
+                if (map.isWalkable(candidate.x, candidate.y) && isPositionFree(candidate)) {
+                    return candidate;
+                }
             }
         }
     }
@@ -59,6 +60,35 @@ bool Game::isPositionFree(Position pos) const {
     }
     return true;
 }
+
+Position Game::getPlayerPosition(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getPosition();
+}
+
+const std::string& Game::getPlayerName(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getName();
+}
+
+bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
+
+std::vector<int> Game::getPlayerIds() const {
+    std::vector<int> ids;
+    ids.reserve(players.size());
+    for (const auto& [id, _]: players) {
+        ids.push_back(id);
+    }
+    return ids;
+}
+
+void Game::removePlayer(int playerId) { players.erase(playerId); }
 
 bool Game::processMovement(int playerId, const std::string& direction) {
     auto itPlayer = players.find(playerId);

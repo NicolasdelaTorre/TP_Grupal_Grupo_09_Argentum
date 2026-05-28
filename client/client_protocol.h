@@ -10,7 +10,30 @@
 #include "../common/DTOs.h"
 #include "../common/common_protocol.h"
 #include "../common/message_types.h"
+#include "../common/position.h"
 #include "../common/socket.h"
+
+// Celda como la manda el servidor (walkable = obstacleId == 0).
+struct ReceivedCell {
+    uint16_t textureId;
+    uint16_t obstacleId;
+    bool safeZone;
+};
+
+// Mapa recibido del servidor. cells en row-major: idx = y * width + x.
+struct ReceivedMap {
+    uint16_t width;
+    uint16_t height;
+    std::vector<ReceivedCell> cells;
+};
+
+// Evento de un jugador (NEW_PLAYER y PLAYER_MOVED). En PLAYER_MOVED `name` queda vacío.
+struct PlayerEvent {
+    uint16_t id;
+    int16_t x;
+    int16_t y;
+    std::string name;
+};
 
 class client_protocol {
     common_protocol protocol;
@@ -18,23 +41,24 @@ class client_protocol {
 public:
     explicit client_protocol(Socket skt);
 
-    // Enviar nombre de usuario al conectarse
-    int send(const std::vector<char>& data);
-
-    // Enviar movimiento: direction debe ser ARRIBA, ABAJO, IZQUIERDA o DERECHA
+    // Enviar movimiento: direction debe ser TOP, BOTTOM, LEFT o RIGHT
     void send_move(ClientMsg direction);
 
-    // Leer el tipo del próximo mensaje que mandó el servidor
+    // Leer el tipo del próximo mensaje que mandó el servidor (1 byte de opcode)
     ServerMsg recv_msg_type();
 
     // Cierra el socket — desbloquea cualquier recv pendiente
     void close();
 
+    // Envío del nombre de usuario al loguearse: [USER_ARRIVAL][len:2][name].
     int send_username(const std::vector<char>& data);
 
-    void send_message(const std::vector<char>& command);
-
-    ServerMessageType receive_message();
+    // Las funciones recv_*_payload asumen que el opcode ya fue consumido vía recv_msg_type().
+    Position recv_login_ok_payload();
+    ReceivedMap recv_map();
+    PlayerEvent recv_new_player_payload();
+    PlayerEvent recv_player_moved_payload();
+    uint16_t recv_player_disconnected_payload();
 };
 
 
