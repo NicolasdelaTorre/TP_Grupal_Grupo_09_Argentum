@@ -1,6 +1,9 @@
 #include "item_builder.h"
 
+#include <QGraphicsPixmapItem>
 #include <QPen>
+#include <QPixmap>
+#include <QTransform>
 
 #include "editor_constants.h"
 
@@ -25,26 +28,89 @@ QGraphicsRectItem* ItemBuilder::buildPlayerSpawn(const QString& id) {
 }
 
 QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& type, int width,
-                                              int height) {
-    auto* rect = new QGraphicsRectItem(0, 0, width * CELL_DISPLAY_SIZE, height * CELL_DISPLAY_SIZE);
-    rect->setBrush(QBrush(QColor(120, 90, 60)));
-    rect->setPen(QPen(QColor(60, 40, 20), 1));
+                                              int height, const QColor& fill,
+                                              const QString& texturePath) {
+    const int pixel_w = width * CELL_DISPLAY_SIZE;
+    const int pixel_h = height * CELL_DISPLAY_SIZE;
+    auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
+
+    // Si hay textura válida la dibujamos encima del rect. Conservamos el pixmap en su
+    // resolución nativa y dejamos que la QGraphicsView lo escale en vivo con
+    // Qt::SmoothTransformation: así Qt hace una única interpolación desde el archivo
+    // original hasta el tamaño en pantalla (mucho más nítido que pre-escalar a pixel_w x
+    // pixel_h, que descartaría casi todo el detalle cuando CELL_DISPLAY_SIZE es chico).
+    QPixmap pixmap;
+    const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
+    if (has_texture) {
+        rect->setBrush(Qt::NoBrush);
+        rect->setPen(Qt::NoPen);
+        auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
+        texture_item->setTransformationMode(Qt::SmoothTransformation);
+        const qreal sx = static_cast<qreal>(pixel_w) / pixmap.width();
+        const qreal sy = static_cast<qreal>(pixel_h) / pixmap.height();
+        QTransform texture_transform;
+        texture_transform.scale(sx, sy);
+        texture_item->setTransform(texture_transform);
+        texture_item->setPos(0, 0);
+    } else {
+        rect->setBrush(QBrush(fill));
+        rect->setPen(QPen(fill.darker(160), 1));
+    }
+
     rect->setData(DATA_TYPE, OBSTACLE_TYPE);
     rect->setData(DATA_ID, id);
     rect->setData(DATA_SUBTYPE, type);
     rect->setData(DATA_WIDTH, width);
     rect->setData(DATA_HEIGHT, height);
+    if (!has_texture) {
+        attachLabel(rect, type);
+    }
+    return rect;
+}
+
+QGraphicsRectItem* ItemBuilder::buildEntry(const QString& id, const QString& type,
+                                           const QString& environmentId, int width, int height,
+                                           const QColor& fill) {
+    auto* rect = new QGraphicsRectItem(0, 0, width * CELL_DISPLAY_SIZE, height * CELL_DISPLAY_SIZE);
+    rect->setBrush(QBrush(fill));
+    rect->setPen(QPen(fill.darker(180), 2));
+    rect->setData(DATA_TYPE, ENTRY_TYPE);
+    rect->setData(DATA_ID, id);
+    rect->setData(DATA_SUBTYPE, type);
+    rect->setData(DATA_WIDTH, width);
+    rect->setData(DATA_HEIGHT, height);
+    rect->setData(DATA_ENVIRONMENT_ID, environmentId);
     attachLabel(rect, type);
     return rect;
 }
 
+QGraphicsRectItem* ItemBuilder::buildWall(const QString& id, const QString& templateId, int width,
+                                          int height, const QColor& fill) {
+    auto* rect = new QGraphicsRectItem(0, 0, width * CELL_DISPLAY_SIZE, height * CELL_DISPLAY_SIZE);
+    rect->setBrush(QBrush(fill));
+    rect->setPen(QPen(fill.darker(180), 1));
+    rect->setData(DATA_TYPE, WALL_TYPE);
+    rect->setData(DATA_ID, id);
+    rect->setData(DATA_SUBTYPE, templateId);
+    rect->setData(DATA_WIDTH, width);
+    rect->setData(DATA_HEIGHT, height);
+    return rect;
+}
+
 QGraphicsRectItem* ItemBuilder::buildZone(const QString& id, const QString& zoneType,
-                                          const QString& templateId, int width, int height) {
+                                          const QString& templateId, int width, int height,
+                                          const QColor& fill) {
     const bool isCity = zoneType == ZONE_TYPE_CITY;
     auto* rect = new QGraphicsRectItem(0, 0, width * CELL_DISPLAY_SIZE, height * CELL_DISPLAY_SIZE);
-    rect->setBrush(QBrush(isCity ? QColor(180, 220, 255, 120) : QColor(80, 160, 80, 120)));
-    rect->setPen(QPen(isCity ? QColor(40, 100, 200) : QColor(20, 100, 20), 2));
-    rect->setData(DATA_TYPE, isCity ? CITY_ZONE_TYPE : FOREST_ZONE_TYPE);
+
+    QColor fillTransparent(fill);
+    fillTransparent.setAlpha(120);
+    QColor border = fill.darker(160);
+    border.setAlpha(255);
+
+    rect->setBrush(QBrush(fillTransparent));
+    rect->setPen(QPen(border, 2));
+    rect->setData(DATA_TYPE, isCity ? CITY_ZONE_TYPE : BIOME_ZONE_TYPE);
     rect->setData(DATA_ID, id);
     rect->setData(DATA_SUBTYPE, templateId);
     rect->setData(DATA_WIDTH, width);

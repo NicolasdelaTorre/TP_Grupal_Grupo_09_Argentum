@@ -1,0 +1,7 @@
+template_id: piedra_pequenia
+name: "Piedra pequeña"
+size:
+  width: 1
+  height: 1
+color: "#9A9A9A"
+texture: "roca_03_ajustada.png"

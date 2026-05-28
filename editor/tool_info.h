@@ -8,16 +8,18 @@ enum class EditorTool {
     PlayerSpawn,
     Obstacle,
     CityZone,
-    ForestZone,
+    BiomeZone,
+    Entry,
+    Wall,
 };
 
 struct ToolInfo {
     EditorTool tool = EditorTool::None;
-    QString obstacle_type = QStringLiteral("tree");
-    int obstacle_width = 1;
-    int obstacle_height = 1;
+    QString obstacle_template_id;
     QString city_template_id;
-    QString forest_template_id;
+    QString biome_template_id;
+    QString entry_template_id;
+    QString wall_template_id;
 };
 
 #endif

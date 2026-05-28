@@ -1,0 +1,6 @@
+template_id: arbol_grande
+name: "Árbol grande"
+size:
+  width: 3
+  height: 5
+color: "#1F4F1F"

@@ -50,12 +50,47 @@ struct Zone {
     std::vector<NpcInstance> fixed_npcs;
 };
 
+struct Entry {
+    std::string id;
+    std::string type;
+    std::string environment_id;
+    int x = 0;
+    int y = 0;
+    int width = 1;
+    int height = 1;
+};
+
+struct Wall {
+    std::string id;
+    std::string template_id;
+    int x = 0;
+    int y = 0;
+    int width = 1;
+    int height = 1;
+};
+
+struct Environment {
+    std::string id;
+    std::string name;
+    std::string type;
+    int width = 0;
+    int height = 0;
+    PlayerSpawn player_spawn;
+    std::vector<Obstacle> obstacles;
+    std::vector<Wall> walls;
+    std::string floor_color;
+};
+
 struct MapDocument {
     int version = 1;
     MapInfo map;
     PlayerSpawn player_spawn;
     std::vector<Obstacle> obstacles;
     std::vector<Zone> zones;
+    std::vector<Entry> entries;
+    std::vector<Environment> environments;
+    std::vector<Wall> walls;
+    std::string floor_color;
 };
 
 #endif

@@ -1,0 +1,7 @@
+template_id: explanada
+name: "Explanada"
+default_size:
+  width: 30
+  height: 20
+color: "#A8C97F"
+allowed_creatures: []
