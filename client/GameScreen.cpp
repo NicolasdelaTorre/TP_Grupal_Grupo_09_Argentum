@@ -82,10 +82,12 @@ void GameScreen::render() {
     for (const auto& [id, op]: otherPlayers) {
         (void)id;
         mapRenderer.renderPlayer(op.visual, camX, camY);
+        mapRenderer.renderWeapon(op.visual, camX, camY);
         mapRenderer.renderHead(op.visual, camX, camY);
     }
 
     mapRenderer.renderPlayer(player, camX, camY);
+    mapRenderer.renderWeapon(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
 
     renderer.Present();
