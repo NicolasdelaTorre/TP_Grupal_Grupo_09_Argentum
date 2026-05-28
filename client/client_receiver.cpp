@@ -8,28 +8,43 @@ client_receiver::client_receiver(client_protocol& protocol, Queue<ServerMessageT
         protocol(protocol), server_queue(server_queue) {}
 
 void client_receiver::run() {
+    // LOGIN_OK + MAP se hacen sync en client::run(). Acá van solo los eventos post-login.
     try {
         while (should_keep_running()) {
-            ServerMessageType message;
             ServerMsg type = protocol.recv_msg_type();
             switch (type) {
-                case ServerMsg::LOGIN_OK:
-                    server_queue.push("LOGIN_OK");
+                case ServerMsg::MOVE_OK:
+                case ServerMsg::MOVE_FAIL:
+                    // Confirmaciones — las ignoramos, el cliente predice localmente.
                     break;
-                case ServerMsg::LOGIN_FAIL:
-                    server_queue.push("LOGIN_FAIL");
+
+                case ServerMsg::NEW_PLAYER: {
+                    PlayerEvent ev = protocol.recv_new_player_payload();
+                    server_queue.push("NEW_PLAYER:" + std::to_string(ev.id) + ":" +
+                                      std::to_string(ev.x) + ":" + std::to_string(ev.y) +
+                                      ":" + ev.name);
                     break;
-                case ServerMsg::MAP:
-                    message = protocol.receive_message();
-                    server_queue.push(message);
+                }
+
+                case ServerMsg::PLAYER_MOVED: {
+                    PlayerEvent ev = protocol.recv_player_moved_payload();
+                    server_queue.push("PLAYER_MOVED:" + std::to_string(ev.id) + ":" +
+                                      std::to_string(ev.x) + ":" + std::to_string(ev.y));
                     break;
+                }
+
+                case ServerMsg::PLAYER_DISCONNECTED: {
+                    uint16_t id = protocol.recv_player_disconnected_payload();
+                    server_queue.push("PLAYER_DISCONNECTED:" + std::to_string(id));
+                    break;
+                }
+
                 default:
-                    // Tipos aún no manejados — ignorar por ahora
                     break;
             }
         }
     } catch (const ClosedQueue&) {
     } catch (...) {
-        // Socket cerrado o error de red — terminar el hilo limpiamente
+        // Socket cerrado o error de red — salimos limpio
     }
 }

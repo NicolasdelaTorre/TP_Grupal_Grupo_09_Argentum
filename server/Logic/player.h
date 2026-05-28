@@ -4,28 +4,22 @@
 #include <cstdint>
 #include <string>
 
-typedef struct Position {
-    int16_t x;
-    int16_t y;
-} Position;
-
-typedef struct PlayerData {
-    const std::string& name;
-    Position position;
-} PlayerData;
+#include "../../common/position.h"
 
 class Player {
 private:
-    PlayerData data;
+    std::string name;
+    Position position;
 
 public:
-    explicit Player(const std::string& name);
+    Player(std::string name, Position position);
 
-    void changePosition(const std::string& direction);
+    void move(Position newPosition);
 
-    int16_t getX();
-
-    int16_t getY();
+    const std::string& getName() const;
+    Position getPosition() const;
+    int16_t getX() const;
+    int16_t getY() const;
 };
 
 #endif

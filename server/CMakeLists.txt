@@ -11,6 +11,7 @@ target_sources(taller_server
         Logic/map.cpp
         Logic/game.cpp
         Logic/gameloop.cpp
+        Logic/yaml_map_loader.cpp
         Protocol/protocol_server.cpp
     PUBLIC
         server.h
@@ -23,6 +24,7 @@ target_sources(taller_server
         Logic/map.h
         Logic/game.h
         Logic/gameloop.h
+        Logic/yaml_map_loader.h
         Protocol/protocol_server.h
     )
 

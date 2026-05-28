@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "../../common/position.h"
 #include "../../common/queue.h"
 #include "../../common/thread.h"
 #include "../Comunication/client_monitor.h"
@@ -22,7 +23,7 @@ private:
 
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
-             ProtocolServer& protocol);
+             ProtocolServer& protocol, Position playerSpawn);
 
     virtual void run() override;
 

@@ -1,11 +1,18 @@
 #include "map.h"
 
-#include <algorithm>
 #include <stdexcept>
 
 Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
-    cells.resize(width * height);
+    cells.resize(static_cast<size_t>(width) * height);
     initializeMap();
+}
+
+Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells):
+        width(width), height(height), cells(std::move(cells)) {
+    if (this->cells.size() != static_cast<size_t>(width) * height) {
+        throw std::invalid_argument(
+                "Map Error: cells vector size does not match width * height");
+    }
 }
 
 void Map::initializeMap() {
@@ -13,73 +20,30 @@ void Map::initializeMap() {
         cell.textureId = 0;
         cell.obstacleId = 0;
         cell.isWalkable = true;
-        cell.occupiedByPlayer = false;
         cell.safeZone = false;
     }
-}
-
-void Map::addPlayer() {
-    for (;;) {
-        auto itCellFree = std::find_if(cells.begin(), cells.end(), [](const Cell& cell) {
-            return cell.isWalkable && !cell.occupiedByPlayer;
-        });
-
-        if (itCellFree != cells.end()) {
-            itCellFree->occupiedByPlayer = true;
-            return;
-        }
-    }
-}
-
-bool Map::movePlayer(const std::string& direction, int16_t x, int16_t y) {
-    int16_t newX = x;
-    int16_t newY = y;
-
-    if (direction == "top") {
-        newY -= 1;
-    } else if (direction == "bottom") {
-        newY += 1;
-    } else if (direction == "left") {
-        newX -= 1;
-    } else if (direction == "right") {
-        newX += 1;
-    } else {
-        // Invalid direction
-        return false;
-    }
-
-    if (newX < 0 || newX >= width || newY < 0 || newY >= height) {
-        // Out of map bounds
-        return false;
-    }
-
-    size_t newPosition = newY * width + newX;
-    size_t currentPosition = y * width + x;
-
-    if (!cells[newPosition].isWalkable || cells[newPosition].occupiedByPlayer) {
-        // Ocuppied cell
-        return false;
-    }
-
-    // Free current cell
-    cells[currentPosition].occupiedByPlayer = false;
-    // Occupy the new cell
-    cells[newPosition].occupiedByPlayer = true;
-
-    // Movement successful
-    return true;
 }
 
 uint16_t Map::getWidth() const { return width; }
 
 uint16_t Map::getHeight() const { return height; }
 
-uint16_t Map::getCellCount() const { return cells.size(); }
+uint16_t Map::getCellCount() const { return static_cast<uint16_t>(cells.size()); }
 
 Cell Map::getCell(size_t index) const {
     if (index >= cells.size()) {
         throw std::out_of_range("Map Error: cell index out of range");
     }
-
     return cells[index];
+}
+
+bool Map::isInBounds(int16_t x, int16_t y) const {
+    return x >= 0 && y >= 0 && x < static_cast<int16_t>(width) &&
+           y < static_cast<int16_t>(height);
+}
+
+bool Map::isWalkable(int16_t x, int16_t y) const {
+    if (!isInBounds(x, y))
+        return false;
+    return cells[static_cast<size_t>(y) * width + x].isWalkable;
 }

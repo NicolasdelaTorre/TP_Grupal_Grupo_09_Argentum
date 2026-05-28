@@ -1,19 +1,16 @@
 #include "player.h"
 
-Player::Player(const std::string& name): data{name, {0, 0}} {}
+#include <utility>
 
-void Player::changePosition(const std::string& direction) {
-    if (direction == "top") {
-        data.position.y -= 1;
-    } else if (direction == "bottom") {
-        data.position.y += 1;
-    } else if (direction == "left") {
-        data.position.x -= 1;
-    } else if (direction == "right") {
-        data.position.x += 1;
-    }
-}
+Player::Player(std::string name, Position position):
+        name(std::move(name)), position(position) {}
 
-int16_t Player::getX() { return data.position.x; }
+void Player::move(Position newPosition) { position = newPosition; }
 
-int16_t Player::getY() { return data.position.y; }
+const std::string& Player::getName() const { return name; }
+
+Position Player::getPosition() const { return position; }
+
+int16_t Player::getX() const { return position.x; }
+
+int16_t Player::getY() const { return position.y; }

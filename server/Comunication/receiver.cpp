@@ -9,4 +9,6 @@ void Receiver::run() {
         commands.push(std::to_string(idCliente) + ":" + message);
         message.clear();
     }
+    // El socket se cerró — avisamos al gameloop para que notifique a los demás.
+    commands.push(std::to_string(idCliente) + ":disconnect.");
 }

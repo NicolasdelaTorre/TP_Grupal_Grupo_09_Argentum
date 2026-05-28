@@ -20,6 +20,9 @@ public:
 
     void broadcast(const std::string& message);
 
+    // Broadcast a todos menos al cliente con id excludeId.
+    void broadcastExcept(int excludeId, const std::string& message);
+
     // Send a message only to the client with that id. Does nothing if the id does not exist.
     void sendToClient(int clientId, const std::string& message);
 };

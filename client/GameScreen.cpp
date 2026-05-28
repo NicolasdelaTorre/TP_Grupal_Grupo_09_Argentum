@@ -2,13 +2,47 @@
 
 #include <algorithm>
 
-GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath):
+namespace {
+
+// ReceivedMap (wire) → GameMap (lo que pinta el MapRenderer).
+GameMap convertToGameMap(const ReceivedMap& m) {
+    GameMap gm;
+    gm.width = m.width;
+    gm.height = m.height;
+    gm.tiles.resize(m.cells.size());
+    for (size_t i = 0; i < m.cells.size(); i++) {
+        bool hasObstacle = (m.cells[i].obstacleId != 0);
+        // DIRT por ahora; cuando haya sprites de obstáculos se va a usar el obstacleId.
+        gm.tiles[i].floor = hasObstacle ? TileType::DIRT : TileType::GRASS;
+        gm.tiles[i].blocked = hasObstacle;
+    }
+    return gm;
+}
+
+}  // namespace
+
+// tile del servidor (donde caen los pies) → coords del Player (sprite + offsets).
+static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player& p) {
+    p.x = static_cast<float>(tileX) - HEAD_OFFSET;
+    p.y = static_cast<float>(tileY) - FEET_OFFSET;
+}
+
+GameScreen::GameScreen(SDL2pp::Renderer& renderer,
+                       const std::string& assetsPath,
+                       Queue<std::string>& events_queue,
+                       Queue<std::string>& server_queue,
+                       const ReceivedMap& mapData,
+                       Position spawn):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
-        map(makeTestMap()) {
-    player.x = map.width / 2.0f;
-    player.y = map.height / 2.0f;
+        map(convertToGameMap(mapData)),
+        events_queue(events_queue),
+        server_queue(server_queue) {
+    tileToPlayerCoords(spawn.x, spawn.y, player);
+
+    lastTileX = (int)(player.x + HEAD_OFFSET);
+    lastTileY = (int)(player.y + FEET_OFFSET);
 }
 
 bool GameScreen::run() {
@@ -43,6 +77,14 @@ void GameScreen::render() {
     renderer.Clear();
 
     mapRenderer.render(map, camX, camY);
+
+    // Otros jugadores primero, el local queda visualmente encima.
+    for (const auto& [id, op]: otherPlayers) {
+        (void)id;
+        mapRenderer.renderPlayer(op.visual, camX, camY);
+        mapRenderer.renderHead(op.visual, camX, camY);
+    }
+
     mapRenderer.renderPlayer(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
 
@@ -86,18 +128,42 @@ bool GameScreen::handleEvents(float dt) {
 
     int tileX = (int)(newX + HEAD_OFFSET);
     int tileY = (int)(newY + FEET_OFFSET);
+    int curFootY = (int)(player.y + FEET_OFFSET);
+    int curHeadX = (int)(player.x + HEAD_OFFSET);
 
-    if (map.inBounds(tileX, (int)(player.y + FEET_OFFSET)) &&
-        !map.at(tileX, (int)(player.y + FEET_OFFSET)).blocked)
+    // Bloqueamos si el server lo rechazaría (bounds, obstáculo, u otro jugador).
+    if (map.inBounds(tileX, curFootY) && !map.at(tileX, curFootY).blocked &&
+        !isOccupiedByOther(tileX, curFootY))
         player.x = newX;
 
-    if (map.inBounds((int)(player.x + HEAD_OFFSET), tileY) &&
-        !map.at((int)(player.x + HEAD_OFFSET), tileY).blocked)
+    if (map.inBounds(curHeadX, tileY) && !map.at(curHeadX, tileY).blocked &&
+        !isOccupiedByOther(curHeadX, tileY))
         player.y = newY;
+
+    // Si cambiamos de tile, le avisamos al server
+    notifyTileChange();
     return true;
 }
 
+void GameScreen::notifyTileChange() {
+    int curTileX = (int)(player.x + HEAD_OFFSET);
+    int curTileY = (int)(player.y + FEET_OFFSET);
+
+    if (curTileX != lastTileX) {
+        events_queue.push(curTileX > lastTileX ? "RIGHT" : "LEFT");
+    }
+    if (curTileY != lastTileY) {
+        events_queue.push(curTileY > lastTileY ? "BOTTOM" : "TOP");
+    }
+
+    lastTileX = curTileX;
+    lastTileY = curTileY;
+}
+
 void GameScreen::update(float dt) {
+    // Consumimos eventos del servidor antes de animar.
+    consumeServerEvents();
+
     if (!player.moving) {
         player.animFrame = 0;
         player.animTimer = 0;
@@ -107,5 +173,57 @@ void GameScreen::update(float dt) {
     if (player.animTimer >= Player::ANIM_SPEED) {
         player.animTimer -= Player::ANIM_SPEED;
         player.animFrame = (player.animFrame + 1) % ANIM_FRAMES;
+    }
+}
+
+bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
+    for (const auto& [id, op]: otherPlayers) {
+        (void)id;
+        int opTileX = (int)(op.visual.x + HEAD_OFFSET);
+        int opTileY = (int)(op.visual.y + FEET_OFFSET);
+        if (opTileX == tileX && opTileY == tileY)
+            return true;
+    }
+    return false;
+}
+
+void GameScreen::consumeServerEvents() {
+    std::string event;
+    while (server_queue.try_pop(event)) {
+        if (event.rfind("NEW_PLAYER:", 0) == 0) {
+            // NEW_PLAYER:<id>:<x>:<y>:<name>
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            size_t c4 = event.find(':', c3 + 1);
+            if (c4 == std::string::npos)
+                continue;
+            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
+            int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
+            OtherPlayer op;
+            tileToPlayerCoords(x, y, op.visual);
+            op.name = event.substr(c4 + 1);
+            otherPlayers[id] = std::move(op);
+        } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
+            // PLAYER_MOVED:<id>:<x>:<y>
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            if (c3 == std::string::npos)
+                continue;
+            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
+            int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1)));
+            auto it = otherPlayers.find(id);
+            if (it != otherPlayers.end()) {
+                tileToPlayerCoords(x, y, it->second.visual);
+            }
+        } else if (event.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
+            // PLAYER_DISCONNECTED:<id>
+            size_t c1 = event.find(':');
+            int id = std::stoi(event.substr(c1 + 1));
+            otherPlayers.erase(id);
+        }
     }
 }

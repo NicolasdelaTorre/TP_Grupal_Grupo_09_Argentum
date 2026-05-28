@@ -2,17 +2,17 @@
 #define MAP_H
 
 #include <cstdint>
-#include <string>
 #include <vector>
 
+// Tile del mapa (datos estáticos).
 struct Cell {
     uint16_t textureId;
-    uint16_t obstacleId;  // 0 if there is no obstacle
+    uint16_t obstacleId;  // 0 si no hay obstáculo
     bool isWalkable;
-    bool occupiedByPlayer;
     bool safeZone;
 };
 
+// Mapa estático: no cambia una vez cargado. Los jugadores los maneja el Game.
 class Map {
 private:
     uint16_t width;
@@ -24,17 +24,19 @@ private:
 public:
     Map(uint16_t width, uint16_t height);
 
-    void addPlayer();
-
-    bool movePlayer(const std::string& direction, int16_t x, int16_t y);
+    // Constructor con celdas ya armadas (lo usa el YAML loader).
+    Map(uint16_t width, uint16_t height, std::vector<Cell> cells);
 
     uint16_t getWidth() const;
-
     uint16_t getHeight() const;
-
     uint16_t getCellCount() const;
-
     Cell getCell(size_t index) const;
+
+    // Devuelve true si (x, y) está dentro de los límites del mapa.
+    bool isInBounds(int16_t x, int16_t y) const;
+
+    // Devuelve true si (x, y) está en bounds y es transitable.
+    bool isWalkable(int16_t x, int16_t y) const;
 };
 
 #endif
