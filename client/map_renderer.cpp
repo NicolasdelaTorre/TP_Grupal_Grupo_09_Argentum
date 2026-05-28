@@ -15,14 +15,14 @@ void MapRenderer::render(const GameMap& map, float camX, float camY) {
     int endX = std::min(map.width, startX + screenW / TILE_SIZE + 2);
     int endY = std::min(map.height, startY + screenH / TILE_SIZE + 2);
 
-    for (int y = startY; y < endY; y++) {
-        for (int x = startX; x < endX; x++) {
-            int screenX = (int)(x * TILE_SIZE - camX);
-            int screenY = (int)(y * TILE_SIZE - camY);
-            drawTile(map.at(x, y).floor, screenX, screenY);
+        for (int y = startY; y < endY; y++) {
+            for (int x = startX; x < endX; x++) {
+                int screenX = (int)(x * TILE_SIZE - camX);
+                int screenY = (int)(y * TILE_SIZE - camY);
+                drawTile(map.at(x, y), screenX, screenY);
+            }
         }
     }
-}
 
 void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
     // Centrado sobre el tile
@@ -38,24 +38,50 @@ void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
     renderer.Copy(cache.get("1027.png"), src, dst);
 }
 
-void MapRenderer::drawTile(TileType type, int screenX, int screenY) {
+void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
     SDL2pp::Rect dst(screenX, screenY, TILE_SIZE, TILE_SIZE);
     SDL2pp::Rect src(0, 0, TILE_SIZE, TILE_SIZE);
 
-    switch (type) {
-        case TileType::GRASS:
-            renderer.Copy(cache.get("Tiles_pasto.png"), src, dst);
+    switch (tile.floor) {
+        case TileType::GRASS: {
+            static constexpr int VAR_W = 170;
+            static constexpr int VAR_H = 128;
+            SDL2pp::Rect varSrc(tile.variant * VAR_W, 0, VAR_W, VAR_H);
+            renderer.Copy(cache.get("Tiles_pasto.png"), varSrc, dst);
             break;
+        }
         case TileType::WATER:
             renderer.Copy(cache.get("Tiles_agua.png"), src, dst);
             break;
         case TileType::DIRT:
-            renderer.Copy(cache.get("Tiles_tierra.png"), src, dst);
-            break;
-        default:
-            // Tile vacío, no dibujamos nada
-            break;
+            renderer.Copy(cache.get("Tile_tierra.png"), src, dst); break;
+        case TileType::SAND:
+            renderer.Copy(cache.get("Tile_arena.png"), src, dst); break;
     }
+}
+
+void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
+    if (player.weaponId < 0) return;
+
+    static const char* weaponFiles[] = {
+        "Espada.png",
+        "Daga.png",
+        "Arco.png",
+        "Baculo.png"
+    };
+    if (player.weaponId >= 4) return;
+
+    int row = static_cast<int>(player.dir);
+    int col = player.moving ? player.animFrame : 0;
+
+    SDL2pp::Rect src(col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H);
+
+    // Misma posición base que el cuerpo
+    int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE/2 - SPRITE_W/2;
+    int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE/2 - SPRITE_H/2;
+    SDL2pp::Rect dst(screenX, screenY, SPRITE_W, SPRITE_H);
+
+    renderer.Copy(cache.get(weaponFiles[player.weaponId]), src, dst);
 }
 
 void MapRenderer::renderHead(const Player& player, float camX, float camY) {

@@ -104,17 +104,17 @@ bool GameScreen::handleEvents(float dt) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
 
-    if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
-        dy = -Player::MOVE_SPEED * dt;
+    if (keys[SDL_SCANCODE_UP]    || keys[SDL_SCANCODE_W]) {
+        dy = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::UP;
-    } else if (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S]) {
-        dy = Player::MOVE_SPEED * dt;
+    } else if (keys[SDL_SCANCODE_DOWN]  || keys[SDL_SCANCODE_S]) {
+        dy =  PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::DOWN;
-    } else if (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A]) {
-        dx = -Player::MOVE_SPEED * dt;
+    } else if (keys[SDL_SCANCODE_LEFT]  || keys[SDL_SCANCODE_A]) {
+        dx = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::LEFT;
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
-        dx = Player::MOVE_SPEED * dt;
+        dx =  PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
     }
 
@@ -170,8 +170,8 @@ void GameScreen::update(float dt) {
         return;
     }
     player.animTimer += dt;
-    if (player.animTimer >= Player::ANIM_SPEED) {
-        player.animTimer -= Player::ANIM_SPEED;
+    if (player.animTimer >= ANIM_SPEED) {
+        player.animTimer -= ANIM_SPEED;
         player.animFrame = (player.animFrame + 1) % ANIM_FRAMES;
     }
 }

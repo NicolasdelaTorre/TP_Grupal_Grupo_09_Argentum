@@ -6,11 +6,8 @@
 #include <SDL2pp/SDL2pp.hh>
 
 #include "../common/DTOs.h"
-/*
-struct LoginResult {
-    std::string username;
-    bool        confirmed = false;
-};*/
+
+
 
 
 class LoginScreen {
@@ -28,23 +25,21 @@ private:
     bool running = true;
     bool confirmed = false;
 
-    // Posición del campo de nombre sobre el PNG (escala 1:1 a 512x512)
-    // El panel está centrado en pantalla — estos son offsets desde el centro
-    // Campo NOMBRE: x=60-186, y=118-140 en el PNG de 512x512
-    static constexpr int PNG_W = 512;
-    static constexpr int PNG_H = 512;
-    static constexpr int FIELD_X = 120;  // inicio campo en PNG
-    static constexpr int FIELD_Y = 198;  // inicio campo en PNG
-    static constexpr int FIELD_W = 122;  // ancho campo
-    static constexpr int FIELD_H = 20;   // alto campo
-    static constexpr int MAX_LENGTH = 20;
-    static constexpr float SCALE = 1.3f;
-    static constexpr int PNG_W_SCL = (int)(PNG_W * SCALE);
-    static constexpr int PNG_H_SCL = (int)(PNG_H * SCALE);
 
-    // Cursor parpadeante
-    float cursorTimer = 0.0f;
-    bool cursorVisible = true;
+    static constexpr int PNG_W       = 512;
+    static constexpr int PNG_H       = 512;
+    static constexpr int FIELD_X     = 120;   // inicio campo en PNG
+    static constexpr int FIELD_Y     = 198;  // inicio campo en PNG
+    static constexpr int FIELD_W     = 122;  // ancho campo
+    static constexpr int FIELD_H     = 20;   // alto campo
+    static constexpr int MAX_LENGTH  = 20;
+    static constexpr float SCALE     = 1.3f;
+    static constexpr int   PNG_W_SCL = (int)(PNG_W * SCALE);  
+    static constexpr int   PNG_H_SCL = (int)(PNG_H * SCALE);  
+
+    
+    float cursorTimer   = 0.0f;
+    bool  cursorVisible = true;
     static constexpr float CURSOR_BLINK = 0.5f;
 
     void handleEvents();
@@ -53,6 +48,6 @@ private:
     void update(float dt);
     void render();
 
-    // Convierte coordenada del PNG a coordenada de pantalla
+
     SDL2pp::Rect pngToScreen(int x, int y, int w, int h);
 };
