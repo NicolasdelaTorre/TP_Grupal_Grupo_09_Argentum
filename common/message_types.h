@@ -3,12 +3,13 @@
 
 // Mensajes Cliente → Servidor
 enum class ClientMsg : uint8_t {
-    USER_ARRIVAL = 0x01,  // [opcode][len:2][nombre]
-    MOVEMENT = 0x02,      // [opcode][direccion:1]
-    TOP = 0x03,
-    BOTTOM = 0x04,
-    LEFT = 0x05,
-    RIGHT = 0x06
+    USER_ARRIVAL  = 0x01,  // [opcode][len:2][nombre]
+    MOVEMENT      = 0x02,  // [opcode][direccion:1]
+    TOP           = 0x03,
+    BOTTOM        = 0x04,
+    LEFT          = 0x05,
+    RIGHT         = 0x06,
+    SKIN_SELECTED = 0x07   // [opcode][skin_id:1]
 };
 
 // Mensajes Servidor → Cliente
@@ -24,5 +25,6 @@ enum class ServerMsg : uint8_t {
     MOVE_FAIL = 0x87,           // [opcode]
     NEW_PLAYER = 0x88,          // [opcode][id:2][x:2][y:2][name_len:2][name:n]
     PLAYER_MOVED = 0x89,        // [opcode][id:2][x:2][y:2]
-    PLAYER_DISCONNECTED = 0x8A  // [opcode][id:2]
+    PLAYER_DISCONNECTED = 0x8A, // [opcode][id:2]
+    FIRST_LOGIN         = 0x8B  // [opcode] — usuario nuevo, debe crear personaje
 };

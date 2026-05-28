@@ -59,6 +59,9 @@ public:
     PlayerEvent recv_new_player_payload();
     PlayerEvent recv_player_moved_payload();
     uint16_t recv_player_disconnected_payload();
+
+    // Envía la skin elegida en la pantalla de creación de personaje.
+    void send_skin_selected(uint8_t skinId);
 };
 
 

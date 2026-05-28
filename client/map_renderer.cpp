@@ -35,7 +35,7 @@ void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
     SDL2pp::Rect src(col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H);
     SDL2pp::Rect dst(screenX, screenY, SPRITE_W, SPRITE_H);
 
-    renderer.Copy(cache.get("1027.png"), src, dst);
+    renderer.Copy(cache.get("/Skins/Caballero_blanco.png"), src, dst);
 }
 
 void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
@@ -47,16 +47,16 @@ void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
             static constexpr int VAR_W = 170;
             static constexpr int VAR_H = 128;
             SDL2pp::Rect varSrc(tile.variant * VAR_W, 0, VAR_W, VAR_H);
-            renderer.Copy(cache.get("Tiles_pasto.png"), varSrc, dst);
+            renderer.Copy(cache.get("/Mapa/Tiles_pasto.png"), varSrc, dst);
             break;
         }
         case TileType::WATER:
-            renderer.Copy(cache.get("Tiles_agua.png"), src, dst);
+            renderer.Copy(cache.get("/Mapa/Tiles_agua.png"), src, dst);
             break;
         case TileType::DIRT:
-            renderer.Copy(cache.get("Tile_tierra.png"), src, dst); break;
+            renderer.Copy(cache.get("/Mapa/Tile_tierra.png"), src, dst); break;
         case TileType::SAND:
-            renderer.Copy(cache.get("Tile_arena.png"), src, dst); break;
+            renderer.Copy(cache.get("/Mapa/Tiles_arena.png"), src, dst); break;
     }
 }
 
@@ -64,10 +64,10 @@ void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
     if (player.weaponId < 0) return;
 
     static const char* weaponFiles[] = {
-        "Espada.png",
-        "Daga.png",
-        "Arco.png",
-        "Baculo.png"
+        "/Armas/Espada.png",
+        "/Armas/Daga.png",
+        "/Armas/Arco.png",
+        "/Armas/Baculo.png"
     };
     if (player.weaponId >= 4) return;
 
@@ -105,5 +105,5 @@ void MapRenderer::renderHead(const Player& player, float camX, float camY) {
 
     SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
 
-    renderer.Copy(cache.get("Cabezas.png"), src, dst);
+    renderer.Copy(cache.get("/Skins/Cabezas.png"), src, dst);
 }

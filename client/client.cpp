@@ -8,6 +8,7 @@
 #include <SDL_image.h>
 
 #include "GameScreen.h"
+#include "char_creation_screen.h"
 #include "login_screen.h"
 
 
@@ -40,6 +41,17 @@ void client::run() {
         std::cerr << "Login failed (server rejected)" << std::endl;
         return;
     }
+
+    if (type == ServerMsg::LOGIN_OK) {
+        CharCreationScreen charCreation(renderer, "AO_IMGS");
+        CharCreationResult charResult = charCreation.run();
+        if (!charResult.confirmed)
+            return;
+        protocol.send_skin_selected(static_cast<uint8_t>(charResult.skinId));
+        // Ahora esperamos el LOGIN_OK con la posición de spawn.
+        type = protocol.recv_msg_type();
+    }
+    
     if (type != ServerMsg::LOGIN_OK) {
         std::cerr << "Unexpected response from server (expected LOGIN_OK)" << std::endl;
         return;

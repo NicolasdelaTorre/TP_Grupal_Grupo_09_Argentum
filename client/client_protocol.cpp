@@ -76,3 +76,8 @@ PlayerEvent client_protocol::recv_player_moved_payload() {
 uint16_t client_protocol::recv_player_disconnected_payload() {
     return protocol.receive_two_bytes_number();
 }
+
+void client_protocol::send_skin_selected(uint8_t skinId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
+    protocol.sendByte(skinId);
+}
