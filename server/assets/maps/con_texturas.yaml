@@ -11,38 +11,47 @@ obstacles:
     type: piedra_pequenia
     position: [41, 55]
     size: [1, 1]
+    texture: roca_03_ajustada.png
   - id: obstacle_9
     type: piedra_pequenia
     position: [41, 61]
     size: [1, 1]
+    texture: roca_03_ajustada.png
   - id: obstacle_8
     type: piedra_pequenia
     position: [33, 56]
     size: [1, 1]
+    texture: roca_03_ajustada.png
   - id: obstacle_7
     type: piedra_pequenia
     position: [30, 59]
     size: [1, 1]
+    texture: roca_03_ajustada.png
   - id: obstacle_6
     type: piedra_grande
     position: [24, 33]
     size: [3, 3]
+    texture: roca_01_ajustada.png
   - id: obstacle_5
     type: piedra_grande
     position: [41, 39]
     size: [3, 3]
+    texture: roca_01_ajustada.png
   - id: obstacle_4
     type: piedra_grande
     position: [47, 55]
     size: [3, 3]
+    texture: roca_01_ajustada.png
   - id: obstacle_3
     type: piedra_grande
     position: [33, 64]
     size: [3, 3]
+    texture: roca_01_ajustada.png
   - id: obstacle_2
     type: piedra_grande
     position: [22, 56]
     size: [3, 3]
+    texture: roca_01_ajustada.png
 zones:
   - id: zone_2
     type: biome
@@ -52,6 +61,7 @@ zones:
       y: 62
       width: 39
       height: 31
+    texture: tile_desierto_128x128.png
   - id: zone_1
     type: biome
     template: explanada
@@ -60,3 +70,4 @@ zones:
       y: 8
       width: 90
       height: 42
+    texture: tile_pasto_128x128.png
