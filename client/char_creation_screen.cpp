@@ -1,5 +1,7 @@
 #include "char_creation_screen.h"
 
+#include <algorithm>
+
 #include <SDL2/SDL.h>
 
 // Skins disponibles en AO_IMGS/Skins/ (excluye Cabezas.png y Gorros.png)
@@ -18,12 +20,13 @@ CharCreationScreen::CharCreationScreen(SDL2pp::Renderer& renderer, const std::st
     int winW, winH;
     SDL_GetRendererOutputSize(renderer.Get(), &winW, &winH);
 
-    // Escalar el PNG 1024×1024 para que llene el ancho de la ventana.
-    // El contenido útil del PNG termina alrededor de y=770, que con esta
-    // escala cabe perfectamente en una ventana de 600px de alto.
-    scale = static_cast<float>(winW) / 1024.0f;
-    bgX   = 0;
-    bgY   = 0;
+    // Escala uniforme: el PNG 1024×1024 cabe dentro de la ventana sin distorsión,
+    // dejando barras negras en los bordes si la relación de aspecto es distinta.
+    scale    = std::min(static_cast<float>(winW), static_cast<float>(winH)) / 1024.0f;
+    displayW = static_cast<int>(1024 * scale);
+    displayH = static_cast<int>(1024 * scale);
+    bgX      = (winW - displayW) / 2;
+    bgY      = (winH - displayH) / 2;
 }
 
 CharCreationResult CharCreationScreen::run() {
@@ -110,10 +113,7 @@ void CharCreationScreen::render() {
     renderer.SetDrawColor(0, 0, 0, 255);
     renderer.Clear();
 
-    int winW, winH;
-    SDL_GetRendererOutputSize(renderer.Get(), &winW, &winH);
-
-    renderer.Copy(background, SDL2pp::NullOpt, SDL2pp::Rect(bgX, bgY, winW, winH));
+    renderer.Copy(background, SDL2pp::NullOpt, SDL2pp::Rect(bgX, bgY, displayW, displayH));
 
     for (int i = 0; i < BOX_COUNT; i++) {
         SDL2pp::Rect box = getBoxRect(i);

@@ -27,6 +27,7 @@ private:
 
     float scale;
     int bgX, bgY;
+    int displayW, displayH;  // tamaño real del PNG en pantalla (aspect ratio preservado)
 
     // ── Skins disponibles (archivos dentro de AO_IMGS/Skins/) ────────────
     static constexpr int NUM_SKINS = 5;
