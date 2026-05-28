@@ -1,7 +1,7 @@
 #ifndef ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
 #define ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
 
-#define CELL_DISPLAY_SIZE 16
+#define CELL_DISPLAY_SIZE 128
 #define TARGET_CELL_SCREEN_PX 32
 
 #ifndef EDITOR_SAVE_MAP_PATH
@@ -63,9 +63,9 @@
 
 #define DATA_ENVIRONMENT_ID (Qt::UserRole + 6)
 
-#define MIN_ZOOM 0.3
-#define MAX_ZOOM 3.0
-#define ZOOM_SCALE 0.1
+#define MIN_ZOOM 0.05
+#define MAX_ZOOM 2.0
+#define ZOOM_SCALE 0.05
 #define INITIAL_ZOOM 1.0
 
 // Z order de los elementos del mapa (de abajo hacia arriba):

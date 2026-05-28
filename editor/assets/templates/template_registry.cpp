@@ -174,6 +174,15 @@ bool TemplateRegistry::load_biome_file(const std::string& path) {
             biome.color = colorNode.as<std::string>();
         }
 
+        if (const auto textureNode = root["texture"]) {
+            const auto filename = textureNode.as<std::string>();
+            if (!filename.empty()) {
+                const std::filesystem::path resolved =
+                        std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
+                biome.texture = resolved.string();
+            }
+        }
+
         const auto creaturesNode = root["allowed_creatures"];
         if (creaturesNode && creaturesNode.IsSequence()) {
             for (const auto& creatureNode: creaturesNode) {
@@ -205,8 +214,6 @@ bool TemplateRegistry::load_obstacle_file(const std::string& path) {
             obstacle.color = colorNode.as<std::string>();
         }
 
-        // texture: nombre de archivo dentro de assets/images. Se resuelve a ruta absoluta
-        // así el ItemBuilder no necesita conocer rutas del proyecto.
         if (const auto textureNode = root["texture"]) {
             const auto filename = textureNode.as<std::string>();
             if (!filename.empty()) {

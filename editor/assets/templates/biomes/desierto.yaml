@@ -1,0 +1,9 @@
+template_id: desierto
+name: "Desierto"
+default_size:
+  width: 25
+  height: 20
+color: "#D6D6D6"
+texture: "tile_desierto_128x128.png"
+allowed_creatures:
+  - skeleton

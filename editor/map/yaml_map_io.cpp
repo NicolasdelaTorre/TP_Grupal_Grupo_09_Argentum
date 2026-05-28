@@ -35,6 +35,9 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 out << YAML::Key << "size" << YAML::Value;
                 out << YAML::Flow << YAML::BeginSeq << obstacle.width << obstacle.height
                     << YAML::EndSeq;
+                if (!obstacle.texture.empty()) {
+                    out << YAML::Key << "texture" << YAML::Value << obstacle.texture;
+                }
                 out << YAML::EndMap;
             }
             out << YAML::EndSeq;
@@ -53,6 +56,10 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 out << YAML::Key << "width" << YAML::Value << zone.area_width;
                 out << YAML::Key << "height" << YAML::Value << zone.area_height;
                 out << YAML::EndMap;
+
+                if (zone.type == "biome" && !zone.texture.empty()) {
+                    out << YAML::Key << "texture" << YAML::Value << zone.texture;
+                }
 
                 if (zone.type == "biome" && !zone.spawns.empty()) {
                     out << YAML::Key << "spawns" << YAML::Value << YAML::BeginSeq;
@@ -130,6 +137,9 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                         out << YAML::Key << "size" << YAML::Value;
                         out << YAML::Flow << YAML::BeginSeq << obstacle.width << obstacle.height
                             << YAML::EndSeq;
+                        if (!obstacle.texture.empty()) {
+                            out << YAML::Key << "texture" << YAML::Value << obstacle.texture;
+                        }
                         out << YAML::EndMap;
                     }
                     out << YAML::EndSeq;

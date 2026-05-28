@@ -1,6 +1,7 @@
 #include "scene_controller.h"
 
 #include <algorithm>
+#include <filesystem>
 
 #include "editor_constants.h"
 
@@ -263,6 +264,13 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             obstacle.y = cell_y;
             obstacle.width = item->data(DATA_WIDTH).toInt();
             obstacle.height = item->data(DATA_HEIGHT).toInt();
+            // Resolver textura via template
+            if (const auto* tpl = templates_.find_obstacle(obstacle.type)) {
+                if (!tpl->texture.empty()) {
+                    obstacle.texture =
+                            std::filesystem::path(tpl->texture).filename().string();
+                }
+            }
             document.obstacles.push_back(obstacle);
             continue;
         }
@@ -306,6 +314,13 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
                 const auto it = biome_spawns_.find(item->data(DATA_ID).toString());
                 if (it != biome_spawns_.end()) {
                     zone.spawns = it.value();
+                }
+                
+                if (const auto* tpl = templates_.find_biome(zone.template_id)) {
+                    if (!tpl->texture.empty()) {
+                        zone.texture =
+                                std::filesystem::path(tpl->texture).filename().string();
+                    }
                 }
             }
 
