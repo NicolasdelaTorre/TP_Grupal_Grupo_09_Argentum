@@ -1,6 +1,7 @@
 #include "map.h"
 
 #include <stdexcept>
+#include <utility>
 
 Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
     cells.resize(static_cast<size_t>(width) * height);
@@ -10,8 +11,7 @@ Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
 Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells):
         width(width), height(height), cells(std::move(cells)) {
     if (this->cells.size() != static_cast<size_t>(width) * height) {
-        throw std::invalid_argument(
-                "Map Error: cells vector size does not match width * height");
+        throw std::invalid_argument("Map Error: cells vector size does not match width * height");
     }
 }
 
@@ -38,8 +38,7 @@ Cell Map::getCell(size_t index) const {
 }
 
 bool Map::isInBounds(int16_t x, int16_t y) const {
-    return x >= 0 && y >= 0 && x < static_cast<int16_t>(width) &&
-           y < static_cast<int16_t>(height);
+    return x >= 0 && y >= 0 && x < static_cast<int16_t>(width) && y < static_cast<int16_t>(height);
 }
 
 bool Map::isWalkable(int16_t x, int16_t y) const {

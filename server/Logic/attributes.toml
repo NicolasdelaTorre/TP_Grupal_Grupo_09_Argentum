@@ -16,7 +16,7 @@ FRaceRecovery = 10.0
 [race.gnome]
 constitution = 5
 FRaceHealth = 6.0
-FRaceHealth = 18.0
+FRaceRecovery = 18.0
 
 [class.mage]
 FClassHealth = 13.0

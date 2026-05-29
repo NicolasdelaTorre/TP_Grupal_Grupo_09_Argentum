@@ -15,14 +15,14 @@ void MapRenderer::render(const GameMap& map, float camX, float camY) {
     int endX = std::min(map.width, startX + screenW / TILE_SIZE + 2);
     int endY = std::min(map.height, startY + screenH / TILE_SIZE + 2);
 
-        for (int y = startY; y < endY; y++) {
-            for (int x = startX; x < endX; x++) {
-                int screenX = (int)(x * TILE_SIZE - camX);
-                int screenY = (int)(y * TILE_SIZE - camY);
-                drawTile(map.at(x, y), screenX, screenY);
-            }
+    for (int y = startY; y < endY; y++) {
+        for (int x = startX; x < endX; x++) {
+            int screenX = (int)(x * TILE_SIZE - camX);
+            int screenY = (int)(y * TILE_SIZE - camY);
+            drawTile(map.at(x, y), screenX, screenY);
         }
     }
+}
 
 void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
     // Centrado sobre el tile
@@ -54,22 +54,22 @@ void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
             renderer.Copy(cache.get("/Mapa/Tiles_agua.png"), src, dst);
             break;
         case TileType::DIRT:
-            renderer.Copy(cache.get("/Mapa/Tile_tierra.png"), src, dst); break;
+            renderer.Copy(cache.get("/Mapa/Tile_tierra.png"), src, dst);
+            break;
         case TileType::SAND:
-            renderer.Copy(cache.get("/Mapa/Tiles_arena.png"), src, dst); break;
+            renderer.Copy(cache.get("/Mapa/Tiles_arena.png"), src, dst);
+            break;
     }
 }
 
 void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
-    if (player.weaponId < 0) return;
+    if (player.weaponId < 0)
+        return;
 
-    static const char* weaponFiles[] = {
-        "/Armas/Espada.png",
-        "/Armas/Daga.png",
-        "/Armas/Arco.png",
-        "/Armas/Baculo.png"
-    };
-    if (player.weaponId >= 4) return;
+    static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Daga.png", "/Armas/Arco.png",
+                                        "/Armas/Baculo.png"};
+    if (player.weaponId >= 4)
+        return;
 
     int row = static_cast<int>(player.dir);
     int col = player.moving ? player.animFrame : 0;
@@ -77,8 +77,8 @@ void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
     SDL2pp::Rect src(col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H);
 
     // Misma posición base que el cuerpo
-    int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE/2 - SPRITE_W/2;
-    int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE/2 - SPRITE_H/2;
+    int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
+    int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
     SDL2pp::Rect dst(screenX, screenY, SPRITE_W, SPRITE_H);
 
     renderer.Copy(cache.get(weaponFiles[player.weaponId]), src, dst);

@@ -1,4 +1,5 @@
 #include "attribute_manager.h"
+
 #include <iostream>
 
 AttributeManager::AttributeManager(const std::string& filename) {
@@ -13,23 +14,23 @@ AttributeManager::AttributeManager(const std::string& filename) {
     attributes.cleric = readClass(config, "cleric");
     attributes.champion = readClass(config, "champion");
     attributes.warrior = readClass(config, "warrior");
-
 }
 
 RaceAttribute AttributeManager::readRace(const toml::value& config, const std::string& raceName) {
-    RaceAttribute raza;
+    RaceAttribute race;
 
-    raza.constitution = toml::find<uint8_t>(config, raceName, "constitution");
-    raza.FRaceHealth = toml::find<float>(config, raceName, "FRaceHealth");
-    raza.FRaceRecovery = toml::find<float>(config, raceName, "FRaceRecovery");
+    race.constitution = toml::find<uint8_t>(config, "race", raceName, "constitution");
+    race.FRaceHealth = toml::find<float>(config, "race", raceName, "FRaceHealth");
+    race.FRaceRecovery = toml::find<float>(config, "race", raceName, "FRaceRecovery");
 
-    return raza;
+    return race;
 }
 
-ClassAttribute AttributeManager::readClass(const toml::value& config, const std::string& className) {
+ClassAttribute AttributeManager::readClass(const toml::value& config,
+                                           const std::string& className) {
     ClassAttribute clase;
 
-    clase.FClassHealth = toml::find<float>(config, className, "FClassHealth");
+    clase.FClassHealth = toml::find<float>(config, "class", className, "FClassHealth");
 
     return clase;
 }

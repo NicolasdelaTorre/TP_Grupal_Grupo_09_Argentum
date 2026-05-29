@@ -8,6 +8,7 @@
 
 #include "assets/templates/template_registry.h"
 #include "map/map_data.h"
+
 #include "map_canvas.h"
 #include "tool_info.h"
 

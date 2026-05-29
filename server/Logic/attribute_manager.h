@@ -2,8 +2,8 @@
 #define ATTRIBUTE_MANAGER_H
 
 #include <cstdint>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #include "toml.hpp"
 
@@ -23,7 +23,7 @@ struct GameAttributes {
     RaceAttribute elf;
     RaceAttribute dwarf;
     RaceAttribute gnome;
-    
+
     ClassAttribute mage;
     ClassAttribute cleric;
     ClassAttribute champion;
@@ -31,19 +31,19 @@ struct GameAttributes {
 };
 
 class AttributeManager {
-    private:
-        GameAttributes attributes;
+private:
+    GameAttributes attributes;
 
-        RaceAttribute readRace(const toml::value& config, const std::string& raceName);
+    RaceAttribute readRace(const toml::value& config, const std::string& raceName);
 
-        ClassAttribute readClass(const toml::value& config, const std::string& className);
+    ClassAttribute readClass(const toml::value& config, const std::string& className);
 
-    public:
-        AttributeManager(const std::string& filename);
+public:
+    explicit AttributeManager(const std::string& filename);
 
-        RaceAttribute getRaceAttribute(const std::string& raceName);
+    RaceAttribute getRaceAttribute(const std::string& raceName);
 
-        ClassAttribute getClassAttribute(const std::string& className);
+    ClassAttribute getClassAttribute(const std::string& className);
 };
 
 #endif

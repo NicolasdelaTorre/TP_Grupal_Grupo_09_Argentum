@@ -1,8 +1,11 @@
 #include "stats_definition.h"
 
-StatsDefinition::StatsDefinition() : attributes("attributes.toml") {}
+#include <string>
 
-uint32_t StatsDefinition::maxHealth(uint8_t playerLevel, const std::string& raceName, const std::string& className) {
+StatsDefinition::StatsDefinition(): attributes("server/Logic/attributes.toml") {}
+
+uint32_t StatsDefinition::maxHealth(uint8_t playerLevel, const std::string& raceName,
+                                    const std::string& className) {
     RaceAttribute race = attributes.getRaceAttribute(raceName);
     ClassAttribute class_ = attributes.getClassAttribute(className);
     return race.constitution * class_.FClassHealth * race.FRaceHealth * playerLevel;

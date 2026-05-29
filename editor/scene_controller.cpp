@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <string>
 
 #include "editor_constants.h"
 
@@ -31,9 +32,7 @@ QString SceneController::nextObstacleId() {
 
 QString SceneController::nextZoneId() { return QStringLiteral("zone_%1").arg(next_zone_id_++); }
 
-QString SceneController::nextWallId() {
-    return QStringLiteral("wall_%1").arg(next_wall_id_++);
-}
+QString SceneController::nextWallId() { return QStringLiteral("wall_%1").arg(next_wall_id_++); }
 
 // obtener item en celda
 QGraphicsItem* SceneController::topLevelItemAtCell(int cell_x, int cell_y) const {
@@ -106,8 +105,8 @@ bool SceneController::placeCityZone(const ToolInfo& tool, int cell_x, int cell_y
     const QColor fill = resolveZoneColor(city ? city->color : std::string(), true);
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
-    auto* item = item_builder_.buildZone(id, ZONE_TYPE_CITY, tool.city_template_id, width, height,
-                                         fill);
+    auto* item =
+            item_builder_.buildZone(id, ZONE_TYPE_CITY, tool.city_template_id, width, height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_CITY_ZONE);
     scene_->addItem(item);
@@ -115,8 +114,8 @@ bool SceneController::placeCityZone(const ToolInfo& tool, int cell_x, int cell_y
 }
 
 bool SceneController::placeEntry(const QString& entry_id, const QString& environment_id,
-                                  const QString& template_id, int cell_x, int cell_y,
-                                  QString& error) {
+                                 const QString& template_id, int cell_x, int cell_y,
+                                 QString& error) {
     if (template_id.isEmpty()) {
         error = QStringLiteral("Seleccioná un template de entrada.");
         return false;
@@ -136,8 +135,8 @@ bool SceneController::placeEntry(const QString& entry_id, const QString& environ
         }
     }
 
-    auto* item = item_builder_.buildEntry(entry_id, QString::fromStdString(tpl->id),
-                                          environment_id, tpl->width, tpl->height, fill);
+    auto* item = item_builder_.buildEntry(entry_id, QString::fromStdString(tpl->id), environment_id,
+                                          tpl->width, tpl->height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_ENTRY);
     scene_->addItem(item);
@@ -175,9 +174,8 @@ bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QS
 }
 
 bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_y, int width,
-                                      int height,
-                                      const std::vector<CreatureSpawn>& spawns,
-                                      QString& error, const QString& zone_id) {
+                                     int height, const std::vector<CreatureSpawn>& spawns,
+                                     QString& error, const QString& zone_id) {
     if (tool.biome_template_id.isEmpty()) {
         error = QStringLiteral("Seleccioná un template de bioma.");
         return false;
@@ -191,8 +189,8 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
     const QColor fill = resolveZoneColor(biome ? biome->color : std::string(), false);
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
-    auto* item = item_builder_.buildZone(id, ZONE_TYPE_BIOME, tool.biome_template_id, width,
-                                       height, fill);
+    auto* item = item_builder_.buildZone(id, ZONE_TYPE_BIOME, tool.biome_template_id, width, height,
+                                         fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_BIOME_ZONE);
     scene_->addItem(item);
@@ -267,8 +265,7 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             // Resolver textura via template
             if (const auto* tpl = templates_.find_obstacle(obstacle.type)) {
                 if (!tpl->texture.empty()) {
-                    obstacle.texture =
-                            std::filesystem::path(tpl->texture).filename().string();
+                    obstacle.texture = std::filesystem::path(tpl->texture).filename().string();
                 }
             }
             document.obstacles.push_back(obstacle);
@@ -315,11 +312,10 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
                 if (it != biome_spawns_.end()) {
                     zone.spawns = it.value();
                 }
-                
+
                 if (const auto* tpl = templates_.find_biome(zone.template_id)) {
                     if (!tpl->texture.empty()) {
-                        zone.texture =
-                                std::filesystem::path(tpl->texture).filename().string();
+                        zone.texture = std::filesystem::path(tpl->texture).filename().string();
                     }
                 }
             }

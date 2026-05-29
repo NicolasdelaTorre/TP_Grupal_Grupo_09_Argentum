@@ -2,7 +2,9 @@
 
 #include <utility>
 
-Player::Player(const std::string& name, Position position, const std::string& race, const std::string& class_): name(name) {
+Player::Player(const std::string& name, Position position, const std::string& race,
+               const std::string& class_):
+        name(name) {
     data.position = position;
     data.level = 1;
     data.race = Race::fromString(race);

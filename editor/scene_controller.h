@@ -6,6 +6,7 @@
 #include <QGraphicsScene>
 #include <QHash>
 #include <QString>
+#include <string>
 #include <vector>
 
 #include "assets/templates/template_registry.h"
@@ -30,8 +31,8 @@ public:
     bool placeCityZone(const ToolInfo& tool, int cell_x, int cell_y, int width, int height,
                        QString& error, const QString& zone_id = QString());
     bool placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_y, int width, int height,
-                         const std::vector<CreatureSpawn>& spawns, QString& error,
-                         const QString& zone_id = QString());
+                        const std::vector<CreatureSpawn>& spawns, QString& error,
+                        const QString& zone_id = QString());
     bool placeEntry(const QString& entry_id, const QString& environment_id,
                     const QString& template_id, int cell_x, int cell_y, QString& error);
     bool placeWall(const ToolInfo& tool, int cell_x, int cell_y, QString& error,

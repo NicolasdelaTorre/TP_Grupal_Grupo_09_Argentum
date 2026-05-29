@@ -8,8 +8,9 @@
 #include <QSize>
 
 #include "dialogs/new_environment_dialog.h"
-#include "editor_constants.h"
 #include "map/yaml_map_io.h"
+
+#include "editor_constants.h"
 #include "ui_EditorWindow.h"
 #include "verificator.h"
 
@@ -43,8 +44,7 @@ EditorWindow::EditorWindow(QWidget* parent):
     connect(ui_->btnBack, &QPushButton::clicked, this,
             [this] { ui_->stackedWidget->setCurrentWidget(ui_->pageMainMenu); });
 
-    connect(ui_->btnBackToMainMap, &QPushButton::clicked, this,
-            [this]() { backToMainMap(); });
+    connect(ui_->btnBackToMainMap, &QPushButton::clicked, this, [this]() { backToMainMap(); });
 
     connect(ui_->listEnvironments, &QListWidget::itemDoubleClicked, this,
             &EditorWindow::onEnvironmentDoubleClicked);
@@ -303,8 +303,8 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
     }
 
     map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);
-    ui_->labelEditingTarget->setText(QStringLiteral("Editando entorno: %1")
-                                              .arg(QString::fromStdString(env->name)));
+    ui_->labelEditingTarget->setText(
+            QStringLiteral("Editando entorno: %1").arg(QString::fromStdString(env->name)));
     ui_->btnBackToMainMap->setVisible(true);
     setMainOnlySectionsVisible(false);
     selectTool(EditorTool::None);
@@ -364,8 +364,8 @@ void EditorWindow::saveMap() {
         return;
     }
 
-    const QString path = QStringLiteral("%1/%2.yaml")
-                                 .arg(SAVE_MAP, QString::fromStdString(main_doc_.map.id));
+    const QString path =
+            QStringLiteral("%1/%2.yaml").arg(SAVE_MAP, QString::fromStdString(main_doc_.map.id));
     if (!YamlMapIO::save(main_doc_, path.toStdString())) {
         QMessageBox::warning(this, QStringLiteral("Error"),
                              QStringLiteral("No se pudo guardar el YAML."));

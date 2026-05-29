@@ -16,5 +16,6 @@ repos:
     hooks:
       - id: cppcheck
         files: ^(.*[.]cpp|.*[.]h)$
-        args: ["--inline-suppr", "--enable=all", "--suppress=missingIncludeSystem", "--suppress=missingInclude", "--suppress=unusedFunction", "--suppress=unmatchedSuppression", "--suppress=unusedStructMember", "--language=c++", "--std=c++20", "--error-exitcode=1"]
+        exclude: ^server/Logic/toml[.]hpp$
+        args: ["--inline-suppr", "--enable=all", "--force", "--suppress=preprocessorErrorDirective:server/Logic/toml.hpp", "--suppress=noValidConfiguration", "--suppress=missingIncludeSystem", "--suppress=missingInclude", "--suppress=unusedFunction", "--suppress=unmatchedSuppression", "--suppress=unusedStructMember", "--language=c++", "--std=c++20", "--error-exitcode=1"]
 
