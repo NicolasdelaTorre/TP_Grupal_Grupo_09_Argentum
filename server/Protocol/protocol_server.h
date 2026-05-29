@@ -35,6 +35,9 @@ private:
     // Deserializa el skin elegido en char creation: "skin.<id>".
     int returnSkin(std::string& message, const int clientId);
 
+    // Deserializa el TURN (gira sin moverse): "turn.<direccion>".
+    int returnTurn(std::string& message, const int clientId);
+
     // Manda el mapa entero (opcode + width + height + cellCount + cells).
     void sendMap(common_protocol& client);
 

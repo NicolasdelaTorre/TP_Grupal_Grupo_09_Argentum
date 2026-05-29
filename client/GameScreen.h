@@ -42,6 +42,7 @@ private:
     Queue<std::string>& events_queue;
     int lastTileX;
     int lastTileY;
+    Direction lastSentDir;  // última dirección que mandamos al server (para detectar giros)
 
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver pushea.
     Queue<std::string>& server_queue;
@@ -58,6 +59,9 @@ private:
 
     // Detecta cuando el jugador cruza a un tile distinto y notifica al server
     void notifyTileChange();
+
+    // Si la dirección local cambió respecto a lo último que mandamos, manda TURN_*.
+    void notifyDirectionChange();
 
     // Drena los eventos pendientes del servidor y actualiza otherPlayers.
     void consumeServerEvents();

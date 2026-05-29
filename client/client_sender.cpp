@@ -9,7 +9,9 @@ client_sender::client_sender(client_protocol& protocol, Queue<std::string>& even
         protocol(protocol), events_queue(events_queue) {}
 
 
-// Formato de eventos esperados en la queue: "TOP", "BOTTOM", "LEFT", "RIGHT"
+// Formato de eventos esperados en la queue:
+//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT" — cruzó un tile, send_move
+//   "TURN_TOP" / "TURN_BOTTOM" / etc. — giró sin moverse, send_turn
 void client_sender::run() {
     try {
         while (should_keep_running()) {
@@ -22,6 +24,14 @@ void client_sender::run() {
                 protocol.send_move(ClientMsg::LEFT);
             else if (event == "RIGHT")
                 protocol.send_move(ClientMsg::RIGHT);
+            else if (event == "TURN_TOP")
+                protocol.send_turn(ClientMsg::TOP);
+            else if (event == "TURN_BOTTOM")
+                protocol.send_turn(ClientMsg::BOTTOM);
+            else if (event == "TURN_LEFT")
+                protocol.send_turn(ClientMsg::LEFT);
+            else if (event == "TURN_RIGHT")
+                protocol.send_turn(ClientMsg::RIGHT);
         }
     } catch (const ClosedQueue&) {}
 }
