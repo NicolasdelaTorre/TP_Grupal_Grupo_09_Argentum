@@ -61,9 +61,22 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnUser(message, clientId);
         case static_cast<uint8_t>(ClientMsg::MOVEMENT):
             return returnMovement(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::SKIN_SELECTED):
+            return returnSkin(message, clientId);
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }
+}
+
+int ProtocolServer::returnSkin(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t skinId = it->second.receive_byte();
+    message += "skin.";
+    message += std::to_string(skinId);
+    return 1;
 }
 
 int ProtocolServer::returnUser(std::string& message, const int clientId) {
@@ -137,6 +150,8 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
             sendLoginOk(it->second, message);
         } else if (message == "LOGIN_FAIL") {
             it->second.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_FAIL));
+        } else if (message == "FIRST_LOGIN") {
+            it->second.sendByte(static_cast<uint8_t>(ServerMsg::FIRST_LOGIN));
         } else if (message == "MAP") {
             sendMap(it->second);
         } else if (message == "MOVE_OK") {

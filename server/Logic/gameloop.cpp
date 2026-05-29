@@ -36,38 +36,22 @@ void Gameloop::processCommand(const std::string& command) {
         return;
     }
 
+    // "skin" llega después del char creation. No la procesa el Game (no cambia
+    // estado del mundo, por ahora), solo gatilla la finalización del login.
+    if (cmd == "skin") {
+        if (game.hasPlayer(idPlayer)) {
+            finalizePlayerLogin(idPlayer);
+        }
+        return;
+    }
+
     bool success = game.processCommand(idPlayer, command.substr(posId + 1));
 
     if (cmd == "user") {
-        if (success) {
-            // Confirmar al recién llegado: LOGIN_OK + MAP.
-            Position p = game.getPlayerPosition(idPlayer);
-            std::string loginMsg =
-                    "LOGIN_OK:" + std::to_string(p.x) + ":" + std::to_string(p.y);
-            clientQueues.sendToClient(idPlayer, loginMsg);
-            clientQueues.sendToClient(idPlayer, "MAP");
-
-            // Mandarle un NEW_PLAYER por cada jugador que ya estaba.
-            for (int otherId: game.getPlayerIds()) {
-                if (otherId == idPlayer)
-                    continue;
-                Position op = game.getPlayerPosition(otherId);
-                const std::string& oname = game.getPlayerName(otherId);
-                std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" +
-                                 std::to_string(op.x) + ":" + std::to_string(op.y) +
-                                 ":" + oname;
-                clientQueues.sendToClient(idPlayer, np);
-            }
-
-            // Avisarles a los demás del recién llegado.
-            const std::string& myName = game.getPlayerName(idPlayer);
-            std::string broadcastMsg = "NEW_PLAYER:" + std::to_string(idPlayer) + ":" +
-                                       std::to_string(p.x) + ":" + std::to_string(p.y) +
-                                       ":" + myName;
-            clientQueues.broadcastExcept(idPlayer, broadcastMsg);
-        } else {
-            clientQueues.sendToClient(idPlayer, "LOGIN_FAIL");
-        }
+        // El usuario se acaba de loguear. Le mandamos FIRST_LOGIN para que
+        // muestre la pantalla de selección de personaje; los NEW_PLAYER y el
+        // MAP se mandan cuando llegue el "skin".
+        clientQueues.sendToClient(idPlayer, success ? "FIRST_LOGIN" : "LOGIN_FAIL");
     } else if (cmd == "movement") {
         if (success) {
             clientQueues.sendToClient(idPlayer, "MOVE_OK");
@@ -82,6 +66,30 @@ void Gameloop::processCommand(const std::string& command) {
     } else {
         std::cout << "Unknown command in gameloop: " << cmd << std::endl;
     }
+}
+
+void Gameloop::finalizePlayerLogin(int idPlayer) {
+    Position p = game.getPlayerPosition(idPlayer);
+    std::string loginMsg = "LOGIN_OK:" + std::to_string(p.x) + ":" + std::to_string(p.y);
+    clientQueues.sendToClient(idPlayer, loginMsg);
+    clientQueues.sendToClient(idPlayer, "MAP");
+
+    // Mandarle un NEW_PLAYER por cada jugador que ya estaba.
+    for (int otherId: game.getPlayerIds()) {
+        if (otherId == idPlayer)
+            continue;
+        Position op = game.getPlayerPosition(otherId);
+        const std::string& oname = game.getPlayerName(otherId);
+        std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" +
+                         std::to_string(op.x) + ":" + std::to_string(op.y) + ":" + oname;
+        clientQueues.sendToClient(idPlayer, np);
+    }
+
+    // Avisarles a los demás del recién llegado.
+    const std::string& myName = game.getPlayerName(idPlayer);
+    std::string broadcastMsg = "NEW_PLAYER:" + std::to_string(idPlayer) + ":" +
+                               std::to_string(p.x) + ":" + std::to_string(p.y) + ":" + myName;
+    clientQueues.broadcastExcept(idPlayer, broadcastMsg);
 }
 
 void Gameloop::stop() { gameFinished = true; }

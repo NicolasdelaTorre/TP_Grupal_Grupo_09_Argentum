@@ -21,6 +21,10 @@ private:
 
     void processCommand(const std::string& command);
 
+    // Manda LOGIN_OK + MAP al jugador y avisa a todos del nuevo. Se llama
+    // al final del char creation (cuando llega "skin").
+    void finalizePlayerLogin(int idPlayer);
+
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
              ProtocolServer& protocol, Position playerSpawn);

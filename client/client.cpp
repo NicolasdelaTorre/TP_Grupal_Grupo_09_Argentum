@@ -42,16 +42,17 @@ void client::run() {
         return;
     }
 
-    if (type == ServerMsg::LOGIN_OK) {
+    // Usuario nuevo: pasamos por char creation y mandamos la skin elegida.
+    // Después el server manda LOGIN_OK con el spawn point.
+    if (type == ServerMsg::FIRST_LOGIN) {
         CharCreationScreen charCreation(renderer, "AO_IMGS");
         CharCreationResult charResult = charCreation.run();
         if (!charResult.confirmed)
             return;
         protocol.send_skin_selected(static_cast<uint8_t>(charResult.skinId));
-        // Ahora esperamos el LOGIN_OK con la posición de spawn.
         type = protocol.recv_msg_type();
     }
-    
+
     if (type != ServerMsg::LOGIN_OK) {
         std::cerr << "Unexpected response from server (expected LOGIN_OK)" << std::endl;
         return;
