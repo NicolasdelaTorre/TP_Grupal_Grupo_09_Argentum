@@ -33,7 +33,8 @@ enum class TileType : uint8_t {
     GRASS = 0,
     WATER,
     DIRT,
-    SAND
+    SAND,
+    INTERIOR  // piso de ciudad / interior
 };
 
 // ── Dirección del personaje ───────────────────────────────────

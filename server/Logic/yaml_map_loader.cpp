@@ -76,7 +76,8 @@ LoadedMap loadMapFromYaml(const std::string& path) {
         }
     }
 
-    // Zonas tipo ciudad -> safe zone. Forest y otros tipos por ahora se ignoran.
+    // Zonas tipo ciudad -> safe zone + fixed_npcs bloquean su celda.
+    // Biomes y otros tipos por ahora se ignoran.
     if (root["zones"]) {
         for (const auto& zone: root["zones"]) {
             std::string type = zone["type"].as<std::string>();
@@ -87,6 +88,25 @@ LoadedMap loadMapFromYaml(const std::string& path) {
             int16_t zw = zone["area"]["width"].as<int16_t>();
             int16_t zh = zone["area"]["height"].as<int16_t>();
             applySafeZone(cells, width, height, zx, zy, zw, zh);
+
+            if (zone["fixed_npcs"]) {
+                for (const auto& npc: zone["fixed_npcs"]) {
+                    int16_t nx = npc["position"][0].as<int16_t>();
+                    int16_t ny = npc["position"][1].as<int16_t>();
+                    applyObstacle(cells, width, height, nx, ny, 1, 1, nextObstacleId++);
+                }
+            }
+        }
+    }
+
+    // Entries (portales a cuevas): bloquean su rectángulo en el mapa principal.
+    if (root["entries"]) {
+        for (const auto& entry: root["entries"]) {
+            int16_t ex = entry["position"][0].as<int16_t>();
+            int16_t ey = entry["position"][1].as<int16_t>();
+            int16_t ew = entry["size"][0].as<int16_t>();
+            int16_t eh = entry["size"][1].as<int16_t>();
+            applyObstacle(cells, width, height, ex, ey, ew, eh, nextObstacleId++);
         }
     }
 

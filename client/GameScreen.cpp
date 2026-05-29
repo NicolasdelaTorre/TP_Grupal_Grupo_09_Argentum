@@ -1,6 +1,7 @@
 #include "GameScreen.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace {
 
@@ -11,10 +12,19 @@ GameMap convertToGameMap(const ReceivedMap& m) {
     gm.height = m.height;
     gm.tiles.resize(m.cells.size());
     for (size_t i = 0; i < m.cells.size(); i++) {
-        bool hasObstacle = (m.cells[i].obstacleId != 0);
-        // DIRT por ahora; cuando haya sprites de obstáculos se va a usar el obstacleId.
-        gm.tiles[i].floor = hasObstacle ? TileType::DIRT : TileType::GRASS;
-        gm.tiles[i].blocked = hasObstacle;
+        const auto& cell = m.cells[i];
+        bool hasObstacle = (cell.obstacleId != 0);
+        if (hasObstacle) {
+            // DIRT por ahora; cuando haya sprites de obstáculos se va a usar el obstacleId.
+            gm.tiles[i].floor = TileType::DIRT;
+            gm.tiles[i].blocked = true;
+        } else if (cell.safeZone) {
+            gm.tiles[i].floor = TileType::INTERIOR;
+            gm.tiles[i].blocked = false;
+        } else {
+            gm.tiles[i].floor = TileType::GRASS;
+            gm.tiles[i].blocked = false;
+        }
     }
     return gm;
 }
@@ -180,6 +190,10 @@ void GameScreen::notifyDirectionChange() {
 void GameScreen::notifyTileChange() {
     int curTileX = (int)(player.x + HEAD_OFFSET);
     int curTileY = (int)(player.y + FEET_OFFSET);
+
+    if (curTileX != lastTileX || curTileY != lastTileY) {
+        std::cout << "Pos: (" << curTileX << ", " << curTileY << ")" << std::endl;
+    }
 
     if (curTileX != lastTileX) {
         events_queue.push(curTileX > lastTileX ? "RIGHT" : "LEFT");
