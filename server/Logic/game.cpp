@@ -18,9 +18,11 @@ bool Game::processCommand(int playerId, const std::string& command) {
     if (dataType == "user") {
         std::string user = command.substr(commandPosition + 1);
         Position spawn = findSpawnPosition();
-        players.emplace(playerId, Player(user, spawn));
+        players.emplace(playerId, Player(user, spawn, "elf", "mage"));
+
         std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")"
                   << std::endl;
+
         return true;
     } else if (dataType == "movement") {
         std::string direction = command.substr(commandPosition + 1);
@@ -157,4 +159,11 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     player.move(next);
     player.setDirection(newDir);
     return true;
+}
+
+void Game::test() {
+    auto itPlayer = players.find(0);
+    if (itPlayer != players.end()) {
+        std::cout << itPlayer->second.data.health << std::endl;
+    }
 }

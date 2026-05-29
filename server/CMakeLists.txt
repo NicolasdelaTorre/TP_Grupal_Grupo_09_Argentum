@@ -8,10 +8,12 @@ target_sources(taller_server
         Comunication/receiver.cpp
         Comunication/sender.cpp
         Logic/player.cpp
+        Logic/stats_definition.cpp
         Logic/map.cpp
         Logic/game.cpp
         Logic/gameloop.cpp
         Logic/yaml_map_loader.cpp
+        Logic/attribute_manager.cpp
         Protocol/protocol_server.cpp
     PUBLIC
         server.h
@@ -21,10 +23,14 @@ target_sources(taller_server
         Comunication/receiver.h
         Comunication/sender.h
         Logic/player.h
+        Logic/stats_definition.h
         Logic/map.h
         Logic/game.h
         Logic/gameloop.h
         Logic/yaml_map_loader.h
+        Logic/attribute_manager.h
+        Logic/race.h
+        Logic/class_.h
         Protocol/protocol_server.h
     )
 

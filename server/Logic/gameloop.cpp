@@ -15,6 +15,8 @@ void Gameloop::run() {
             processCommand(command);
         }
 
+        game.test();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }

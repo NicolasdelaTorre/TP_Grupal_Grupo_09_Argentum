@@ -1,0 +1,31 @@
+[race.human]
+constitution = 10
+FRaceHealth = 15.0
+FRaceRecovery = 15.0
+
+[race.elf]
+constitution = 5
+FRaceHealth = 8.0
+FRaceRecovery = 20.0
+
+[race.dwarf]
+constitution = 14
+FRaceHealth = 20.0
+FRaceRecovery = 10.0
+
+[race.gnome]
+constitution = 5
+FRaceHealth = 6.0
+FRaceHealth = 18.0
+
+[class.mage]
+FClassHealth = 13.0
+
+[class.cleric]
+FClassHealth = 10.0
+
+[class.champion]
+FClassHealth = 18.0
+
+[class.warrior]
+FClassHealth = 20.0
