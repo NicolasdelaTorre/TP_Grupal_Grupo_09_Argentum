@@ -17,6 +17,11 @@ void client_protocol::send_move(ClientMsg direction) {
     protocol.sendByte(static_cast<uint8_t>(direction));
 }
 
+void client_protocol::send_turn(ClientMsg direction) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::TURN));
+    protocol.sendByte(static_cast<uint8_t>(direction));
+}
+
 ServerMsg client_protocol::recv_msg_type() {
     uint8_t opcode = protocol.receive_byte();
     return static_cast<ServerMsg>(opcode);
@@ -60,6 +65,7 @@ PlayerEvent client_protocol::recv_new_player_payload() {
     ev.id = protocol.receive_two_bytes_number();
     ev.x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     ev.y = static_cast<int16_t>(protocol.receive_two_bytes_number());
+    ev.dir = protocol.receive_byte();
     uint16_t nameLen = protocol.receive_two_bytes_number();
     ev.name = protocol.receive_message(nameLen);
     return ev;
@@ -70,6 +76,7 @@ PlayerEvent client_protocol::recv_player_moved_payload() {
     ev.id = protocol.receive_two_bytes_number();
     ev.x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     ev.y = static_cast<int16_t>(protocol.receive_two_bytes_number());
+    ev.dir = protocol.receive_byte();
     return ev;
 }
 

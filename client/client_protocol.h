@@ -28,10 +28,12 @@ struct ReceivedMap {
 };
 
 // Evento de un jugador (NEW_PLAYER y PLAYER_MOVED). En PLAYER_MOVED `name` queda vacío.
+// dir usa valores wire: 3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT.
 struct PlayerEvent {
     uint16_t id;
     int16_t x;
     int16_t y;
+    uint8_t dir;
     std::string name;
 };
 
@@ -43,6 +45,9 @@ public:
 
     // Enviar movimiento: direction debe ser TOP, BOTTOM, LEFT o RIGHT
     void send_move(ClientMsg direction);
+
+    // Enviar cambio de dirección sin moverse (girar en la misma celda).
+    void send_turn(ClientMsg direction);
 
     // Leer el tipo del próximo mensaje que mandó el servidor (1 byte de opcode)
     ServerMsg recv_msg_type();

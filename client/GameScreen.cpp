@@ -27,6 +27,18 @@ static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player& p) {
     p.y = static_cast<float>(tileY) - FEET_OFFSET;
 }
 
+// Mapea la dirección wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT) a la Direction
+// del cliente (que usa otros valores porque son índices de fila en el spritesheet).
+static Direction wireDirToSpriteDir(uint8_t wireDir) {
+    switch (wireDir) {
+        case 3: return Direction::UP;
+        case 4: return Direction::DOWN;
+        case 5: return Direction::LEFT;
+        case 6: return Direction::RIGHT;
+        default: return Direction::DOWN;
+    }
+}
+
 GameScreen::GameScreen(SDL2pp::Renderer& renderer,
                        const std::string& assetsPath,
                        Queue<std::string>& events_queue,
@@ -43,6 +55,7 @@ GameScreen::GameScreen(SDL2pp::Renderer& renderer,
 
     lastTileX = (int)(player.x + HEAD_OFFSET);
     lastTileY = (int)(player.y + FEET_OFFSET);
+    lastSentDir = player.dir;
 }
 
 bool GameScreen::run() {
@@ -144,7 +157,23 @@ bool GameScreen::handleEvents(float dt) {
 
     // Si cambiamos de tile, le avisamos al server
     notifyTileChange();
+    notifyDirectionChange();
     return true;
+}
+
+void GameScreen::notifyDirectionChange() {
+    if (player.dir == lastSentDir)
+        return;
+    const char* msg = nullptr;
+    switch (player.dir) {
+        case Direction::UP:    msg = "TURN_TOP"; break;
+        case Direction::DOWN:  msg = "TURN_BOTTOM"; break;
+        case Direction::LEFT:  msg = "TURN_LEFT"; break;
+        case Direction::RIGHT: msg = "TURN_RIGHT"; break;
+    }
+    if (msg)
+        events_queue.push(msg);
+    lastSentDir = player.dir;
 }
 
 void GameScreen::notifyTileChange() {
@@ -193,7 +222,25 @@ void GameScreen::consumeServerEvents() {
     std::string event;
     while (server_queue.try_pop(event)) {
         if (event.rfind("NEW_PLAYER:", 0) == 0) {
-            // NEW_PLAYER:<id>:<x>:<y>:<name>
+            // NEW_PLAYER:<id>:<x>:<y>:<dir>:<name>
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            size_t c4 = event.find(':', c3 + 1);
+            size_t c5 = event.find(':', c4 + 1);
+            if (c5 == std::string::npos)
+                continue;
+            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
+            int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
+            uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
+            OtherPlayer op;
+            tileToPlayerCoords(x, y, op.visual);
+            op.visual.dir = wireDirToSpriteDir(dir);
+            op.name = event.substr(c5 + 1);
+            otherPlayers[id] = std::move(op);
+        } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
+            // PLAYER_MOVED:<id>:<x>:<y>:<dir>
             size_t c1 = event.find(':');
             size_t c2 = event.find(':', c1 + 1);
             size_t c3 = event.find(':', c2 + 1);
@@ -203,23 +250,11 @@ void GameScreen::consumeServerEvents() {
             int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
             int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
             int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
-            OtherPlayer op;
-            tileToPlayerCoords(x, y, op.visual);
-            op.name = event.substr(c4 + 1);
-            otherPlayers[id] = std::move(op);
-        } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
-            // PLAYER_MOVED:<id>:<x>:<y>
-            size_t c1 = event.find(':');
-            size_t c2 = event.find(':', c1 + 1);
-            size_t c3 = event.find(':', c2 + 1);
-            if (c3 == std::string::npos)
-                continue;
-            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
-            int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
-            int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1)));
+            uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1)));
             auto it = otherPlayers.find(id);
             if (it != otherPlayers.end()) {
                 tileToPlayerCoords(x, y, it->second.visual);
+                it->second.visual.dir = wireDirToSpriteDir(dir);
             }
         } else if (event.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
             // PLAYER_DISCONNECTED:<id>

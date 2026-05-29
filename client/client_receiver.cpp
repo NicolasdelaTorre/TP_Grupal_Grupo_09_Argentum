@@ -22,14 +22,15 @@ void client_receiver::run() {
                     PlayerEvent ev = protocol.recv_new_player_payload();
                     server_queue.push("NEW_PLAYER:" + std::to_string(ev.id) + ":" +
                                       std::to_string(ev.x) + ":" + std::to_string(ev.y) +
-                                      ":" + ev.name);
+                                      ":" + std::to_string(ev.dir) + ":" + ev.name);
                     break;
                 }
 
                 case ServerMsg::PLAYER_MOVED: {
                     PlayerEvent ev = protocol.recv_player_moved_payload();
                     server_queue.push("PLAYER_MOVED:" + std::to_string(ev.id) + ":" +
-                                      std::to_string(ev.x) + ":" + std::to_string(ev.y));
+                                      std::to_string(ev.x) + ":" + std::to_string(ev.y) +
+                                      ":" + std::to_string(ev.dir));
                     break;
                 }
 

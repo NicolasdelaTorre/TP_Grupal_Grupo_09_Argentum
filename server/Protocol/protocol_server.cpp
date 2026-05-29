@@ -63,6 +63,8 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnMovement(message, clientId);
         case static_cast<uint8_t>(ClientMsg::SKIN_SELECTED):
             return returnSkin(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::TURN):
+            return returnTurn(message, clientId);
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }
@@ -76,6 +78,24 @@ int ProtocolServer::returnSkin(std::string& message, const int clientId) {
     uint8_t skinId = it->second.receive_byte();
     message += "skin.";
     message += std::to_string(skinId);
+    return 1;
+}
+
+int ProtocolServer::returnTurn(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t receivedByte = it->second.receive_byte();
+    message += "turn.";
+    switch (receivedByte) {
+        case static_cast<uint8_t>(ClientMsg::TOP):    message += "top"; break;
+        case static_cast<uint8_t>(ClientMsg::BOTTOM): message += "bottom"; break;
+        case static_cast<uint8_t>(ClientMsg::LEFT):   message += "left"; break;
+        case static_cast<uint8_t>(ClientMsg::RIGHT):  message += "right"; break;
+        default:
+            throw std::runtime_error("Protocol Error: unknown turn direction");
+    }
     return 1;
 }
 
@@ -192,44 +212,51 @@ void ProtocolServer::sendLoginOk(common_protocol& client, const std::string& mes
 }
 
 void ProtocolServer::sendNewPlayer(common_protocol& client, const std::string& message) {
-    // Formato: "NEW_PLAYER:<id>:<x>:<y>:<name>"
+    // Formato: "NEW_PLAYER:<id>:<x>:<y>:<dir>:<name>"
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    size_t c3 = message.find(':', c2 + 1);
+    size_t c4 = message.find(':', c3 + 1);
+    size_t c5 = message.find(':', c4 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos ||
+        c4 == std::string::npos || c5 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed NEW_PLAYER message: " + message);
+    }
+    uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+    int16_t x = static_cast<int16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
+    int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
+    uint8_t dir = static_cast<uint8_t>(std::stoi(message.substr(c4 + 1, c5 - c4 - 1)));
+    std::string name = message.substr(c5 + 1);
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::NEW_PLAYER));
+    client.send_two_bytes_number(id);
+    client.send_two_bytes_number(static_cast<uint16_t>(x));
+    client.send_two_bytes_number(static_cast<uint16_t>(y));
+    client.sendByte(dir);
+    client.send_two_bytes_number(static_cast<uint16_t>(name.size()));
+    client.send_message(std::vector<char>(name.begin(), name.end()));
+}
+
+void ProtocolServer::sendPlayerMoved(common_protocol& client, const std::string& message) {
+    // Formato: "PLAYER_MOVED:<id>:<x>:<y>:<dir>"
     size_t c1 = message.find(':');
     size_t c2 = message.find(':', c1 + 1);
     size_t c3 = message.find(':', c2 + 1);
     size_t c4 = message.find(':', c3 + 1);
     if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos ||
         c4 == std::string::npos) {
-        throw std::runtime_error("Protocol Error: malformed NEW_PLAYER message: " + message);
-    }
-    uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
-    int16_t x = static_cast<int16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
-    int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
-    std::string name = message.substr(c4 + 1);
-
-    client.sendByte(static_cast<uint8_t>(ServerMsg::NEW_PLAYER));
-    client.send_two_bytes_number(id);
-    client.send_two_bytes_number(static_cast<uint16_t>(x));
-    client.send_two_bytes_number(static_cast<uint16_t>(y));
-    client.send_two_bytes_number(static_cast<uint16_t>(name.size()));
-    client.send_message(std::vector<char>(name.begin(), name.end()));
-}
-
-void ProtocolServer::sendPlayerMoved(common_protocol& client, const std::string& message) {
-    // Formato: "PLAYER_MOVED:<id>:<x>:<y>"
-    size_t c1 = message.find(':');
-    size_t c2 = message.find(':', c1 + 1);
-    size_t c3 = message.find(':', c2 + 1);
-    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos) {
         throw std::runtime_error("Protocol Error: malformed PLAYER_MOVED message: " + message);
     }
     uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
     int16_t x = static_cast<int16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
-    int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1)));
+    int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
+    uint8_t dir = static_cast<uint8_t>(std::stoi(message.substr(c4 + 1)));
 
     client.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_MOVED));
     client.send_two_bytes_number(id);
     client.send_two_bytes_number(static_cast<uint16_t>(x));
     client.send_two_bytes_number(static_cast<uint16_t>(y));
+    client.sendByte(dir);
 }
 
 void ProtocolServer::sendPlayerDisconnected(common_protocol& client, const std::string& message) {

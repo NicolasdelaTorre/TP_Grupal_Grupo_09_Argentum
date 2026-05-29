@@ -25,9 +25,28 @@ bool Game::processCommand(int playerId, const std::string& command) {
     } else if (dataType == "movement") {
         std::string direction = command.substr(commandPosition + 1);
         return processMovement(playerId, direction);
+    } else if (dataType == "turn") {
+        std::string direction = command.substr(commandPosition + 1);
+        return turnPlayer(playerId, direction);
     }
 
     return false;
+}
+
+bool Game::turnPlayer(int playerId, const std::string& direction) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        return false;
+    }
+    uint8_t newDir;
+    if (direction == "top")         newDir = 3;
+    else if (direction == "bottom") newDir = 4;
+    else if (direction == "left")   newDir = 5;
+    else if (direction == "right")  newDir = 6;
+    else return false;
+
+    itPlayer->second.setDirection(newDir);
+    return true;
 }
 
 Position Game::findSpawnPosition() const {
@@ -77,6 +96,14 @@ const std::string& Game::getPlayerName(int playerId) const {
     return it->second.getName();
 }
 
+uint8_t Game::getPlayerDirection(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getDirection();
+}
+
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
 std::vector<int> Game::getPlayerIds() const {
@@ -98,15 +125,20 @@ bool Game::processMovement(int playerId, const std::string& direction) {
 
     Player& player = itPlayer->second;
     Position next = player.getPosition();
+    uint8_t newDir = 4;
 
     if (direction == "top") {
         next.y -= 1;
+        newDir = 3;
     } else if (direction == "bottom") {
         next.y += 1;
+        newDir = 4;
     } else if (direction == "left") {
         next.x -= 1;
+        newDir = 5;
     } else if (direction == "right") {
         next.x += 1;
+        newDir = 6;
     } else {
         return false;
     }
@@ -123,5 +155,6 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     }
 
     player.move(next);
+    player.setDirection(newDir);
     return true;
 }

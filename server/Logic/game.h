@@ -23,6 +23,7 @@ private:
     bool isPositionFree(Position pos) const;
 
     bool processMovement(int playerId, const std::string& direction);
+    bool turnPlayer(int playerId, const std::string& direction);
 
 public:
     Game(Map& map, Position playerSpawn);
@@ -31,6 +32,7 @@ public:
 
     Position getPlayerPosition(int playerId) const;
     const std::string& getPlayerName(int playerId) const;
+    uint8_t getPlayerDirection(int playerId) const;
     bool hasPlayer(int playerId) const;
     std::vector<int> getPlayerIds() const;
     void removePlayer(int playerId);

@@ -15,7 +15,7 @@ void Gameloop::run() {
             processCommand(command);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
 
@@ -57,11 +57,23 @@ void Gameloop::processCommand(const std::string& command) {
             clientQueues.sendToClient(idPlayer, "MOVE_OK");
             // Avisar a los demás del movimiento.
             Position p = game.getPlayerPosition(idPlayer);
+            uint8_t dir = game.getPlayerDirection(idPlayer);
             std::string moveMsg = "PLAYER_MOVED:" + std::to_string(idPlayer) + ":" +
-                                  std::to_string(p.x) + ":" + std::to_string(p.y);
+                                  std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
+                                  std::to_string(dir);
             clientQueues.broadcastExcept(idPlayer, moveMsg);
         } else {
             clientQueues.sendToClient(idPlayer, "MOVE_FAIL");
+        }
+    } else if (cmd == "turn") {
+        // Gira sin moverse: misma posición, nueva dirección.
+        if (success) {
+            Position p = game.getPlayerPosition(idPlayer);
+            uint8_t dir = game.getPlayerDirection(idPlayer);
+            std::string turnMsg = "PLAYER_MOVED:" + std::to_string(idPlayer) + ":" +
+                                  std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
+                                  std::to_string(dir);
+            clientQueues.broadcastExcept(idPlayer, turnMsg);
         }
     } else {
         std::cout << "Unknown command in gameloop: " << cmd << std::endl;
@@ -80,15 +92,19 @@ void Gameloop::finalizePlayerLogin(int idPlayer) {
             continue;
         Position op = game.getPlayerPosition(otherId);
         const std::string& oname = game.getPlayerName(otherId);
+        uint8_t odir = game.getPlayerDirection(otherId);
         std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" +
-                         std::to_string(op.x) + ":" + std::to_string(op.y) + ":" + oname;
+                         std::to_string(op.x) + ":" + std::to_string(op.y) + ":" +
+                         std::to_string(odir) + ":" + oname;
         clientQueues.sendToClient(idPlayer, np);
     }
 
     // Avisarles a los demás del recién llegado.
     const std::string& myName = game.getPlayerName(idPlayer);
+    uint8_t myDir = game.getPlayerDirection(idPlayer);
     std::string broadcastMsg = "NEW_PLAYER:" + std::to_string(idPlayer) + ":" +
-                               std::to_string(p.x) + ":" + std::to_string(p.y) + ":" + myName;
+                               std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
+                               std::to_string(myDir) + ":" + myName;
     clientQueues.broadcastExcept(idPlayer, broadcastMsg);
 }
 
