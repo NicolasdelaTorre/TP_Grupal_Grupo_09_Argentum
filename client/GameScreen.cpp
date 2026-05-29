@@ -21,10 +21,11 @@ GameMap convertToGameMap(const ReceivedMap& m) {
 
 }  // namespace
 
-// tile del servidor (donde caen los pies) → coords del Player (sprite + offsets).
+// tile del servidor (donde caen los pies) → coords del Player.
+// p.x e p.y = tile del jugador, así el sprite queda centrado en la celda.
 static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player& p) {
-    p.x = static_cast<float>(tileX) - HEAD_OFFSET;
-    p.y = static_cast<float>(tileY) - FEET_OFFSET;
+    p.x = static_cast<float>(tileX);
+    p.y = static_cast<float>(tileY);
 }
 
 // Mapea la dirección wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT) a la Direction
