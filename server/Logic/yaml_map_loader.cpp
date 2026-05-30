@@ -7,7 +7,22 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "../../common/DTOs.h"
+
 namespace {
+
+// Convierte el "type" del YAML al código de ObstacleType que va por la red.
+uint8_t obstacleTypeFromString(const std::string& type) {
+    if (type == "roca" || type == "piedra_grande" || type == "piedra_pequenia")
+        return static_cast<uint8_t>(ObstacleType::ROCK);
+    if (type == "arbol" || type == "arbol_grande" || type == "arbusto" || type == "tronco")
+        return static_cast<uint8_t>(ObstacleType::TREE);
+    if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
+        type == "pilar")
+        return static_cast<uint8_t>(ObstacleType::WALL);
+    // Desconocido: lo dejamos como ROCK para que al menos se vea como obstáculo.
+    return static_cast<uint8_t>(ObstacleType::ROCK);
+}
 
 void initializeDefaultCells(std::vector<Cell>& cells) {
     for (auto& c: cells) {
@@ -64,19 +79,21 @@ LoadedMap loadMapFromYaml(const std::string& path) {
     std::vector<Cell> cells(static_cast<size_t>(width) * height);
     initializeDefaultCells(cells);
 
-    // Obstáculos: cada uno reserva un rectángulo bloqueado
+    // Obstáculos: cada celda guarda el código de ObstacleType
     if (root["obstacles"]) {
-        uint16_t nextObstacleId = 1;
         for (const auto& obs: root["obstacles"]) {
+            std::string type = obs["type"].as<std::string>();
+            uint8_t typeCode = obstacleTypeFromString(type);
             int16_t ox = obs["position"][0].as<int16_t>();
             int16_t oy = obs["position"][1].as<int16_t>();
             int16_t ow = obs["size"][0].as<int16_t>();
             int16_t oh = obs["size"][1].as<int16_t>();
-            applyObstacle(cells, width, height, ox, oy, ow, oh, nextObstacleId++);
+            applyObstacle(cells, width, height, ox, oy, ow, oh, typeCode);
         }
     }
 
-    // Zonas tipo ciudad -> safe zone. Forest y otros tipos por ahora se ignoran.
+    // Zonas tipo ciudad -> safe zone + fixed_npcs bloquean su celda.
+    // Biomes y otros tipos por ahora se ignoran.
     if (root["zones"]) {
         for (const auto& zone: root["zones"]) {
             std::string type = zone["type"].as<std::string>();
@@ -87,6 +104,27 @@ LoadedMap loadMapFromYaml(const std::string& path) {
             int16_t zw = zone["area"]["width"].as<int16_t>();
             int16_t zh = zone["area"]["height"].as<int16_t>();
             applySafeZone(cells, width, height, zx, zy, zw, zh);
+
+            if (zone["fixed_npcs"]) {
+                for (const auto& npc: zone["fixed_npcs"]) {
+                    int16_t nx = npc["position"][0].as<int16_t>();
+                    int16_t ny = npc["position"][1].as<int16_t>();
+                    applyObstacle(cells, width, height, nx, ny, 1, 1,
+                                  static_cast<uint8_t>(ObstacleType::NPC));
+                }
+            }
+        }
+    }
+
+    // Entries (portales a cuevas): bloquean su rectángulo en el mapa principal.
+    if (root["entries"]) {
+        for (const auto& entry: root["entries"]) {
+            int16_t ex = entry["position"][0].as<int16_t>();
+            int16_t ey = entry["position"][1].as<int16_t>();
+            int16_t ew = entry["size"][0].as<int16_t>();
+            int16_t eh = entry["size"][1].as<int16_t>();
+            applyObstacle(cells, width, height, ex, ey, ew, eh,
+                          static_cast<uint8_t>(ObstacleType::ENTRY));
         }
     }
 

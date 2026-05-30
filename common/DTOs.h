@@ -29,7 +29,23 @@ struct LoginResult {
 
 
 // ── Tipos de tile ─────────────────────────────────────────────
-enum class TileType : uint8_t { GRASS = 0, WATER, DIRT, SAND };
+enum class TileType : uint8_t {
+    GRASS = 0,
+    WATER,
+    DIRT,
+    SAND,
+    INTERIOR  // piso de ciudad / interior
+};
+
+// Tipos de obstáculo. Se mandan como obstacleId en cada Cell del mapa.
+enum class ObstacleType : uint8_t {
+    NONE  = 0,
+    ROCK  = 1,
+    TREE  = 2,
+    NPC   = 3,
+    ENTRY = 4,
+    WALL  = 5,
+};
 
 // ── Dirección del personaje ───────────────────────────────────
 enum class Direction : uint8_t { UP = 1, LEFT = 2, DOWN = 0, RIGHT = 3 };

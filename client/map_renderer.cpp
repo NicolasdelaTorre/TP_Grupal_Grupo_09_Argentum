@@ -59,6 +59,9 @@ void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
         case TileType::SAND:
             renderer.Copy(cache.get("/Mapa/Tiles_arena.png"), src, dst);
             break;
+        case TileType::INTERIOR:
+            renderer.Copy(cache.get("/Mapa/Tiles_interiores.png"), src, dst);
+            break;
     }
 }
 
