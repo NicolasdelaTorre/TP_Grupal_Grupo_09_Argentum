@@ -37,6 +37,16 @@ enum class TileType : uint8_t {
     INTERIOR  // piso de ciudad / interior
 };
 
+// Tipos de obstáculo. Se mandan como obstacleId en cada Cell del mapa.
+enum class ObstacleType : uint8_t {
+    NONE  = 0,
+    ROCK  = 1,
+    TREE  = 2,
+    NPC   = 3,
+    ENTRY = 4,
+    WALL  = 5,
+};
+
 // ── Dirección del personaje ───────────────────────────────────
 enum class Direction : uint8_t {
     UP    = 1,
