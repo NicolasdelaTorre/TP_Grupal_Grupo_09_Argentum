@@ -1,6 +1,7 @@
 #ifndef ARGENTUM_EDITOR_MAP_CANVAS_H
 #define ARGENTUM_EDITOR_MAP_CANVAS_H
 
+#include <QGraphicsItem>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -46,6 +47,7 @@ signals:
     void entryPlacementRequested(const QString& template_id, int cell_x, int cell_y);
     void entryDeleted(const QString& environment_id);
     void saveRequested();
+    void biomeHoverInfo(const QString& text);
 
 public slots:
     void onSaveClicked();
@@ -77,6 +79,7 @@ private:
     QGraphicsRectItem* env_floor_item_ = nullptr;
     QGraphicsPixmapItem* env_exterior_item_ = nullptr;
     QString env_floor_color_;
+    QString last_hover_zone_id_;
 
     void initializeScene(const QString& map_id, const QString& map_name, int width, int height);
     void drawGrid();
@@ -85,11 +88,14 @@ private:
     void handleLeftPress(const QPoint& view_pos);
     void handleRightPress(const QPoint& view_pos);
     void handleMouseMove(const QPoint& view_pos);
+    void handleHoverMove(const QPoint& view_pos);
     void placeCityAt(int cell_x, int cell_y);
     void placeObstacleAt(int cell_x, int cell_y);
     void placeWallAt(int cell_x, int cell_y);
     void requestEntryAt(int cell_x, int cell_y);
     void finishBiomeZoneDraw(int end_cell_x, int end_cell_y);
+    QGraphicsItem* biomeZoneAtCell(int cell_x, int cell_y) const;
+    void editBiomeSpawnsAt(int cell_x, int cell_y);
     void clearZonePreview();
     QRect normalizedCellRect(const QPoint& a, const QPoint& b) const;
     void zoomIn();

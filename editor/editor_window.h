@@ -43,6 +43,14 @@ private:
     void onCreateNewMap();
     void applyActiveTool();
     void selectTool(EditorTool tool);
+    void selectSpawnMode();
+    void selectObstacleMode();
+    void selectBiomeMode();
+    void selectCityMode();
+    void selectEnvironmentMode();
+    void selectDimensionsMode();
+    void selectDefaultMode();
+    void updateDimensionsLabel();
 
     void startNewMainMap(const QString& map_id, const QString& map_name, int width, int height);
     void onEntryPlacementRequested(const QString& template_id, int cell_x, int cell_y);

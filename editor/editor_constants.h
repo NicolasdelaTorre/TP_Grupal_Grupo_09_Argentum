@@ -1,7 +1,13 @@
 #ifndef ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
 #define ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
 
-#define CELL_DISPLAY_SIZE 128
+#define CELL_DISPLAY_SIZE 64
+// Tamaño nativo (en píxeles) de las texturas de tile del piso (biomas).
+// Si difiere de CELL_DISPLAY_SIZE, los tiles de bioma se recortan a un cuadrado
+// de CELL_DISPLAY_SIZE^2 al cargarse (no se escalan, para no perder nitidez).
+// Los obstáculos y demás items asumen que su textura ya viene dimensionada para
+// su tamaño en celdas (width*CELL_DISPLAY_SIZE x height*CELL_DISPLAY_SIZE).
+#define TEXTURE_NATIVE_CELL_SIZE 128
 #define TARGET_CELL_SCREEN_PX 32
 
 #ifndef EDITOR_SAVE_MAP_PATH

@@ -45,6 +45,8 @@ public:
     void reset();
 
     const QHash<QString, std::vector<CreatureSpawn>>& biome_spawns() const;
+    std::vector<CreatureSpawn> biomeSpawnsFor(const QString& zone_id) const;
+    void setBiomeSpawns(const QString& zone_id, const std::vector<CreatureSpawn>& spawns);
 
 private:
     QGraphicsScene* scene_;

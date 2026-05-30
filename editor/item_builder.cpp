@@ -33,11 +33,9 @@ QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& 
     const int pixel_h = height * CELL_DISPLAY_SIZE;
     auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
 
-    // El rect (pixel_w x pixel_h) representa el footprint de colisión del obstáculo
-    // (width x height celdas). La textura se dibuja en su tamaño nativo en píxeles, sin
-    // estirarse para encajar en el rect, y queda anclada al top-left del mismo. Así una
-    // textura puede ocupar visualmente más celdas que su footprint de colisión (p. ej.
-    // un árbol cuyo tronco es 1x1 pero la copa se extiende a celdas vecinas).
+    // La textura se dibuja a tamaño nativo, anclando su esquina inferior izquierda a la
+    // esquina inferior izquierda del rect (las celdas que ocupa el obstáculo).
+    // Las imágenes "altas" sobresalen hacia arriba, no hacia abajo.
     QPixmap pixmap;
     const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
     if (has_texture) {
@@ -45,7 +43,7 @@ QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& 
         rect->setPen(Qt::NoPen);
         auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
         texture_item->setTransformationMode(Qt::SmoothTransformation);
-        texture_item->setPos(0, 0);
+        texture_item->setPos(0, pixel_h - pixmap.height());
     } else {
         rect->setBrush(QBrush(fill));
         rect->setPen(QPen(fill.darker(160), 1));
