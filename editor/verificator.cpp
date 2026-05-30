@@ -1,5 +1,6 @@
 #include "verificator.h"
 
+#include <algorithm>
 #include <queue>
 #include <utility>
 #include <vector>
@@ -99,22 +100,18 @@ bool Verificator::check_entries(QString& error_title, QString& error_message) co
             entry.y + entry.height > document_.map.height) {
             error_title = QStringLiteral("Entrada inválida");
             error_message = QStringLiteral("La entrada '%1' está fuera de los límites del mapa.")
-                                     .arg(QString::fromStdString(entry.id));
+                                    .arg(QString::fromStdString(entry.id));
             return false;
         }
 
-        bool found = false;
-        for (const auto& env: document_.environments) {
-            if (env.id == entry.environment_id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        const auto environment_it =
+                std::find_if(document_.environments.begin(), document_.environments.end(),
+                             [&entry](const auto& env) { return env.id == entry.environment_id; });
+        if (environment_it == document_.environments.end()) {
             error_title = QStringLiteral("Entrada huérfana");
             error_message = QStringLiteral("La entrada '%1' apunta a un entorno inexistente '%2'.")
-                                     .arg(QString::fromStdString(entry.id),
-                                          QString::fromStdString(entry.environment_id));
+                                    .arg(QString::fromStdString(entry.id),
+                                         QString::fromStdString(entry.environment_id));
             return false;
         }
     }
@@ -126,30 +123,36 @@ bool Verificator::check_environments(QString& error_title, QString& error_messag
         if (env.width <= 0 || env.height <= 0) {
             error_title = QStringLiteral("Entorno inválido");
             error_message = QStringLiteral("El entorno '%1' tiene tamaño inválido.")
-                                     .arg(QString::fromStdString(env.id));
+                                    .arg(QString::fromStdString(env.id));
             return false;
         }
-        for (const auto& obstacle: env.obstacles) {
-            if (obstacle.x < 0 || obstacle.y < 0 ||
-                obstacle.x + obstacle.width > env.width ||
-                obstacle.y + obstacle.height > env.height) {
-                error_title = QStringLiteral("Obstáculo inválido");
-                error_message =
-                        QStringLiteral("El obstáculo '%1' del entorno '%2' está fuera de los límites.")
-                                .arg(QString::fromStdString(obstacle.id),
-                                     QString::fromStdString(env.id));
-                return false;
-            }
+        const auto invalid_obstacle = std::find_if(
+                env.obstacles.begin(), env.obstacles.end(), [&env](const auto& obstacle) {
+                    return obstacle.x < 0 || obstacle.y < 0 ||
+                           obstacle.x + obstacle.width > env.width ||
+                           obstacle.y + obstacle.height > env.height;
+                });
+        if (invalid_obstacle != env.obstacles.end()) {
+            error_title = QStringLiteral("Obstáculo inválido");
+            error_message =
+                    QStringLiteral("El obstáculo '%1' del entorno '%2' está fuera de los límites.")
+                            .arg(QString::fromStdString(invalid_obstacle->id),
+                                 QString::fromStdString(env.id));
+            return false;
         }
-        for (const auto& wall: env.walls) {
-            if (wall.x < 0 || wall.y < 0 || wall.x + wall.width > env.width ||
-                wall.y + wall.height > env.height) {
-                error_title = QStringLiteral("Pared inválida");
-                error_message = QStringLiteral("La pared '%1' del entorno '%2' está fuera de los límites.")
-                                        .arg(QString::fromStdString(wall.id),
-                                             QString::fromStdString(env.id));
-                return false;
-            }
+
+        const auto invalid_wall =
+                std::find_if(env.walls.begin(), env.walls.end(), [&env](const auto& wall) {
+                    return wall.x < 0 || wall.y < 0 || wall.x + wall.width > env.width ||
+                           wall.y + wall.height > env.height;
+                });
+        if (invalid_wall != env.walls.end()) {
+            error_title = QStringLiteral("Pared inválida");
+            error_message =
+                    QStringLiteral("La pared '%1' del entorno '%2' está fuera de los límites.")
+                            .arg(QString::fromStdString(invalid_wall->id),
+                                 QString::fromStdString(env.id));
+            return false;
         }
 
         if (env.walls.empty()) {
@@ -211,9 +214,8 @@ bool Verificator::check_environments(QString& error_title, QString& error_messag
         }
         if (!has_interior) {
             error_title = QStringLiteral("Entorno sin recinto");
-            error_message =
-                    QStringLiteral("Las paredes del entorno '%1' no encierran ningún área.")
-                            .arg(QString::fromStdString(env.id));
+            error_message = QStringLiteral("Las paredes del entorno '%1' no encierran ningún área.")
+                                    .arg(QString::fromStdString(env.id));
             return false;
         }
 
@@ -235,8 +237,10 @@ bool Verificator::check_environments(QString& error_title, QString& error_messag
             }
             if (is_exterior[idx]) {
                 error_title = QStringLiteral("Spawn fuera del recinto");
-                error_message = QStringLiteral("El spawn del entorno '%1' debe estar dentro del recinto cerrado.")
-                                        .arg(QString::fromStdString(env.id));
+                error_message =
+                        QStringLiteral(
+                                "El spawn del entorno '%1' debe estar dentro del recinto cerrado.")
+                                .arg(QString::fromStdString(env.id));
                 return false;
             }
         }

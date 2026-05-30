@@ -1,12 +1,5 @@
 #include "map_canvas.h"
 
-#include <algorithm>
-#include <cmath>
-#include <limits>
-#include <queue>
-#include <utility>
-#include <vector>
-
 #include <QColor>
 #include <QCoreApplication>
 #include <QFileInfo>
@@ -22,8 +15,15 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <queue>
+#include <utility>
+#include <vector>
 
 #include "dialogs/biome_spawn_dialog.h"
+
 #include "editor_constants.h"
 
 MapCanvas::MapCanvas(const TemplateRegistry& templates, QWidget* parent):
@@ -92,7 +92,8 @@ void MapCanvas::initializeScene(const QString& map_id, const QString& map_name, 
     biome_tint_item_->setScale(CELL_DISPLAY_SIZE);
     biome_tint_item_->setZValue(-1.5);
     // capas de entorno: piso (rect texturizado tileable) y overlay negro encima del piso.
-    env_floor_item_ = scene_->addRect(0, 0, scene_width, scene_height, QPen(Qt::NoPen), Qt::NoBrush);
+    env_floor_item_ =
+            scene_->addRect(0, 0, scene_width, scene_height, QPen(Qt::NoPen), Qt::NoBrush);
     env_floor_item_->setZValue(-1.8);
     env_floor_item_->setVisible(false);
     env_exterior_item_ = scene_->addPixmap(QPixmap());
@@ -127,14 +128,14 @@ void MapCanvas::applyInitialView() {
     const double fit_scale = std::min(fit_scale_x, fit_scale_y);
 
     // escala de la vista para que cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
-    const double target_scale =
-            static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
-    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
+    const double target_scale = static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
+    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño
+    // TARGET_CELL_SCREEN_PX
     const double scale = std::max(fit_scale, target_scale);
 
     // escalar vista
     view_->scale(scale, scale);
-    // escalar zoom 
+    // escalar zoom
     current_zoom_ = scale;
     view_->centerOn(scene_width / 2.0, scene_height / 2.0);
 }
@@ -209,8 +210,7 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
             tool.tool = EditorTool::CityZone;
             tool.city_template_id = QString::fromStdString(zone.template_id);
             controller_->placeCityZone(tool, zone.area_x, zone.area_y, zone.area_width,
-                                       zone.area_height, error,
-                                       QString::fromStdString(zone.id));
+                                       zone.area_height, error, QString::fromStdString(zone.id));
         } else if (zone.type == ZONE_TYPE_BIOME) {
             tool.tool = EditorTool::BiomeZone;
             tool.biome_template_id = QString::fromStdString(zone.template_id);
@@ -236,9 +236,8 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
     rebuildBiomeTint();
     rebuildEnvironmentLayers();
 
-    const QString header = (mode == EditingMode::MainMap)
-                                   ? QStringLiteral("Mapa %1 (%2x%3)")
-                                   : QStringLiteral("Entorno %1 (%2x%3)");
+    const QString header = (mode == EditingMode::MainMap) ? QStringLiteral("Mapa %1 (%2x%3)") :
+                                                            QStringLiteral("Entorno %1 (%2x%3)");
     emit statusMessage(header.arg(map_name_).arg(map_width_).arg(map_height_));
 }
 
@@ -290,37 +289,36 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
     QString error;
     // poner respecitvo item
     switch (active_tool_.tool) {
-    case EditorTool::PlayerSpawn:
-        controller_->placePlayerSpawn(cell_x, cell_y, error);
-        break;
-    case EditorTool::Obstacle:
-        placeObstacleAt(cell_x, cell_y);
-        break;
-    case EditorTool::CityZone:
-        placeCityAt(cell_x, cell_y);
-        break;
-    case EditorTool::BiomeZone:
-        if (!drawing_zone_) {
-            drawing_zone_ = true;
-            zone_start_cell_ = QPoint(cell_x, cell_y);
-            clearZonePreview();
-        }
-        break;
-    case EditorTool::Entry:
-        requestEntryAt(cell_x, cell_y);
-        break;
-    case EditorTool::Wall:
-        placeWallAt(cell_x, cell_y);
-        break;
-    default:
-        break;
+        case EditorTool::PlayerSpawn:
+            controller_->placePlayerSpawn(cell_x, cell_y, error);
+            break;
+        case EditorTool::Obstacle:
+            placeObstacleAt(cell_x, cell_y);
+            break;
+        case EditorTool::CityZone:
+            placeCityAt(cell_x, cell_y);
+            break;
+        case EditorTool::BiomeZone:
+            if (!drawing_zone_) {
+                drawing_zone_ = true;
+                zone_start_cell_ = QPoint(cell_x, cell_y);
+                clearZonePreview();
+            }
+            break;
+        case EditorTool::Entry:
+            requestEntryAt(cell_x, cell_y);
+            break;
+        case EditorTool::Wall:
+            placeWallAt(cell_x, cell_y);
+            break;
+        default:
+            break;
     }
 }
 
 // pedir a EditorWindow que muestre el diálogo y luego confirme la entrada con un id de entorno.
 void MapCanvas::requestEntryAt(int cell_x, int cell_y) {
-    const auto* entry =
-            templates_.find_entry(active_tool_.entry_template_id.toStdString());
+    const auto* entry = templates_.find_entry(active_tool_.entry_template_id.toStdString());
     if (!entry) {
         QMessageBox::warning(this, QStringLiteral("Entrada"),
                              QStringLiteral("Template de entrada inválido."));
@@ -349,10 +347,10 @@ void MapCanvas::handleMouseMove(const QPoint& view_pos) {
 
     const QRect rect = normalizedCellRect(zone_start_cell_, QPoint(cell_x, cell_y));
     clearZonePreview();
-    zone_preview_ = scene_->addRect(rect.x() * CELL_DISPLAY_SIZE, rect.y() * CELL_DISPLAY_SIZE,
-                                   rect.width() * CELL_DISPLAY_SIZE,
-                                   rect.height() * CELL_DISPLAY_SIZE,
-                                   QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
+    zone_preview_ =
+            scene_->addRect(rect.x() * CELL_DISPLAY_SIZE, rect.y() * CELL_DISPLAY_SIZE,
+                            rect.width() * CELL_DISPLAY_SIZE, rect.height() * CELL_DISPLAY_SIZE,
+                            QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
     zone_preview_->setZValue(Z_ZONE_PREVIEW);
 }
 
@@ -445,8 +443,9 @@ void MapCanvas::placeObstacleAt(int cell_x, int cell_y) {
     }
 
     if (cell_x + obstacle->width > map_width_ || cell_y + obstacle->height > map_height_) {
-        QMessageBox::warning(this, QStringLiteral("Obstáculo"),
-                             QStringLiteral("El obstáculo no entra en el mapa desde esa posición."));
+        QMessageBox::warning(
+                this, QStringLiteral("Obstáculo"),
+                QStringLiteral("El obstáculo no entra en el mapa desde esa posición."));
         return;
     }
 
@@ -548,8 +547,8 @@ void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     }
     // colocar zona de bioma
     QString error;
-    if (!controller_->placeBiomeZone(active_tool_, rect.x(), rect.y(), rect.width(),
-                                      rect.height(), spawns, error)) {
+    if (!controller_->placeBiomeZone(active_tool_, rect.x(), rect.y(), rect.width(), rect.height(),
+                                     spawns, error)) {
         QMessageBox::warning(this, QStringLiteral("Biome"), error);
         return;
     }
@@ -734,7 +733,8 @@ void MapCanvas::rebuildEnvironmentLayers() {
     QImage overlay(W, H, QImage::Format_ARGB32_Premultiplied);
     overlay.fill(Qt::transparent);
 
-    // contar interiores para decidir si pintar overlay (si no hay recinto cerrado, mostrar todo el piso).
+    // contar interiores para decidir si pintar overlay (si no hay recinto cerrado, mostrar todo el
+    // piso).
     bool has_interior = false;
     for (int y = 0; y < H && !has_interior; ++y) {
         for (int x = 0; x < W && !has_interior; ++x) {
@@ -816,8 +816,7 @@ void MapCanvas::rebuildBiomeTint() {
 
     // Dijkstra multi-fuente, los biomas grandes expanden más rápido.
     std::vector<int> owner(static_cast<size_t>(W) * H, -1);
-    std::vector<double> cost(static_cast<size_t>(W) * H,
-                             std::numeric_limits<double>::infinity());
+    std::vector<double> cost(static_cast<size_t>(W) * H, std::numeric_limits<double>::infinity());
 
     struct FrontierNode {
         double cost = 0.0;
@@ -855,7 +854,8 @@ void MapCanvas::rebuildBiomeTint() {
         const FrontierNode frontier_node = expansion_frontier.top();
         expansion_frontier.pop();
         const size_t frontier_flat_idx = static_cast<size_t>(frontier_node.y) * W + frontier_node.x;
-        if (frontier_node.cost != cost[frontier_flat_idx] || frontier_node.owner != owner[frontier_flat_idx]) {
+        if (frontier_node.cost != cost[frontier_flat_idx] ||
+            frontier_node.owner != owner[frontier_flat_idx]) {
             continue;
         }
 

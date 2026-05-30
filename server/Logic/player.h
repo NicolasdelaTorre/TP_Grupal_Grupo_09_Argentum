@@ -3,29 +3,44 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
-typedef struct Position {
-    int16_t x;
-    int16_t y;
-} Position;
+#include "../../common/position.h"
+
+#include "class_.h"
+#include "race.h"
+#include "stats_definition.h"
 
 typedef struct PlayerData {
-    const std::string& name;
     Position position;
+    uint8_t level;
+    Race::RaceCode race;
+    Class_::ClassCode class_;
+    uint32_t health;
 } PlayerData;
 
 class Player {
 private:
-    PlayerData data;
+    // PlayerData data;
+    // const std::string& name;
 
 public:
-    explicit Player(const std::string& name);
+    PlayerData data;
+    const std::string& name;
+    // dirección actual (valores wire: 3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT)
+    uint8_t direction = 4;
 
-    void changePosition(const std::string& direction);
+    explicit Player(const std::string& name, Position position, const std::string& race,
+                    const std::string& class_);
 
-    int16_t getX();
+    void move(Position newPosition);
+    void setDirection(uint8_t dir);
 
-    int16_t getY();
+    const std::string& getName() const;
+    Position getPosition() const;
+    int16_t getX() const;
+    int16_t getY() const;
+    uint8_t getDirection() const;
 };
 
 #endif

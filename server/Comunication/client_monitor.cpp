@@ -19,6 +19,15 @@ void ClientMonitor::broadcast(const std::string& message) {
     }
 }
 
+void ClientMonitor::broadcastExcept(int excludeId, const std::string& message) {
+    std::lock_guard<std::mutex> lock(mtx);
+    for (auto& cliente: Clients) {
+        if (cliente.first == excludeId)
+            continue;
+        cliente.second->push(message);
+    }
+}
+
 void ClientMonitor::sendToClient(int clientId, const std::string& message) {
     std::lock_guard<std::mutex> lock(mtx);
     auto it = Clients.find(clientId);

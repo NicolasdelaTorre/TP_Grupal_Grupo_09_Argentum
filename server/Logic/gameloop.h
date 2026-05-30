@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "../../common/position.h"
 #include "../../common/queue.h"
 #include "../../common/thread.h"
 #include "../Comunication/client_monitor.h"
@@ -20,9 +21,13 @@ private:
 
     void processCommand(const std::string& command);
 
+    // Manda LOGIN_OK + MAP al jugador y avisa a todos del nuevo. Se llama
+    // al final del char creation (cuando llega "skin").
+    void finalizePlayerLogin(int idPlayer);
+
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
-             ProtocolServer& protocol);
+             ProtocolServer& protocol, Position playerSpawn);
 
     virtual void run() override;
 

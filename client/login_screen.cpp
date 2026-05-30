@@ -11,7 +11,7 @@ LoginScreen::LoginScreen(SDL2pp::Renderer& renderer, const std::string& assetsPa
         renderer(renderer),
         ttf(),
         font(assetsPath + "/font.ttf", (int)(11 * SCALE)),
-        background(renderer, SDL2pp::Surface(assetsPath + "/login.png")) {}
+        background(renderer, SDL2pp::Surface(assetsPath + "/Pantallas/login.png")) {}
 
 LoginResult LoginScreen::run() {
     SDL_StartTextInput();

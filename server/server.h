@@ -8,6 +8,7 @@
 #include "Comunication/client_monitor.h"
 #include "Logic/gameloop.h"
 #include "Logic/map.h"
+#include "Logic/yaml_map_loader.h"
 #include "Protocol/protocol_server.h"
 
 class Server {
@@ -15,7 +16,8 @@ private:
     ProtocolServer protocol;
     Queue<std::string> clientCommands;
     ClientMonitor clientQueues;
-    Map map;
+    // Declarado antes que Gameloop porque éste lo referencia.
+    LoadedMap loadedMap;
     Gameloop gameloop;
     Acceptor acceptor;
 

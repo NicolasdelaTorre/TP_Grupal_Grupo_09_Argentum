@@ -1,19 +1,27 @@
 #include "player.h"
 
-Player::Player(const std::string& name): data{name, {0, 0}} {}
+#include <utility>
 
-void Player::changePosition(const std::string& direction) {
-    if (direction == "top") {
-        data.position.y -= 1;
-    } else if (direction == "bottom") {
-        data.position.y += 1;
-    } else if (direction == "left") {
-        data.position.x -= 1;
-    } else if (direction == "right") {
-        data.position.x += 1;
-    }
+Player::Player(const std::string& name, Position position, const std::string& race,
+               const std::string& class_):
+        name(name) {
+    data.position = position;
+    data.level = 1;
+    data.race = Race::fromString(race);
+    data.class_ = Class_::fromString(class_);
+    data.health = StatsDefinition().maxHealth(data.level, race, class_);
 }
 
-int16_t Player::getX() { return data.position.x; }
+void Player::move(Position newPosition) { data.position = newPosition; }
 
-int16_t Player::getY() { return data.position.y; }
+void Player::setDirection(uint8_t dir) { direction = dir; }
+
+const std::string& Player::getName() const { return name; }
+
+Position Player::getPosition() const { return data.position; }
+
+int16_t Player::getX() const { return data.position.x; }
+
+int16_t Player::getY() const { return data.position.y; }
+
+uint8_t Player::getDirection() const { return direction; }

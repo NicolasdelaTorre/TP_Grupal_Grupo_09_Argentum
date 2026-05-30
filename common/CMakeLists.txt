@@ -11,6 +11,7 @@ target_sources(taller_common
     # .h files
     liberror.h
     common_protocol.h
+    position.h
     queue.h
     protocol_util.h
     resolver.h

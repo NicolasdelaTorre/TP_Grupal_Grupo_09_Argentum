@@ -127,6 +127,16 @@ if(TALLER_CLIENT)
     target_link_libraries(taller_client PRIVATE taller_common SDL2pp::SDL2pp SDL2_image::SDL2_image SDL2_ttf::SDL2_ttf)
 endif()
 
+# yaml-cpp lo necesitan tanto el server como el editor
+if(TALLER_SERVER OR TALLER_EDITOR)
+    find_package(yaml-cpp REQUIRED)
+    if(TARGET yaml-cpp::yaml-cpp)
+        set(YAML_CPP_TARGET yaml-cpp::yaml-cpp)
+    else()
+        set(YAML_CPP_TARGET yaml-cpp)
+    endif()
+endif()
+
 if(TALLER_SERVER)
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(taller_server)
@@ -141,19 +151,12 @@ if(TALLER_SERVER)
     set_project_warnings(taller_server ${TALLER_MAKE_WARNINGS_AS_ERRORS} FALSE)
 
     # Link the taller_common lib target
-    target_link_libraries(taller_server taller_common)
+    target_link_libraries(taller_server taller_common ${YAML_CPP_TARGET})
 endif()
 
 if(TALLER_EDITOR)
     find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-    find_package(yaml-cpp REQUIRED)
-
-    if(TARGET yaml-cpp::yaml-cpp)
-        set(YAML_CPP_TARGET yaml-cpp::yaml-cpp)
-    else()
-        set(YAML_CPP_TARGET yaml-cpp)
-    endif()
 
     # HEY!! TODO XXX: Change the name of the executable to the one you like!
     add_executable(taller_editor)

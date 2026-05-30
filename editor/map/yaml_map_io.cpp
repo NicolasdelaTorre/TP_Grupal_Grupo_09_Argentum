@@ -100,8 +100,7 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 out << YAML::Key << "position" << YAML::Value;
                 out << YAML::Flow << YAML::BeginSeq << entry.x << entry.y << YAML::EndSeq;
                 out << YAML::Key << "size" << YAML::Value;
-                out << YAML::Flow << YAML::BeginSeq << entry.width << entry.height
-                    << YAML::EndSeq;
+                out << YAML::Flow << YAML::BeginSeq << entry.width << entry.height << YAML::EndSeq;
                 out << YAML::EndMap;
             }
             out << YAML::EndSeq;
