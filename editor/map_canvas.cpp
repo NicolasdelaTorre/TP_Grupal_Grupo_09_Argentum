@@ -40,12 +40,14 @@ MapCanvas::MapCanvas(const TemplateRegistry& templates, QWidget* parent):
     view_->setScene(scene_);
     view_->viewport()->installEventFilter(this);
     view_->installEventFilter(this);
+    view_->setMouseTracking(true);
+    view_->viewport()->setMouseTracking(true);
     // añadir vista al layout
     layout->addWidget(view_);
     // botones guardar, zoom in y zoom out
     auto* save_button = new QPushButton(QStringLiteral("Guardar mapa"), this);
-    auto* zoom_in_button = new QPushButton(QStringLiteral("Zoom in"), this);
-    auto* zoom_out_button = new QPushButton(QStringLiteral("Zoom out"), this);
+    auto* zoom_in_button = new QPushButton(QStringLiteral("+"), this);
+    auto* zoom_out_button = new QPushButton(QStringLiteral("–"), this);
     // layout de botones
     auto* buttons = new QHBoxLayout();
     buttons->addWidget(save_button);
@@ -351,6 +353,63 @@ void MapCanvas::handleMouseMove(const QPoint& view_pos) {
                             QPen(Qt::DashLine), QBrush(QColor(255, 255, 0, 60)));
     zone_preview_->setZValue(Z_ZONE_PREVIEW);
 }
+
+// hover sobre un bioma existente: emitir info de spawns para el panel lateral.
+void MapCanvas::handleHoverMove(const QPoint& view_pos) {
+    if (active_tool_.tool != EditorTool::BiomeZone) {
+        if (!last_hover_zone_id_.isEmpty()) {
+            last_hover_zone_id_.clear();
+            emit biomeHoverInfo(QString());
+        }
+        return;
+    }
+
+    int cell_x = 0;
+    int cell_y = 0;
+    cellFromViewPos(view_pos, cell_x, cell_y);
+    if (cell_x < 0 || cell_y < 0 || cell_x >= map_width_ || cell_y >= map_height_) {
+        if (!last_hover_zone_id_.isEmpty()) {
+            last_hover_zone_id_.clear();
+            emit biomeHoverInfo(QString());
+        }
+        return;
+    }
+
+    auto* item = biomeZoneAtCell(cell_x, cell_y);
+    if (!item) {
+        if (!last_hover_zone_id_.isEmpty()) {
+            last_hover_zone_id_.clear();
+            emit biomeHoverInfo(QString());
+        }
+        return;
+    }
+
+    const QString zone_id = item->data(DATA_ID).toString();
+    if (zone_id == last_hover_zone_id_) {
+        return;
+    }
+    last_hover_zone_id_ = zone_id;
+
+    const QString template_id = item->data(DATA_SUBTYPE).toString();
+    const auto* tpl = templates_.find_biome(template_id.toStdString());
+    QString text;
+    if (tpl) {
+        text = QString::fromStdString(tpl->name);
+        text += QStringLiteral("\n");
+    }
+
+    const auto spawns = controller_->biomeSpawnsFor(zone_id);
+    if (spawns.empty()) {
+        text += QStringLiteral("Sin spawns configurados.");
+    } else {
+        for (const auto& spawn: spawns) {
+            text += QStringLiteral("• %1: %2\n")
+                            .arg(QString::fromStdString(spawn.creature))
+                            .arg(spawn.max_population);
+        }
+    }
+    emit biomeHoverInfo(text);
+}
 // colocar ciudad en celda
 void MapCanvas::placeCityAt(int cell_x, int cell_y) {
     const auto* city = templates_.find_city(active_tool_.city_template_id.toStdString());
@@ -419,6 +478,45 @@ void MapCanvas::placeWallAt(int cell_x, int cell_y) {
     rebuildEnvironmentLayers();
 }
 
+QGraphicsItem* MapCanvas::biomeZoneAtCell(int cell_x, int cell_y) const {
+    const QRectF area(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE,
+                      CELL_DISPLAY_SIZE);
+    const auto items = scene_->items(area);
+    for (auto* item: items) {
+        QGraphicsItem* current = item;
+        while (current->parentItem()) {
+            current = current->parentItem();
+        }
+        if (current->data(DATA_TYPE).toString() == BIOME_ZONE_TYPE) {
+            return current;
+        }
+    }
+    return nullptr;
+}
+
+void MapCanvas::editBiomeSpawnsAt(int cell_x, int cell_y) {
+    auto* biome_item = biomeZoneAtCell(cell_x, cell_y);
+    if (!biome_item) {
+        return;
+    }
+
+    const QString template_id = biome_item->data(DATA_SUBTYPE).toString();
+    const auto* biome = templates_.find_biome(template_id.toStdString());
+    if (!biome) {
+        QMessageBox::warning(this, QStringLiteral("Biome"),
+                             QStringLiteral("Template de bioma inválido."));
+        return;
+    }
+
+    const QString zone_id = biome_item->data(DATA_ID).toString();
+    BiomeSpawnDialog dialog(*biome, controller_->biomeSpawnsFor(zone_id), this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    controller_->setBiomeSpawns(zone_id, dialog.selected_spawns());
+    last_hover_zone_id_.clear();
+}
+
 // finalizar dibujo de zona de bioma
 void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     drawing_zone_ = false;
@@ -427,12 +525,9 @@ void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     end_cell_y = std::clamp(end_cell_y, 0, map_height_ - 1);
     // normalizar rectángulo de la celda
     QRect rect = normalizedCellRect(zone_start_cell_, QPoint(end_cell_x, end_cell_y));
-    // si rectángulo es de 1x1, buscar template de bioma
     if (rect.width() == 1 && rect.height() == 1) {
-        if (const auto* biome =
-                    templates_.find_biome(active_tool_.biome_template_id.toStdString())) {
-            rect.setSize(QSize(biome->default_width, biome->default_height));
-        }
+        editBiomeSpawnsAt(rect.x(), rect.y());
+        return;
     }
 
     const auto* biome = templates_.find_biome(active_tool_.biome_template_id.toStdString());
@@ -474,6 +569,10 @@ void MapCanvas::handleRightPress(const QPoint& view_pos) {
     if (deleted.deleted && deleted.type == ENTRY_TYPE && !deleted.environment_id.isEmpty()) {
         emit entryDeleted(deleted.environment_id);
     }
+    if (deleted.deleted && deleted.id == last_hover_zone_id_) {
+        last_hover_zone_id_.clear();
+        emit biomeHoverInfo(QString());
+    }
     rebuildBiomeTint();
     if (deleted.deleted && deleted.type == WALL_TYPE) {
         rebuildEnvironmentLayers();
@@ -497,10 +596,13 @@ bool MapCanvas::eventFilter(QObject* obj, QEvent* event) {
         }
     }
     // manejar movimiento del mouse
-    if (event->type() == QEvent::MouseMove && drawing_zone_) {
+    if (event->type() == QEvent::MouseMove) {
         auto* mouse_event = static_cast<QMouseEvent*>(event);
-        handleMouseMove(mouse_event->pos());
-        return true;
+        if (drawing_zone_) {
+            handleMouseMove(mouse_event->pos());
+            return true;
+        }
+        handleHoverMove(mouse_event->pos());
     }
     // suelto el click izquierdo
     if (event->type() == QEvent::MouseButtonRelease && drawing_zone_) {
@@ -775,20 +877,24 @@ void MapCanvas::rebuildBiomeTint() {
         }
     }
 
-    // Resolver textura por bioma. Un QPixmap nulo en el slot indica "este bioma no tiene
-    // textura, usar tinte de color".
+    // Resolver textura por bioma. Las texturas vienen a 128x128 pero
+    // nuestros tiles son 64x64, se recorta al esquina superior izquierda.
     std::vector<QPixmap> biome_pixmaps(zones.size());
     for (size_t i = 0; i < zones.size(); ++i) {
         const QString& path = zones[i].texture_path;
-        if (!path.isEmpty()) {
-            biome_pixmaps[i].load(path);
+        if (path.isEmpty()) {
+            continue;
         }
+        QPixmap loaded;
+        if (!loaded.load(path)) {
+            continue;
+        }
+        const int crop_w = std::min(loaded.width(), CELL_DISPLAY_SIZE);
+        const int crop_h = std::min(loaded.height(), CELL_DISPLAY_SIZE);
+        biome_pixmaps[i] = loaded.copy(0, 0, crop_w, crop_h);
     }
 
-    // Para celdas con textura: instanciar un QGraphicsPixmapItem por celda (sin estirar,
-    // queda 1:1 si pixmap.size() == CELL_DISPLAY_SIZE x CELL_DISPLAY_SIZE). Los QPixmap
-    // se comparten implícitamente entre items, así que la huella de memoria es chica.
-    // Para celdas sin textura: tinte de color con alpha 90 (comportamiento original).
+    // Para celdas con textura instanciar un QGraphicsPixmapItem por celda, para celdas sin textura tinte de color con alpha 90.
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             const int o = owner[static_cast<size_t>(y) * W + x];

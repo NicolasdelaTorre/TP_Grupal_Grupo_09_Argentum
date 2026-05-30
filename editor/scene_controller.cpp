@@ -228,6 +228,16 @@ const QHash<QString, std::vector<CreatureSpawn>>& SceneController::biome_spawns(
     return biome_spawns_;
 }
 
+std::vector<CreatureSpawn> SceneController::biomeSpawnsFor(const QString& zone_id) const {
+    const auto it = biome_spawns_.find(zone_id);
+    return it == biome_spawns_.end() ? std::vector<CreatureSpawn>() : it.value();
+}
+
+void SceneController::setBiomeSpawns(const QString& zone_id,
+                                     const std::vector<CreatureSpawn>& spawns) {
+    biome_spawns_.insert(zone_id, spawns);
+}
+
 // construir documento con datos del mapa
 MapDocument SceneController::buildDocument(const QString& map_id, const QString& map_name,
                                            int width, int height) const {

@@ -1,0 +1,7 @@
+template_id: lampara_ciudad
+name: "Lampara"
+size:
+  width: 1
+  height: 1
+color: "#9A9A9A"
+texture: "lampara_corregida.png"
