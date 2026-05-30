@@ -3,18 +3,35 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "../../common/position.h"
 
+#include "class_.h"
+#include "race.h"
+#include "stats_definition.h"
+
+typedef struct PlayerData {
+    Position position;
+    uint8_t level;
+    Race::RaceCode race;
+    Class_::ClassCode class_;
+    uint32_t health;
+} PlayerData;
+
 class Player {
 private:
-    std::string name;
-    Position position;
+    // PlayerData data;
+    // const std::string& name;
+
+public:
+    PlayerData data;
+    const std::string& name;
     // dirección actual (valores wire: 3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT)
     uint8_t direction = 4;
 
-public:
-    Player(std::string name, Position position);
+    explicit Player(const std::string& name, Position position, const std::string& race,
+                    const std::string& class_);
 
     void move(Position newPosition);
     void setDirection(uint8_t dir);

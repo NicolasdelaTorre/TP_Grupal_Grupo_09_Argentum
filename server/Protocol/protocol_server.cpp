@@ -89,10 +89,18 @@ int ProtocolServer::returnTurn(std::string& message, const int clientId) {
     uint8_t receivedByte = it->second.receive_byte();
     message += "turn.";
     switch (receivedByte) {
-        case static_cast<uint8_t>(ClientMsg::TOP):    message += "top"; break;
-        case static_cast<uint8_t>(ClientMsg::BOTTOM): message += "bottom"; break;
-        case static_cast<uint8_t>(ClientMsg::LEFT):   message += "left"; break;
-        case static_cast<uint8_t>(ClientMsg::RIGHT):  message += "right"; break;
+        case static_cast<uint8_t>(ClientMsg::TOP):
+            message += "top";
+            break;
+        case static_cast<uint8_t>(ClientMsg::BOTTOM):
+            message += "bottom";
+            break;
+        case static_cast<uint8_t>(ClientMsg::LEFT):
+            message += "left";
+            break;
+        case static_cast<uint8_t>(ClientMsg::RIGHT):
+            message += "right";
+            break;
         default:
             throw std::runtime_error("Protocol Error: unknown turn direction");
     }
@@ -203,7 +211,8 @@ void ProtocolServer::sendLoginOk(common_protocol& client, const std::string& mes
     if (firstColon == std::string::npos || secondColon == std::string::npos) {
         throw std::runtime_error("Protocol Error: malformed LOGIN_OK message: " + message);
     }
-    int16_t x = static_cast<int16_t>(std::stoi(message.substr(firstColon + 1, secondColon - firstColon - 1)));
+    int16_t x = static_cast<int16_t>(
+            std::stoi(message.substr(firstColon + 1, secondColon - firstColon - 1)));
     int16_t y = static_cast<int16_t>(std::stoi(message.substr(secondColon + 1)));
 
     client.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_OK));

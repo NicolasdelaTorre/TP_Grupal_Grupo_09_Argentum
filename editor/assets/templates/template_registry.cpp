@@ -83,39 +83,28 @@ const CityTemplate* TemplateRegistry::find_city(const std::string& id) const {
 }
 
 const BiomeTemplate* TemplateRegistry::find_biome(const std::string& id) const {
-    for (const auto& biome: biomes_) {
-        if (biome.id == id) {
-            return &biome;
-        }
-    }
-    return nullptr;
+    const auto it = std::find_if(biomes_.begin(), biomes_.end(),
+                                 [&id](const BiomeTemplate& biome) { return biome.id == id; });
+    return it != biomes_.end() ? &(*it) : nullptr;
 }
 
 const ObstacleTemplate* TemplateRegistry::find_obstacle(const std::string& id) const {
-    for (const auto& obstacle: obstacles_) {
-        if (obstacle.id == id) {
-            return &obstacle;
-        }
-    }
-    return nullptr;
+    const auto it =
+            std::find_if(obstacles_.begin(), obstacles_.end(),
+                         [&id](const ObstacleTemplate& obstacle) { return obstacle.id == id; });
+    return it != obstacles_.end() ? &(*it) : nullptr;
 }
 
 const EntryTemplate* TemplateRegistry::find_entry(const std::string& id) const {
-    for (const auto& entry: entries_) {
-        if (entry.id == id) {
-            return &entry;
-        }
-    }
-    return nullptr;
+    const auto it = std::find_if(entries_.begin(), entries_.end(),
+                                 [&id](const EntryTemplate& entry) { return entry.id == id; });
+    return it != entries_.end() ? &(*it) : nullptr;
 }
 
 const WallTemplate* TemplateRegistry::find_wall(const std::string& id) const {
-    for (const auto& wall: walls_) {
-        if (wall.id == id) {
-            return &wall;
-        }
-    }
-    return nullptr;
+    const auto it = std::find_if(walls_.begin(), walls_.end(),
+                                 [&id](const WallTemplate& wall) { return wall.id == id; });
+    return it != walls_.end() ? &(*it) : nullptr;
 }
 
 bool TemplateRegistry::load_city_file(const std::string& path) {

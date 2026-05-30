@@ -21,10 +21,9 @@ NewEnvironmentDialog::NewEnvironmentDialog(const EntryTemplate& entry_template,
     }
 
     auto* form = new QFormLayout();
-    form->addRow(QStringLiteral("Tipo"), new QLineEdit(QString::fromStdString(entry_template.name)));
-    form->itemAt(form->rowCount() - 1, QFormLayout::FieldRole)
-            ->widget()
-            ->setEnabled(false);
+    form->addRow(QStringLiteral("Tipo"),
+                 new QLineEdit(QString::fromStdString(entry_template.name)));
+    form->itemAt(form->rowCount() - 1, QFormLayout::FieldRole)->widget()->setEnabled(false);
     form->addRow(QStringLiteral("Nombre"), name_input_);
     form->addRow(QStringLiteral("Tamaño"), size_preset_);
 

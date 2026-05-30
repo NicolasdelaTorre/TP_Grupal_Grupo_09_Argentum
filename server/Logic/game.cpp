@@ -18,9 +18,13 @@ bool Game::processCommand(int playerId, const std::string& command) {
     if (dataType == "user") {
         std::string user = command.substr(commandPosition + 1);
         Position spawn = findSpawnPosition();
-        players.emplace(playerId, Player(user, spawn));
+        players.emplace(playerId, Player(user, spawn, "elf", "mage"));
+
         std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")"
                   << std::endl;
+
+        test();
+
         return true;
     } else if (dataType == "movement") {
         std::string direction = command.substr(commandPosition + 1);
@@ -39,11 +43,16 @@ bool Game::turnPlayer(int playerId, const std::string& direction) {
         return false;
     }
     uint8_t newDir;
-    if (direction == "top")         newDir = 3;
-    else if (direction == "bottom") newDir = 4;
-    else if (direction == "left")   newDir = 5;
-    else if (direction == "right")  newDir = 6;
-    else return false;
+    if (direction == "top")
+        newDir = 3;
+    else if (direction == "bottom")
+        newDir = 4;
+    else if (direction == "left")
+        newDir = 5;
+    else if (direction == "right")
+        newDir = 6;
+    else
+        return false;
 
     itPlayer->second.setDirection(newDir);
     return true;
@@ -56,7 +65,8 @@ Position Game::findSpawnPosition() const {
     for (int radius = 0; radius < maxRadius; radius++) {
         for (int offsetY = -radius; offsetY <= radius; offsetY++) {
             for (int offsetX = -radius; offsetX <= radius; offsetX++) {
-                // Solo la frontera del cuadrado (las interiores ya las chequeamos en radios anteriores).
+                // Solo la frontera del cuadrado (las interiores ya las chequeamos en radios
+                // anteriores).
                 if (radius > 0 && std::abs(offsetX) != radius && std::abs(offsetY) != radius)
                     continue;
                 Position candidate{static_cast<int16_t>(playerSpawn.x + offsetX),
@@ -157,4 +167,10 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     player.move(next);
     player.setDirection(newDir);
     return true;
+}
+
+void Game::test() {
+    for (const auto& [id, player]: players) {
+        std::cout << "Player " << player.getName() << " Life: " << player.data.health << std::endl;
+    }
 }

@@ -93,9 +93,8 @@ void Gameloop::finalizePlayerLogin(int idPlayer) {
         Position op = game.getPlayerPosition(otherId);
         const std::string& oname = game.getPlayerName(otherId);
         uint8_t odir = game.getPlayerDirection(otherId);
-        std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" +
-                         std::to_string(op.x) + ":" + std::to_string(op.y) + ":" +
-                         std::to_string(odir) + ":" + oname;
+        std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" + std::to_string(op.x) +
+                         ":" + std::to_string(op.y) + ":" + std::to_string(odir) + ":" + oname;
         clientQueues.sendToClient(idPlayer, np);
     }
 

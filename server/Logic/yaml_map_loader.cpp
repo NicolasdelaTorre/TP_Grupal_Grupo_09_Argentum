@@ -33,8 +33,8 @@ void initializeDefaultCells(std::vector<Cell>& cells) {
     }
 }
 
-void applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
-                   int16_t x, int16_t y, int16_t w, int16_t h, uint16_t obstacleId) {
+void applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight, int16_t x,
+                   int16_t y, int16_t w, int16_t h, uint16_t obstacleId) {
     for (int16_t tileY = y; tileY < y + h; tileY++) {
         for (int16_t tileX = x; tileX < x + w; tileX++) {
             if (tileX < 0 || tileY < 0 || tileX >= static_cast<int16_t>(mapWidth) ||
@@ -47,8 +47,8 @@ void applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
     }
 }
 
-void applySafeZone(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
-                   int16_t x, int16_t y, int16_t w, int16_t h) {
+void applySafeZone(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight, int16_t x,
+                   int16_t y, int16_t w, int16_t h) {
     for (int16_t tileY = y; tileY < y + h; tileY++) {
         for (int16_t tileX = x; tileX < x + w; tileX++) {
             if (tileX < 0 || tileY < 0 || tileX >= static_cast<int16_t>(mapWidth) ||
@@ -134,8 +134,8 @@ LoadedMap loadMapFromYaml(const std::string& path) {
         spawn.y = root["player_spawn"]["position"][1].as<int16_t>();
     }
 
-    std::cout << "Map loaded (" << width << "x" << height << "), spawn at (" << spawn.x
-              << ", " << spawn.y << ")" << std::endl;
+    std::cout << "Map loaded (" << width << "x" << height << "), spawn at (" << spawn.x << ", "
+              << spawn.y << ")" << std::endl;
 
     return LoadedMap{Map(width, height, std::move(cells)), spawn};
 }

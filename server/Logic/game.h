@@ -36,6 +36,8 @@ public:
     bool hasPlayer(int playerId) const;
     std::vector<int> getPlayerIds() const;
     void removePlayer(int playerId);
+
+    void test();
 };
 
 #endif

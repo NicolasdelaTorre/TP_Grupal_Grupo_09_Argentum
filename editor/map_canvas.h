@@ -5,7 +5,6 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QWidget>
-
 #include <vector>
 
 #include "assets/templates/template_registry.h"

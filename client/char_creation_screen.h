@@ -36,21 +36,21 @@ private:
     // ── Posiciones de los recuadros en el PNG 1024×1024 ──────────────────
     // Cada par (left, right) son los bordes exteriores detectados por pixel.
     // El contenido interior empieza 4px adentro de cada borde.
-    static constexpr int BOX_COUNT   = 5;
+    static constexpr int BOX_COUNT = 5;
     static constexpr int BOX_LEFT[5] = {215, 347, 479, 611, 743};
-    static constexpr int BOX_RIGHT[5]= {284, 416, 548, 680, 812};
-    static constexpr int BOX_TOP      = 185;
-    static constexpr int BOX_BOTTOM   = 245;
+    static constexpr int BOX_RIGHT[5] = {284, 416, 548, 680, 812};
+    static constexpr int BOX_TOP = 185;
+    static constexpr int BOX_BOTTOM = 245;
 
     // Padding interior (excluye el borde de 4px)
     static constexpr int BOX_PAD = 4;
 
     // ── Constantes del sprite ─────────────────────────────────────────────
-    static constexpr int SPRITE_W     = 27;
-    static constexpr int SPRITE_H     = 49;
-    static constexpr int HEAD_CELL_W  = 27;
-    static constexpr int HEAD_CELL_H  = 64;
-    static constexpr int DEFAULT_HEAD = 4;   // columna en Cabezas.png
+    static constexpr int SPRITE_W = 27;
+    static constexpr int SPRITE_H = 49;
+    static constexpr int HEAD_CELL_W = 27;
+    static constexpr int HEAD_CELL_H = 64;
+    static constexpr int DEFAULT_HEAD = 4;  // columna en Cabezas.png
     static constexpr float SPRITE_SCL = 0.8f;
 
     // ── Color para el recuadro seleccionado ──────────────────────────────

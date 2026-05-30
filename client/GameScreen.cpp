@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <utility>
 
 namespace {
 
@@ -54,20 +55,22 @@ static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player& p) {
 // del cliente (que usa otros valores porque son índices de fila en el spritesheet).
 static Direction wireDirToSpriteDir(uint8_t wireDir) {
     switch (wireDir) {
-        case 3: return Direction::UP;
-        case 4: return Direction::DOWN;
-        case 5: return Direction::LEFT;
-        case 6: return Direction::RIGHT;
-        default: return Direction::DOWN;
+        case 3:
+            return Direction::UP;
+        case 4:
+            return Direction::DOWN;
+        case 5:
+            return Direction::LEFT;
+        case 6:
+            return Direction::RIGHT;
+        default:
+            return Direction::DOWN;
     }
 }
 
-GameScreen::GameScreen(SDL2pp::Renderer& renderer,
-                       const std::string& assetsPath,
-                       Queue<std::string>& events_queue,
-                       Queue<std::string>& server_queue,
-                       const ReceivedMap& mapData,
-                       Position spawn):
+GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
+                       Queue<std::string>& events_queue, Queue<std::string>& server_queue,
+                       const ReceivedMap& mapData, Position spawn):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
@@ -115,8 +118,9 @@ void GameScreen::render() {
     mapRenderer.render(map, camX, camY);
 
     // Otros jugadores primero, el local queda visualmente encima.
-    for (const auto& [id, op]: otherPlayers) {
-        (void)id;
+    // for (const auto& [id, op: otherPlayers]) {(void)id .....}
+    for (const auto& playerEntry: otherPlayers) {
+        const auto& op = playerEntry.second;
         mapRenderer.renderPlayer(op.visual, camX, camY);
         mapRenderer.renderWeapon(op.visual, camX, camY);
         mapRenderer.renderHead(op.visual, camX, camY);
@@ -142,17 +146,17 @@ bool GameScreen::handleEvents(float dt) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
 
-    if (keys[SDL_SCANCODE_UP]    || keys[SDL_SCANCODE_W]) {
+    if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::UP;
-    } else if (keys[SDL_SCANCODE_DOWN]  || keys[SDL_SCANCODE_S]) {
-        dy =  PLAYER_MOVE_SPEED * dt;
+    } else if (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S]) {
+        dy = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::DOWN;
-    } else if (keys[SDL_SCANCODE_LEFT]  || keys[SDL_SCANCODE_A]) {
+    } else if (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A]) {
         dx = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::LEFT;
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
-        dx =  PLAYER_MOVE_SPEED * dt;
+        dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
     }
 
@@ -189,10 +193,18 @@ void GameScreen::notifyDirectionChange() {
         return;
     const char* msg = nullptr;
     switch (player.dir) {
-        case Direction::UP:    msg = "TURN_TOP"; break;
-        case Direction::DOWN:  msg = "TURN_BOTTOM"; break;
-        case Direction::LEFT:  msg = "TURN_LEFT"; break;
-        case Direction::RIGHT: msg = "TURN_RIGHT"; break;
+        case Direction::UP:
+            msg = "TURN_TOP";
+            break;
+        case Direction::DOWN:
+            msg = "TURN_BOTTOM";
+            break;
+        case Direction::LEFT:
+            msg = "TURN_LEFT";
+            break;
+        case Direction::RIGHT:
+            msg = "TURN_RIGHT";
+            break;
     }
     if (msg)
         events_queue.push(msg);
@@ -235,8 +247,8 @@ void GameScreen::update(float dt) {
 }
 
 bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
-    for (const auto& [id, op]: otherPlayers) {
-        (void)id;
+    for (const auto& playerEntry: otherPlayers) {
+        const auto& op = playerEntry.second;
         int opTileX = (int)(op.visual.x + HEAD_OFFSET);
         int opTileY = (int)(op.visual.y + FEET_OFFSET);
         if (opTileX == tileX && opTileY == tileY)

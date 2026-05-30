@@ -6,16 +6,16 @@
 
 #include <SDL2pp/SDL2pp.hh>
 
-#include "texture_cache.h"
 #include "../common/DTOs.h"
 
+#include "texture_cache.h"
 
 
 // ── Datos de un tile del mapa ─────────────────────────────────
 struct TileData {
-    TileType floor   = TileType::DIRT;
-    bool     blocked = false;
-    uint8_t  variant = 0;  // 0, 1 o 2 para grass
+    TileType floor = TileType::DIRT;
+    bool blocked = false;
+    uint8_t variant = 0;  // 0, 1 o 2 para grass
 };
 
 // ── Mapa ──────────────────────────────────────────────────────
@@ -29,7 +29,6 @@ struct GameMap {
 
     bool inBounds(int x, int y) const { return x >= 0 && y >= 0 && x < width && y < height; }
 };
-
 
 
 class MapRenderer {
@@ -52,4 +51,3 @@ private:
 
     void drawTile(const TileData& tile, int screenX, int screenY);
 };
-
