@@ -14,14 +14,9 @@ class BiomeSpawnDialog: public QDialog {
     Q_OBJECT
 
 public:
-<<<<<<< HEAD
-    BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget* parent = nullptr);
-    BiomeSpawnDialog(const BiomeTemplate& biome_template,
-                     const std::vector<CreatureSpawn>& initial_spawns,
-                     QWidget* parent = nullptr);
-=======
     explicit BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget* parent = nullptr);
->>>>>>> origin/main
+    BiomeSpawnDialog(const BiomeTemplate& biome_template,
+                     const std::vector<CreatureSpawn>& initial_spawns, QWidget* parent = nullptr);
 
     std::vector<CreatureSpawn> selected_spawns() const;
 

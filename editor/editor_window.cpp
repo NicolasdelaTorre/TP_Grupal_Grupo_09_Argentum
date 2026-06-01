@@ -57,24 +57,22 @@ EditorWindow::EditorWindow(QWidget* parent):
             &EditorWindow::onEntryPlacementRequested);
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
     connect(map_canvas_, &MapCanvas::saveRequested, this, &EditorWindow::saveMap);
-    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns,
-            &QLabel::setText);
+    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
 
 void EditorWindow::setupTemplates() {
     for (const auto& biome: templates_.biomes()) {
-        auto* item = new QListWidgetItem(QString::fromStdString(biome.name),
-                                         ui_->listBiomeTemplate);
+        auto* item =
+                new QListWidgetItem(QString::fromStdString(biome.name), ui_->listBiomeTemplate);
         item->setData(Qt::UserRole, QString::fromStdString(biome.id));
     }
     if (ui_->listBiomeTemplate->count() > 0) {
         ui_->listBiomeTemplate->setCurrentRow(0);
     }
     for (const auto& city: templates_.cities()) {
-        auto* item = new QListWidgetItem(QString::fromStdString(city.name),
-                                         ui_->listCityTemplate);
+        auto* item = new QListWidgetItem(QString::fromStdString(city.name), ui_->listCityTemplate);
         item->setData(Qt::UserRole, QString::fromStdString(city.id));
     }
     if (ui_->listCityTemplate->count() > 0) {
@@ -209,9 +207,8 @@ void EditorWindow::selectDefaultMode() {
 }
 
 void EditorWindow::updateDimensionsLabel() {
-    ui_->labelMapDimensions->setText(QStringLiteral("%1 x %2")
-                                             .arg(map_canvas_->map_width())
-                                             .arg(map_canvas_->map_height()));
+    ui_->labelMapDimensions->setText(
+            QStringLiteral("%1 x %2").arg(map_canvas_->map_width()).arg(map_canvas_->map_height()));
 }
 
 void EditorWindow::setupNewMapPage() {
@@ -395,8 +392,8 @@ void EditorWindow::setMainOnlySectionsVisible(bool visible) {
     ui_->btnModeBiomes->setVisible(visible);
     ui_->btnModeCities->setVisible(visible);
     ui_->btnModeDimensions->setVisible(true);
-    ui_->btnModeEnvironments->setText(visible ? QStringLiteral("Environments")
-                                              : QStringLiteral("Walls"));
+    ui_->btnModeEnvironments->setText(visible ? QStringLiteral("Environments") :
+                                                QStringLiteral("Walls"));
 }
 
 void EditorWindow::refreshEnvironmentsList() {
