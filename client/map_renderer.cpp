@@ -111,17 +111,38 @@ void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
 }
 
 void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
-    // Centrado sobre el tile
     int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
     int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
 
     int row = static_cast<int>(player.dir);
     int col = player.moving ? player.animFrame : 0;
 
+    if (player.killed) {
+        int ghostRow = row;
+        if (player.dir == Direction::LEFT)       ghostRow = static_cast<int>(Direction::RIGHT);
+        else if (player.dir == Direction::RIGHT) ghostRow = static_cast<int>(Direction::LEFT);
+        SDL2pp::Rect src(col * PHANTOM_SPRITE_W, ghostRow * PHANTOM_SPRITE_H, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
+        SDL2pp::Rect dst(screenX, screenY, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
+        renderer.Copy(cache.get("/Skins/NPC/Fantasma.png"), src, dst);
+        return;
+    }
+
+    
+
     SDL2pp::Rect src(col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H);
     SDL2pp::Rect dst(screenX, screenY, SPRITE_W, SPRITE_H);
 
-    renderer.Copy(cache.get("/Skins/Caballero_blanco.png"), src, dst);
+    renderer.Copy(cache.get(get_path(player.skin)), src, dst);
+}
+
+std::string MapRenderer::get_path(int skin) {
+    switch (skin) {
+        case 0: return "/Skins/Caballero_blanco.png";
+        case 1: return "/Skins/Gladiador_violeta.png";
+        case 2: return "/Skins/Gladiador_azul.png";
+        case 3: return "/Skins/Hechicero.png";
+        default: return "/Skins/skin_default.png";
+    }
 }
 
 void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
@@ -152,7 +173,7 @@ void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
 }
 
 void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
-    if (player.weaponId < 0)
+    if (player.killed || player.weaponId < 0)
         return;
 
     static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Daga.png", "/Armas/Arco.png",
@@ -174,6 +195,8 @@ void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
 }
 
 void MapRenderer::renderHead(const Player& player, float camX, float camY) {
+    if (player.killed)
+        return;
     // Misma posición base que el cuerpo
     int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
     int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;

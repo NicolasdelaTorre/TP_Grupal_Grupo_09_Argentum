@@ -21,6 +21,8 @@ static constexpr float PLAYER_MOVE_SPEED = 4.0f;  // tiles por segundo
 static constexpr int TILE_SIZE = 64;              // tiles son 128x128
 static constexpr int SPRITE_W = 27;               // frame del personaje
 static constexpr int SPRITE_H = 49;
+static constexpr int PHANTOM_SPRITE_W = 32;  // distancia en tiles del centro del cuerpo a la cabeza
+static constexpr int PHANTOM_SPRITE_H = 64; 
 static constexpr int ANIM_FRAMES = 4;  // columnas del spritesheet
 
 
@@ -60,6 +62,8 @@ enum class ObstacleType : uint8_t {
 // ── Dirección del personaje ───────────────────────────────────
 enum class Direction : uint8_t { UP = 1, LEFT = 2, DOWN = 0, RIGHT = 3 };
 
+enum class Direction_phantom : uint8_t { UP = 1, LEFT = 3, DOWN = 0, RIGHT = 2 };
+
 enum class Race : uint8_t { HUMAN = 0, ELF, DWARF, GNOME };
 
 enum class Classtype : uint8_t { MAGE = 0, CLERIC, PALADIN, WARRIOR };
@@ -83,11 +87,13 @@ struct Player {
     bool moving = false;
     int animFrame = 0;
     float animTimer = 0.0f;
+    int skin = 2;  
     int headId = 4;
     int weaponId = 0;  // 0=Espada, 1=Daga, 2=Arco, 3=Baculo, -1=sin arma
     Race race = Race::HUMAN;
     Classtype classtype = Classtype::MAGE;
     std::vector<Obj> inventory;
+    bool killed = false;
 };
 
 #endif  // TP_GRUPAL_GRUPO_09_ARGENTUM_DTOS_H

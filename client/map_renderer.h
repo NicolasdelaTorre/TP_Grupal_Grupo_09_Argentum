@@ -52,4 +52,6 @@ private:
     TextureCache& cache;
 
     void drawTile(const TileData& tile, int screenX, int screenY);
+
+    std::string get_path(int skin);
 };
