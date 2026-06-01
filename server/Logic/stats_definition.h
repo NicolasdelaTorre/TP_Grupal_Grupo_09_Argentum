@@ -17,6 +17,8 @@ public:
                        const std::string& className);
 
     uint32_t recoveryHealth(const std::string& raceName, uint16_t secondsToRecovery);
+
+    uint32_t safeGold(uint8_t playerLevel);
 };
 
 #endif

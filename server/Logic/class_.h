@@ -7,7 +7,7 @@
 class Class_ {
 private:
 public:
-    enum class ClassCode { MAGE = 0, CLERIC = 1, CHAMPION = 2, WARRIOR = 3 };
+    enum class ClassCode : uint8_t { MAGE = 0, CLERIC = 1, CHAMPION = 2, WARRIOR = 3 };
 
     static ClassCode fromString(const std::string& className) {
         if (className == "mage") {

@@ -15,3 +15,5 @@ uint32_t StatsDefinition::recoveryHealth(const std::string& raceName, uint16_t s
     RaceAttribute race = attributes.getRaceAttribute(raceName);
     return race.FRaceRecovery * secondsToRecovery;
 }
+
+uint32_t StatsDefinition::safeGold(uint8_t playerLevel) { return 100 * std::pow(playerLevel, 1.1); }

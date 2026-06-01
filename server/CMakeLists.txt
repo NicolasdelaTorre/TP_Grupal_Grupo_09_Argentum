@@ -14,6 +14,8 @@ target_sources(taller_server
         Logic/gameloop.cpp
         Logic/yaml_map_loader.cpp
         Logic/attribute_manager.cpp
+        Logic/binary_parser.cpp
+        Logic/items.cpp
         Protocol/protocol_server.cpp
     PUBLIC
         server.h
@@ -31,6 +33,8 @@ target_sources(taller_server
         Logic/attribute_manager.h
         Logic/race.h
         Logic/class_.h
+        Logic/binary_parser.h
+        Logic/items.h
         Protocol/protocol_server.h
     )
 
