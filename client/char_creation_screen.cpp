@@ -85,12 +85,20 @@ void CharCreationScreen::handleEvents() {
 }
 
 void CharCreationScreen::handleMouseClick(int mouseX, int mouseY) {
+    // Botón JUGAR
+    SDL2pp::Rect jugar = pngToScreen(BTN_JUGAR_X, BTN_JUGAR_Y, BTN_JUGAR_W, BTN_JUGAR_H);
+    if (mouseX >= jugar.x && mouseX < jugar.x + jugar.w && mouseY >= jugar.y &&
+        mouseY < jugar.y + jugar.h) {
+        confirmed = true;
+        running = false;
+        return;
+    }
+
     for (int i = 0; i < BOX_COUNT; i++) {
         SDL2pp::Rect box = getBoxRect(i);
         if (mouseX >= box.x && mouseX < box.x + box.w && mouseY >= box.y &&
             mouseY < box.y + box.h) {
             if (selectedSkin == i) {
-                // Doble click sobre el mismo box confirma.
                 confirmed = true;
                 running = false;
             } else {

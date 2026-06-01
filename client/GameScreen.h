@@ -11,7 +11,7 @@
 #include "client_protocol.h"  // ReceivedMap
 #include "map_renderer.h"
 
-static constexpr float FEET_OFFSET = 0.5f;
+static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
 
 // Jugador remoto del que recibimos eventos por broadcast del servidor.

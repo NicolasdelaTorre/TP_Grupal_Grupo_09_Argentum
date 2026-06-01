@@ -13,9 +13,10 @@
 
 // ── Datos de un tile del mapa ─────────────────────────────────
 struct TileData {
-    TileType floor = TileType::DIRT;
+    TileType floor = TileType::GRASS;
     bool blocked = false;
     uint8_t variant = 0;  // 0, 1 o 2 para grass
+    ObstacleType obstacleType = ObstacleType::NONE;
 };
 
 // ── Mapa ──────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ public:
 
 
     void render(const GameMap& map, float camX, float camY);
+    void renderObstacles(const GameMap& map, float camX, float camY);
 
 
     void renderPlayer(const Player& player, float camX, float camY);

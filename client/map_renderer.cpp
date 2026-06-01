@@ -2,6 +2,25 @@
 
 #include <algorithm>
 
+namespace {
+
+const char* obstacleTexturePath(ObstacleType type) {
+    switch (type) {
+        case ObstacleType::ROCK:       return "/Obstaculos/roca_01_ajustada.png";
+        case ObstacleType::ROCK_SMALL: return "/Obstaculos/roca_03_ajustada.png";
+        //case ObstacleType::ROCK_LARGE: return "/Obstaculos/roca_01_ajustada.png";
+        case ObstacleType::LAMP:       return "/Obstaculos/lampara_corregida.png";
+        case ObstacleType::WOOD:       return "/Obstaculos/maderas_apiladas_corregida.png";
+        case ObstacleType::CART:       return "/Obstaculos/segunda_carretilla_primera_fila.png";
+        case ObstacleType::MILL:       return "/Obstaculos/molino_recortado.png";
+        case ObstacleType::CACTUS:     return "/Obstaculos/cactus_arriba_derecha_128x128.png";
+        default:                       return nullptr;
+    }
+}
+
+
+}  // namespace
+
 
 MapRenderer::MapRenderer(SDL2pp::Renderer& renderer, TextureCache& cache):
         renderer(renderer), cache(cache) {}
@@ -20,6 +39,73 @@ void MapRenderer::render(const GameMap& map, float camX, float camY) {
             int screenX = (int)(x * TILE_SIZE - camX);
             int screenY = (int)(y * TILE_SIZE - camY);
             drawTile(map.at(x, y), screenX, screenY);
+        }
+    }
+
+    renderObstacles(map, camX, camY);
+}
+
+
+// Source crop rect for each obstacle image, excluding the drop-shadow overhang
+// that extends past the rock body to the lower-right.
+// Returns NullOpt to use the full image.
+SDL2pp::Optional<SDL2pp::Rect> obstacleSourceCrop(ObstacleType type) {
+    switch (type) {
+        // roca_01_ajustada.png (437x327): rock body ends ~col 350, row 315
+        case ObstacleType::ROCK:       return SDL2pp::Rect(0, 0, 350, 315);
+        // roca_03_ajustada.png (168x134): rock body ends ~col 140, row 120
+        case ObstacleType::ROCK_SMALL: return SDL2pp::Rect(0, 0, 140, 120);
+        default:                       return SDL2pp::NullOpt;
+    }
+}
+
+
+void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    int startX = std::max(0, (int)(camX / TILE_SIZE));
+    int startY = std::max(0, (int)(camY / TILE_SIZE));
+    int endX = std::min(map.width, startX + screenW / TILE_SIZE + 2);
+    int endY = std::min(map.height, startY + screenH / TILE_SIZE + 2);
+
+    for (int y = startY; y < endY; y++) {
+        for (int x = startX; x < endX; x++) {
+            const TileData& tile = map.at(x, y);
+            if (tile.obstacleType == ObstacleType::NONE)
+                continue;
+
+            // Solo renderizamos desde la celda ancla (esquina superior-izquierda del grupo).
+            const bool leftSame =
+                    (x > 0 && map.at(x - 1, y).obstacleType == tile.obstacleType);
+            const bool aboveSame =
+                    (y > 0 && map.at(x, y - 1).obstacleType == tile.obstacleType);
+            if (leftSame || aboveSame)
+                continue;
+
+            // Medir el ancho del grupo escaneando hacia la derecha.
+            int w = 1;
+            while (x + w < map.width && map.at(x + w, y).obstacleType == tile.obstacleType)
+                w++;
+
+            // Medir el alto del grupo escaneando hacia abajo.
+            int h = 1;
+            while (y + h < map.height && map.at(x, y + h).obstacleType == tile.obstacleType)
+                h++;
+
+            const char* texPath = obstacleTexturePath(tile.obstacleType);
+            if (!texPath)
+                continue;
+
+            const int screenX = (int)(x * TILE_SIZE - camX);
+            const int screenY = (int)(y * TILE_SIZE - camY);
+            SDL2pp::Rect dst(screenX, screenY, w * TILE_SIZE, h * TILE_SIZE);
+
+            try {
+               renderer.Copy(cache.get(texPath), obstacleSourceCrop(tile.obstacleType), dst);
+            } catch (...) {
+                // Textura no disponible — se ignora silenciosamente.
+            }
         }
     }
 }

@@ -39,8 +39,8 @@ private:
     static constexpr int BOX_COUNT = 5;
     static constexpr int BOX_LEFT[5] = {215, 347, 479, 611, 743};
     static constexpr int BOX_RIGHT[5] = {284, 416, 548, 680, 812};
-    static constexpr int BOX_TOP = 185;
-    static constexpr int BOX_BOTTOM = 245;
+    static constexpr int BOX_TOP = 250;
+    static constexpr int BOX_BOTTOM = 330;
 
     // Padding interior (excluye el borde de 4px)
     static constexpr int BOX_PAD = 4;
@@ -55,6 +55,12 @@ private:
 
     // ── Color para el recuadro seleccionado ──────────────────────────────
     static constexpr SDL_Color HIGHLIGHT = {200, 170, 50, 160};
+
+    // Botón JUGAR (coordenadas en el PNG 1024×1024)
+    static constexpr int BTN_JUGAR_X = 565;
+    static constexpr int BTN_JUGAR_Y = 708;
+    static constexpr int BTN_JUGAR_W = 315;
+    static constexpr int BTN_JUGAR_H = 44;
 
     // Convierte coordenadas del PNG a coordenadas de pantalla.
     SDL2pp::Rect pngToScreen(int x, int y, int w, int h) const;

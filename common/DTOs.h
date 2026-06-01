@@ -14,9 +14,11 @@ using Command = std::string;
 
 // enum class ServerMessageType { ... };
 using ServerMessageType = std::string;
+
+
 static constexpr float ANIM_SPEED = 0.15f;        // segundos por frame
 static constexpr float PLAYER_MOVE_SPEED = 4.0f;  // tiles por segundo
-static constexpr int TILE_SIZE = 32;              // tiles son 128x128
+static constexpr int TILE_SIZE = 64;              // tiles son 128x128
 static constexpr int SPRITE_W = 27;               // frame del personaje
 static constexpr int SPRITE_H = 49;
 static constexpr int ANIM_FRAMES = 4;  // columnas del spritesheet
@@ -24,7 +26,7 @@ static constexpr int ANIM_FRAMES = 4;  // columnas del spritesheet
 
 struct LoginResult {
     std::vector<char> username;
-    bool confirmed;  // true = presionó Enter, false = cerró la ventana
+    bool confirmed;  
 };
 
 
@@ -39,12 +41,20 @@ enum class TileType : uint8_t {
 
 // Tipos de obstáculo. Se mandan como obstacleId en cada Cell del mapa.
 enum class ObstacleType : uint8_t {
-    NONE  = 0,
-    ROCK  = 1,
-    TREE  = 2,
-    NPC   = 3,
-    ENTRY = 4,
-    WALL  = 5,
+    NONE       = 0,
+    ROCK       = 1,   // roca (3x3) → 7225.png
+    TREE       = 2,   // arbol / arbol_grande / tronco (sin textura)
+    NPC        = 3,
+    ENTRY      = 4,
+    WALL       = 5,
+    ROCK_SMALL = 6,   // piedra_pequenia (2x2) → roca_03_ajustada.png
+    ROCK_LARGE = 7,   // piedra_grande (6x4)   → roca_01_ajustada.png
+    LAMP       = 8,   // lampara_ciudad  (1x1) → lampara_corregida.png
+    WOOD       = 9,   // pila_maderas    (1x1) → maderas_apiladas_corregida.png
+    CART       = 10,  // carretilla      (2x2) → segunda_carretilla_primera_fila.png
+    MILL       = 11,  // molino          (6x4) → molino_recortado.png
+    CACTUS     = 12,  // cactus          (1x1) → cactus_arriba_derecha_128x128.png
+    BUSH       = 13,  // arbusto         (1x1) (sin textura)
 };
 
 // ── Dirección del personaje ───────────────────────────────────

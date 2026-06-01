@@ -15,22 +15,8 @@ GameMap convertToGameMap(const ReceivedMap& m) {
     for (size_t i = 0; i < m.cells.size(); i++) {
         const auto& cell = m.cells[i];
         if (cell.obstacleId != 0) {
-            // El obstacleId trae el código de ObstacleType — elegimos tile según el tipo.
             gm.tiles[i].blocked = true;
-            switch (static_cast<ObstacleType>(cell.obstacleId)) {
-                case ObstacleType::NPC:
-                    gm.tiles[i].floor = TileType::SAND;
-                    break;
-                case ObstacleType::ENTRY:
-                    gm.tiles[i].floor = TileType::WATER;
-                    break;
-                case ObstacleType::ROCK:
-                case ObstacleType::TREE:
-                case ObstacleType::WALL:
-                default:
-                    gm.tiles[i].floor = TileType::DIRT;
-                    break;
-            }
+            gm.tiles[i].obstacleType = static_cast<ObstacleType>(cell.obstacleId);
         } else if (cell.safeZone) {
             gm.tiles[i].floor = TileType::INTERIOR;
             gm.tiles[i].blocked = false;
