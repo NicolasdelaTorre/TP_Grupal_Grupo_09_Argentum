@@ -123,8 +123,18 @@ int ProtocolServer::returnUser(std::string& message, const int clientId) {
 
     std::string userName = it->second.receive_message(nameLenght);
 
+    u_int16_t raceLenght = it->second.receive_two_bytes_number();
+    std::string race = raceLenght ? it->second.receive_message(raceLenght) : "";
+
+    u_int16_t classLenght = it->second.receive_two_bytes_number();
+    std::string class_ = classLenght ? it->second.receive_message(classLenght) : "";
+
     message += "user.";
     message += userName;
+    message += ":";
+    message += race;
+    message += ":";
+    message += class_;
 
     return 1;
 }
@@ -192,6 +202,8 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
             sendPlayerMoved(it->second, message);
         } else if (message.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
             sendPlayerDisconnected(it->second, message);
+        } else if (message.rfind("STATS:", 0) == 0) {
+            sendStats(it->second, message);
         } else {
             throw std::runtime_error("Protocol Error: unknown server's command: " + message);
         }
@@ -279,6 +291,24 @@ void ProtocolServer::sendPlayerDisconnected(common_protocol& client, const std::
 
     client.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_DISCONNECTED));
     client.send_two_bytes_number(id);
+}
+
+void ProtocolServer::sendStats(common_protocol& client, const std::string& message) {
+    // Formato: "STATS:<hp>:<maxHp>:<level>"
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    size_t c3 = message.find(':', c2 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed STATS message: " + message);
+    }
+    uint16_t hp = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+    uint16_t maxHp = static_cast<uint16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
+    uint8_t level = static_cast<uint8_t>(std::stoi(message.substr(c3 + 1)));
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::STATS_JUGADOR));
+    client.send_two_bytes_number(hp);
+    client.send_two_bytes_number(maxHp);
+    client.sendByte(level);
 }
 
 void ProtocolServer::sendMap(common_protocol& client) {

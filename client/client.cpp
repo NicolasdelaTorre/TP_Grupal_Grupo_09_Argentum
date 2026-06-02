@@ -34,7 +34,8 @@ void client::run() {
         return;
 
     // Handshake sincrónico (login + mapa) antes de arrancar los hilos para evitar races.
-    protocol.send_username(result.username);
+    // Raza/clase hardcodeadas hasta que haya UI para elegirlas.
+    protocol.send_user_arrival(result.username, "Elf", "Mage");
 
     ServerMsg type = protocol.recv_msg_type();
     if (type == ServerMsg::LOGIN_FAIL) {

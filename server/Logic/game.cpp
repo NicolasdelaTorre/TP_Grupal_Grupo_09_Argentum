@@ -5,7 +5,8 @@
 #include <iostream>
 #include <stdexcept>
 
-Game::Game(Map& map, Position playerSpawn): map(map), playerSpawn(playerSpawn) {}
+Game::Game(Map& map, Position playerSpawn):
+        map(map), playerSpawn(playerSpawn), parser(BinaryParser()) {}
 
 bool Game::processCommand(int playerId, const std::string& command) {
     size_t commandPosition = command.find('.');
@@ -17,24 +18,51 @@ bool Game::processCommand(int playerId, const std::string& command) {
 
     if (dataType == "user") {
         std::string user = command.substr(commandPosition + 1);
-        Position spawn = findSpawnPosition();
-        players.emplace(playerId, Player(user, spawn, "elf", "mage"));
-
-        std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")"
-                  << std::endl;
-
-        test();
-
-        return true;
+        return processUser(playerId, user);
     } else if (dataType == "movement") {
         std::string direction = command.substr(commandPosition + 1);
         return processMovement(playerId, direction);
     } else if (dataType == "turn") {
         std::string direction = command.substr(commandPosition + 1);
         return turnPlayer(playerId, direction);
+    } else if (dataType == "attack") {
+        // Formato: "attack"
+        std::string direction = command.substr(commandPosition + 1);
+        return processAttack(playerId, direction);
     }
 
     return false;
+}
+
+bool Game::processUser(int playerId, const std::string& user) {
+    // Formato: "NAME:RACE:CLASS"
+    size_t firstColon = user.find(':');
+    size_t secondColon = user.find(':', firstColon + 1);
+    if (firstColon == std::string::npos || secondColon == std::string::npos) {
+        throw std::runtime_error("Game Error: malformed user command (expected NAME:RACE:CLASS)");
+    }
+
+    std::string name = user.substr(0, firstColon);
+    std::string race = user.substr(firstColon + 1, secondColon - firstColon - 1);
+    std::string class_ = user.substr(secondColon + 1);
+
+    Position spawn;
+
+    if (!parser.checkPlayerExists(name)) {
+        spawn = findSpawnPosition();
+        players.emplace(playerId, Player(name, spawn, race, class_));
+        parser.savePlayerData(name, players.at(playerId).getData());
+    } else {
+        players.emplace(playerId, Player(parser.loadPlayerData(name), name));
+        spawn = players.at(playerId).getPosition();
+    }
+
+    map.placePlayer(playerId, spawn.x, spawn.y);
+
+    std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
+              << ", " << spawn.y << ")" << std::endl;
+
+    return true;
 }
 
 bool Game::turnPlayer(int playerId, const std::string& direction) {
@@ -114,6 +142,30 @@ uint8_t Game::getPlayerDirection(int playerId) const {
     return it->second.getDirection();
 }
 
+uint16_t Game::getPlayerHealth(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().health;
+}
+
+uint16_t Game::getPlayerMaxHealth(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().maxHealth;
+}
+
+uint8_t Game::getPlayerLevel(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().level;
+}
+
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
 std::vector<int> Game::getPlayerIds() const {
@@ -125,7 +177,19 @@ std::vector<int> Game::getPlayerIds() const {
     return ids;
 }
 
-void Game::removePlayer(int playerId) { players.erase(playerId); }
+void Game::updatePlayerData(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    parser.updatePlayerData(it->second.getName(), it->second.getData());
+}
+
+void Game::removePlayer(int playerId) {
+    updatePlayerData(playerId);
+    players.erase(playerId);
+}
 
 bool Game::processMovement(int playerId, const std::string& direction) {
     auto itPlayer = players.find(playerId);
@@ -169,8 +233,34 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     return true;
 }
 
-void Game::test() {
-    for (const auto& [id, player]: players) {
-        std::cout << "Player " << player.getName() << " Life: " << player.data.health << std::endl;
+bool Game::processAttack(int playerId, const std::string& direction) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
+        return false;
+    }
+
+    uint8_t entityId = map.isEntityInSight(itPlayer->second.getX(), itPlayer->second.getY(),
+                                           direction, itPlayer->second.hasLongDistanceWeapon());
+
+    if (entityId == 0)
+        return false;
+
+    auto itTarget = players.find(entityId);
+    if (itTarget == players.end()) {
+        throw std::runtime_error("Game Error: player in sight not found");
+    }
+
+    itTarget->second.receiveDamage(itPlayer->second.dealDamage());
+
+    return true;
+}
+
+Game::~Game() {
+    for (const auto& [id, _]: players) {
+        updatePlayerData(id);
     }
 }

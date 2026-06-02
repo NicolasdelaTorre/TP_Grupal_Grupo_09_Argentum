@@ -9,9 +9,9 @@
 
 struct RaceAttribute {
     uint8_t constitution;
+    uint8_t force;
     float FRaceHealth;
     float FRaceRecovery;
-    uint8_t SecondsToRecovery;
 };
 
 struct ClassAttribute {

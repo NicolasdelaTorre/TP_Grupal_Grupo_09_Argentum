@@ -27,13 +27,22 @@ ServerMsg client_protocol::recv_msg_type() {
     return static_cast<ServerMsg>(opcode);
 }
 
+void client_protocol::sendCheat(CheatCode cheat) {
+    protocol.sendByte(static_cast<uint8_t>(cheat));
+}
+
 void client_protocol::close() { protocol.shutdown(); }
 
 
-int client_protocol::send_username(const std::vector<char>& data) {
+int client_protocol::send_user_arrival(const std::vector<char>& name, const std::string& race,
+                                       const std::string& class_) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::USER_ARRIVAL));
-    protocol.send_two_bytes_number(static_cast<uint16_t>(data.size()));
-    protocol.send_message(data);
+    protocol.send_two_bytes_number(static_cast<uint16_t>(name.size()));
+    protocol.send_message(name);
+    protocol.send_two_bytes_number(static_cast<uint16_t>(race.size()));
+    protocol.send_message(std::vector<char>(race.begin(), race.end()));
+    protocol.send_two_bytes_number(static_cast<uint16_t>(class_.size()));
+    protocol.send_message(std::vector<char>(class_.begin(), class_.end()));
     return 0;
 }
 
@@ -84,7 +93,30 @@ uint16_t client_protocol::recv_player_disconnected_payload() {
     return protocol.receive_two_bytes_number();
 }
 
+StatsEvent client_protocol::recv_stats_payload() {
+    StatsEvent ev;
+    ev.health = protocol.receive_two_bytes_number();
+    ev.maxHealth = protocol.receive_two_bytes_number();
+    ev.level = protocol.receive_byte();
+    return ev;
+}
+
 void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);
+}
+
+std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {
+    uint16_t count = protocol.receive_two_bytes_number();
+    std::vector<DroppedItem> items;
+    items.reserve(count);
+    for (uint16_t i = 0; i < count; i++) {
+        DroppedItem item;
+        item.x = static_cast<int16_t>(protocol.receive_two_bytes_number());
+        item.y = static_cast<int16_t>(protocol.receive_two_bytes_number());
+        item.sheetId = protocol.receive_byte();
+        item.itemId = protocol.receive_two_bytes_number();
+        items.push_back(item);
+    }
+    return items;
 }

@@ -20,6 +20,7 @@ RaceAttribute AttributeManager::readRace(const toml::value& config, const std::s
     RaceAttribute race;
 
     race.constitution = toml::find<uint8_t>(config, "race", raceName, "constitution");
+    race.force = toml::find<uint8_t>(config, "race", raceName, "force");
     race.FRaceHealth = toml::find<float>(config, "race", raceName, "FRaceHealth");
     race.FRaceRecovery = toml::find<float>(config, "race", raceName, "FRaceRecovery");
 
@@ -36,13 +37,13 @@ ClassAttribute AttributeManager::readClass(const toml::value& config,
 }
 
 RaceAttribute AttributeManager::getRaceAttribute(const std::string& raceName) {
-    if (raceName == "human") {
+    if (raceName == "Human") {
         return attributes.human;
-    } else if (raceName == "elf") {
+    } else if (raceName == "Elf") {
         return attributes.elf;
-    } else if (raceName == "dwarf") {
+    } else if (raceName == "Dwarf") {
         return attributes.dwarf;
-    } else if (raceName == "gnome") {
+    } else if (raceName == "Gnome") {
         return attributes.gnome;
     } else {
         throw std::runtime_error("Unknown race");
@@ -50,13 +51,13 @@ RaceAttribute AttributeManager::getRaceAttribute(const std::string& raceName) {
 }
 
 ClassAttribute AttributeManager::getClassAttribute(const std::string& className) {
-    if (className == "mage") {
+    if (className == "Mage") {
         return attributes.mage;
-    } else if (className == "cleric") {
+    } else if (className == "Cleric") {
         return attributes.cleric;
-    } else if (className == "champion") {
+    } else if (className == "Champion") {
         return attributes.champion;
-    } else if (className == "warrior") {
+    } else if (className == "Warrior") {
         return attributes.warrior;
     } else {
         throw std::runtime_error("Unknown class");

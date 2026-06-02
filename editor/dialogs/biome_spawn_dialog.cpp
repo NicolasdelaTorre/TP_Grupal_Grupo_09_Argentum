@@ -1,13 +1,12 @@
 #include "biome_spawn_dialog.h"
 
-#include <algorithm>
-
 #include <QDialogButtonBox>
 #include <QFont>
 #include <QGridLayout>
 #include <QLabel>
 #include <QSlider>
 #include <QVBoxLayout>
+#include <algorithm>
 
 #include "editor_constants.h"
 

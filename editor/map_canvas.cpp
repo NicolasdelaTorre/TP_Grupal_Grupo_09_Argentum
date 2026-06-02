@@ -833,7 +833,8 @@ void MapCanvas::rebuildBiomeTint() {
         biome_pixmaps[i] = loaded.copy(0, 0, crop_w, crop_h);
     }
 
-    // Para celdas con textura instanciar un QGraphicsPixmapItem por celda, para celdas sin textura tinte de color con alpha 90.
+    // Para celdas con textura instanciar un QGraphicsPixmapItem por celda, para celdas sin textura
+    // tinte de color con alpha 90.
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             const int o = owner[static_cast<size_t>(y) * W + x];

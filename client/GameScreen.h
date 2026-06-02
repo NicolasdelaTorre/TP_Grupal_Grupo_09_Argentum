@@ -11,12 +11,16 @@
 #include "client_protocol.h"  // ReceivedMap
 #include "map_renderer.h"
 
-static constexpr float FEET_OFFSET = 0.5f;
+static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
 
 // Jugador remoto del que recibimos eventos por broadcast del servidor.
+// target* es el tile destino que mandó el server; visual.x/y avanzan hacia ahí
+// a PLAYER_MOVE_SPEED para que el movimiento se vea fluido en vez de teletransporte.
 struct OtherPlayer {
     Player visual;
+    float targetX = 0.0f;
+    float targetY = 0.0f;
     std::string name;
 };
 
@@ -28,6 +32,7 @@ public:
 
     // Retorna false cuando el jugador quiere salir
     bool run();
+    uint16_t a = 0;
 
 private:
     SDL2pp::Renderer& renderer;
@@ -46,6 +51,12 @@ private:
     // pushea.
     Queue<std::string>& server_queue;
     std::unordered_map<int, OtherPlayer> otherPlayers;
+    std::vector<DroppedItem> droppedItems;
+
+    // Stats del jugador local (vienen por STATS_JUGADOR).
+    uint16_t health = 0;
+    uint16_t maxHealth = 0;
+    uint8_t level = 1;
 
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);
@@ -67,4 +78,7 @@ private:
 
     // True si algún otherPlayer está en (tileX, tileY). Para que la predicción local no choque.
     bool isOccupiedByOther(int tileX, int tileY) const;
+
+    // Dibuja la barra de vida en la esquina superior izquierda.
+    void renderHUD();
 };

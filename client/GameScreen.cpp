@@ -1,6 +1,7 @@
 #include "GameScreen.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <utility>
 
@@ -15,22 +16,8 @@ GameMap convertToGameMap(const ReceivedMap& m) {
     for (size_t i = 0; i < m.cells.size(); i++) {
         const auto& cell = m.cells[i];
         if (cell.obstacleId != 0) {
-            // El obstacleId trae el código de ObstacleType — elegimos tile según el tipo.
             gm.tiles[i].blocked = true;
-            switch (static_cast<ObstacleType>(cell.obstacleId)) {
-                case ObstacleType::NPC:
-                    gm.tiles[i].floor = TileType::SAND;
-                    break;
-                case ObstacleType::ENTRY:
-                    gm.tiles[i].floor = TileType::WATER;
-                    break;
-                case ObstacleType::ROCK:
-                case ObstacleType::TREE:
-                case ObstacleType::WALL:
-                default:
-                    gm.tiles[i].floor = TileType::DIRT;
-                    break;
-            }
+            gm.tiles[i].obstacleType = static_cast<ObstacleType>(cell.obstacleId);
         } else if (cell.safeZone) {
             gm.tiles[i].floor = TileType::INTERIOR;
             gm.tiles[i].blocked = false;
@@ -116,6 +103,7 @@ void GameScreen::render() {
     renderer.Clear();
 
     mapRenderer.render(map, camX, camY);
+    mapRenderer.renderDroppedItems(droppedItems, camX, camY);
 
     // Otros jugadores primero, el local queda visualmente encima.
     // for (const auto& [id, op: otherPlayers]) {(void)id .....}
@@ -129,6 +117,8 @@ void GameScreen::render() {
     mapRenderer.renderPlayer(player, camX, camY);
     mapRenderer.renderWeapon(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
+
+    renderHUD();
 
     renderer.Present();
 }
@@ -146,6 +136,8 @@ bool GameScreen::handleEvents(float dt) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
 
+    const char *msg = nullptr;
+
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::UP;
@@ -158,8 +150,17 @@ bool GameScreen::handleEvents(float dt) {
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
+    }else if (keys[SDL_SCANCODE_F1]){
+       msg = "CHEAT_SUICIDE";
+    }else if (keys[SDL_SCANCODE_F2]){
+        msg = "CHEAT_GOLD";
+    }else if (keys[SDL_SCANCODE_F3]){
+        msg = "CHEAT_EXPERIENCE";
     }
-
+        
+    if(msg){
+        events_queue.push(msg);
+    }
     player.moving = (dx != 0 || dy != 0);
 
     // Mover si el tile destino no está bloqueado
@@ -234,6 +235,32 @@ void GameScreen::update(float dt) {
     // Consumimos eventos del servidor antes de animar.
     consumeServerEvents();
 
+    // Interpolamos a los otros jugadores hacia su tile destino para que se vea
+    // un walk fluido en vez de saltos de tile en tile.
+    for (auto& entry: otherPlayers) {
+        auto& op = entry.second;
+        float dx = op.targetX - op.visual.x;
+        float dy = op.targetY - op.visual.y;
+        float dist = std::sqrt(dx * dx + dy * dy);
+        float step = PLAYER_MOVE_SPEED * dt;
+        if (dist <= step || dist == 0.0f) {
+            op.visual.x = op.targetX;
+            op.visual.y = op.targetY;
+            op.visual.moving = false;
+            op.visual.animFrame = 0;
+            op.visual.animTimer = 0;
+        } else {
+            op.visual.x += (dx / dist) * step;
+            op.visual.y += (dy / dist) * step;
+            op.visual.moving = true;
+            op.visual.animTimer += dt;
+            if (op.visual.animTimer >= ANIM_SPEED) {
+                op.visual.animTimer -= ANIM_SPEED;
+                op.visual.animFrame = (op.visual.animFrame + 1) % ANIM_FRAMES;
+            }
+        }
+    }
+
     if (!player.moving) {
         player.animFrame = 0;
         player.animTimer = 0;
@@ -252,6 +279,11 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
         int opTileX = (int)(op.visual.x + HEAD_OFFSET);
         int opTileY = (int)(op.visual.y + FEET_OFFSET);
         if (opTileX == tileX && opTileY == tileY)
+            return true;
+        // También el tile destino: si está caminando hacia (tileX,tileY) no podemos pisarlo.
+        int opTargetX = (int)(op.targetX + HEAD_OFFSET);
+        int opTargetY = (int)(op.targetY + FEET_OFFSET);
+        if (opTargetX == tileX && opTargetY == tileY)
             return true;
     }
     return false;
@@ -275,6 +307,8 @@ void GameScreen::consumeServerEvents() {
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
             OtherPlayer op;
             tileToPlayerCoords(x, y, op.visual);
+            op.targetX = static_cast<float>(x);
+            op.targetY = static_cast<float>(y);
             op.visual.dir = wireDirToSpriteDir(dir);
             op.name = event.substr(c5 + 1);
             otherPlayers[id] = std::move(op);
@@ -292,7 +326,8 @@ void GameScreen::consumeServerEvents() {
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1)));
             auto it = otherPlayers.find(id);
             if (it != otherPlayers.end()) {
-                tileToPlayerCoords(x, y, it->second.visual);
+                it->second.targetX = static_cast<float>(x);
+                it->second.targetY = static_cast<float>(y);
                 it->second.visual.dir = wireDirToSpriteDir(dir);
             }
         } else if (event.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
@@ -300,6 +335,67 @@ void GameScreen::consumeServerEvents() {
             size_t c1 = event.find(':');
             int id = std::stoi(event.substr(c1 + 1));
             otherPlayers.erase(id);
+        } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
+            // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
+            droppedItems.clear();
+            size_t pos = event.find(':');
+            size_t next = event.find(':', pos + 1);
+            int count = std::stoi(event.substr(pos + 1, next - pos - 1));
+            pos = next;
+            for (int i = 0; i < count && pos != std::string::npos; i++) {
+                DroppedItem di;
+                next = event.find(':', pos + 1);
+                di.x = static_cast<int16_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
+                pos = next;
+                next = event.find(':', pos + 1);
+                di.y = static_cast<int16_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
+                pos = next;
+                next = event.find(':', pos + 1);
+                di.sheetId = static_cast<uint8_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
+                pos = next;
+                next = event.find(':', pos + 1);
+                di.itemId = static_cast<uint16_t>(std::stoi(
+                        event.substr(pos + 1, next == std::string::npos ? std::string::npos : next - pos - 1)));
+                pos = next;
+                droppedItems.push_back(di);
+            }
+        } else if (event.rfind("STATS:", 0) == 0) {
+            // STATS:<hp>:<maxHp>:<level>
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            if (c3 == std::string::npos)
+                continue;
+            health = static_cast<uint16_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
+            maxHealth = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
+            level = static_cast<uint8_t>(std::stoi(event.substr(c3 + 1)));
         }
     }
+}
+
+void GameScreen::renderHUD() {
+    if (maxHealth == 0)
+        return;  // no recibimos stats todavía
+
+    // Barra de vida en la esquina superior izquierda
+    static constexpr int HUD_X = 10;
+    static constexpr int HUD_Y = 10;
+    static constexpr int BAR_W = 200;
+    static constexpr int BAR_H = 20;
+
+    // Fondo gris
+    renderer.SetDrawColor(60, 60, 60, 220);
+    SDL_Rect bg{HUD_X, HUD_Y, BAR_W, BAR_H};
+    SDL_RenderFillRect(renderer.Get(), &bg);
+
+    // Vida actual (rojo)
+    int filledW = static_cast<int>(BAR_W * (float)health / (float)maxHealth);
+    renderer.SetDrawColor(180, 30, 30, 255);
+    SDL_Rect fill{HUD_X, HUD_Y, filledW, BAR_H};
+    SDL_RenderFillRect(renderer.Get(), &fill);
+
+    // Borde
+    renderer.SetDrawColor(0, 0, 0, 255);
+    SDL_Rect border{HUD_X, HUD_Y, BAR_W, BAR_H};
+    SDL_RenderDrawRect(renderer.Get(), &border);
 }

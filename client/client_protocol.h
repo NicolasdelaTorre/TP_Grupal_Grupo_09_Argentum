@@ -37,6 +37,13 @@ struct PlayerEvent {
     std::string name;
 };
 
+// Stats del jugador local (STATS_JUGADOR).
+struct StatsEvent {
+    uint16_t health;
+    uint16_t maxHealth;
+    uint8_t level;
+};
+
 class client_protocol {
     common_protocol protocol;
 
@@ -55,8 +62,9 @@ public:
     // Cierra el socket — desbloquea cualquier recv pendiente
     void close();
 
-    // Envío del nombre de usuario al loguearse: [USER_ARRIVAL][len:2][name].
-    int send_username(const std::vector<char>& data);
+    // Envío del login: [USER_ARRIVAL][len:2][name][len:2][race][len:2][class].
+    int send_user_arrival(const std::vector<char>& name, const std::string& race,
+                          const std::string& class_);
 
     // Las funciones recv_*_payload asumen que el opcode ya fue consumido vía recv_msg_type().
     Position recv_login_ok_payload();
@@ -64,9 +72,18 @@ public:
     PlayerEvent recv_new_player_payload();
     PlayerEvent recv_player_moved_payload();
     uint16_t recv_player_disconnected_payload();
+    StatsEvent recv_stats_payload();
 
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
+
+    // Recibe la lista completa de NPCs dinámicos (criaturas).
+    std::vector<NpcEntity> recv_npc_list_payload();
+
+    // Recibe la lista de items tirados en el piso.
+    std::vector<DroppedItem> recv_dropped_items_payload();
+
+    void sendCheat(CheatCode cheat);
 };
 
 
