@@ -1,20 +1,24 @@
 [race.human]
 constitution = 10
+force = 8
 FRaceHealth = 15.0
 FRaceRecovery = 15.0
 
 [race.elf]
 constitution = 5
+force = 5
 FRaceHealth = 8.0
 FRaceRecovery = 20.0
 
 [race.dwarf]
 constitution = 14
+force = 12
 FRaceHealth = 20.0
 FRaceRecovery = 10.0
 
 [race.gnome]
 constitution = 5
+force = 5
 FRaceHealth = 6.0
 FRaceRecovery = 18.0
 

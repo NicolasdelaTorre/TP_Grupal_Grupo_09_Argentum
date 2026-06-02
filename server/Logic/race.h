@@ -11,13 +11,13 @@ public:
     enum class RaceCode : uint8_t { HUMAN = 0, ELF = 1, DWARF = 2, GNOME = 3 };
 
     static RaceCode fromString(const std::string& raceName) {
-        if (raceName == "human") {
+        if (raceName == "Human") {
             return RaceCode::HUMAN;
-        } else if (raceName == "elf") {
+        } else if (raceName == "Elf") {
             return RaceCode::ELF;
-        } else if (raceName == "dwarf") {
+        } else if (raceName == "Dwarf") {
             return RaceCode::DWARF;
-        } else if (raceName == "gnome") {
+        } else if (raceName == "Gnome") {
             return RaceCode::GNOME;
         } else {
             throw std::runtime_error("Unknown race");

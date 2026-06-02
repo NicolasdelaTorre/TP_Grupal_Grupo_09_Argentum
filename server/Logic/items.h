@@ -35,7 +35,19 @@ private:
     uint16_t manaRestore;
 
 public:
-    explicit Item(const std::string& itemName);
+    Item();
+
+    void createItem(const std::string& itemName);
+
+    bool emptyItem();
+
+    bool longDistance();
+
+    uint16_t getMinDamage() const;
+
+    uint16_t getMaxDamage() const;
+
+    ItemType getType() const;
 };
 
 #endif
