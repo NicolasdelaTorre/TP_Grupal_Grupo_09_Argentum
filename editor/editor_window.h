@@ -26,6 +26,15 @@ public:
     ~EditorWindow() override;
 
 private:
+    enum class ResizeDirection { Left, Right, Up, Down };
+
+    struct ResizeDelta {
+        int delta_w = 0;
+        int delta_h = 0;
+        int offset_x = 0;
+        int offset_y = 0;
+    };
+
     Ui::EditorWindow* ui_;
     TemplateRegistry templates_;
     MapCanvas* map_canvas_ = nullptr;
@@ -36,6 +45,11 @@ private:
     QString current_environment_id_;
     int next_entry_index_ = 1;
     int next_environment_index_ = 1;
+
+    static ResizeDelta computeResizeDelta(ResizeDirection dir, int cells, bool shrink);
+    static bool fitsInside(int x, int y, int w, int h, int map_w, int map_h);
+    static bool canShrinkDocument(const MapDocument& doc, const ResizeDelta& delta);
+    static void applyResizeToDocument(MapDocument& doc, const ResizeDelta& delta);
 
     void setupTemplates();
     void setupTools();
@@ -52,6 +66,7 @@ private:
     void selectDimensionsMode();
     void selectDefaultMode();
     void updateDimensionsLabel();
+    void onApplyMapResize();
 
     void startNewMainMap(const QString& map_id, const QString& map_name, int width, int height);
     void onEntryPlacementRequested(const QString& template_id, int cell_x, int cell_y);

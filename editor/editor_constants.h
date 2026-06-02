@@ -74,6 +74,11 @@
 #define ZOOM_SCALE 0.05
 #define INITIAL_ZOOM 1.0
 
+#define CREATURE_SLIDER_MIN 0
+#define CREATURE_SLIDER_MAX 50
+#define CREATURE_SLIDER_DEFAULT 0
+#define CREATURE_VALUE_LABEL_WIDTH 28
+
 // Z order de los elementos del mapa (de abajo hacia arriba):
 // biomas -> ciudades -> obstáculos / entries / spawn (y paredes en entornos).
 #define Z_BIOME_ZONE 1.0

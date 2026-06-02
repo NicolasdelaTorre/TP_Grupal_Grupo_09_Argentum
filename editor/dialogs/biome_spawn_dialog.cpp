@@ -9,28 +9,23 @@
 #include <QSlider>
 #include <QVBoxLayout>
 
-namespace {
-constexpr int CREATURE_SLIDER_MIN = 0;
-constexpr int CREATURE_SLIDER_MAX = 50;
-constexpr int CREATURE_SLIDER_DEFAULT = 0;
-constexpr int CREATURE_VALUE_LABEL_WIDTH = 28;
+#include "editor_constants.h"
 
-QString capitalize_first(const QString& text) {
+QString BiomeSpawnDialog::capitalize_first(const QString& text) {
     if (text.isEmpty()) {
         return text;
     }
     return text.left(1).toUpper() + text.mid(1);
 }
 
-int initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
-                           const std::string& creature) {
+int BiomeSpawnDialog::initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
+                                             const std::string& creature) {
     const auto it = std::find_if(initial_spawns.begin(), initial_spawns.end(),
                                  [&creature](const CreatureSpawn& spawn) {
                                      return spawn.creature == creature;
                                  });
     return it == initial_spawns.end() ? CREATURE_SLIDER_DEFAULT : it->max_population;
 }
-}  // namespace
 
 BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget* parent):
         BiomeSpawnDialog(biome_template, {}, parent) {}

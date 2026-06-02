@@ -1,0 +1,121 @@
+/* Fondo */
+
+QMainWindow,
+QDialog {
+    border-image: url(:/ui/background.png) 0 0 0 0 stretch stretch;
+}
+
+/* Contenedores transparentes */
+QStackedWidget,
+QStackedWidget > QWidget,
+QWidget#centralwidget,
+QWidget#pageMainMenu,
+QWidget#pageNewMap,
+QWidget#pageEditor,
+QWidget#toolsPanel,
+QWidget#mapCanvasHost,
+QWidget#pageToolSpawn,
+QWidget#pageToolObstacles,
+QWidget#pageToolBiomes,
+QWidget#pageToolCities,
+QWidget#pageToolEnvironments,
+QWidget#pageToolDimensions,
+QWidget#pageToolWalls,
+QFrame#resizeActionGroupFrame,
+QFrame#resizeActionFrame,
+QFrame#resizeDirectionFrame {
+    background: transparent;
+}
+
+/* Texto */
+QLabel {
+    background: transparent;
+    color: #e8d8b0;
+}
+
+
+/* Inputs */
+
+QLineEdit,
+QComboBox,
+QSpinBox,
+QListWidget,
+QAbstractItemView {
+    background-color: rgba(20, 20, 20, 200);
+    color: #e8d8b0;
+    border: 1px solid #5a4a3a;
+    selection-background-color: #6a3030;
+    selection-color: #ffffff;
+    padding: 2px 4px;
+}
+
+QLineEdit:focus,
+QComboBox:focus,
+QSpinBox:focus {
+    border: 1px solid #c0a070;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #1a1a1a;
+    color: #e8d8b0;
+    border: 1px solid #5a4a3a;
+}
+
+QListWidget::item:selected {
+    background-color: #6a3030;
+    color: #ffffff;
+}
+
+/* Botones */
+
+QPushButton {
+    border-image: url(:/ui/grey_button.png) 2 2 2 2 stretch stretch;
+    border-width: 2px;
+    border-style: solid;
+    color: #e8d8b0;
+    font-weight: bold;
+    padding: 4px 14px;
+    min-height: 26px;
+    outline: none;
+}
+
+QPushButton:hover {
+    color: #ffffff;
+}
+
+QPushButton:pressed {
+    color: #c0a070;
+    padding-top: 6px;
+    padding-bottom: 2px;
+}
+
+QPushButton:checked {
+    color: #ffd28a;
+}
+
+QPushButton:disabled {
+    color: #777777;
+}
+
+QPushButton:focus {
+    outline: none;
+}
+
+/* Botones destacados (rojos) */
+
+QPushButton[primary="true"] {
+    border-image: url(:/ui/red_button.png) 2 2 2 2 stretch stretch;
+    color: #f4e2c8;
+}
+
+QPushButton[primary="true"]:hover {
+    color: #ffffff;
+}
+
+QPushButton[primary="true"]:pressed {
+    color: #d8b890;
+}
+
+QPushButton[primary="true"]:disabled {
+    color: #888888;
+}

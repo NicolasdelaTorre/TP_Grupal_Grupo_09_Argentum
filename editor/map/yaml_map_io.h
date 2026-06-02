@@ -14,6 +14,7 @@ public:
 private:
     static void write_position(YAML::Emitter& out, int x, int y);
     static void write_size(YAML::Emitter& out, int width, int height);
+    static void write_biome_map(YAML::Emitter& out, const MapDocument& document);
 };
 
 #endif

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "dialogs/biome_spawn_dialog.h"
+#include "map/biome_grid.h"
 
 #include "editor_constants.h"
 
@@ -46,6 +47,7 @@ MapCanvas::MapCanvas(const TemplateRegistry& templates, QWidget* parent):
     layout->addWidget(view_);
     // botones guardar, zoom in y zoom out
     auto* save_button = new QPushButton(QStringLiteral("Guardar mapa"), this);
+    save_button->setProperty("primary", true);
     auto* zoom_in_button = new QPushButton(QStringLiteral("+"), this);
     auto* zoom_out_button = new QPushButton(QStringLiteral("–"), this);
     // layout de botones
@@ -122,15 +124,14 @@ void MapCanvas::applyInitialView() {
     const int viewport_w = std::max(view_->viewport()->width(), 1);
     const int viewport_h = std::max(view_->viewport()->height(), 1);
 
-    // escala de la vista para que quepa en la ventana
+    // escala de la vista para que entre en la ventana
     const double fit_scale_x = (viewport_w * 0.92) / scene_width;
     const double fit_scale_y = (viewport_h * 0.92) / scene_height;
     const double fit_scale = std::min(fit_scale_x, fit_scale_y);
 
     // escala de la vista para que cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
     const double target_scale = static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
-    // escala de la vista para que quepa en la ventana y cada celda ocupe el tamaño
-    // TARGET_CELL_SCREEN_PX
+    // escala de la vista para que entre en la ventana y cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
     const double scale = std::max(fit_scale, target_scale);
 
     // escalar vista
@@ -766,9 +767,7 @@ void MapCanvas::rebuildBiomeTint() {
         return;
     }
 
-    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena,
-    // así que primero los removemos y después delete (orden importante para evitar leaks
-    // si la escena tuviera ownership exclusivo).
+    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena, primero los removemos y después delete
     for (auto* item: biome_texture_items_) {
         scene_->removeItem(item);
         delete item;
@@ -781,31 +780,31 @@ void MapCanvas::rebuildBiomeTint() {
     QImage img(W, H, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
 
-    // recolectar zonas de bioma, color y textura (si tiene)
+    // recolectar zonas de bioma, color y textura (si tiene). El orden de
+    // recorrido debe coincidir con SceneController::buildDocument para que el
+    // grid mostrado y el persistido sean idénticos.
     struct BiomeZone {
-        int x = 0;
-        int y = 0;
-        int w = 0;
-        int h = 0;
-        double speed = 1.0;
         QColor color;
         QString texture_path;
     };
     std::vector<BiomeZone> zones;
+    std::vector<BiomeSource> sources;
     for (auto* item: scene_->items()) {
         if (item->data(DATA_TYPE).toString() != BIOME_ZONE_TYPE) {
             continue;
         }
+        BiomeSource src;
+        src.x = static_cast<int>(item->pos().x()) / CELL_DISPLAY_SIZE;
+        src.y = static_cast<int>(item->pos().y()) / CELL_DISPLAY_SIZE;
+        src.width = item->data(DATA_WIDTH).toInt();
+        src.height = item->data(DATA_HEIGHT).toInt();
+
         BiomeZone z;
-        z.x = static_cast<int>(item->pos().x()) / CELL_DISPLAY_SIZE;
-        z.y = static_cast<int>(item->pos().y()) / CELL_DISPLAY_SIZE;
-        z.w = item->data(DATA_WIDTH).toInt();
-        z.h = item->data(DATA_HEIGHT).toInt();
-        z.speed = std::max(1.0, std::sqrt(static_cast<double>(z.w * z.h)));
         const auto* tpl = templates_.find_biome(item->data(DATA_SUBTYPE).toString().toStdString());
         z.color = QColor(QString::fromStdString(tpl->color));
         z.texture_path = QString::fromStdString(tpl->texture);
 
+        sources.push_back(src);
         zones.push_back(z);
     }
 
@@ -814,68 +813,8 @@ void MapCanvas::rebuildBiomeTint() {
         return;
     }
 
-    // Dijkstra multi-fuente, los biomas grandes expanden más rápido.
-    std::vector<int> owner(static_cast<size_t>(W) * H, -1);
-    std::vector<double> cost(static_cast<size_t>(W) * H, std::numeric_limits<double>::infinity());
-
-    struct FrontierNode {
-        double cost = 0.0;
-        int x = 0;
-        int y = 0;
-        int owner = -1;
-
-        bool operator<(const FrontierNode& other) const { return cost > other.cost; }
-    };
-    std::priority_queue<FrontierNode> expansion_frontier;
-
-    for (size_t biome_idx = 0; biome_idx < zones.size(); ++biome_idx) {
-        const auto& biome_zone = zones[biome_idx];
-        for (int rel_y = 0; rel_y < biome_zone.h; ++rel_y) {
-            for (int rel_x = 0; rel_x < biome_zone.w; ++rel_x) {
-                const int absolute_x = biome_zone.x + rel_x;
-                const int absolute_y = biome_zone.y + rel_y;
-                if (absolute_x < 0 || absolute_y < 0 || absolute_x >= W || absolute_y >= H) {
-                    continue;
-                }
-                const size_t flat_index = static_cast<size_t>(absolute_y) * W + absolute_x;
-                if (cost[flat_index] <= 0.0) {
-                    continue;
-                }
-                owner[flat_index] = static_cast<int>(biome_idx);
-                cost[flat_index] = 0.0;
-                expansion_frontier.push({0.0, absolute_x, absolute_y, static_cast<int>(biome_idx)});
-            }
-        }
-    }
-
-    const int delta_x4[] = {1, -1, 0, 0};
-    const int delta_y4[] = {0, 0, 1, -1};
-    while (!expansion_frontier.empty()) {
-        const FrontierNode frontier_node = expansion_frontier.top();
-        expansion_frontier.pop();
-        const size_t frontier_flat_idx = static_cast<size_t>(frontier_node.y) * W + frontier_node.x;
-        if (frontier_node.cost != cost[frontier_flat_idx] ||
-            frontier_node.owner != owner[frontier_flat_idx]) {
-            continue;
-        }
-
-        const double biome_step_cost = 1.0 / zones[frontier_node.owner].speed;
-        for (int dir = 0; dir < 4; ++dir) {
-            const int neighbor_x = frontier_node.x + delta_x4[dir];
-            const int neighbor_y = frontier_node.y + delta_y4[dir];
-            if (neighbor_x < 0 || neighbor_y < 0 || neighbor_x >= W || neighbor_y >= H) {
-                continue;
-            }
-            const size_t neighbor_flat_idx = static_cast<size_t>(neighbor_y) * W + neighbor_x;
-            const double propagated_cost = frontier_node.cost + biome_step_cost;
-            if (propagated_cost >= cost[neighbor_flat_idx]) {
-                continue;
-            }
-            owner[neighbor_flat_idx] = frontier_node.owner;
-            cost[neighbor_flat_idx] = propagated_cost;
-            expansion_frontier.push({propagated_cost, neighbor_x, neighbor_y, frontier_node.owner});
-        }
-    }
+    // Dijkstra multi-fuente (mismo helper que usa el guardado del mapa).
+    const std::vector<int> owner = computeBiomeOwners(W, H, sources);
 
     // Resolver textura por bioma. Las texturas vienen a 128x128 pero
     // nuestros tiles son 64x64, se recorta al esquina superior izquierda.

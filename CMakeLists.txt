@@ -164,6 +164,7 @@ if(TALLER_EDITOR)
     set_target_properties(taller_editor PROPERTIES
         AUTOMOC ON
         AUTOUIC ON
+        AUTORCC ON
     )
 
     # Make them depend on taller_common lib

@@ -1,8 +1,12 @@
 #include "scene_controller.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <string>
+
+#include "../common/common_biome.h"
+#include "map/biome_grid.h"
 
 #include "editor_constants.h"
 
@@ -248,6 +252,11 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
     document.map.width = width;
     document.map.height = height;
 
+    // Fuentes de bioma (en orden de escena) para reconstruir el grid con Dijkstra.
+    // El valor numérico paralelo es el BiomeType de cada fuente.
+    std::vector<BiomeSource> biome_sources;
+    std::vector<uint8_t> biome_values;
+
     for (auto* item: scene_->items()) {
         const QString type = item->data(DATA_TYPE).toString();
         if (type.isEmpty()) {
@@ -328,6 +337,11 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
                         zone.texture = std::filesystem::path(tpl->texture).filename().string();
                     }
                 }
+
+                biome_sources.push_back(
+                        {zone.area_x, zone.area_y, zone.area_width, zone.area_height});
+                biome_values.push_back(
+                        static_cast<uint8_t>(biome_from_template_id(zone.template_id)));
             }
 
             if (type == CITY_ZONE_TYPE) {
@@ -344,6 +358,20 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             }
 
             document.zones.push_back(zone);
+        }
+    }
+
+    // Congelar el resultado del Dijkstra en una matriz para que el cliente no
+    // tenga que recomputarlo: cada celda guarda el valor de BiomeType.
+    document.biome_grid.assign(static_cast<size_t>(width) * height,
+                               static_cast<uint8_t>(BiomeType::NONE));
+    if (!biome_sources.empty()) {
+        const std::vector<int> owners = computeBiomeOwners(width, height, biome_sources);
+        for (size_t i = 0; i < owners.size(); ++i) {
+            const int o = owners[i];
+            if (o >= 0) {
+                document.biome_grid[i] = biome_values[static_cast<size_t>(o)];
+            }
         }
     }
 

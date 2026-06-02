@@ -2,12 +2,14 @@ target_sources(taller_editor
     PRIVATE
     # .cpp files
         EditorWindow.ui
+        resources.qrc
         main.cpp
         editor_window.cpp
         map_canvas.cpp
         scene_controller.cpp
         item_builder.cpp
         verificator.cpp
+        map/biome_grid.cpp
         map/yaml_map_io.cpp
         assets/templates/template_registry.cpp
         dialogs/biome_spawn_dialog.cpp
@@ -22,6 +24,7 @@ target_sources(taller_editor
         editor_constants.h
         tool_info.h
         map/map_data.h
+        map/biome_grid.h
         map/yaml_map_io.h
         assets/templates/template_registry.h
         dialogs/biome_spawn_dialog.h
