@@ -1,11 +1,16 @@
 #include "editor_window.h"
 
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QMessageBox>
+#include <QPainter>
+#include <QPixmap>
 #include <QSize>
+#include <QSpinBox>
+#include <algorithm>
 
 #include "dialogs/new_environment_dialog.h"
 #include "map/yaml_map_io.h"
@@ -14,9 +19,143 @@
 #include "ui_EditorWindow.h"
 #include "verificator.h"
 
+EditorWindow::ResizeDelta EditorWindow::computeResizeDelta(ResizeDirection dir, int cells,
+                                                           bool shrink) {
+    const int signed_cells = shrink ? -cells : cells;
+    ResizeDelta r;
+    switch (dir) {
+    case ResizeDirection::Right:
+        r.delta_w = signed_cells;
+        break;
+    case ResizeDirection::Down:
+        r.delta_h = signed_cells;
+        break;
+    case ResizeDirection::Left:
+        r.delta_w = signed_cells;
+        r.offset_x = signed_cells;
+        break;
+    case ResizeDirection::Up:
+        r.delta_h = signed_cells;
+        r.offset_y = signed_cells;
+        break;
+    }
+    return r;
+}
+
+bool EditorWindow::fitsInside(int x, int y, int w, int h, int map_w, int map_h) {
+    return x >= 0 && y >= 0 && (x + w) <= map_w && (y + h) <= map_h;
+}
+
+bool EditorWindow::canShrinkDocument(const MapDocument& doc, const ResizeDelta& delta) {
+    const int new_w = doc.map.width + delta.delta_w;
+    const int new_h = doc.map.height + delta.delta_h;
+    if (new_w <= 0 || new_h <= 0) {
+        return false;
+    }
+    if (doc.player_spawn.placed) {
+        const int x = doc.player_spawn.x + delta.offset_x;
+        const int y = doc.player_spawn.y + delta.offset_y;
+        if (!fitsInside(x, y, 1, 1, new_w, new_h)) {
+            return false;
+        }
+    }
+    for (const auto& o: doc.obstacles) {
+        if (!fitsInside(o.x + delta.offset_x, o.y + delta.offset_y, o.width, o.height, new_w,
+                        new_h)) {
+            return false;
+        }
+    }
+    for (const auto& w: doc.walls) {
+        if (!fitsInside(w.x + delta.offset_x, w.y + delta.offset_y, w.width, w.height, new_w,
+                        new_h)) {
+            return false;
+        }
+    }
+    for (const auto& e: doc.entries) {
+        if (!fitsInside(e.x + delta.offset_x, e.y + delta.offset_y, e.width, e.height, new_w,
+                        new_h)) {
+            return false;
+        }
+    }
+    for (const auto& z: doc.zones) {
+        if (!fitsInside(z.area_x + delta.offset_x, z.area_y + delta.offset_y, z.area_width,
+                        z.area_height, new_w, new_h)) {
+            return false;
+        }
+        for (const auto& npc: z.fixed_npcs) {
+            const int x = npc.x + delta.offset_x;
+            const int y = npc.y + delta.offset_y;
+            if (!fitsInside(x, y, 1, 1, new_w, new_h)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void EditorWindow::applyResizeToDocument(MapDocument& doc, const ResizeDelta& delta) {
+    doc.map.width += delta.delta_w;
+    doc.map.height += delta.delta_h;
+
+    if (delta.offset_x == 0 && delta.offset_y == 0) {
+        return;
+    }
+    if (doc.player_spawn.placed) {
+        doc.player_spawn.x += delta.offset_x;
+        doc.player_spawn.y += delta.offset_y;
+    }
+    for (auto& o: doc.obstacles) {
+        o.x += delta.offset_x;
+        o.y += delta.offset_y;
+    }
+    for (auto& w: doc.walls) {
+        w.x += delta.offset_x;
+        w.y += delta.offset_y;
+    }
+    for (auto& e: doc.entries) {
+        e.x += delta.offset_x;
+        e.y += delta.offset_y;
+    }
+    for (auto& z: doc.zones) {
+        z.area_x += delta.offset_x;
+        z.area_y += delta.offset_y;
+        for (auto& npc: z.fixed_npcs) {
+            npc.x += delta.offset_x;
+            npc.y += delta.offset_y;
+        }
+    }
+}
+
 EditorWindow::EditorWindow(QWidget* parent):
         QMainWindow(parent), ui_(new Ui::EditorWindow), tool_group_(new QButtonGroup(this)) {
     ui_->setupUi(this);
+
+    {
+        QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
+        QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
+        if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
+            const QPixmap arg_scaled =
+                    logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
+            const QPixmap me_scaled =
+                    logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
+
+            const int overlap_px = 50;
+            const int total_w = std::max(arg_scaled.width(), me_scaled.width());
+            const int total_h = arg_scaled.height() + me_scaled.height() - overlap_px;
+
+            QPixmap composite(total_w, total_h);
+            composite.fill(Qt::transparent);
+            QPainter painter(&composite);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform);
+            painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
+            painter.drawPixmap((total_w - me_scaled.width()) / 2,
+                               arg_scaled.height() - overlap_px, me_scaled);
+            painter.end();
+
+            ui_->labelLogoArgentum->setPixmap(composite);
+        }
+        ui_->labelLogoMapEditor->setVisible(false);
+    }
 
     auto back_to_main_policy = ui_->btnBackToMainMap->sizePolicy();
     back_to_main_policy.setRetainSizeWhenHidden(true);
@@ -57,7 +196,29 @@ EditorWindow::EditorWindow(QWidget* parent):
             &EditorWindow::onEntryPlacementRequested);
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
     connect(map_canvas_, &MapCanvas::saveRequested, this, &EditorWindow::saveMap);
+<<<<<<< HEAD
+    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns,
+            &QLabel::setText);
+
+    connect(ui_->btnApplyResize, &QPushButton::clicked, this, &EditorWindow::onApplyMapResize);
+
+    auto* resize_action_group = new QButtonGroup(this);
+    resize_action_group->setExclusive(true);
+    resize_action_group->addButton(ui_->btnResizeExpand);
+    resize_action_group->addButton(ui_->btnResizeShrink);
+
+    auto* resize_direction_group = new QButtonGroup(this);
+    resize_direction_group->setExclusive(true);
+    resize_direction_group->addButton(ui_->btnResizeUp);
+    resize_direction_group->addButton(ui_->btnResizeDown);
+    resize_direction_group->addButton(ui_->btnResizeLeft);
+    resize_direction_group->addButton(ui_->btnResizeRight);
+
+    ui_->btnResizeExpand->setChecked(true);
+    ui_->btnResizeRight->setChecked(true);
+=======
     connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
+>>>>>>> origin/main
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
@@ -207,8 +368,117 @@ void EditorWindow::selectDefaultMode() {
 }
 
 void EditorWindow::updateDimensionsLabel() {
+<<<<<<< HEAD
+    ui_->labelMapDimensions->setText(QStringLiteral("Map Size: %1 x %2")
+                                             .arg(map_canvas_->map_width())
+                                             .arg(map_canvas_->map_height()));
+=======
     ui_->labelMapDimensions->setText(
             QStringLiteral("%1 x %2").arg(map_canvas_->map_width()).arg(map_canvas_->map_height()));
+>>>>>>> origin/main
+}
+
+void EditorWindow::onApplyMapResize() {
+    ResizeDirection dir;
+    if (ui_->btnResizeUp->isChecked()) {
+        dir = ResizeDirection::Up;
+    } else if (ui_->btnResizeDown->isChecked()) {
+        dir = ResizeDirection::Down;
+    } else if (ui_->btnResizeLeft->isChecked()) {
+        dir = ResizeDirection::Left;
+    } else if (ui_->btnResizeRight->isChecked()) {
+        dir = ResizeDirection::Right;
+    } else {
+        QMessageBox::warning(this, QStringLiteral("Resize"),
+                             QStringLiteral("Choose a direction."));
+        return;
+    }
+
+    const bool shrink = ui_->btnResizeShrink->isChecked();
+    if (!shrink && !ui_->btnResizeExpand->isChecked()) {
+        QMessageBox::warning(this, QStringLiteral("Resize"),
+                             QStringLiteral("Choose an action (Expand or Reduce)."));
+        return;
+    }
+
+    const int cells = ui_->spinResizeCells->value();
+    if (cells <= 0) {
+        return;
+    }
+
+    constexpr int MAX_DIM = 2000;
+    constexpr int MIN_DIM = 1;
+    saveCurrentToDocument();
+
+    const ResizeDelta delta = computeResizeDelta(dir, cells, shrink);
+
+    auto applyTo = [&](MapDocument& doc, const QString& context) -> bool {
+        const int target_w = doc.map.width + delta.delta_w;
+        const int target_h = doc.map.height + delta.delta_h;
+
+        if (!shrink) {
+            if (target_w > MAX_DIM || target_h > MAX_DIM) {
+                QMessageBox::warning(this, QStringLiteral("Resize"),
+                                     QStringLiteral("New size exceeds the %1 cells limit for %2.")
+                                             .arg(MAX_DIM)
+                                             .arg(context));
+                return false;
+            }
+            applyResizeToDocument(doc, delta);
+            return true;
+        }
+
+        if (target_w < MIN_DIM || target_h < MIN_DIM) {
+            QMessageBox::warning(this, QStringLiteral("Resize"),
+                                 QStringLiteral("Cant reduce map size with objects interfering"));
+            return false;
+        }
+        if (!canShrinkDocument(doc, delta)) {
+            QMessageBox::warning(this, QStringLiteral("Resize"),
+                                 QStringLiteral("Cant reduce map size with objects interfering"));
+            return false;
+        }
+        applyResizeToDocument(doc, delta);
+        return true;
+    };
+
+    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+        if (!applyTo(main_doc_, QStringLiteral("the main map"))) {
+            return;
+        }
+        map_canvas_->loadFromDocument(main_doc_, EditingMode::MainMap);
+    } else {
+        Environment* env = find_environment(current_environment_id_);
+        if (!env) {
+            return;
+        }
+
+        MapDocument env_doc;
+        env_doc.version = 1;
+        env_doc.map.id = env->id;
+        env_doc.map.name = env->name;
+        env_doc.map.width = env->width;
+        env_doc.map.height = env->height;
+        env_doc.player_spawn = env->player_spawn;
+        env_doc.obstacles = env->obstacles;
+        env_doc.walls = env->walls;
+        env_doc.floor_color = env->floor_color;
+
+        if (!applyTo(env_doc, QStringLiteral("the environment"))) {
+            return;
+        }
+
+        env->width = env_doc.map.width;
+        env->height = env_doc.map.height;
+        env->player_spawn = env_doc.player_spawn;
+        env->obstacles = env_doc.obstacles;
+        env->walls = env_doc.walls;
+
+        map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);
+    }
+
+    updateDimensionsLabel();
+    refreshEnvironmentsList();
 }
 
 void EditorWindow::setupNewMapPage() {

@@ -1,6 +1,34 @@
 #include "yaml_map_io.h"
 
+#include <cstddef>
 #include <fstream>
+#include <string>
+
+void YamlMapIO::write_biome_map(YAML::Emitter& out, const MapDocument& document) {
+    const int width = document.map.width;
+    const int height = document.map.height;
+
+    // Cada fila del mapa es una línea de `width` caracteres. Soporta hasta 10
+    // biomas (valores 0-9); más biomas requieren cambiar la codificación.
+    std::string grid;
+    grid.reserve(static_cast<size_t>(width + 1) * height);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            const size_t idx = static_cast<size_t>(y) * width + x;
+            const uint8_t value = idx < document.biome_grid.size() ? document.biome_grid[idx] : 0;
+            grid.push_back(static_cast<char>('0' + (value % 10)));
+        }
+        if (y + 1 < height) {
+            grid.push_back('\n');
+        }
+    }
+
+    out << YAML::Key << "biome_map" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "width" << YAML::Value << width;
+    out << YAML::Key << "height" << YAML::Value << height;
+    out << YAML::Key << "data" << YAML::Value << YAML::Literal << grid;
+    out << YAML::EndMap;
+}
 
 bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
     try {
@@ -15,6 +43,12 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
         out << YAML::Key << "width" << YAML::Value << document.map.width;
         out << YAML::Key << "height" << YAML::Value << document.map.height;
         out << YAML::EndMap;
+
+        // Grid de biomas pre-calculado: un caracter por celda ('0' + BiomeType),
+        // una fila por línea. El cliente lo lee tal cual sin recomputar Dijkstra.
+        if (!document.biome_grid.empty() && document.map.width > 0 && document.map.height > 0) {
+            write_biome_map(out, document);
+        }
 
         if (document.player_spawn.placed) {
             out << YAML::Key << "player_spawn" << YAML::Value << YAML::BeginMap;

@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/ui">
+        <file alias="grey_button.png">assets/ui_textures/grey_button.png</file>
+        <file alias="red_button.png">assets/ui_textures/red_button.png</file>
+        <file alias="background.png">assets/ui_textures/239.png</file>
+        <file alias="logo_argentum.png">assets/ui_textures/243.png</file>
+        <file alias="logo_map_editor.png">assets/ui_textures/logo_Map_Editor.png</file>
+    </qresource>
+    <qresource prefix="/styles">
+        <file alias="editor.qss">assets/styles/editor.qss</file>
+    </qresource>
+</RCC>

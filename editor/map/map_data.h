@@ -1,6 +1,7 @@
 #ifndef ARGENTUM_EDITOR_MAP_MAP_DATA_H
 #define ARGENTUM_EDITOR_MAP_MAP_DATA_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -93,6 +94,9 @@ struct MapDocument {
     std::vector<Environment> environments;
     std::vector<Wall> walls;
     std::string floor_color;
+    // Grid de biomas pre-calculado (Dijkstra), row-major width*height.
+    // Cada celda guarda el valor numérico de BiomeType (0 = sin bioma).
+    std::vector<uint8_t> biome_grid;
 };
 
 #endif
