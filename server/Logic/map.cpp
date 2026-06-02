@@ -19,6 +19,7 @@ void Map::initializeMap() {
     for (auto& cell: cells) {
         cell.textureId = 0;
         cell.obstacleId = 0;
+        cell.playerId = 0;
         cell.isWalkable = true;
         cell.safeZone = false;
     }
@@ -45,4 +46,56 @@ bool Map::isWalkable(int16_t x, int16_t y) const {
     if (!isInBounds(x, y))
         return false;
     return cells[static_cast<size_t>(y) * width + x].isWalkable;
+}
+
+bool Map::occupiedByPlayer(int16_t x, int16_t y) const {
+    if (!isInBounds(x, y))
+        return false;
+    return cells[static_cast<size_t>(y) * width + x].playerId != 0;
+}
+
+uint8_t Map::isEntityInSight(int16_t x, int16_t y, const std::string& direction,
+                             bool distanceWeapon) {
+    size_t iterations = distanceWeapon ? 5 : 1;
+    for (size_t i = 0; i < iterations; i++) {
+        if (direction == "top") {
+            y -= 1;
+        } else if (direction == "bottom") {
+            y += 1;
+        } else if (direction == "left") {
+            x -= 1;
+        } else if (direction == "right") {
+            x += 1;
+        } else {
+            throw std::invalid_argument("Map Error: invalid direction");
+        }
+
+        if (!isInBounds(x, y)) {
+            return 0;  // out of bounds
+        }
+
+        Cell cell = getCell(static_cast<size_t>(y) * width + x);
+        if (cell.playerId != 0) {
+            return cell.playerId;  // player in sight
+        }
+    }
+
+    return 0;  // no player in sight
+}
+
+void Map::placePlayer(int playerId, int16_t x, int16_t y) {
+    if (!isInBounds(x, y)) {
+        throw std::out_of_range("Map Error: trying to place player out of bounds");
+    }
+
+    // Preguntar a Martín sobre si el juego esta full cargado de jugadores
+    while (occupiedByPlayer(x, y)) {
+        // If the cell is already occupied by another player, look for the next free cell.
+        x = (x + 1) % width;
+        if (x == 0) {
+            y = (y + 1) % height;
+        }
+    }
+
+    cells[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(playerId);
 }

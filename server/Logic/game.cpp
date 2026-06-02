@@ -18,32 +18,41 @@ bool Game::processCommand(int playerId, const std::string& command) {
 
     if (dataType == "user") {
         std::string user = command.substr(commandPosition + 1);
-        Position spawn;
-
-        if (!parser.checkPlayerExists(user)) {
-            // Create new player.
-            spawn = findSpawnPosition();
-            players.emplace(playerId, Player(user, spawn, "elf", "mage"));
-            parser.savePlayerData(user, players.at(playerId).getData());
-        } else {
-            // Restore existing player.
-            players.emplace(playerId, Player(parser.loadPlayerData(user), user));
-            spawn = players.at(playerId).getPosition();
-        }
-
-        std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")"
-                  << std::endl;
-
-        return true;
+        return processUser(playerId, user);
     } else if (dataType == "movement") {
         std::string direction = command.substr(commandPosition + 1);
         return processMovement(playerId, direction);
     } else if (dataType == "turn") {
         std::string direction = command.substr(commandPosition + 1);
         return turnPlayer(playerId, direction);
+    } else if (dataType == "attack") {
+        // Formato: "attack"
+        std::string direction = command.substr(commandPosition + 1);
+        return processAttack(playerId, direction);
     }
 
     return false;
+}
+
+bool Game::processUser(int playerId, const std::string& user) {
+    Position spawn;
+
+    if (!parser.checkPlayerExists(user)) {
+        // Create new player.
+        spawn = findSpawnPosition();
+        players.emplace(playerId, Player(user, spawn, "Elf", "Mage"));
+        parser.savePlayerData(user, players.at(playerId).getData());
+    } else {
+        // Restore existing player.
+        players.emplace(playerId, Player(parser.loadPlayerData(user), user));
+        spawn = players.at(playerId).getPosition();
+    }
+
+    map.placePlayer(playerId, spawn.x, spawn.y);
+
+    std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")" << std::endl;
+
+    return true;
 }
 
 bool Game::turnPlayer(int playerId, const std::string& direction) {
@@ -187,6 +196,32 @@ bool Game::processMovement(int playerId, const std::string& direction) {
 
     player.move(next);
     player.setDirection(newDir);
+    return true;
+}
+
+bool Game::processAttack(int playerId, const std::string& direction) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
+        return false;
+    }
+
+    uint8_t entityId = map.isEntityInSight(itPlayer->second.getX(), itPlayer->second.getY(),
+                                           direction, itPlayer->second.hasLongDistanceWeapon());
+
+    if (entityId == 0)
+        return false;
+
+    auto itTarget = players.find(entityId);
+    if (itTarget == players.end()) {
+        throw std::runtime_error("Game Error: player in sight not found");
+    }
+
+    itTarget->second.receiveDamage(itPlayer->second.dealDamage());
+
     return true;
 }
 

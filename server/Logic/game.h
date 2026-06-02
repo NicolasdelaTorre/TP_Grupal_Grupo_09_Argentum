@@ -24,8 +24,13 @@ private:
     // True si ningún jugador está parado en pos.
     bool isPositionFree(Position pos) const;
 
+    bool processUser(int playerId, const std::string& user);
+
     bool processMovement(int playerId, const std::string& direction);
+
     bool turnPlayer(int playerId, const std::string& direction);
+
+    bool processAttack(int playerId, const std::string& direction);
 
 public:
     Game(Map& map, Position playerSpawn);
