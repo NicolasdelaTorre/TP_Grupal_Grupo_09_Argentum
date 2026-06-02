@@ -18,6 +18,10 @@ EditorWindow::EditorWindow(QWidget* parent):
         QMainWindow(parent), ui_(new Ui::EditorWindow), tool_group_(new QButtonGroup(this)) {
     ui_->setupUi(this);
 
+    auto back_to_main_policy = ui_->btnBackToMainMap->sizePolicy();
+    back_to_main_policy.setRetainSizeWhenHidden(true);
+    ui_->btnBackToMainMap->setSizePolicy(back_to_main_policy);
+
     if (!templates_.load()) {
         QMessageBox::critical(this, QStringLiteral("Error"),
                               QStringLiteral("No se pudieron cargar los templates en %1.")
@@ -49,30 +53,41 @@ EditorWindow::EditorWindow(QWidget* parent):
     connect(ui_->listEnvironments, &QListWidget::itemDoubleClicked, this,
             &EditorWindow::onEnvironmentDoubleClicked);
 
-    connect(map_canvas_, &MapCanvas::statusMessage, ui_->labelStatus, &QLabel::setText);
     connect(map_canvas_, &MapCanvas::entryPlacementRequested, this,
             &EditorWindow::onEntryPlacementRequested);
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
     connect(map_canvas_, &MapCanvas::saveRequested, this, &EditorWindow::saveMap);
+    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
 
 void EditorWindow::setupTemplates() {
-    for (const auto& city: templates_.cities()) {
-        ui_->comboCityTemplate->addItem(QString::fromStdString(city.name),
-                                        QString::fromStdString(city.id));
-    }
     for (const auto& biome: templates_.biomes()) {
-        ui_->comboBiomeTemplate->addItem(QString::fromStdString(biome.name),
-                                         QString::fromStdString(biome.id));
+        auto* item =
+                new QListWidgetItem(QString::fromStdString(biome.name), ui_->listBiomeTemplate);
+        item->setData(Qt::UserRole, QString::fromStdString(biome.id));
+    }
+    if (ui_->listBiomeTemplate->count() > 0) {
+        ui_->listBiomeTemplate->setCurrentRow(0);
+    }
+    for (const auto& city: templates_.cities()) {
+        auto* item = new QListWidgetItem(QString::fromStdString(city.name), ui_->listCityTemplate);
+        item->setData(Qt::UserRole, QString::fromStdString(city.id));
+    }
+    if (ui_->listCityTemplate->count() > 0) {
+        ui_->listCityTemplate->setCurrentRow(0);
     }
     for (const auto& obstacle: templates_.obstacles()) {
         const QString label = QStringLiteral("%1 (%2x%3)")
                                       .arg(QString::fromStdString(obstacle.name))
                                       .arg(obstacle.width)
                                       .arg(obstacle.height);
-        ui_->comboObstacleTemplate->addItem(label, QString::fromStdString(obstacle.id));
+        auto* item = new QListWidgetItem(label, ui_->listObstacleTemplate);
+        item->setData(Qt::UserRole, QString::fromStdString(obstacle.id));
+    }
+    if (ui_->listObstacleTemplate->count() > 0) {
+        ui_->listObstacleTemplate->setCurrentRow(0);
     }
     for (const auto& entry: templates_.entries()) {
         const QString label = QStringLiteral("%1 (%2x%3)")
@@ -92,36 +107,34 @@ void EditorWindow::setupTemplates() {
 
 void EditorWindow::setupTools() {
     tool_group_->setExclusive(true);
-    tool_group_->addButton(ui_->btnToolSpawn);
-    tool_group_->addButton(ui_->btnToolObstacle);
-    tool_group_->addButton(ui_->btnToolCity);
-    tool_group_->addButton(ui_->btnToolBiome);
-    tool_group_->addButton(ui_->btnToolEntry);
-    tool_group_->addButton(ui_->btnToolWall);
+    tool_group_->addButton(ui_->btnModeSpawn);
+    tool_group_->addButton(ui_->btnModeObstacles);
+    tool_group_->addButton(ui_->btnModeBiomes);
+    tool_group_->addButton(ui_->btnModeCities);
+    tool_group_->addButton(ui_->btnModeEnvironments);
+    tool_group_->addButton(ui_->btnModeDimensions);
 
-    connect(ui_->btnToolSpawn, &QPushButton::clicked, this,
-            [this]() { selectTool(EditorTool::PlayerSpawn); });
-    connect(ui_->btnToolObstacle, &QPushButton::clicked, this,
-            [this]() { selectTool(EditorTool::Obstacle); });
-    connect(ui_->btnToolCity, &QPushButton::clicked, this,
-            [this]() { selectTool(EditorTool::CityZone); });
-    connect(ui_->btnToolBiome, &QPushButton::clicked, this,
-            [this]() { selectTool(EditorTool::BiomeZone); });
-    connect(ui_->btnToolEntry, &QPushButton::clicked, this,
-            [this]() { selectTool(EditorTool::Entry); });
-    connect(ui_->btnToolWall, &QPushButton::clicked, this,
-            [this]() { selectTool(EditorTool::Wall); });
+    connect(ui_->btnModeSpawn, &QPushButton::clicked, this, &EditorWindow::selectSpawnMode);
+    connect(ui_->btnModeObstacles, &QPushButton::clicked, this, &EditorWindow::selectObstacleMode);
+    connect(ui_->btnModeBiomes, &QPushButton::clicked, this, &EditorWindow::selectBiomeMode);
+    connect(ui_->btnModeCities, &QPushButton::clicked, this, &EditorWindow::selectCityMode);
+    connect(ui_->btnModeEnvironments, &QPushButton::clicked, this,
+            &EditorWindow::selectEnvironmentMode);
+    connect(ui_->btnModeDimensions, &QPushButton::clicked, this,
+            &EditorWindow::selectDimensionsMode);
 
-    connect(ui_->comboObstacleTemplate, &QComboBox::currentIndexChanged, this,
-            [this](int) { applyActiveTool(); });
-    connect(ui_->comboCityTemplate, &QComboBox::currentIndexChanged, this,
-            [this](int) { applyActiveTool(); });
-    connect(ui_->comboBiomeTemplate, &QComboBox::currentIndexChanged, this,
-            [this](int) { applyActiveTool(); });
+    connect(ui_->listObstacleTemplate, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
+    connect(ui_->listBiomeTemplate, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
+    connect(ui_->listCityTemplate, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
     connect(ui_->comboEntryTemplate, &QComboBox::currentIndexChanged, this,
             [this](int) { applyActiveTool(); });
     connect(ui_->comboWallTemplate, &QComboBox::currentIndexChanged, this,
             [this](int) { applyActiveTool(); });
+
+    selectDefaultMode();
 }
 
 void EditorWindow::selectTool(EditorTool tool) {
@@ -130,12 +143,72 @@ void EditorWindow::selectTool(EditorTool tool) {
 }
 
 void EditorWindow::applyActiveTool() {
-    active_tool_.obstacle_template_id = ui_->comboObstacleTemplate->currentData().toString();
-    active_tool_.city_template_id = ui_->comboCityTemplate->currentData().toString();
-    active_tool_.biome_template_id = ui_->comboBiomeTemplate->currentData().toString();
+    if (auto* item = ui_->listObstacleTemplate->currentItem()) {
+        active_tool_.obstacle_template_id = item->data(Qt::UserRole).toString();
+    } else {
+        active_tool_.obstacle_template_id.clear();
+    }
+    if (auto* item = ui_->listBiomeTemplate->currentItem()) {
+        active_tool_.biome_template_id = item->data(Qt::UserRole).toString();
+    } else {
+        active_tool_.biome_template_id.clear();
+    }
+    if (auto* item = ui_->listCityTemplate->currentItem()) {
+        active_tool_.city_template_id = item->data(Qt::UserRole).toString();
+    } else {
+        active_tool_.city_template_id.clear();
+    }
     active_tool_.entry_template_id = ui_->comboEntryTemplate->currentData().toString();
     active_tool_.wall_template_id = ui_->comboWallTemplate->currentData().toString();
     map_canvas_->setActiveTool(active_tool_);
+}
+
+void EditorWindow::selectSpawnMode() {
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolSpawn);
+    selectTool(EditorTool::PlayerSpawn);
+}
+
+void EditorWindow::selectObstacleMode() {
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolObstacles);
+    selectTool(EditorTool::Obstacle);
+}
+
+void EditorWindow::selectBiomeMode() {
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolBiomes);
+    ui_->labelBiomeHoverSpawns->clear();
+    selectTool(EditorTool::BiomeZone);
+}
+
+void EditorWindow::selectCityMode() {
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolCities);
+    selectTool(EditorTool::CityZone);
+}
+
+void EditorWindow::selectEnvironmentMode() {
+    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+        ui_->toolsStack->setCurrentWidget(ui_->pageToolEnvironments);
+        selectTool(EditorTool::Entry);
+        return;
+    }
+
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolWalls);
+    selectTool(EditorTool::Wall);
+}
+
+void EditorWindow::selectDimensionsMode() {
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolDimensions);
+    selectTool(EditorTool::None);
+    updateDimensionsLabel();
+}
+
+void EditorWindow::selectDefaultMode() {
+    ui_->btnModeSpawn->setChecked(true);
+    selectSpawnMode();
+}
+
+void EditorWindow::updateDimensionsLabel() {
+    ui_->labelMapDimensions->setText(
+            QStringLiteral("%1 x %2").arg(map_canvas_->map_width()).arg(map_canvas_->map_height()));
 }
 
 void EditorWindow::setupNewMapPage() {
@@ -146,8 +219,8 @@ void EditorWindow::setupNewMapPage() {
 }
 
 void EditorWindow::resetNewMapPage() {
-    ui_->inputNewMapId->setText(QStringLiteral("mapa_inicial"));
-    ui_->inputNewMapName->setText(QStringLiteral("Mapa Inicial"));
+    ui_->inputNewMapId->setText(QStringLiteral("otro_mapa"));
+    ui_->inputNewMapName->setText(QStringLiteral("Otro mapa"));
     ui_->comboNewMapSize->setCurrentIndex(0);
 }
 
@@ -182,6 +255,8 @@ void EditorWindow::startNewMainMap(const QString& map_id, const QString& map_nam
     ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
     ui_->btnBackToMainMap->setVisible(false);
     setMainOnlySectionsVisible(true);
+    updateDimensionsLabel();
+    selectDefaultMode();
 }
 
 void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cell_x, int cell_y) {
@@ -257,7 +332,9 @@ void EditorWindow::backToMainMap() {
     ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
     ui_->btnBackToMainMap->setVisible(false);
     setMainOnlySectionsVisible(true);
-    selectTool(EditorTool::None);
+    updateDimensionsLabel();
+    ui_->btnModeEnvironments->setChecked(true);
+    selectEnvironmentMode();
 }
 
 void EditorWindow::saveCurrentToDocument() {
@@ -307,28 +384,16 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
             QStringLiteral("Editando entorno: %1").arg(QString::fromStdString(env->name)));
     ui_->btnBackToMainMap->setVisible(true);
     setMainOnlySectionsVisible(false);
-    selectTool(EditorTool::None);
+    updateDimensionsLabel();
+    selectDefaultMode();
 }
 
 void EditorWindow::setMainOnlySectionsVisible(bool visible) {
-    ui_->labelCity->setVisible(visible);
-    ui_->comboCityTemplate->setVisible(visible);
-    ui_->btnToolCity->setVisible(visible);
-
-    ui_->labelBiome->setVisible(visible);
-    ui_->comboBiomeTemplate->setVisible(visible);
-    ui_->btnToolBiome->setVisible(visible);
-
-    ui_->labelEntry->setVisible(visible);
-    ui_->comboEntryTemplate->setVisible(visible);
-    ui_->btnToolEntry->setVisible(visible);
-
-    ui_->labelEnvironments->setVisible(visible);
-    ui_->listEnvironments->setVisible(visible);
-
-    ui_->labelWall->setVisible(!visible);
-    ui_->comboWallTemplate->setVisible(!visible);
-    ui_->btnToolWall->setVisible(!visible);
+    ui_->btnModeBiomes->setVisible(visible);
+    ui_->btnModeCities->setVisible(visible);
+    ui_->btnModeDimensions->setVisible(true);
+    ui_->btnModeEnvironments->setText(visible ? QStringLiteral("Environments") :
+                                                QStringLiteral("Walls"));
 }
 
 void EditorWindow::refreshEnvironmentsList() {

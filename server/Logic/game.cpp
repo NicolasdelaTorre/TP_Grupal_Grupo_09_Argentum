@@ -5,7 +5,8 @@
 #include <iostream>
 #include <stdexcept>
 
-Game::Game(Map& map, Position playerSpawn): map(map), playerSpawn(playerSpawn) {}
+Game::Game(Map& map, Position playerSpawn):
+        map(map), playerSpawn(playerSpawn), parser(BinaryParser()) {}
 
 bool Game::processCommand(int playerId, const std::string& command) {
     size_t commandPosition = command.find('.');
@@ -17,13 +18,21 @@ bool Game::processCommand(int playerId, const std::string& command) {
 
     if (dataType == "user") {
         std::string user = command.substr(commandPosition + 1);
-        Position spawn = findSpawnPosition();
-        players.emplace(playerId, Player(user, spawn, "elf", "mage"));
+        Position spawn;
+
+        if (!parser.checkPlayerExists(user)) {
+            // Create new player.
+            spawn = findSpawnPosition();
+            players.emplace(playerId, Player(user, spawn, "elf", "mage"));
+            parser.savePlayerData(user, players.at(playerId).getData());
+        } else {
+            // Restore existing player.
+            players.emplace(playerId, Player(parser.loadPlayerData(user), user));
+            spawn = players.at(playerId).getPosition();
+        }
 
         std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")"
                   << std::endl;
-
-        test();
 
         return true;
     } else if (dataType == "movement") {
@@ -114,20 +123,20 @@ uint8_t Game::getPlayerDirection(int playerId) const {
     return it->second.getDirection();
 }
 
-uint32_t Game::getPlayerHealth(int playerId) const {
+uint16_t Game::getPlayerHealth(int playerId) const {
     auto it = players.find(playerId);
     if (it == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    return it->second.data.health;
+    return it->second.getData().health;
 }
 
-uint32_t Game::getPlayerMaxHealth(int playerId) const {
+uint16_t Game::getPlayerMaxHealth(int playerId) const {
     auto it = players.find(playerId);
     if (it == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    return it->second.data.maxHealth;
+    return it->second.getData().maxHealth;
 }
 
 uint8_t Game::getPlayerLevel(int playerId) const {
@@ -135,7 +144,7 @@ uint8_t Game::getPlayerLevel(int playerId) const {
     if (it == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    return it->second.data.level;
+    return it->second.getData().level;
 }
 
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
@@ -149,7 +158,19 @@ std::vector<int> Game::getPlayerIds() const {
     return ids;
 }
 
-void Game::removePlayer(int playerId) { players.erase(playerId); }
+void Game::updatePlayerData(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    parser.updatePlayerData(it->second.getName(), it->second.getData());
+}
+
+void Game::removePlayer(int playerId) {
+    updatePlayerData(playerId);
+    players.erase(playerId);
+}
 
 bool Game::processMovement(int playerId, const std::string& direction) {
     auto itPlayer = players.find(playerId);
@@ -193,8 +214,8 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     return true;
 }
 
-void Game::test() {
-    for (const auto& [id, player]: players) {
-        std::cout << "Player " << player.getName() << " Life: " << player.data.health << std::endl;
+Game::~Game() {
+    for (const auto& [id, _]: players) {
+        updatePlayerData(id);
     }
 }

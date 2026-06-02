@@ -1,0 +1,141 @@
+[[item]]
+id = 1
+name = "Sword"
+type = "WEAPON"
+distance = false
+minDamage = 2
+maxDamage = 5
+
+[[item]]
+id = 2
+name = "Axe"
+type = "WEAPON"
+distance = false
+minDamage = 4
+maxDamage = 5
+
+[[item]]
+id = 3
+name = "Hammer"
+type = "WEAPON"
+distance = true
+minDamage = 1
+maxDamage = 9
+
+[[item]]
+id = 4
+name = "Ash Staff"
+type = "MAGIC"
+distance = true
+minDamage = 2
+maxDamage = 4
+manaCost = 5
+
+[[item]]
+id = 5
+name = "Elven Flute"
+type = "HEAL"
+distance = true
+manaCost = 100
+
+[[item]]
+id = 6
+name = "Root Staff"
+type = "MAGIC"
+distance = true
+minDamage = 4
+maxDamage = 8
+manaCost = 15
+
+[[item]]
+id = 7
+name = "Socketed Staff"
+type = "MAGIC"
+distance = true
+minDamage = 8
+maxDamage = 20
+manaCost = 30
+
+[[item]]
+id = 8
+name = "Simple Bow"
+type = "WEAPON"
+distance = true
+minDamage = 1
+maxDamage = 4
+
+[[item]]
+id = 9
+name = "Composite Bow"
+type = "WEAPON"
+distance = true
+minDamage = 4
+maxDamage = 16
+
+[[item]]
+id = 10
+name = "Lether Armor"
+type = "ARMOR"
+minDefense = 2
+maxDefense = 6
+
+[[item]]
+id = 11
+name = "Plate Armor"
+type = "ARMOR"
+minDefense = 15
+maxDefense = 30
+
+[[item]]
+id = 12
+name = "Blue Tunic"
+type = "ARMOR"
+minDefense = 6
+maxDefense = 10
+
+[[item]]
+id = 13
+name = "Hood"
+type = "HELMET"
+minDefense = 1
+maxDefense = 4
+
+[[item]]
+id = 14
+name = "Iron Helmet"
+type = "HELMET"
+minDefense = 4
+maxDefense = 8
+
+[[item]]
+id = 15
+name = "Turtle Shield"
+type = "SHIELD"
+minDefense = 1
+maxDefense = 2
+
+[[item]]
+id = 16
+name = "Iron Shield"
+type = "SHIELD"
+minDefense = 1
+maxDefense = 4
+
+[[item]]
+id = 17
+name = "Wizard Hat"
+type = "HELMET"
+minDefense = 4
+maxDefense = 12
+
+[[item]]
+id = 18
+name = "Health Potion"
+type = "HEALTH_POTION"
+healthRestore = 50
+
+[[item]]
+id = 19
+name = "Mana Potion"
+type = "MANA_POTION"
+manaRestore = 50

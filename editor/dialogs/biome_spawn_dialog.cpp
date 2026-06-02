@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QSlider>
 #include <QVBoxLayout>
+#include <algorithm>
 
 namespace {
 constexpr int CREATURE_SLIDER_MIN = 0;
@@ -19,9 +20,22 @@ QString capitalize_first(const QString& text) {
     }
     return text.left(1).toUpper() + text.mid(1);
 }
+
+int initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
+                           const std::string& creature) {
+    const auto it = std::find_if(
+            initial_spawns.begin(), initial_spawns.end(),
+            [&creature](const CreatureSpawn& spawn) { return spawn.creature == creature; });
+    return it == initial_spawns.end() ? CREATURE_SLIDER_DEFAULT : it->max_population;
+}
 }  // namespace
 
 BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget* parent):
+        BiomeSpawnDialog(biome_template, {}, parent) {}
+
+BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template,
+                                   const std::vector<CreatureSpawn>& initial_spawns,
+                                   QWidget* parent):
         QDialog(parent) {
     setWindowTitle(QStringLiteral("Criaturas del bioma"));
     resize(440, 320);
@@ -51,9 +65,9 @@ BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget*
         auto* name_label = new QLabel(creature_label);
         auto* slider = new QSlider(Qt::Horizontal);
         slider->setRange(CREATURE_SLIDER_MIN, CREATURE_SLIDER_MAX);
-        slider->setValue(CREATURE_SLIDER_DEFAULT);
+        slider->setValue(initial_population_for(initial_spawns, creature));
 
-        auto* value_label = new QLabel(QString::number(CREATURE_SLIDER_DEFAULT));
+        auto* value_label = new QLabel(QString::number(slider->value()));
         value_label->setMinimumWidth(CREATURE_VALUE_LABEL_WIDTH);
         value_label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
