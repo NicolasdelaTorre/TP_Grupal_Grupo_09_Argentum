@@ -123,8 +123,18 @@ int ProtocolServer::returnUser(std::string& message, const int clientId) {
 
     std::string userName = it->second.receive_message(nameLenght);
 
+    u_int16_t raceLenght = it->second.receive_two_bytes_number();
+    std::string race = raceLenght ? it->second.receive_message(raceLenght) : "";
+
+    u_int16_t classLenght = it->second.receive_two_bytes_number();
+    std::string class_ = classLenght ? it->second.receive_message(classLenght) : "";
+
     message += "user.";
     message += userName;
+    message += ":";
+    message += race;
+    message += ":";
+    message += class_;
 
     return 1;
 }

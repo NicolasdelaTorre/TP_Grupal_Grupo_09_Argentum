@@ -35,22 +35,32 @@ bool Game::processCommand(int playerId, const std::string& command) {
 }
 
 bool Game::processUser(int playerId, const std::string& user) {
+    // Formato: "NAME:RACE:CLASS"
+    size_t firstColon = user.find(':');
+    size_t secondColon = user.find(':', firstColon + 1);
+    if (firstColon == std::string::npos || secondColon == std::string::npos) {
+        throw std::runtime_error("Game Error: malformed user command (expected NAME:RACE:CLASS)");
+    }
+
+    std::string name = user.substr(0, firstColon);
+    std::string race = user.substr(firstColon + 1, secondColon - firstColon - 1);
+    std::string class_ = user.substr(secondColon + 1);
+
     Position spawn;
 
-    if (!parser.checkPlayerExists(user)) {
-        // Create new player.
+    if (!parser.checkPlayerExists(name)) {
         spawn = findSpawnPosition();
-        players.emplace(playerId, Player(user, spawn, "Elf", "Mage"));
-        parser.savePlayerData(user, players.at(playerId).getData());
+        players.emplace(playerId, Player(name, spawn, race, class_));
+        parser.savePlayerData(name, players.at(playerId).getData());
     } else {
-        // Restore existing player.
-        players.emplace(playerId, Player(parser.loadPlayerData(user), user));
+        players.emplace(playerId, Player(parser.loadPlayerData(name), name));
         spawn = players.at(playerId).getPosition();
     }
 
     map.placePlayer(playerId, spawn.x, spawn.y);
 
-    std::cout << "Hi " << user << " spawned at (" << spawn.x << ", " << spawn.y << ")" << std::endl;
+    std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
+              << ", " << spawn.y << ")" << std::endl;
 
     return true;
 }

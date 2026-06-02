@@ -3,7 +3,7 @@
 
 // Mensajes Cliente → Servidor
 enum class ClientMsg : uint8_t {
-    USER_ARRIVAL = 0x01,  // [opcode][len:2][nombre]
+    USER_ARRIVAL = 0x01,  // [opcode][len:2][nombre][len:2][raza][len:2][clase]
     MOVEMENT = 0x02,      // [opcode][direccion:1]
     TOP = 0x03,
     BOTTOM = 0x04,
