@@ -6,6 +6,8 @@ Sender::Sender(ProtocolServer& protocol, Queue<std::string>& clientMessages, con
         clientConnected(true),
         clientId(clientId) {}
 
+
+        
 void Sender::run() {
     std::string message;
     while (clientConnected) {

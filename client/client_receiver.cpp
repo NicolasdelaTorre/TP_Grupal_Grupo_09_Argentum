@@ -48,6 +48,17 @@ void client_receiver::run() {
                     break;
                 }
 
+                case ServerMsg::DROPPED_ITEMS: {
+                    auto items = protocol.recv_dropped_items_payload();
+                    std::string msg = "DROPPED_ITEMS:" + std::to_string(items.size());
+                    for (const auto& item : items) {
+                        msg += ":" + std::to_string(item.x) + ":" + std::to_string(item.y) +
+                               ":" + std::to_string(item.sheetId) + ":" + std::to_string(item.itemId);
+                    }
+                    server_queue.push(msg);
+                    break;
+                }
+
                 default:
                     break;
             }

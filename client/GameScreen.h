@@ -11,7 +11,7 @@
 #include "client_protocol.h"  // ReceivedMap
 #include "map_renderer.h"
 
-static constexpr float FEET_OFFSET = 0.5f;
+static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
 
 // Jugador remoto del que recibimos eventos por broadcast del servidor.
@@ -32,6 +32,7 @@ public:
 
     // Retorna false cuando el jugador quiere salir
     bool run();
+    uint16_t a = 0;
 
 private:
     SDL2pp::Renderer& renderer;
@@ -50,6 +51,7 @@ private:
     // pushea.
     Queue<std::string>& server_queue;
     std::unordered_map<int, OtherPlayer> otherPlayers;
+    std::vector<DroppedItem> droppedItems;
 
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;

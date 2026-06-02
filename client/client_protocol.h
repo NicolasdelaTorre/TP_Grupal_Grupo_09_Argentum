@@ -76,6 +76,14 @@ public:
 
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
+
+    // Recibe la lista completa de NPCs dinámicos (criaturas).
+    std::vector<NpcEntity> recv_npc_list_payload();
+
+    // Recibe la lista de items tirados en el piso.
+    std::vector<DroppedItem> recv_dropped_items_payload();
+
+    void sendCheat(CheatCode cheat);
 };
 
 

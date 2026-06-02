@@ -8,6 +8,8 @@
 const char* const CharCreationScreen::SKIN_FILES[NUM_SKINS] = {
         "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",
         "Hechicero.png",    "Hechicera.png",
+        "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",
+        "Hechicero.png",    "Hechicera.png",
 };
 
 CharCreationScreen::CharCreationScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath):
@@ -17,13 +19,12 @@ CharCreationScreen::CharCreationScreen(SDL2pp::Renderer& renderer, const std::st
     int winW, winH;
     SDL_GetRendererOutputSize(renderer.Get(), &winW, &winH);
 
-    // Escala uniforme: el PNG 1024×1024 cabe dentro de la ventana sin distorsión,
-    // dejando barras negras en los bordes si la relación de aspecto es distinta.
-    scale = std::min(static_cast<float>(winW), static_cast<float>(winH)) / 1024.0f;
-    displayW = static_cast<int>(1024 * scale);
-    displayH = static_cast<int>(1024 * scale);
-    bgX = (winW - displayW) / 2;
-    bgY = (winH - displayH) / 2;
+    scaleX = static_cast<float>(winW) / 1024.0f;
+    scaleY = static_cast<float>(winH) / 768.0f;
+    displayW = winW;
+    displayH = winH;
+    bgX = 0;
+    bgY = 0;
 }
 
 CharCreationResult CharCreationScreen::run() {
@@ -38,15 +39,17 @@ CharCreationResult CharCreationScreen::run() {
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 SDL2pp::Rect CharCreationScreen::pngToScreen(int x, int y, int w, int h) const {
-    return SDL2pp::Rect(bgX + static_cast<int>(x * scale), bgY + static_cast<int>(y * scale),
-                        static_cast<int>(w * scale), static_cast<int>(h * scale));
+    return SDL2pp::Rect(bgX + static_cast<int>(x * scaleX), bgY + static_cast<int>(y * scaleY),
+                        static_cast<int>(w * scaleX), static_cast<int>(h * scaleY));
 }
 
 SDL2pp::Rect CharCreationScreen::getBoxRect(int i) const {
-    int x = BOX_LEFT[i];
-    int w = BOX_RIGHT[i] - BOX_LEFT[i];
-    int h = BOX_BOTTOM - BOX_TOP;
-    return pngToScreen(x, BOX_TOP, w, h);
+    int col = i % COLS;
+    int x = BOX_LEFT[col];
+    int w = BOX_RIGHT[col] - BOX_LEFT[col];
+    int top = (i < COLS) ? BOX_TOP : BOX_TOP2;
+    int h = (i < COLS) ? BOX_BOTTOM - BOX_TOP : BOX_BOTTOM2 - BOX_TOP2;
+    return pngToScreen(x, top, w, h);
 }
 
 // ── Eventos ───────────────────────────────────────────────────────────────
@@ -74,6 +77,12 @@ void CharCreationScreen::handleEvents() {
                     case SDLK_RIGHT:
                         selectedSkin = (selectedSkin + 1) % NUM_SKINS;
                         break;
+                    case SDLK_DOWN:
+                        selectedSkin = (selectedSkin + COLS) % NUM_SKINS;
+                        break;
+                    case SDLK_UP:
+                        selectedSkin = (selectedSkin - COLS + NUM_SKINS) % NUM_SKINS;
+                        break;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
@@ -85,12 +94,20 @@ void CharCreationScreen::handleEvents() {
 }
 
 void CharCreationScreen::handleMouseClick(int mouseX, int mouseY) {
+    // Botón JUGAR
+    SDL2pp::Rect jugar = pngToScreen(BTN_JUGAR_X, BTN_JUGAR_Y, BTN_JUGAR_W, BTN_JUGAR_H);
+    if (mouseX >= jugar.x && mouseX < jugar.x + jugar.w && mouseY >= jugar.y &&
+        mouseY < jugar.y + jugar.h) {
+        confirmed = true;
+        running = false;
+        return;
+    }
+
     for (int i = 0; i < BOX_COUNT; i++) {
         SDL2pp::Rect box = getBoxRect(i);
         if (mouseX >= box.x && mouseX < box.x + box.w && mouseY >= box.y &&
             mouseY < box.y + box.h) {
             if (selectedSkin == i) {
-                // Doble click sobre el mismo box confirma.
                 confirmed = true;
                 running = false;
             } else {
@@ -128,20 +145,24 @@ void CharCreationScreen::render() {
 
 void CharCreationScreen::renderSkinInBox(int skinIdx, const SDL2pp::Rect& boxRect) {
     // Zona interior del recuadro (excluye el borde)
-    int pad = static_cast<int>(BOX_PAD * scale);
+    int pad = static_cast<int>(BOX_PAD * std::min(scaleX, scaleY));
     int innerX = boxRect.x + pad;
     int innerY = boxRect.y + pad;
     int innerW = boxRect.w - pad * 2;
     int innerH = boxRect.h - pad * 2;
 
-    // Tamaño del sprite escalado
-    int bodyW = static_cast<int>(SPRITE_W * SPRITE_SCL);
-    int bodyH = static_cast<int>(SPRITE_H * SPRITE_SCL);
-    int headW = static_cast<int>(HEAD_CELL_W * SPRITE_SCL);
-    int headH = static_cast<int>(HEAD_CELL_H * SPRITE_SCL);
+    // Escala dinámica: el sprite ocupa el máximo espacio posible dentro del recuadro
+    float totalSrcH = (HEAD_CELL_H / 4.0f + 3.0f) + SPRITE_H;
+    float spriteScale = std::min(
+            static_cast<float>(innerW) / SPRITE_W,
+            static_cast<float>(innerH) / totalSrcH);
+    int bodyW = static_cast<int>(SPRITE_W * spriteScale);
+    int bodyH = static_cast<int>(SPRITE_H * spriteScale);
+    int headW = static_cast<int>(HEAD_CELL_W * spriteScale);
+    int headH = static_cast<int>(HEAD_CELL_H * spriteScale);
 
     // Desplazamiento de la cabeza respecto al cuerpo (igual que en map_renderer)
-    int headAboveBody = static_cast<int>((HEAD_CELL_H / 4 + 3) * SPRITE_SCL);
+    int headAboveBody = static_cast<int>((HEAD_CELL_H / 4 + 3) * spriteScale);
 
     // Altura visual total: desde el top de la cabeza hasta el bottom del cuerpo
     int totalH = headAboveBody + bodyH;

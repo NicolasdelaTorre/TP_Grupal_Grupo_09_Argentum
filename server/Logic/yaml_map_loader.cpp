@@ -13,14 +13,29 @@ namespace {
 
 // Convierte el "type" del YAML al código de ObstacleType que va por la red.
 uint8_t obstacleTypeFromString(const std::string& type) {
-    if (type == "roca" || type == "piedra_grande" || type == "piedra_pequenia")
+    if (type == "roca")
         return static_cast<uint8_t>(ObstacleType::ROCK);
-    if (type == "arbol" || type == "arbol_grande" || type == "arbusto" || type == "tronco")
+    if (type == "piedra_pequenia")
+        return static_cast<uint8_t>(ObstacleType::ROCK_SMALL);
+    if (type == "piedra_grande")
+        return static_cast<uint8_t>(ObstacleType::ROCK_LARGE);
+    if (type == "arbol" || type == "arbol_grande" || type == "tronco")
         return static_cast<uint8_t>(ObstacleType::TREE);
+    if (type == "arbusto")
+        return static_cast<uint8_t>(ObstacleType::BUSH);
+    if (type == "cactus")
+        return static_cast<uint8_t>(ObstacleType::CACTUS);
+    if (type == "lampara_ciudad")
+        return static_cast<uint8_t>(ObstacleType::LAMP);
+    if (type == "pila_maderas")
+        return static_cast<uint8_t>(ObstacleType::WOOD);
+    if (type == "carretilla_de_madera")
+        return static_cast<uint8_t>(ObstacleType::CART);
+    if (type == "molino")
+        return static_cast<uint8_t>(ObstacleType::MILL);
     if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
         type == "pilar")
         return static_cast<uint8_t>(ObstacleType::WALL);
-    // Desconocido: lo dejamos como ROCK para que al menos se vea como obstáculo.
     return static_cast<uint8_t>(ObstacleType::ROCK);
 }
 

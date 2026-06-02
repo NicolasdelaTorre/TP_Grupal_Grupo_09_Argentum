@@ -8,12 +8,12 @@ player_spawn:
   position: [52, 47]
 obstacles:
   - id: obstacle_2
-    type: arbol
-    position: [34, 72]
-    size: [1, 3]
+    type: lampara_ciudad
+    position: [50, 50]
+    size: [1, 1]
   - id: obstacle_1
     type: roca
-    position: [15, 65]
+    position: [55, 50]
     size: [3, 3]
 zones:
   - id: zone_2
