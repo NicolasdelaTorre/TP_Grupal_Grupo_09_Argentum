@@ -102,6 +102,7 @@ void GameScreen::render() {
     renderer.Clear();
 
     mapRenderer.render(map, camX, camY);
+    mapRenderer.renderDroppedItems(droppedItems, camX, camY);
 
     // Otros jugadores primero, el local queda visualmente encima.
     // for (const auto& [id, op: otherPlayers]) {(void)id .....}
@@ -132,6 +133,8 @@ bool GameScreen::handleEvents(float dt) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
 
+    const char *msg = nullptr;
+
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::UP;
@@ -144,8 +147,17 @@ bool GameScreen::handleEvents(float dt) {
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
+    }else if (keys[SDL_SCANCODE_F1]){
+       msg = "CHEAT_SUICIDE";
+    }else if (keys[SDL_SCANCODE_F2]){
+        msg = "CHEAT_GOLD";
+    }else if (keys[SDL_SCANCODE_F3]){
+        msg = "CHEAT_EXPERIENCE";
     }
-
+        
+    if(msg){
+        events_queue.push(msg);
+    }
     player.moving = (dx != 0 || dy != 0);
 
     // Mover si el tile destino no está bloqueado
@@ -286,6 +298,30 @@ void GameScreen::consumeServerEvents() {
             size_t c1 = event.find(':');
             int id = std::stoi(event.substr(c1 + 1));
             otherPlayers.erase(id);
+        } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
+            // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
+            droppedItems.clear();
+            size_t pos = event.find(':');
+            size_t next = event.find(':', pos + 1);
+            int count = std::stoi(event.substr(pos + 1, next - pos - 1));
+            pos = next;
+            for (int i = 0; i < count && pos != std::string::npos; i++) {
+                DroppedItem di;
+                next = event.find(':', pos + 1);
+                di.x = static_cast<int16_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
+                pos = next;
+                next = event.find(':', pos + 1);
+                di.y = static_cast<int16_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
+                pos = next;
+                next = event.find(':', pos + 1);
+                di.sheetId = static_cast<uint8_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
+                pos = next;
+                next = event.find(':', pos + 1);
+                di.itemId = static_cast<uint16_t>(std::stoi(
+                        event.substr(pos + 1, next == std::string::npos ? std::string::npos : next - pos - 1)));
+                pos = next;
+                droppedItems.push_back(di);
+            }
         }
     }
 }

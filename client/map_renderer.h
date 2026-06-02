@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -42,10 +43,17 @@ public:
 
 
     void renderPlayer(const Player& player, float camX, float camY);
-
     void renderWeapon(const Player& player, float camX, float camY);
-
     void renderHead(const Player& player, float camX, float camY);
+
+    // Renderiza los NPCs estáticos de ciudad (tiles con ObstacleType::NPC_*)
+    void renderCityNpcs(const GameMap& map, float camX, float camY);
+
+    // Renderiza una criatura NPC dinámica (araña, esqueleto, etc.)
+    void renderNpcEntity(const NpcEntity& npc, float camX, float camY);
+
+    // Renderiza items tirados en el piso, encima de los tiles pero debajo de entidades.
+    void renderDroppedItems(const std::vector<DroppedItem>& items, float camX, float camY);
 
 private:
     SDL2pp::Renderer& renderer;

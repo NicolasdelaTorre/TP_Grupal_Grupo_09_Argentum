@@ -4,6 +4,47 @@
 
 namespace {
 
+static constexpr int ITEM_CELL = 32;       // each cell in all three sheets is 32×32 px
+static constexpr int ITEM_COLS_512  = 16;  // 512px sheets → 16 columns
+static constexpr int ITEM_COLS_1024 = 32;  // 1024px sheet  → 32 columns
+static constexpr int ITEM_DRAW_SIZE = 40;  // render size on screen (scaled up from 32px)
+
+const char* itemSheetPath(uint8_t sheetId) {
+    switch (sheetId) {
+        case 0:  return "/Pantallas/Items_recolectables.png";
+        case 1:  return "/Pantallas/Items_recolectables_2.png";
+        case 2:  return "/Pantallas/Items_recolectables_3.png";
+        default: return nullptr;
+    }
+}
+
+// Devuelve el path del sprite para NPCs de ciudad (obstáculos fijos en el mapa).
+// Retorna nullptr si el tipo no es un NPC de ciudad.
+const char* cityNpcTexturePath(ObstacleType type) {
+    switch (type) {
+        case ObstacleType::NPC:
+        case ObstacleType::NPC_PRIEST:
+        case ObstacleType::NPC_MERCHANT:
+        case ObstacleType::NPC_BANKER:
+            return "/Skins/NPC/Sacerdote.png";
+        default:
+            return nullptr;
+    }
+}
+
+// Devuelve el path del sprite para criaturas NPC dinámicas.
+const char* npcEntityTexturePath(NpcType type) {
+    switch (type) {
+        case NpcType::SPIDER:   return "/Skins/NPC/araña.png";
+        case NpcType::SKELETON: return "/Skins/NPC/Esqueleto.png";
+        case NpcType::ZOMBIE:   return "/Skins/NPC/Goblin.png";
+        case NpcType::GOBLIN:   return "/Skins/NPC/Goblin.png";
+        case NpcType::ORC:      return "/Skins/NPC/Orc.png";
+        case NpcType::GOLEM:    return "/Skins/NPC/Golem.png";
+        default:                return "/Skins/NPC/araña.png";
+    }
+}
+
 const char* obstacleTexturePath(ObstacleType type) {
     switch (type) {
         case ObstacleType::ROCK:       return "/Obstaculos/roca_01_ajustada.png";
@@ -218,4 +259,70 @@ void MapRenderer::renderHead(const Player& player, float camX, float camY) {
     SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
 
     renderer.Copy(cache.get("/Skins/Cabezas.png"), src, dst);
+}
+
+void MapRenderer::renderCityNpcs(const GameMap& map, float camX, float camY) {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    int startX = std::max(0, (int)(camX / TILE_SIZE));
+    int startY = std::max(0, (int)(camY / TILE_SIZE));
+    int endX = std::min(map.width, startX + screenW / TILE_SIZE + 2);
+    int endY = std::min(map.height, startY + screenH / TILE_SIZE + 2);
+
+    for (int y = startY; y < endY; y++) {
+        for (int x = startX; x < endX; x++) {
+            const char* tex = cityNpcTexturePath(map.at(x, y).obstacleType);
+            if (!tex)
+                continue;
+
+            // Centrado en el tile, sprite hacia abajo (row 0), frame idle (col 0)
+            int screenX = (int)(x * TILE_SIZE - camX) + TILE_SIZE / 2 - PHANTOM_SPRITE_W / 2;
+            int screenY = (int)(y * TILE_SIZE - camY) + TILE_SIZE / 2 - PHANTOM_SPRITE_H / 2;
+            SDL2pp::Rect src(0, 0, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
+            SDL2pp::Rect dst(screenX, screenY, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
+            try {
+                renderer.Copy(cache.get(tex), src, dst);
+            } catch (...) {}
+        }
+    }
+}
+
+void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, float camX, float camY) {
+    for (const auto& item : items) {
+        const char* tex = itemSheetPath(item.sheetId);
+        if (!tex)
+            continue;
+
+        int cols = (item.sheetId == 2) ? ITEM_COLS_1024 : ITEM_COLS_512;
+        int row = item.itemId / cols;
+        int col = item.itemId % cols;
+        SDL2pp::Rect src(col * ITEM_CELL, row * ITEM_CELL, ITEM_CELL, ITEM_CELL);
+
+        int screenX = (int)(item.x * TILE_SIZE - camX) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
+        int screenY = (int)(item.y * TILE_SIZE - camY) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
+        SDL2pp::Rect dst(screenX, screenY, ITEM_DRAW_SIZE, ITEM_DRAW_SIZE);
+
+        try {
+            renderer.Copy(cache.get(tex), src, dst);
+        } catch (...) {}
+    }
+}
+
+void MapRenderer::renderNpcEntity(const NpcEntity& npc, float camX, float camY) {
+    const char* tex = npcEntityTexturePath(npc.type);
+    if (!tex)
+        return;
+
+    int screenX = (int)(npc.x * TILE_SIZE - camX) + TILE_SIZE / 2 - PHANTOM_SPRITE_W / 2;
+    int screenY = (int)(npc.y * TILE_SIZE - camY) + TILE_SIZE / 2 - PHANTOM_SPRITE_H / 2;
+
+    int row = static_cast<int>(npc.dir);
+    int col = npc.moving ? npc.animFrame : 0;
+
+    SDL2pp::Rect src(col * PHANTOM_SPRITE_W, row * PHANTOM_SPRITE_H, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
+    SDL2pp::Rect dst(screenX, screenY, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
+    try {
+        renderer.Copy(cache.get(tex), src, dst);
+    } catch (...) {}
 }

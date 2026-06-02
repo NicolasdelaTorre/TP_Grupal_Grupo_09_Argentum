@@ -27,6 +27,10 @@ ServerMsg client_protocol::recv_msg_type() {
     return static_cast<ServerMsg>(opcode);
 }
 
+void client_protocol::sendCheat(CheatCode cheat) {
+    protocol.sendByte(static_cast<uint8_t>(cheat));
+}
+
 void client_protocol::close() { protocol.shutdown(); }
 
 
@@ -87,4 +91,19 @@ uint16_t client_protocol::recv_player_disconnected_payload() {
 void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);
+}
+
+std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {
+    uint16_t count = protocol.receive_two_bytes_number();
+    std::vector<DroppedItem> items;
+    items.reserve(count);
+    for (uint16_t i = 0; i < count; i++) {
+        DroppedItem item;
+        item.x = static_cast<int16_t>(protocol.receive_two_bytes_number());
+        item.y = static_cast<int16_t>(protocol.receive_two_bytes_number());
+        item.sheetId = protocol.receive_byte();
+        item.itemId = protocol.receive_two_bytes_number();
+        items.push_back(item);
+    }
+    return items;
 }

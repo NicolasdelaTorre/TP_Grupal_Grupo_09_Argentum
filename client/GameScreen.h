@@ -28,6 +28,7 @@ public:
 
     // Retorna false cuando el jugador quiere salir
     bool run();
+    uint16_t a = 0;
 
 private:
     SDL2pp::Renderer& renderer;
@@ -46,6 +47,7 @@ private:
     // pushea.
     Queue<std::string>& server_queue;
     std::unordered_map<int, OtherPlayer> otherPlayers;
+    std::vector<DroppedItem> droppedItems;
 
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);

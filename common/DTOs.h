@@ -46,7 +46,7 @@ enum class ObstacleType : uint8_t {
     NONE       = 0,
     ROCK       = 1,   // roca (3x3) → 7225.png
     TREE       = 2,   // arbol / arbol_grande / tronco (sin textura)
-    NPC        = 3,
+    NPC        = 3,   // NPC genérico (fallback)
     ENTRY      = 4,
     WALL       = 5,
     ROCK_SMALL = 6,   // piedra_pequenia (2x2) → roca_03_ajustada.png
@@ -57,6 +57,9 @@ enum class ObstacleType : uint8_t {
     MILL       = 11,  // molino          (6x4) → molino_recortado.png
     CACTUS     = 12,  // cactus          (1x1) → cactus_arriba_derecha_128x128.png
     BUSH       = 13,  // arbusto         (1x1) (sin textura)
+    NPC_PRIEST   = 14,  // sacerdote → Sacerdote.png
+    NPC_MERCHANT = 15,  // comerciante → Sacerdote.png
+    NPC_BANKER   = 16,  // banquero → Sacerdote.png
 };
 
 // ── Dirección del personaje ───────────────────────────────────
@@ -79,6 +82,29 @@ struct Obj {
 struct Weapon: public Obj {
     WeaponType type;
     uint8_t damage;
+};
+
+// Tipo de criatura NPC dinámica
+enum class NpcType : uint8_t { SPIDER = 0, SKELETON, ZOMBIE, GOBLIN, ORC, GOLEM };
+
+enum class CheatCode : uint8_t { SUICIDE = 0, GOLD, EXPERIENCE };
+
+struct NpcEntity {
+    uint16_t id = 0;
+    float x = 0, y = 0;
+    Direction dir = Direction::DOWN;
+    bool moving = false;
+    int animFrame = 0;
+    float animTimer = 0.0f;
+    NpcType type = NpcType::SPIDER;
+};
+
+// Item dropped on the floor. x/y are tile coordinates.
+// sheetId 0 → Items_recolectables.png, 1 → Items_recolectables_2.png, 2 → Items_recolectables_3.png
+struct DroppedItem {
+    int16_t x = 0, y = 0;
+    uint8_t sheetId = 0;
+    uint16_t itemId = 0;  // row * cols_per_row + col
 };
 
 struct Player {

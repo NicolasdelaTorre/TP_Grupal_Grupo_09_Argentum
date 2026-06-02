@@ -27,5 +27,7 @@ enum class ServerMsg : uint8_t {
     NEW_PLAYER = 0x88,           // [opcode][id:2][x:2][y:2][dir:1][name_len:2][name:n]
     PLAYER_MOVED = 0x89,         // [opcode][id:2][x:2][y:2][dir:1]
     PLAYER_DISCONNECTED = 0x8A,  // [opcode][id:2]
-    FIRST_LOGIN = 0x8B           // [opcode] — usuario nuevo, debe crear personaje
+    FIRST_LOGIN = 0x8B,          // [opcode] — usuario nuevo, debe crear personaje
+    NPC_LIST    = 0x8C,          // [opcode][count:2][[id:2][x:2][y:2][dir:1][type:1][moving:1]...]
+    DROPPED_ITEMS = 0x8D         // [opcode][count:2][[x:2][y:2][sheetId:1][itemId:2]...]
 };
