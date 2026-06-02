@@ -21,6 +21,7 @@ Player::Player(const std::string& name, Position position, const std::string& ra
     data.equippedHelmet = 0;
     data.equippedShield = 0;
     data.isGhost = false;
+    data.maxHealth = data.health;  // arrancan con vida llena
 
     for (int i = 0; i < N; ++i) {
         data.inventory[i] = 0;

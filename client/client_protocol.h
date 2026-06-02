@@ -37,6 +37,13 @@ struct PlayerEvent {
     std::string name;
 };
 
+// Stats del jugador local (STATS_JUGADOR).
+struct StatsEvent {
+    uint16_t health;
+    uint16_t maxHealth;
+    uint8_t level;
+};
+
 class client_protocol {
     common_protocol protocol;
 
@@ -64,6 +71,7 @@ public:
     PlayerEvent recv_new_player_payload();
     PlayerEvent recv_player_moved_payload();
     uint16_t recv_player_disconnected_payload();
+    StatsEvent recv_stats_payload();
 
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);

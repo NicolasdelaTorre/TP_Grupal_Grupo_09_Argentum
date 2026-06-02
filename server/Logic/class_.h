@@ -10,13 +10,13 @@ public:
     enum class ClassCode : uint8_t { MAGE = 0, CLERIC = 1, CHAMPION = 2, WARRIOR = 3 };
 
     static ClassCode fromString(const std::string& className) {
-        if (className == "mage") {
+        if (className == "Mage") {
             return ClassCode::MAGE;
-        } else if (className == "cleric") {
+        } else if (className == "Cleric") {
             return ClassCode::CLERIC;
-        } else if (className == "champion") {
+        } else if (className == "Champion") {
             return ClassCode::CHAMPION;
-        } else if (className == "warrior") {
+        } else if (className == "Warrior") {
             return ClassCode::WARRIOR;
         } else {
             throw std::runtime_error("Unknown class");

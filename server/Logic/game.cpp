@@ -132,6 +132,30 @@ uint8_t Game::getPlayerDirection(int playerId) const {
     return it->second.getDirection();
 }
 
+uint16_t Game::getPlayerHealth(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().health;
+}
+
+uint16_t Game::getPlayerMaxHealth(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().maxHealth;
+}
+
+uint8_t Game::getPlayerLevel(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().level;
+}
+
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
 std::vector<int> Game::getPlayerIds() const {

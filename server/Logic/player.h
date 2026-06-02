@@ -32,6 +32,7 @@ struct PlayerData {
     uint8_t equippedHelmet;
     uint8_t equippedShield;
     bool isGhost;
+    uint16_t maxHealth;
 
     uint8_t inventory[N];
 };

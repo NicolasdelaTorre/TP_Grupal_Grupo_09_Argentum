@@ -42,6 +42,9 @@ public:
     const std::string& getPlayerName(int playerId) const;
 
     uint8_t getPlayerDirection(int playerId) const;
+    uint16_t getPlayerHealth(int playerId) const;
+    uint16_t getPlayerMaxHealth(int playerId) const;
+    uint8_t getPlayerLevel(int playerId) const;
 
     bool hasPlayer(int playerId) const;
 

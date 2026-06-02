@@ -10,7 +10,7 @@ void Item::createItem(const std::string& itemName) {
     name = itemName;
     const toml::value config = toml::parse("server/Logic/items.toml");
 
-    const auto& items = toml::find<std::vector<toml::value>>(config, "item");
+    const auto items = toml::find<std::vector<toml::value>>(config, "item");
 
     for (const auto& item: items) {
         if (toml::find<std::string>(item, "name") == itemName) {

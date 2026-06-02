@@ -40,6 +40,14 @@ void client_receiver::run() {
                     break;
                 }
 
+                case ServerMsg::STATS_JUGADOR: {
+                    StatsEvent ev = protocol.recv_stats_payload();
+                    server_queue.push("STATS:" + std::to_string(ev.health) + ":" +
+                                      std::to_string(ev.maxHealth) + ":" +
+                                      std::to_string(static_cast<int>(ev.level)));
+                    break;
+                }
+
                 default:
                     break;
             }
