@@ -62,8 +62,9 @@ public:
     // Cierra el socket — desbloquea cualquier recv pendiente
     void close();
 
-    // Envío del nombre de usuario al loguearse: [USER_ARRIVAL][len:2][name].
-    int send_username(const std::vector<char>& data);
+    // Envío del login: [USER_ARRIVAL][len:2][name][len:2][race][len:2][class].
+    int send_user_arrival(const std::vector<char>& name, const std::string& race,
+                          const std::string& class_);
 
     // Las funciones recv_*_payload asumen que el opcode ya fue consumido vía recv_msg_type().
     Position recv_login_ok_payload();

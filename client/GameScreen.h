@@ -15,8 +15,12 @@ static constexpr float FEET_OFFSET = 0.5f;
 static constexpr float HEAD_OFFSET = 0.5f;
 
 // Jugador remoto del que recibimos eventos por broadcast del servidor.
+// target* es el tile destino que mandó el server; visual.x/y avanzan hacia ahí
+// a PLAYER_MOVE_SPEED para que el movimiento se vea fluido en vez de teletransporte.
 struct OtherPlayer {
     Player visual;
+    float targetX = 0.0f;
+    float targetY = 0.0f;
     std::string name;
 };
 

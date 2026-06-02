@@ -30,10 +30,15 @@ ServerMsg client_protocol::recv_msg_type() {
 void client_protocol::close() { protocol.shutdown(); }
 
 
-int client_protocol::send_username(const std::vector<char>& data) {
+int client_protocol::send_user_arrival(const std::vector<char>& name, const std::string& race,
+                                       const std::string& class_) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::USER_ARRIVAL));
-    protocol.send_two_bytes_number(static_cast<uint16_t>(data.size()));
-    protocol.send_message(data);
+    protocol.send_two_bytes_number(static_cast<uint16_t>(name.size()));
+    protocol.send_message(name);
+    protocol.send_two_bytes_number(static_cast<uint16_t>(race.size()));
+    protocol.send_message(std::vector<char>(race.begin(), race.end()));
+    protocol.send_two_bytes_number(static_cast<uint16_t>(class_.size()));
+    protocol.send_message(std::vector<char>(class_.begin(), class_.end()));
     return 0;
 }
 
