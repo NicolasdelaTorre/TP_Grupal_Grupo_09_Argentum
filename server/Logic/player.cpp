@@ -9,7 +9,8 @@ Player::Player(const std::string& name, Position position, const std::string& ra
     data.level = 1;
     data.race = Race::fromString(race);
     data.class_ = Class_::fromString(class_);
-    data.health = StatsDefinition().maxHealth(data.level, race, class_);
+    data.maxHealth = StatsDefinition().maxHealth(data.level, race, class_);
+    data.health = data.maxHealth;
 }
 
 void Player::move(Position newPosition) { data.position = newPosition; }

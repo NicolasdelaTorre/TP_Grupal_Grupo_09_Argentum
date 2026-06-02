@@ -84,6 +84,14 @@ uint16_t client_protocol::recv_player_disconnected_payload() {
     return protocol.receive_two_bytes_number();
 }
 
+StatsEvent client_protocol::recv_stats_payload() {
+    StatsEvent ev;
+    ev.health = protocol.receive_two_bytes_number();
+    ev.maxHealth = protocol.receive_two_bytes_number();
+    ev.level = protocol.receive_byte();
+    return ev;
+}
+
 void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);

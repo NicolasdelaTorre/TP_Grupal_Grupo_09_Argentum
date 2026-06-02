@@ -130,6 +130,8 @@ void GameScreen::render() {
     mapRenderer.renderWeapon(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
 
+    renderHUD();
+
     renderer.Present();
 }
 
@@ -300,6 +302,43 @@ void GameScreen::consumeServerEvents() {
             size_t c1 = event.find(':');
             int id = std::stoi(event.substr(c1 + 1));
             otherPlayers.erase(id);
+        } else if (event.rfind("STATS:", 0) == 0) {
+            // STATS:<hp>:<maxHp>:<level>
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            if (c3 == std::string::npos)
+                continue;
+            health = static_cast<uint16_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
+            maxHealth = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
+            level = static_cast<uint8_t>(std::stoi(event.substr(c3 + 1)));
         }
     }
+}
+
+void GameScreen::renderHUD() {
+    if (maxHealth == 0)
+        return;  // no recibimos stats todavía
+
+    // Barra de vida en la esquina superior izquierda
+    static constexpr int HUD_X = 10;
+    static constexpr int HUD_Y = 10;
+    static constexpr int BAR_W = 200;
+    static constexpr int BAR_H = 20;
+
+    // Fondo gris
+    renderer.SetDrawColor(60, 60, 60, 220);
+    SDL_Rect bg{HUD_X, HUD_Y, BAR_W, BAR_H};
+    SDL_RenderFillRect(renderer.Get(), &bg);
+
+    // Vida actual (rojo)
+    int filledW = static_cast<int>(BAR_W * (float)health / (float)maxHealth);
+    renderer.SetDrawColor(180, 30, 30, 255);
+    SDL_Rect fill{HUD_X, HUD_Y, filledW, BAR_H};
+    SDL_RenderFillRect(renderer.Get(), &fill);
+
+    // Borde
+    renderer.SetDrawColor(0, 0, 0, 255);
+    SDL_Rect border{HUD_X, HUD_Y, BAR_W, BAR_H};
+    SDL_RenderDrawRect(renderer.Get(), &border);
 }

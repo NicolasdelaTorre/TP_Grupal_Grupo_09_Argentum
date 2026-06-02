@@ -53,6 +53,9 @@ private:
     // Parsea "PLAYER_DISCONNECTED:id" y lo manda.
     void sendPlayerDisconnected(common_protocol& client, const std::string& message);
 
+    // Parsea "STATS:hp:maxHp:level" y manda STATS_JUGADOR.
+    void sendStats(common_protocol& client, const std::string& message);
+
 public:
     explicit ProtocolServer(const char* port);
 

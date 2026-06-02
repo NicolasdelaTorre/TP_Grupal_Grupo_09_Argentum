@@ -47,6 +47,11 @@ private:
     Queue<std::string>& server_queue;
     std::unordered_map<int, OtherPlayer> otherPlayers;
 
+    // Stats del jugador local (vienen por STATS_JUGADOR).
+    uint16_t health = 0;
+    uint16_t maxHealth = 0;
+    uint8_t level = 1;
+
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);
 
@@ -67,4 +72,7 @@ private:
 
     // True si algún otherPlayer está en (tileX, tileY). Para que la predicción local no choque.
     bool isOccupiedByOther(int tileX, int tileY) const;
+
+    // Dibuja la barra de vida en la esquina superior izquierda.
+    void renderHUD();
 };

@@ -33,6 +33,9 @@ public:
     Position getPlayerPosition(int playerId) const;
     const std::string& getPlayerName(int playerId) const;
     uint8_t getPlayerDirection(int playerId) const;
+    uint32_t getPlayerHealth(int playerId) const;
+    uint32_t getPlayerMaxHealth(int playerId) const;
+    uint8_t getPlayerLevel(int playerId) const;
     bool hasPlayer(int playerId) const;
     std::vector<int> getPlayerIds() const;
     void removePlayer(int playerId);

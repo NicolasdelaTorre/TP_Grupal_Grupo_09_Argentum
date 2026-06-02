@@ -17,6 +17,7 @@ typedef struct PlayerData {
     Race::RaceCode race;
     Class_::ClassCode class_;
     uint32_t health;
+    uint32_t maxHealth;
 } PlayerData;
 
 class Player {
