@@ -25,22 +25,25 @@ private:
     bool running = true;
     bool confirmed = false;
 
-    float scale;
-    int bgX, bgY;
-    int displayW, displayH;  // tamaño real del PNG en pantalla (aspect ratio preservado)
+    float scaleX = 1.0f, scaleY = 1.0f;
+    int bgX = 0, bgY = 0;
+    int displayW = 0, displayH = 0;
 
     // ── Skins disponibles (archivos dentro de AO_IMGS/Skins/) ────────────
-    static constexpr int NUM_SKINS = 5;
+    static constexpr int NUM_SKINS = 10;
     static const char* const SKIN_FILES[NUM_SKINS];
 
     // ── Posiciones de los recuadros en el PNG 1024×1024 ──────────────────
     // Cada par (left, right) son los bordes exteriores detectados por pixel.
     // El contenido interior empieza 4px adentro de cada borde.
-    static constexpr int BOX_COUNT = 5;
+    static constexpr int BOX_COUNT = 10;
+    static constexpr int COLS = 5;
     static constexpr int BOX_LEFT[5] = {215, 347, 479, 611, 743};
-    static constexpr int BOX_RIGHT[5] = {284, 416, 548, 680, 812};
+    static constexpr int BOX_RIGHT[5] = {280, 412, 544, 676, 808};
     static constexpr int BOX_TOP = 250;
     static constexpr int BOX_BOTTOM = 330;
+    static constexpr int BOX_TOP2 = 410;
+    static constexpr int BOX_BOTTOM2 = 490;
 
     // Padding interior (excluye el borde de 4px)
     static constexpr int BOX_PAD = 4;
