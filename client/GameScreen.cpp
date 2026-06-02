@@ -1,6 +1,7 @@
 #include "GameScreen.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <utility>
 
@@ -236,6 +237,32 @@ void GameScreen::update(float dt) {
     // Consumimos eventos del servidor antes de animar.
     consumeServerEvents();
 
+    // Interpolamos a los otros jugadores hacia su tile destino para que se vea
+    // un walk fluido en vez de saltos de tile en tile.
+    for (auto& entry: otherPlayers) {
+        auto& op = entry.second;
+        float dx = op.targetX - op.visual.x;
+        float dy = op.targetY - op.visual.y;
+        float dist = std::sqrt(dx * dx + dy * dy);
+        float step = PLAYER_MOVE_SPEED * dt;
+        if (dist <= step || dist == 0.0f) {
+            op.visual.x = op.targetX;
+            op.visual.y = op.targetY;
+            op.visual.moving = false;
+            op.visual.animFrame = 0;
+            op.visual.animTimer = 0;
+        } else {
+            op.visual.x += (dx / dist) * step;
+            op.visual.y += (dy / dist) * step;
+            op.visual.moving = true;
+            op.visual.animTimer += dt;
+            if (op.visual.animTimer >= ANIM_SPEED) {
+                op.visual.animTimer -= ANIM_SPEED;
+                op.visual.animFrame = (op.visual.animFrame + 1) % ANIM_FRAMES;
+            }
+        }
+    }
+
     if (!player.moving) {
         player.animFrame = 0;
         player.animTimer = 0;
@@ -254,6 +281,11 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
         int opTileX = (int)(op.visual.x + HEAD_OFFSET);
         int opTileY = (int)(op.visual.y + FEET_OFFSET);
         if (opTileX == tileX && opTileY == tileY)
+            return true;
+        // También el tile destino: si está caminando hacia (tileX,tileY) no podemos pisarlo.
+        int opTargetX = (int)(op.targetX + HEAD_OFFSET);
+        int opTargetY = (int)(op.targetY + FEET_OFFSET);
+        if (opTargetX == tileX && opTargetY == tileY)
             return true;
     }
     return false;
@@ -277,6 +309,8 @@ void GameScreen::consumeServerEvents() {
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
             OtherPlayer op;
             tileToPlayerCoords(x, y, op.visual);
+            op.targetX = static_cast<float>(x);
+            op.targetY = static_cast<float>(y);
             op.visual.dir = wireDirToSpriteDir(dir);
             op.name = event.substr(c5 + 1);
             otherPlayers[id] = std::move(op);
@@ -294,7 +328,8 @@ void GameScreen::consumeServerEvents() {
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1)));
             auto it = otherPlayers.find(id);
             if (it != otherPlayers.end()) {
-                tileToPlayerCoords(x, y, it->second.visual);
+                it->second.targetX = static_cast<float>(x);
+                it->second.targetY = static_cast<float>(y);
                 it->second.visual.dir = wireDirToSpriteDir(dir);
             }
         } else if (event.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
