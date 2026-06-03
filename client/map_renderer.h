@@ -55,6 +55,11 @@ public:
     // Renderiza items tirados en el piso, encima de los tiles pero debajo de entidades.
     void renderDroppedItems(const std::vector<DroppedItem>& items, float camX, float camY);
 
+    // Renderiza un efecto de sangre centrado en la posición de tile (x, y).
+    // texIndex: 0–4 → Sangre_1.png … Sangre_5.png
+    // alpha: 0–255 para fade-out
+    void renderBlood(float x, float y, int texIndex, Uint8 alpha, float camX, float camY);
+
 private:
     SDL2pp::Renderer& renderer;
     TextureCache& cache;

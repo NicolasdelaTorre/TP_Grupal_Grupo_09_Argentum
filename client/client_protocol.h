@@ -67,6 +67,7 @@ public:
                           const std::string& class_);
 
     // Las funciones recv_*_payload asumen que el opcode ya fue consumido vía recv_msg_type().
+    uint16_t recv_my_player_id();
     Position recv_login_ok_payload();
     ReceivedMap recv_map();
     PlayerEvent recv_new_player_payload();
@@ -84,6 +85,8 @@ public:
     std::vector<DroppedItem> recv_dropped_items_payload();
 
     void sendCheat(CheatCode cheat);
+
+    void send_attack(uint16_t attackerId, uint16_t targetId);
 };
 
 

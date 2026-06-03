@@ -1,6 +1,7 @@
 #include "protocol_server.h"
 
 #include <stdexcept>
+#include <iostream>
 #include <utility>
 
 #include <sys/socket.h>
@@ -65,6 +66,9 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnSkin(message, clientId);
         case static_cast<uint8_t>(ClientMsg::TURN):
             return returnTurn(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::ATTACK):
+            std::cout << "Received attack command from client " << clientId << std::endl;
+            return 1;
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }

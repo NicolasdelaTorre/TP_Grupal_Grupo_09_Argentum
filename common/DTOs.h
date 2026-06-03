@@ -108,6 +108,7 @@ struct DroppedItem {
 };
 
 struct Player {
+    uint16_t id = 0;
     float x = 5.0f, y = 5.0f;  // posición en tiles
     Direction dir = Direction::DOWN;
     bool moving = false;

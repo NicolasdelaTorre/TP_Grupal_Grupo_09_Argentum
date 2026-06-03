@@ -46,10 +46,20 @@ int client_protocol::send_user_arrival(const std::vector<char>& name, const std:
     return 0;
 }
 
+uint16_t client_protocol::recv_my_player_id() {
+    return protocol.receive_two_bytes_number();
+}
+
 Position client_protocol::recv_login_ok_payload() {
     int16_t x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(protocol.receive_two_bytes_number());
     return Position{x, y};
+}
+
+void client_protocol::send_attack(uint16_t attackerId, uint16_t targetId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
+    protocol.send_two_bytes_number(attackerId);
+    protocol.send_two_bytes_number(targetId);
 }
 
 ReceivedMap client_protocol::recv_map() {

@@ -309,6 +309,27 @@ void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, floa
     }
 }
 
+void MapRenderer::renderBlood(float x, float y, int texIndex, Uint8 alpha, float camX, float camY) {
+    static constexpr int BLOOD_DRAW_SIZE = 32;
+    static const char* bloodFiles[] = {
+        "/Skins/Sangre_1.png", "/Skins/Sangre_2.png", "/Skins/Sangre_3.png",
+        "/Skins/Sangre_4.png", "/Skins/Sangre_5.png"
+    };
+    if (texIndex < 0 || texIndex >= 5)
+        return;
+
+    int screenX = (int)(x * TILE_SIZE - camX) + TILE_SIZE / 2 - BLOOD_DRAW_SIZE / 2;
+    int screenY = (int)(y * TILE_SIZE - camY) + TILE_SIZE / 2 - BLOOD_DRAW_SIZE / 2;
+    SDL2pp::Rect dst(screenX, screenY, BLOOD_DRAW_SIZE, BLOOD_DRAW_SIZE);
+
+    try {
+        SDL2pp::Texture& tex = cache.get(bloodFiles[texIndex]);
+        tex.SetAlphaMod(alpha);
+        renderer.Copy(tex, SDL2pp::NullOpt, dst);
+        tex.SetAlphaMod(255);
+    } catch (...) {}
+}
+
 void MapRenderer::renderNpcEntity(const NpcEntity& npc, float camX, float camY) {
     const char* tex = npcEntityTexturePath(npc.type);
     if (!tex)
