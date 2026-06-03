@@ -26,9 +26,12 @@ bool Game::processCommand(int playerId, const std::string& command) {
         std::string direction = command.substr(commandPosition + 1);
         return turnPlayer(playerId, direction);
     } else if (dataType == "attack") {
-        // Formato: "attack"
+        // Format: "attack"
         std::string direction = command.substr(commandPosition + 1);
         return processAttack(playerId, direction);
+    } else if (dataType == "heal") {
+        // Format: "heal"
+        return processHeal(playerId);
     }
 
     return false;
@@ -58,6 +61,27 @@ bool Game::processUser(int playerId, const std::string& user) {
     }
 
     map.placePlayer(playerId, spawn.x, spawn.y);
+
+    // Codigo de testeo
+    if (players.size() > 1) {
+        // players.at(playerId).addItem("Elven Flute");
+        // players.at(playerId).addItem("Sword");
+        // players.at(playerId).equipItem(0);
+        std::cout << "Inventory: ";
+        for (const auto& item: players.at(playerId).getInventory()) {
+            std::cout << item.getName() << " ";
+        }
+        std::cout << std::endl;
+        // players.at(playerId).equipItem(1);
+        std::cout << "Inventory: ";
+        for (const auto& item: players.at(playerId).getInventory()) {
+            std::cout << item.getName() << " ";
+        }
+        std::cout << std::endl;
+        processAttack(playerId, "bottom");
+        // processHeal(playerId);
+    }
+    //
 
     std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
               << ", " << spawn.y << ")" << std::endl;
@@ -155,7 +179,7 @@ uint16_t Game::getPlayerMaxHealth(int playerId) const {
     if (it == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    return it->second.getData().maxHealth;
+    return it->second.getMaxHealth();
 }
 
 uint8_t Game::getPlayerLevel(int playerId) const {
@@ -254,7 +278,36 @@ bool Game::processAttack(int playerId, const std::string& direction) {
         throw std::runtime_error("Game Error: player in sight not found");
     }
 
+    std::cout << "Player " << itPlayer->second.getName() << " attacks player "
+              << itTarget->second.getName() << " with " << itTarget->second.getData().health
+              << " for " << itPlayer->second.dealDamage() << " damage!" << std::endl;
+
     itTarget->second.receiveDamage(itPlayer->second.dealDamage());
+
+    std::cout << "Player " << itTarget->second.getName() << " has "
+              << itTarget->second.getData().health << " health left!" << std::endl;
+
+    return true;
+}
+
+bool Game::processHeal(int playerId) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (!itPlayer->second.isAlive()) {
+        return false;
+    }
+
+    uint16_t healedAmount = itPlayer->second.heal();
+
+    if (healedAmount == 0) {
+        return false;
+    }
+
+    std::cout << "Player " << itPlayer->second.getName() << " heals for " << healedAmount
+              << " health!" << std::endl;
 
     return true;
 }

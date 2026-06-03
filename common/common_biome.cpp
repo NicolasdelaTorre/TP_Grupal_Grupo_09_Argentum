@@ -22,7 +22,7 @@ constexpr std::array<BiomeName, 8> BIOME_NAMES = {{
         {BiomeType::PANTANO_EMBRUJADO, "pantano_embrujado"},
 }};
 
-}
+}  // namespace
 
 BiomeType biome_from_cell(uint8_t cell) {
     if (cell > BIOME_MAX_VALUE) {

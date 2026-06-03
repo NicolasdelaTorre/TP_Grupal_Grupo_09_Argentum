@@ -10,12 +10,15 @@
 struct RaceAttribute {
     uint8_t constitution;
     uint8_t force;
+    uint8_t intelligence;
     float FRaceHealth;
     float FRaceRecovery;
+    float FRaceMana;
 };
 
 struct ClassAttribute {
     float FClassHealth;
+    float FClassMana;
 };
 
 struct GameAttributes {

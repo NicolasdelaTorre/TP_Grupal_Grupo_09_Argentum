@@ -22,6 +22,21 @@ public:
             throw std::runtime_error("Unknown class");
         }
     }
+
+    static std::string ToString(ClassCode classCode) {
+        switch (classCode) {
+            case ClassCode::MAGE:
+                return "Mage";
+            case ClassCode::CLERIC:
+                return "Cleric";
+            case ClassCode::CHAMPION:
+                return "Champion";
+            case ClassCode::WARRIOR:
+                return "Warrior";
+            default:
+                throw std::runtime_error("Unknown class");
+        }
+    }
 };
 
 #endif

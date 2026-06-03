@@ -131,7 +131,8 @@ void MapCanvas::applyInitialView() {
 
     // escala de la vista para que cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
     const double target_scale = static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
-    // escala de la vista para que entre en la ventana y cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
+    // escala de la vista para que entre en la ventana y cada celda ocupe el tamaño
+    // TARGET_CELL_SCREEN_PX
     const double scale = std::max(fit_scale, target_scale);
 
     // escalar vista
@@ -767,7 +768,8 @@ void MapCanvas::rebuildBiomeTint() {
         return;
     }
 
-    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena, primero los removemos y después delete
+    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena, primero
+    // los removemos y después delete
     for (auto* item: biome_texture_items_) {
         scene_->removeItem(item);
         delete item;

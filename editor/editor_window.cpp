@@ -24,20 +24,20 @@ EditorWindow::ResizeDelta EditorWindow::computeResizeDelta(ResizeDirection dir, 
     const int signed_cells = shrink ? -cells : cells;
     ResizeDelta r;
     switch (dir) {
-    case ResizeDirection::Right:
-        r.delta_w = signed_cells;
-        break;
-    case ResizeDirection::Down:
-        r.delta_h = signed_cells;
-        break;
-    case ResizeDirection::Left:
-        r.delta_w = signed_cells;
-        r.offset_x = signed_cells;
-        break;
-    case ResizeDirection::Up:
-        r.delta_h = signed_cells;
-        r.offset_y = signed_cells;
-        break;
+        case ResizeDirection::Right:
+            r.delta_w = signed_cells;
+            break;
+        case ResizeDirection::Down:
+            r.delta_h = signed_cells;
+            break;
+        case ResizeDirection::Left:
+            r.delta_w = signed_cells;
+            r.offset_x = signed_cells;
+            break;
+        case ResizeDirection::Up:
+            r.delta_h = signed_cells;
+            r.offset_y = signed_cells;
+            break;
     }
     return r;
 }
@@ -134,10 +134,8 @@ EditorWindow::EditorWindow(QWidget* parent):
         QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
         QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
         if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
-            const QPixmap arg_scaled =
-                    logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
-            const QPixmap me_scaled =
-                    logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
+            const QPixmap arg_scaled = logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
+            const QPixmap me_scaled = logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
 
             const int overlap_px = 50;
             const int total_w = std::max(arg_scaled.width(), me_scaled.width());
@@ -148,8 +146,8 @@ EditorWindow::EditorWindow(QWidget* parent):
             QPainter painter(&composite);
             painter.setRenderHint(QPainter::SmoothPixmapTransform);
             painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
-            painter.drawPixmap((total_w - me_scaled.width()) / 2,
-                               arg_scaled.height() - overlap_px, me_scaled);
+            painter.drawPixmap((total_w - me_scaled.width()) / 2, arg_scaled.height() - overlap_px,
+                               me_scaled);
             painter.end();
 
             ui_->labelLogoArgentum->setPixmap(composite);
@@ -196,29 +194,7 @@ EditorWindow::EditorWindow(QWidget* parent):
             &EditorWindow::onEntryPlacementRequested);
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
     connect(map_canvas_, &MapCanvas::saveRequested, this, &EditorWindow::saveMap);
-<<<<<<< HEAD
-    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns,
-            &QLabel::setText);
-
-    connect(ui_->btnApplyResize, &QPushButton::clicked, this, &EditorWindow::onApplyMapResize);
-
-    auto* resize_action_group = new QButtonGroup(this);
-    resize_action_group->setExclusive(true);
-    resize_action_group->addButton(ui_->btnResizeExpand);
-    resize_action_group->addButton(ui_->btnResizeShrink);
-
-    auto* resize_direction_group = new QButtonGroup(this);
-    resize_direction_group->setExclusive(true);
-    resize_direction_group->addButton(ui_->btnResizeUp);
-    resize_direction_group->addButton(ui_->btnResizeDown);
-    resize_direction_group->addButton(ui_->btnResizeLeft);
-    resize_direction_group->addButton(ui_->btnResizeRight);
-
-    ui_->btnResizeExpand->setChecked(true);
-    ui_->btnResizeRight->setChecked(true);
-=======
     connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
->>>>>>> origin/main
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
@@ -368,14 +344,8 @@ void EditorWindow::selectDefaultMode() {
 }
 
 void EditorWindow::updateDimensionsLabel() {
-<<<<<<< HEAD
-    ui_->labelMapDimensions->setText(QStringLiteral("Map Size: %1 x %2")
-                                             .arg(map_canvas_->map_width())
-                                             .arg(map_canvas_->map_height()));
-=======
     ui_->labelMapDimensions->setText(
             QStringLiteral("%1 x %2").arg(map_canvas_->map_width()).arg(map_canvas_->map_height()));
->>>>>>> origin/main
 }
 
 void EditorWindow::onApplyMapResize() {
@@ -389,8 +359,7 @@ void EditorWindow::onApplyMapResize() {
     } else if (ui_->btnResizeRight->isChecked()) {
         dir = ResizeDirection::Right;
     } else {
-        QMessageBox::warning(this, QStringLiteral("Resize"),
-                             QStringLiteral("Choose a direction."));
+        QMessageBox::warning(this, QStringLiteral("Resize"), QStringLiteral("Choose a direction."));
         return;
     }
 

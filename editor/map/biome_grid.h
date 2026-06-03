@@ -16,7 +16,6 @@ struct BiomeSource {
 // Devuelve, por celda (row-major, idx = y * width + x), el índice del bioma
 // dueño dentro de `sources`, o -1 si ninguna fuente la alcanza.
 // El orden de `sources` define el desempate entre biomas a igual costo.
-std::vector<int> computeBiomeOwners(int width, int height,
-                                    const std::vector<BiomeSource>& sources);
+std::vector<int> computeBiomeOwners(int width, int height, const std::vector<BiomeSource>& sources);
 
 #endif

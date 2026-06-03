@@ -21,8 +21,10 @@ RaceAttribute AttributeManager::readRace(const toml::value& config, const std::s
 
     race.constitution = toml::find<uint8_t>(config, "race", raceName, "constitution");
     race.force = toml::find<uint8_t>(config, "race", raceName, "force");
+    race.intelligence = toml::find<uint8_t>(config, "race", raceName, "intelligence");
     race.FRaceHealth = toml::find<float>(config, "race", raceName, "FRaceHealth");
     race.FRaceRecovery = toml::find<float>(config, "race", raceName, "FRaceRecovery");
+    race.FRaceMana = toml::find<float>(config, "race", raceName, "FRaceMana");
 
     return race;
 }
@@ -32,6 +34,7 @@ ClassAttribute AttributeManager::readClass(const toml::value& config,
     ClassAttribute clase;
 
     clase.FClassHealth = toml::find<float>(config, "class", className, "FClassHealth");
+    clase.FClassMana = toml::find<float>(config, "class", className, "FClassMana");
 
     return clase;
 }
