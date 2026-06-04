@@ -136,7 +136,7 @@ bool GameScreen::handleEvents(float dt) {
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
 
-    const char *msg = nullptr;
+    const char* msg = nullptr;
 
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
@@ -150,15 +150,15 @@ bool GameScreen::handleEvents(float dt) {
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
-    }else if (keys[SDL_SCANCODE_F1]){
-       msg = "CHEAT_SUICIDE";
-    }else if (keys[SDL_SCANCODE_F2]){
+    } else if (keys[SDL_SCANCODE_F1]) {
+        msg = "CHEAT_SUICIDE";
+    } else if (keys[SDL_SCANCODE_F2]) {
         msg = "CHEAT_GOLD";
-    }else if (keys[SDL_SCANCODE_F3]){
+    } else if (keys[SDL_SCANCODE_F3]) {
         msg = "CHEAT_EXPERIENCE";
     }
-        
-    if(msg){
+
+    if (msg) {
         events_queue.push(msg);
     }
     player.moving = (dx != 0 || dy != 0);
@@ -354,8 +354,8 @@ void GameScreen::consumeServerEvents() {
                 di.sheetId = static_cast<uint8_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
                 pos = next;
                 next = event.find(':', pos + 1);
-                di.itemId = static_cast<uint16_t>(std::stoi(
-                        event.substr(pos + 1, next == std::string::npos ? std::string::npos : next - pos - 1)));
+                di.itemId = static_cast<uint16_t>(std::stoi(event.substr(
+                        pos + 1, next == std::string::npos ? std::string::npos : next - pos - 1)));
                 pos = next;
                 droppedItems.push_back(di);
             }

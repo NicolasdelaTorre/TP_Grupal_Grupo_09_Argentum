@@ -15,14 +15,13 @@ std::vector<int> computeBiomeOwners(int width, int height,
         return owner;
     }
 
-    std::vector<double> cost(static_cast<size_t>(W) * H,
-                             std::numeric_limits<double>::infinity());
+    std::vector<double> cost(static_cast<size_t>(W) * H, std::numeric_limits<double>::infinity());
 
     // Velocidad de expansión por bioma: los más grandes ganan más terreno.
     std::vector<double> speed(sources.size(), 1.0);
     for (size_t i = 0; i < sources.size(); ++i) {
-        speed[i] = std::max(
-                1.0, std::sqrt(static_cast<double>(sources[i].width * sources[i].height)));
+        speed[i] =
+                std::max(1.0, std::sqrt(static_cast<double>(sources[i].width * sources[i].height)));
     }
 
     struct FrontierNode {
@@ -60,8 +59,7 @@ std::vector<int> computeBiomeOwners(int width, int height,
     while (!expansion_frontier.empty()) {
         const FrontierNode frontier_node = expansion_frontier.top();
         expansion_frontier.pop();
-        const size_t frontier_flat_idx =
-                static_cast<size_t>(frontier_node.y) * W + frontier_node.x;
+        const size_t frontier_flat_idx = static_cast<size_t>(frontier_node.y) * W + frontier_node.x;
         if (frontier_node.cost != cost[frontier_flat_idx] ||
             frontier_node.owner != owner[frontier_flat_idx]) {
             continue;
@@ -81,8 +79,7 @@ std::vector<int> computeBiomeOwners(int width, int height,
             }
             owner[neighbor_flat_idx] = frontier_node.owner;
             cost[neighbor_flat_idx] = propagated_cost;
-            expansion_frontier.push(
-                    {propagated_cost, neighbor_x, neighbor_y, frontier_node.owner});
+            expansion_frontier.push({propagated_cost, neighbor_x, neighbor_y, frontier_node.owner});
         }
     }
 

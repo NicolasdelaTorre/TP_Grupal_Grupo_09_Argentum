@@ -19,10 +19,9 @@ QString BiomeSpawnDialog::capitalize_first(const QString& text) {
 
 int BiomeSpawnDialog::initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
                                              const std::string& creature) {
-    const auto it = std::find_if(initial_spawns.begin(), initial_spawns.end(),
-                                 [&creature](const CreatureSpawn& spawn) {
-                                     return spawn.creature == creature;
-                                 });
+    const auto it = std::find_if(
+            initial_spawns.begin(), initial_spawns.end(),
+            [&creature](const CreatureSpawn& spawn) { return spawn.creature == creature; });
     return it == initial_spawns.end() ? CREATURE_SLIDER_DEFAULT : it->max_population;
 }
 

@@ -22,13 +22,13 @@ static constexpr int TILE_SIZE = 64;              // tiles son 128x128
 static constexpr int SPRITE_W = 27;               // frame del personaje
 static constexpr int SPRITE_H = 49;
 static constexpr int PHANTOM_SPRITE_W = 32;  // distancia en tiles del centro del cuerpo a la cabeza
-static constexpr int PHANTOM_SPRITE_H = 64; 
+static constexpr int PHANTOM_SPRITE_H = 64;
 static constexpr int ANIM_FRAMES = 4;  // columnas del spritesheet
 
 
 struct LoginResult {
     std::vector<char> username;
-    bool confirmed;  
+    bool confirmed;
 };
 
 
@@ -43,23 +43,23 @@ enum class TileType : uint8_t {
 
 // Tipos de obstáculo. Se mandan como obstacleId en cada Cell del mapa.
 enum class ObstacleType : uint8_t {
-    NONE       = 0,
-    ROCK       = 1,   // roca (3x3) → 7225.png
-    TREE       = 2,   // arbol / arbol_grande / tronco (sin textura)
-    NPC        = 3,   // NPC genérico (fallback)
-    ENTRY      = 4,
-    WALL       = 5,
-    ROCK_SMALL = 6,   // piedra_pequenia (2x2) → roca_03_ajustada.png
-    ROCK_LARGE = 7,   // piedra_grande (6x4)   → roca_01_ajustada.png
-    LAMP       = 8,   // lampara_ciudad  (1x1) → lampara_corregida.png
-    WOOD       = 9,   // pila_maderas    (1x1) → maderas_apiladas_corregida.png
-    CART       = 10,  // carretilla      (2x2) → segunda_carretilla_primera_fila.png
-    MILL       = 11,  // molino          (6x4) → molino_recortado.png
-    CACTUS     = 12,  // cactus          (1x1) → cactus_arriba_derecha_128x128.png
-    BUSH       = 13,  // arbusto         (1x1) (sin textura)
-    NPC_PRIEST   = 14,  // sacerdote → Sacerdote.png
+    NONE = 0,
+    ROCK = 1,  // roca (3x3) → 7225.png
+    TREE = 2,  // arbol / arbol_grande / tronco (sin textura)
+    NPC = 3,   // NPC genérico (fallback)
+    ENTRY = 4,
+    WALL = 5,
+    ROCK_SMALL = 6,     // piedra_pequenia (2x2) → roca_03_ajustada.png
+    ROCK_LARGE = 7,     // piedra_grande (6x4)   → roca_01_ajustada.png
+    LAMP = 8,           // lampara_ciudad  (1x1) → lampara_corregida.png
+    WOOD = 9,           // pila_maderas    (1x1) → maderas_apiladas_corregida.png
+    CART = 10,          // carretilla      (2x2) → segunda_carretilla_primera_fila.png
+    MILL = 11,          // molino          (6x4) → molino_recortado.png
+    CACTUS = 12,        // cactus          (1x1) → cactus_arriba_derecha_128x128.png
+    BUSH = 13,          // arbusto         (1x1) (sin textura)
+    NPC_PRIEST = 14,    // sacerdote → Sacerdote.png
     NPC_MERCHANT = 15,  // comerciante → Sacerdote.png
-    NPC_BANKER   = 16,  // banquero → Sacerdote.png
+    NPC_BANKER = 16,    // banquero → Sacerdote.png
 };
 
 // ── Dirección del personaje ───────────────────────────────────
@@ -113,7 +113,7 @@ struct Player {
     bool moving = false;
     int animFrame = 0;
     float animTimer = 0.0f;
-    int skin = 2;  
+    int skin = 2;
     int headId = 4;
     int weaponId = 0;  // 0=Espada, 1=Daga, 2=Arco, 3=Baculo, -1=sin arma
     Race race = Race::HUMAN;

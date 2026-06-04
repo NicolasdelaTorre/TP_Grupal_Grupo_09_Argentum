@@ -6,9 +6,8 @@
 
 // Skins disponibles en AO_IMGS/Skins/ (excluye Cabezas.png y Gorros.png)
 const char* const CharCreationScreen::SKIN_FILES[NUM_SKINS] = {
-        "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",
-        "Hechicero.png",    "Hechicera.png",
-        "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",
+        "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",   "Hechicero.png",
+        "Hechicera.png",    "skin_default.png",     "Caballero_blanco.png", "Gladiador_azul.png",
         "Hechicero.png",    "Hechicera.png",
 };
 
@@ -153,9 +152,8 @@ void CharCreationScreen::renderSkinInBox(int skinIdx, const SDL2pp::Rect& boxRec
 
     // Escala dinámica: el sprite ocupa el máximo espacio posible dentro del recuadro
     float totalSrcH = (HEAD_CELL_H / 4.0f + 3.0f) + SPRITE_H;
-    float spriteScale = std::min(
-            static_cast<float>(innerW) / SPRITE_W,
-            static_cast<float>(innerH) / totalSrcH);
+    float spriteScale =
+            std::min(static_cast<float>(innerW) / SPRITE_W, static_cast<float>(innerH) / totalSrcH);
     int bodyW = static_cast<int>(SPRITE_W * spriteScale);
     int bodyH = static_cast<int>(SPRITE_H * spriteScale);
     int headW = static_cast<int>(HEAD_CELL_W * spriteScale);

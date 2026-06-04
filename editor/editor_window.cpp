@@ -1,6 +1,7 @@
 #include "editor_window.h"
 
 #include <QComboBox>
+#include <QFileDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -24,20 +25,20 @@ EditorWindow::ResizeDelta EditorWindow::computeResizeDelta(ResizeDirection dir, 
     const int signed_cells = shrink ? -cells : cells;
     ResizeDelta r;
     switch (dir) {
-    case ResizeDirection::Right:
-        r.delta_w = signed_cells;
-        break;
-    case ResizeDirection::Down:
-        r.delta_h = signed_cells;
-        break;
-    case ResizeDirection::Left:
-        r.delta_w = signed_cells;
-        r.offset_x = signed_cells;
-        break;
-    case ResizeDirection::Up:
-        r.delta_h = signed_cells;
-        r.offset_y = signed_cells;
-        break;
+        case ResizeDirection::Right:
+            r.delta_w = signed_cells;
+            break;
+        case ResizeDirection::Down:
+            r.delta_h = signed_cells;
+            break;
+        case ResizeDirection::Left:
+            r.delta_w = signed_cells;
+            r.offset_x = signed_cells;
+            break;
+        case ResizeDirection::Up:
+            r.delta_h = signed_cells;
+            r.offset_y = signed_cells;
+            break;
     }
     return r;
 }
@@ -134,10 +135,8 @@ EditorWindow::EditorWindow(QWidget* parent):
         QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
         QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
         if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
-            const QPixmap arg_scaled =
-                    logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
-            const QPixmap me_scaled =
-                    logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
+            const QPixmap arg_scaled = logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
+            const QPixmap me_scaled = logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
 
             const int overlap_px = 50;
             const int total_w = std::max(arg_scaled.width(), me_scaled.width());
@@ -148,8 +147,8 @@ EditorWindow::EditorWindow(QWidget* parent):
             QPainter painter(&composite);
             painter.setRenderHint(QPainter::SmoothPixmapTransform);
             painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
-            painter.drawPixmap((total_w - me_scaled.width()) / 2,
-                               arg_scaled.height() - overlap_px, me_scaled);
+            painter.drawPixmap((total_w - me_scaled.width()) / 2, arg_scaled.height() - overlap_px,
+                               me_scaled);
             painter.end();
 
             ui_->labelLogoArgentum->setPixmap(composite);
@@ -184,6 +183,8 @@ EditorWindow::EditorWindow(QWidget* parent):
 
     connect(ui_->btnNewMapCreate, &QPushButton::clicked, this, &EditorWindow::onCreateNewMap);
 
+    connect(ui_->btnOpenMap, &QPushButton::clicked, this, &EditorWindow::openExistingMap);
+
     connect(ui_->btnBack, &QPushButton::clicked, this,
             [this] { ui_->stackedWidget->setCurrentWidget(ui_->pageMainMenu); });
 
@@ -196,9 +197,7 @@ EditorWindow::EditorWindow(QWidget* parent):
             &EditorWindow::onEntryPlacementRequested);
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
     connect(map_canvas_, &MapCanvas::saveRequested, this, &EditorWindow::saveMap);
-<<<<<<< HEAD
-    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns,
-            &QLabel::setText);
+    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
 
     connect(ui_->btnApplyResize, &QPushButton::clicked, this, &EditorWindow::onApplyMapResize);
 
@@ -216,9 +215,6 @@ EditorWindow::EditorWindow(QWidget* parent):
 
     ui_->btnResizeExpand->setChecked(true);
     ui_->btnResizeRight->setChecked(true);
-=======
-    connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
->>>>>>> origin/main
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
@@ -368,14 +364,9 @@ void EditorWindow::selectDefaultMode() {
 }
 
 void EditorWindow::updateDimensionsLabel() {
-<<<<<<< HEAD
     ui_->labelMapDimensions->setText(QStringLiteral("Map Size: %1 x %2")
                                              .arg(map_canvas_->map_width())
                                              .arg(map_canvas_->map_height()));
-=======
-    ui_->labelMapDimensions->setText(
-            QStringLiteral("%1 x %2").arg(map_canvas_->map_width()).arg(map_canvas_->map_height()));
->>>>>>> origin/main
 }
 
 void EditorWindow::onApplyMapResize() {
@@ -389,8 +380,7 @@ void EditorWindow::onApplyMapResize() {
     } else if (ui_->btnResizeRight->isChecked()) {
         dir = ResizeDirection::Right;
     } else {
-        QMessageBox::warning(this, QStringLiteral("Resize"),
-                             QStringLiteral("Choose a direction."));
+        QMessageBox::warning(this, QStringLiteral("Resize"), QStringLiteral("Choose a direction."));
         return;
     }
 
@@ -527,6 +517,56 @@ void EditorWindow::startNewMainMap(const QString& map_id, const QString& map_nam
     setMainOnlySectionsVisible(true);
     updateDimensionsLabel();
     selectDefaultMode();
+}
+
+void EditorWindow::openExistingMap() {
+    const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Abrir mapa"),
+                                                      QStringLiteral(SAVE_MAP),
+                                                      QStringLiteral("Mapas YAML (*.yaml *.yml)"));
+    if (path.isEmpty()) {
+        return;
+    }
+
+    MapDocument loaded;
+    if (!YamlMapIO::load(loaded, path.toStdString())) {
+        QMessageBox::warning(this, QStringLiteral("Error"),
+                             QStringLiteral("No se pudo abrir el mapa:\n%1").arg(path));
+        return;
+    }
+
+    main_doc_ = loaded;
+    current_environment_id_.clear();
+
+    // Reanudar los contadores por encima de los ids ya usados para no pisarlos.
+    auto index_after = [](const std::string& id, const QString& prefix) -> int {
+        const QString qid = QString::fromStdString(id);
+        if (!qid.startsWith(prefix)) {
+            return 0;
+        }
+        bool ok = false;
+        const int value = qid.mid(prefix.size()).toInt(&ok);
+        return ok ? value + 1 : 0;
+    };
+
+    next_entry_index_ = 1;
+    next_environment_index_ = 1;
+    for (const auto& entry: main_doc_.entries) {
+        next_entry_index_ =
+                std::max(next_entry_index_, index_after(entry.id, QStringLiteral("entry_")));
+    }
+    for (const auto& env: main_doc_.environments) {
+        next_environment_index_ =
+                std::max(next_environment_index_, index_after(env.id, QStringLiteral("env_")));
+    }
+
+    map_canvas_->loadFromDocument(main_doc_, EditingMode::MainMap);
+    refreshEnvironmentsList();
+    ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
+    ui_->btnBackToMainMap->setVisible(false);
+    setMainOnlySectionsVisible(true);
+    updateDimensionsLabel();
+    selectDefaultMode();
+    ui_->stackedWidget->setCurrentWidget(ui_->pageEditor);
 }
 
 void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cell_x, int cell_y) {

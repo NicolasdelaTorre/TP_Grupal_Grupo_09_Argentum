@@ -139,6 +139,20 @@ bool TemplateRegistry::load_city_file(const std::string& path) {
             }
         }
 
+        const auto obstaclesNode = root["fixed_obstacles"];
+        if (obstaclesNode && obstaclesNode.IsSequence()) {
+            for (const auto& obstacleNode: obstaclesNode) {
+                CityObstacleTemplate obstacle;
+                obstacle.type = obstacleNode["type"].as<std::string>();
+                const auto posNode = obstacleNode["position"];
+                if (posNode && posNode.IsSequence() && posNode.size() >= 2) {
+                    obstacle.relative_x = posNode[0].as<int>();
+                    obstacle.relative_y = posNode[1].as<int>();
+                }
+                city.fixed_obstacles.push_back(obstacle);
+            }
+        }
+
         cities_.push_back(city);
         return true;
     } catch (const YAML::Exception&) {

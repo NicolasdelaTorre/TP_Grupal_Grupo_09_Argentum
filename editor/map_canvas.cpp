@@ -131,7 +131,8 @@ void MapCanvas::applyInitialView() {
 
     // escala de la vista para que cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
     const double target_scale = static_cast<double>(TARGET_CELL_SCREEN_PX) / CELL_DISPLAY_SIZE;
-    // escala de la vista para que entre en la ventana y cada celda ocupe el tamaño TARGET_CELL_SCREEN_PX
+    // escala de la vista para que entre en la ventana y cada celda ocupe el tamaño
+    // TARGET_CELL_SCREEN_PX
     const double scale = std::max(fit_scale, target_scale);
 
     // escalar vista
@@ -430,6 +431,20 @@ void MapCanvas::placeCityAt(int cell_x, int cell_y) {
     if (!controller_->placeCityZone(active_tool_, cell_x, cell_y, city->default_width,
                                     city->default_height, error)) {
         QMessageBox::warning(this, QStringLiteral("Ciudad"), error);
+        return;
+    }
+
+    // Los obstáculos fijos de la ciudad se materializan como obstáculos normales
+    // (se ven en el editor y se guardan junto al resto). Al cargar un mapa ya
+    // vienen en la lista de obstáculos, por eso esto sólo corre al colocar la
+    // ciudad de forma interactiva.
+    for (const auto& fixed: city->fixed_obstacles) {
+        ToolInfo obstacle_tool;
+        obstacle_tool.tool = EditorTool::Obstacle;
+        obstacle_tool.obstacle_template_id = QString::fromStdString(fixed.type);
+        QString obstacle_error;
+        controller_->placeObstacle(obstacle_tool, cell_x + fixed.relative_x,
+                                   cell_y + fixed.relative_y, obstacle_error);
     }
 }
 
@@ -767,7 +782,8 @@ void MapCanvas::rebuildBiomeTint() {
         return;
     }
 
-    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena, primero los removemos y después delete
+    // Limpiar items de textura de la corrida anterior. Los items pertenecen a la escena, primero
+    // los removemos y después delete
     for (auto* item: biome_texture_items_) {
         scene_->removeItem(item);
         delete item;

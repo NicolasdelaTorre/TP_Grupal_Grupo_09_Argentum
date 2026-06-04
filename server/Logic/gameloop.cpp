@@ -90,8 +90,8 @@ void Gameloop::finalizePlayerLogin(int idPlayer) {
     uint32_t hp = game.getPlayerHealth(idPlayer);
     uint32_t maxHp = game.getPlayerMaxHealth(idPlayer);
     uint8_t level = game.getPlayerLevel(idPlayer);
-    std::string statsMsg = "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) +
-                           ":" + std::to_string(static_cast<int>(level));
+    std::string statsMsg = "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) + ":" +
+                           std::to_string(static_cast<int>(level));
     clientQueues.sendToClient(idPlayer, statsMsg);
 
     // Mandarle un NEW_PLAYER por cada jugador que ya estaba.

@@ -84,17 +84,24 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="btnNewMap">
-            <property name="text">
-             <string>Nuevo mapa</string>
-            </property>
-            <property name="primary" stdset="0">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="mainMenuButtonRightSpacer">
+          <widget class="QPushButton" name="btnNewMap">
+           <property name="text">
+            <string>Nuevo mapa</string>
+           </property>
+           <property name="primary" stdset="0">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnOpenMap">
+           <property name="text">
+            <string>Abrir mapa</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="mainMenuButtonRightSpacer">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>

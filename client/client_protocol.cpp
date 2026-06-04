@@ -27,9 +27,7 @@ ServerMsg client_protocol::recv_msg_type() {
     return static_cast<ServerMsg>(opcode);
 }
 
-void client_protocol::sendCheat(CheatCode cheat) {
-    protocol.sendByte(static_cast<uint8_t>(cheat));
-}
+void client_protocol::sendCheat(CheatCode cheat) { protocol.sendByte(static_cast<uint8_t>(cheat)); }
 
 void client_protocol::close() { protocol.shutdown(); }
 
