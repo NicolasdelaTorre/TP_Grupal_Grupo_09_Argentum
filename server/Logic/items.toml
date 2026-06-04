@@ -36,6 +36,7 @@ id = 5
 name = "Elven Flute"
 type = "HEAL"
 distance = true
+healthRestore = 50
 manaCost = 100
 
 [[item]]

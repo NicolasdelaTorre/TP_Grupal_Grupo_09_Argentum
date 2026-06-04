@@ -13,7 +13,7 @@
 #include "race.h"
 #include "stats_definition.h"
 
-#define N 11
+#define N 9
 
 struct PlayerData {
     uint32_t experience;
@@ -32,7 +32,6 @@ struct PlayerData {
     uint8_t equippedHelmet;
     uint8_t equippedShield;
     bool isGhost;
-    uint16_t maxHealth;
 
     uint8_t inventory[N];
 };
@@ -48,6 +47,8 @@ private:
     Item equippedArmor;
     Item equippedHelmet;
     Item equippedShield;
+    uint16_t maxHealth;
+    uint16_t maxMana;
 
 public:
     explicit Player(const std::string& name, Position position, const std::string& race,
@@ -71,6 +72,12 @@ public:
 
     PlayerData getData() const;
 
+    std::vector<Item> getInventory() const;
+
+    uint16_t getMaxHealth() const;
+
+    uint16_t getMaxMana() const;
+
     bool hasLongDistanceWeapon();
 
     void receiveDamage(uint16_t damage);
@@ -84,6 +91,12 @@ public:
     bool addItem(const std::string& itemName);
 
     bool equipItem(int inventorySlot);
+
+    bool unequipItem(ItemType type);
+
+    uint16_t heal();
+
+    void resetStats();
 };
 
 #endif

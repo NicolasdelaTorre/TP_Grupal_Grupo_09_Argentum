@@ -21,6 +21,9 @@ public:
     uint32_t safeGold(uint8_t playerLevel);
 
     uint16_t damage(const std::string& raceName, uint16_t minDamage, uint16_t maxDamage);
+
+    uint16_t maxMana(uint8_t playerLevel, const std::string& raceName,
+                     const std::string& className);
 };
 
 #endif

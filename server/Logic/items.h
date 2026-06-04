@@ -39,15 +39,27 @@ public:
 
     void createItem(const std::string& itemName);
 
+    void createItemById(uint8_t itemId);
+
     bool emptyItem();
 
     bool longDistance();
+
+    uint8_t getId() const;
 
     uint16_t getMinDamage() const;
 
     uint16_t getMaxDamage() const;
 
     ItemType getType() const;
+
+    uint16_t getHealthRestore() const;
+
+    uint16_t getManaWaste() const;
+
+    std::string getName() const;
+
+    bool isOffensiveWeapon();
 };
 
 #endif

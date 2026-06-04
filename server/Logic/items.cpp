@@ -48,6 +48,7 @@ void Item::createItem(const std::string& itemName) {
                     break;
                 case ItemType::HEAL:
                     distance = toml::find<bool>(item, "distance");
+                    healthRestore = toml::find<uint16_t>(item, "healthRestore");
                     manaCost = toml::find<uint16_t>(item, "manaCost");
                     break;
                 case ItemType::ARMOR:
@@ -71,6 +72,21 @@ void Item::createItem(const std::string& itemName) {
     }
 }
 
+void Item::createItemById(uint8_t itemId) {
+    const toml::value config = toml::parse("server/Logic/items.toml");
+
+    const auto items = toml::find<std::vector<toml::value>>(config, "item");
+
+    for (const auto& item: items) {
+        if (toml::find<uint8_t>(item, "id") == itemId) {
+            createItem(toml::find<std::string>(item, "name"));
+            return;
+        }
+    }
+
+    throw std::runtime_error("Unknown item id");
+}
+
 bool Item::emptyItem() {
     if (id == 0) {
         return true;
@@ -80,6 +96,13 @@ bool Item::emptyItem() {
 }
 
 bool Item::longDistance() { return type == ItemType::WEAPON && distance; }
+
+uint8_t Item::getId() const {
+    if (id == 0) {
+        throw std::runtime_error("Item Error: trying to get id of empty item");
+    }
+    return id;
+}
 
 uint16_t Item::getMinDamage() const {
     if (type != ItemType::WEAPON && type != ItemType::MAGIC) {
@@ -101,3 +124,28 @@ ItemType Item::getType() const {
     }
     return type;
 }
+
+uint16_t Item::getHealthRestore() const {
+    if (type == ItemType::HEAL || type == ItemType::HEALTH_POTION) {
+        return healthRestore;
+    }
+
+    return 0;
+}
+
+uint16_t Item::getManaWaste() const {
+    if (type == ItemType::MAGIC || type == ItemType::HEAL) {
+        return manaCost;
+    }
+
+    return 0;
+}
+
+std::string Item::getName() const {
+    if (id == 0) {
+        throw std::runtime_error("Item Error: trying to get name of empty item");
+    }
+    return name;
+}
+
+bool Item::isOffensiveWeapon() { return type == ItemType::WEAPON || type == ItemType::MAGIC; }

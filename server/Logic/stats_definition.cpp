@@ -27,3 +27,10 @@ uint16_t StatsDefinition::damage(const std::string& raceName, uint16_t minDamage
     srand(time(nullptr));
     return race.force * (minDamage + rand() % (maxDamage - minDamage + 1));
 }
+
+uint16_t StatsDefinition::maxMana(uint8_t playerLevel, const std::string& raceName,
+                                  const std::string& className) {
+    RaceAttribute race = attributes.getRaceAttribute(raceName);
+    ClassAttribute class_ = attributes.getClassAttribute(className);
+    return race.intelligence * class_.FClassMana * race.FRaceMana * playerLevel;
+}
