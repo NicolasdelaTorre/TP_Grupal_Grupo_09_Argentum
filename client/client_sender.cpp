@@ -10,10 +10,10 @@ client_sender::client_sender(client_protocol& protocol, Queue<std::string>& even
 
 
 // Formato de eventos esperados en la queue:
-//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT"             — cruzó un tile, send_move
-//   "TURN_TOP" / "TURN_BOTTOM" / etc.               — giró sin moverse, send_turn
-//   "ATTACK_TOP" / "ATTACK_BOTTOM" / etc.           — ataca en esa dirección
-//   "CHEAT_SUICIDE" / "CHEAT_GOLD" / "CHEAT_EXPERIENCE" — sendCheat con el code
+//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT"                — cruzó un tile, send_move
+//   "TURN_TOP" / "TURN_BOTTOM" / etc.                  — giró sin moverse, send_turn
+//   "ATTACK_TOP" / "ATTACK_BOTTOM" / etc.              — ataca en esa dirección
+//   "CHEAT_SUICIDE" / "CHEAT_GOLD" / "CHEAT_EXPERIENCE"— sendCheat con el code
 void client_sender::run() {
     try {
         while (should_keep_running()) {

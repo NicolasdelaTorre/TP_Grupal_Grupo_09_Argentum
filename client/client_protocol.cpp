@@ -47,10 +47,29 @@ int client_protocol::send_user_arrival(const std::vector<char>& name, const std:
     return 0;
 }
 
+uint16_t client_protocol::recv_my_player_id() {
+    return protocol.receive_two_bytes_number();
+}
+
 Position client_protocol::recv_login_ok_payload() {
     int16_t x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(protocol.receive_two_bytes_number());
     return Position{x, y};
+}
+
+void client_protocol::send_attack(ClientMsg direction) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
+    protocol.sendByte(static_cast<uint8_t>(direction));
+}
+
+AttackResultEvent client_protocol::recv_attack_result_payload() {
+    AttackResultEvent ev;
+    ev.attackerId = protocol.receive_two_bytes_number();
+    ev.targetType = protocol.receive_byte();
+    ev.targetId = protocol.receive_two_bytes_number();
+    ev.damage = protocol.receive_two_bytes_number();
+    ev.hit = (protocol.receive_byte() != 0);
+    return ev;
 }
 
 ReceivedMap client_protocol::recv_map() {
@@ -103,24 +122,15 @@ StatsEvent client_protocol::recv_stats_payload() {
     return ev;
 }
 
+void client_protocol::send_head_selected(uint8_t headId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::HEAD_SELECTED));
+    protocol.sendByte(headId);
+}
+
+
 void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);
-}
-
-void client_protocol::send_attack(ClientMsg direction) {
-    protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
-    protocol.sendByte(static_cast<uint8_t>(direction));
-}
-
-AttackResultEvent client_protocol::recv_attack_result_payload() {
-    AttackResultEvent ev;
-    ev.attackerId = protocol.receive_two_bytes_number();
-    ev.targetType = protocol.receive_byte();
-    ev.targetId = protocol.receive_two_bytes_number();
-    ev.damage = protocol.receive_two_bytes_number();
-    ev.hit = (protocol.receive_byte() != 0);
-    return ev;
 }
 
 std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {

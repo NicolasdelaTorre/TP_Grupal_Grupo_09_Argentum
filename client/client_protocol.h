@@ -77,6 +77,7 @@ public:
                           const std::string& class_);
 
     // Las funciones recv_*_payload asumen que el opcode ya fue consumido vía recv_msg_type().
+    uint16_t recv_my_player_id();
     Position recv_login_ok_payload();
     ReceivedMap recv_map();
     PlayerEvent recv_new_player_payload();
@@ -88,7 +89,11 @@ public:
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
 
+    // Envía la cabeza elegida en la pantalla de creación de personaje.
+    void send_head_selected(uint8_t headId);
+
     // Envía un ataque en la dirección dada (TOP, BOTTOM, LEFT, RIGHT).
+    // El server resuelve quién es el target por línea de vista (server-authoritative).
     void send_attack(ClientMsg direction);
 
     // Recibe la lista completa de NPCs dinámicos (criaturas).

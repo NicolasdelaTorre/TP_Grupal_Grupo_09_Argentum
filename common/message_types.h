@@ -11,8 +11,9 @@ enum class ClientMsg : uint8_t {
     RIGHT = 0x06,
     SKIN_SELECTED = 0x07,  // [opcode][skin_id:1]
     TURN = 0x08,           // [opcode][direccion:1] — gira sin moverse de celda
-    CHEAT = 0x09,          // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
-    ATTACK = 0x0A          // [opcode][direccion:1] — ataca al primero en línea de vista
+    ATTACK = 0x09,         // [opcode][direccion:1] — ataca al primero en línea de vista (server-authoritative)
+    HEAD_SELECTED = 0x0A,  // [opcode][head_id:1]
+    CHEAT = 0x0B           // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
 };
 
 // Mensajes Servidor → Cliente
