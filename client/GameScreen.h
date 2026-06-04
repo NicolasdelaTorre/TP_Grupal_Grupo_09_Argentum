@@ -15,7 +15,8 @@
 static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
 
-static constexpr float BLOOD_DURATION = 0.5f;  // seconds a blood splatter stays visible
+static constexpr float BLOOD_DURATION = 0.5f;   // seconds a blood splatter stays visible
+static constexpr float ARROW_SPEED    = 10.0f;  // tiles/sec
 
 struct BloodEffect {
     float x, y;   // world tile position where the hit occurred
@@ -63,6 +64,7 @@ private:
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::vector<DroppedItem> droppedItems;
     std::vector<BloodEffect> bloodEffects;
+    std::vector<ArrowProjectile> arrows;
 
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;

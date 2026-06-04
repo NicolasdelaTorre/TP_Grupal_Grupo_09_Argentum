@@ -111,12 +111,18 @@ void GameScreen::render() {
         const auto& op = playerEntry.second;
         mapRenderer.renderPlayer(op.visual, camX, camY);
         mapRenderer.renderWeapon(op.visual, camX, camY);
+        mapRenderer.renderShield(op.visual, camX, camY);
         mapRenderer.renderHead(op.visual, camX, camY);
+        mapRenderer.renderHelmet(op.visual, camX, camY);
     }
 
     mapRenderer.renderPlayer(player, camX, camY);
     mapRenderer.renderWeapon(player, camX, camY);
+    mapRenderer.renderShield(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
+    mapRenderer.renderHelmet(player, camX, camY);
+
+    mapRenderer.renderArrows(arrows, camX, camY);
 
     renderBloodEffects(camX, camY);
 
@@ -149,6 +155,25 @@ bool GameScreen::handleEvents(float dt) {
                 if (opTileX == clickTileX && opTileY == clickTileY) {
                     events_queue.push("ATTACK:" + std::to_string(myId) + ":" +
                                       std::to_string(entry.first));
+                    if (player.weaponId == 2) {  // Arco
+                        float sx = player.x + 0.5f;
+                        float sy = player.y + 0.5f;
+                        float tx = op.visual.x + 0.5f;
+                        float ty = op.visual.y + 0.5f;
+                        float dx = tx - sx;
+                        float dy = ty - sy;
+                        float dist = std::sqrt(dx * dx + dy * dy);
+                        if (dist > 0.0f) {
+                            ArrowProjectile arrow;
+                            arrow.x = sx;
+                            arrow.y = sy;
+                            arrow.vx = (dx / dist) * ARROW_SPEED;
+                            arrow.vy = (dy / dist) * ARROW_SPEED;
+                            arrow.lifetime = dist / ARROW_SPEED + 0.3f;
+                            arrow.arrowType = 0;
+                            arrows.push_back(arrow);
+                        }
+                    }
                     break;
                 }
             }
@@ -272,6 +297,17 @@ void GameScreen::update(float dt) {
         std::remove_if(bloodEffects.begin(), bloodEffects.end(),
                        [](const BloodEffect& b) { return b.timer <= 0.0f; }),
         bloodEffects.end());
+
+    // Tick arrows and remove ones that reached the target or expired.
+    for (auto& arrow : arrows) {
+        arrow.x += arrow.vx * dt;
+        arrow.y += arrow.vy * dt;
+        arrow.lifetime -= dt;
+    }
+    arrows.erase(
+        std::remove_if(arrows.begin(), arrows.end(),
+                       [](const ArrowProjectile& a) { return a.lifetime <= 0.0f; }),
+        arrows.end());
 
     // Interpolamos a los otros jugadores hacia su tile destino para que se vea
     // un walk fluido en vez de saltos de tile en tile.

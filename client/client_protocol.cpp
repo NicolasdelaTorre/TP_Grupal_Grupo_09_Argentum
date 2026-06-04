@@ -111,11 +111,16 @@ StatsEvent client_protocol::recv_stats_payload() {
     return ev;
 }
 
+void client_protocol::send_head_selected(uint8_t headId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::HEAD_SELECTED));
+    protocol.sendByte(headId);
+}
+
+
 void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);
 }
-
 std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {
     uint16_t count = protocol.receive_two_bytes_number();
     std::vector<DroppedItem> items;

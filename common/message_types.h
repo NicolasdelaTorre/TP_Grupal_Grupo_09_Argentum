@@ -11,7 +11,8 @@ enum class ClientMsg : uint8_t {
     RIGHT = 0x06,
     SKIN_SELECTED = 0x07,  // [opcode][skin_id:1]
     TURN = 0x08,           // [opcode][direccion:1] — gira sin moverse de celda
-    ATTACK = 0x09          // [opcode][attacker_id:2][target_id:2]
+    ATTACK = 0x09,         // [opcode][attacker_id:2][target_id:2]
+    HEAD_SELECTED = 0x0A   // [opcode][head_id:1]
 };
 
 // Mensajes Servidor → Cliente

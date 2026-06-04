@@ -9,6 +9,7 @@
 
 #include "GameScreen.h"
 #include "char_creation_screen.h"
+#include "head_selection_screen.h"
 #include "login_screen.h"
 
 
@@ -43,14 +44,19 @@ void client::run() {
         return;
     }
 
-    // Usuario nuevo: pasamos por char creation y mandamos la skin elegida.
-    // Después el server manda LOGIN_OK con el spawn point.
+    // Usuario nuevo: elige cabeza, luego skin, luego manda la skin al server.
+     // default para jugadores que ya existían
     if (type == ServerMsg::FIRST_LOGIN) {
-        CharCreationScreen charCreation(renderer, "AO_IMGS");
+        HeadSelectionScreen headSelection(renderer, "AO_IMGS");
+        HeadSelectionResult headResult = headSelection.run();
+        if (!headResult.confirmed)
+            return;
+        CharCreationScreen charCreation(renderer, "AO_IMGS", headResult.headId);
         CharCreationResult charResult = charCreation.run();
         if (!charResult.confirmed)
             return;
         protocol.send_skin_selected(static_cast<uint8_t>(charResult.skinId));
+        protocol.send_head_selected(static_cast<uint8_t>(headResult.headId));
         type = protocol.recv_msg_type();
     }
 

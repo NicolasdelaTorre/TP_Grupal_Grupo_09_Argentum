@@ -13,7 +13,7 @@ struct CharCreationResult {
 
 class CharCreationScreen {
 public:
-    CharCreationScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath);
+    CharCreationScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath, int headId);
     CharCreationResult run();
 
 private:
@@ -22,6 +22,7 @@ private:
     TextureCache cache;
 
     int selectedSkin = 0;
+    int chosenHeadId = 0;
     bool running = true;
     bool confirmed = false;
 

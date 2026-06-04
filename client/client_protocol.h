@@ -78,6 +78,9 @@ public:
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
 
+    // Envía la cabeza elegida en la pantalla de creación de personaje.
+    void send_head_selected(uint8_t headId);
+
     // Recibe la lista completa de NPCs dinámicos (criaturas).
     std::vector<NpcEntity> recv_npc_list_payload();
 
