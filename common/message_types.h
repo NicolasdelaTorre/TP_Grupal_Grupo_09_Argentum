@@ -10,7 +10,8 @@ enum class ClientMsg : uint8_t {
     LEFT = 0x05,
     RIGHT = 0x06,
     SKIN_SELECTED = 0x07,  // [opcode][skin_id:1]
-    TURN = 0x08            // [opcode][direccion:1] — gira sin moverse de celda
+    TURN = 0x08,           // [opcode][direccion:1] — gira sin moverse de celda
+    CHEAT = 0x09           // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
 };
 
 // Mensajes Servidor → Cliente

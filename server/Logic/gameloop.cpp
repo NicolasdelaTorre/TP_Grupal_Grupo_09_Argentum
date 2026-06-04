@@ -46,6 +46,23 @@ void Gameloop::processCommand(const std::string& command) {
         return;
     }
 
+    // "cheat.<code>" — aplica un cheat y reenvía los stats actualizados.
+    if (cmd == "cheat") {
+        if (game.hasPlayer(idPlayer)) {
+            uint8_t code = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
+            game.processCheat(idPlayer, code);
+            // Los stats pueden haber cambiado (vida=0 en suicide, gold/exp etc).
+            // Reenviamos para que el HUD del cliente se actualice.
+            uint16_t hp = game.getPlayerHealth(idPlayer);
+            uint16_t maxHp = game.getPlayerMaxHealth(idPlayer);
+            uint8_t level = game.getPlayerLevel(idPlayer);
+            std::string statsMsg = "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) +
+                                   ":" + std::to_string(static_cast<int>(level));
+            clientQueues.sendToClient(idPlayer, statsMsg);
+        }
+        return;
+    }
+
     bool success = game.processCommand(idPlayer, command.substr(posId + 1));
 
     if (cmd == "user") {

@@ -330,6 +330,20 @@ void Game::setSkin(int playerId, const std::string& skinId) {
     itPlayer->second.setSkin(std::stoi(skinId), 0);
 }
 
+void Game::processCheat(int playerId, uint8_t code) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    // TODO(team-gameplay): implementar la lógica de cada cheat.
+    //   0 = SUICIDE     → player.receiveDamage(player.getHealth())
+    //   1 = GOLD        → sumar 1000 al gold persistido
+    //   2 = EXPERIENCE  → sumar 1000 a la experiencia, levelup si corresponde
+    // Hoy solo loggeamos para confirmar que el mensaje llegó end-to-end.
+    std::cout << "Cheat recibido: player=" << playerId << " code=" << static_cast<int>(code)
+              << " (stub, sin efecto)" << std::endl;
+}
+
 Game::~Game() {
     for (const auto& [id, _]: players) {
         updatePlayerData(id);

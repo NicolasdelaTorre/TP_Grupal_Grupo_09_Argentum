@@ -61,6 +61,12 @@ public:
 
     void setSkin(int playerId, const std::string& skinId);
 
+    // Aplica un cheat al jugador. code mapea al enum CheatCode (common/DTOs.h):
+    // 0 = SUICIDE, 1 = GOLD, 2 = EXPERIENCE.
+    // TODO(team-gameplay): implementar la lógica concreta (matar al jugador,
+    // sumar oro, sumar experiencia). Hoy es un stub que solo loggea.
+    void processCheat(int playerId, uint8_t code);
+
     void removePlayer(int playerId);
 
     ~Game();

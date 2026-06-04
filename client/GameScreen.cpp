@@ -125,19 +125,34 @@ void GameScreen::render() {
 }
 
 bool GameScreen::handleEvents(float dt) {
+    // Acciones edge-triggered: un evento = una acción. Filtramos los repeats
+    // sintéticos del OS con e.key.repeat == 0.
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return false;
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
-            return false;
+        if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_ESCAPE)
+                return false;
+            if (e.key.repeat == 0) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_F1:
+                        events_queue.push("CHEAT_SUICIDE");
+                        break;
+                    case SDLK_F2:
+                        events_queue.push("CHEAT_GOLD");
+                        break;
+                    case SDLK_F3:
+                        events_queue.push("CHEAT_EXPERIENCE");
+                        break;
+                }
+            }
+        }
     }
 
-    // Movimiento continuo con teclas sostenidas
+    // Movimiento continuo con teclas sostenidas (level-triggered).
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
-
-    const char* msg = nullptr;
 
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
@@ -151,17 +166,8 @@ bool GameScreen::handleEvents(float dt) {
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
-    } else if (keys[SDL_SCANCODE_F1]) {
-        msg = "CHEAT_SUICIDE";
-    } else if (keys[SDL_SCANCODE_F2]) {
-        msg = "CHEAT_GOLD";
-    } else if (keys[SDL_SCANCODE_F3]) {
-        msg = "CHEAT_EXPERIENCE";
     }
 
-    if (msg) {
-        events_queue.push(msg);
-    }
     player.moving = (dx != 0 || dy != 0);
 
     // Mover si el tile destino no está bloqueado

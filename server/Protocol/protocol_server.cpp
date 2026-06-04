@@ -65,9 +65,22 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnSkin(message, clientId);
         case static_cast<uint8_t>(ClientMsg::TURN):
             return returnTurn(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::CHEAT):
+            return returnCheat(message, clientId);
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }
+}
+
+int ProtocolServer::returnCheat(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t code = it->second.receive_byte();
+    message += "cheat.";
+    message += std::to_string(code);
+    return 1;
 }
 
 int ProtocolServer::returnSkin(std::string& message, const int clientId) {

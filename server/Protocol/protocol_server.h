@@ -38,6 +38,9 @@ private:
     // Deserializa el TURN (gira sin moverse): "turn.<direccion>".
     int returnTurn(std::string& message, const int clientId);
 
+    // Deserializa un cheat del cliente: "cheat.<code>". Ver enum CheatCode en common/DTOs.h.
+    int returnCheat(std::string& message, const int clientId);
+
     // Manda el mapa entero (opcode + width + height + cellCount + cells).
     void sendMap(common_protocol& client);
 
