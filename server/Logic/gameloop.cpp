@@ -39,8 +39,9 @@ void Gameloop::processCommand(const std::string& command) {
     // "skin" llega después del char creation. No la procesa el Game (no cambia
     // estado del mundo, por ahora), solo gatilla la finalización del login.
     if (cmd == "skin") {
+        std::string skinId = command.substr(posCommand + 1);
         if (game.hasPlayer(idPlayer)) {
-            finalizePlayerLogin(idPlayer);
+            finalizePlayerLogin(idPlayer, skinId);
         }
         return;
     }
@@ -80,8 +81,9 @@ void Gameloop::processCommand(const std::string& command) {
     }
 }
 
-void Gameloop::finalizePlayerLogin(int idPlayer) {
+void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
     Position p = game.getPlayerPosition(idPlayer);
+    game.setSkin(idPlayer, skinId);
     std::string loginMsg = "LOGIN_OK:" + std::to_string(p.x) + ":" + std::to_string(p.y);
     clientQueues.sendToClient(idPlayer, loginMsg);
     clientQueues.sendToClient(idPlayer, "MAP");
@@ -101,17 +103,20 @@ void Gameloop::finalizePlayerLogin(int idPlayer) {
         Position op = game.getPlayerPosition(otherId);
         const std::string& oname = game.getPlayerName(otherId);
         uint8_t odir = game.getPlayerDirection(otherId);
+        uint8_t oskin = game.getPlayerSkin(otherId);
         std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" + std::to_string(op.x) +
-                         ":" + std::to_string(op.y) + ":" + std::to_string(odir) + ":" + oname;
+                         ":" + std::to_string(op.y) + ":" + std::to_string(odir) + ":" +
+                         std::to_string(oskin) + ":" + oname;
         clientQueues.sendToClient(idPlayer, np);
     }
 
     // Avisarles a los demás del recién llegado.
     const std::string& myName = game.getPlayerName(idPlayer);
     uint8_t myDir = game.getPlayerDirection(idPlayer);
+    uint8_t mySkin = game.getPlayerSkin(idPlayer);
     std::string broadcastMsg = "NEW_PLAYER:" + std::to_string(idPlayer) + ":" +
                                std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
-                               std::to_string(myDir) + ":" + myName;
+                               std::to_string(myDir) + ":" + std::to_string(mySkin) + ":" + myName;
     clientQueues.broadcastExcept(idPlayer, broadcastMsg);
 }
 

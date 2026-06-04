@@ -28,7 +28,7 @@ class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-               const ReceivedMap& mapData, Position spawn);
+               const ReceivedMap& mapData, Position spawn, Player player);
 
     // Retorna false cuando el jugador quiere salir
     bool run();
@@ -39,7 +39,6 @@ private:
     TextureCache cache;
     MapRenderer mapRenderer;
     GameMap map;
-    Player player;
 
     // Queue al sender: pusheamos "TOP"/"BOTTOM"/"LEFT"/"RIGHT" cuando el jugador cruza un tile.
     Queue<std::string>& events_queue;
@@ -50,6 +49,7 @@ private:
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
     // pushea.
     Queue<std::string>& server_queue;
+    Player player;
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::vector<DroppedItem> droppedItems;
 

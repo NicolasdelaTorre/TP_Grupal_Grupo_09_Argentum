@@ -34,6 +34,7 @@ struct PlayerEvent {
     int16_t x;
     int16_t y;
     uint8_t dir;
+    uint8_t skin;
     std::string name;
 };
 
