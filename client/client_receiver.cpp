@@ -49,6 +49,16 @@ void client_receiver::run() {
                     break;
                 }
 
+                case ServerMsg::ATTACK_RESULT: {
+                    AttackResultEvent ev = protocol.recv_attack_result_payload();
+                    server_queue.push("ATTACK_RESULT:" + std::to_string(ev.attackerId) + ":" +
+                                      std::to_string(static_cast<int>(ev.targetType)) + ":" +
+                                      std::to_string(ev.targetId) + ":" +
+                                      std::to_string(ev.damage) + ":" +
+                                      std::to_string(ev.hit ? 1 : 0));
+                    break;
+                }
+
                 case ServerMsg::DROPPED_ITEMS: {
                     auto items = protocol.recv_dropped_items_payload();
                     std::string msg = "DROPPED_ITEMS:" + std::to_string(items.size());

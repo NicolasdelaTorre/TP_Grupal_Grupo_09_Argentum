@@ -11,7 +11,8 @@ enum class ClientMsg : uint8_t {
     RIGHT = 0x06,
     SKIN_SELECTED = 0x07,  // [opcode][skin_id:1]
     TURN = 0x08,           // [opcode][direccion:1] — gira sin moverse de celda
-    CHEAT = 0x09           // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
+    CHEAT = 0x09,          // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
+    ATTACK = 0x0A          // [opcode][direccion:1] — ataca al primero en línea de vista
 };
 
 // Mensajes Servidor → Cliente
@@ -31,5 +32,7 @@ enum class ServerMsg : uint8_t {
     PLAYER_DISCONNECTED = 0x8A,  // [opcode][id:2]
     FIRST_LOGIN = 0x8B,          // [opcode] — usuario nuevo, debe crear personaje
     NPC_LIST = 0x8C,             // [opcode][count:2][[id:2][x:2][y:2][dir:1][type:1][moving:1]...]
-    DROPPED_ITEMS = 0x8D         // [opcode][count:2][[x:2][y:2][sheetId:1][itemId:2]...]
+    DROPPED_ITEMS = 0x8D,        // [opcode][count:2][[x:2][y:2][sheetId:1][itemId:2]...]
+    ATTACK_RESULT = 0x8E         // [opcode][attacker_id:2][target_type:1][target_id:2][damage:2][hit:1]
+                                 // target_type: 0=player, 1=npc. hit: 1=impactó, 0=evadió.
 };

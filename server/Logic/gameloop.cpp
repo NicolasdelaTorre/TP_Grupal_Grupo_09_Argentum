@@ -46,6 +46,32 @@ void Gameloop::processCommand(const std::string& command) {
         return;
     }
 
+    // "attack.<dir>" — resuelve el ataque y broadcast del resultado a todos.
+    if (cmd == "attack") {
+        if (game.hasPlayer(idPlayer)) {
+            std::string direction = command.substr(posCommand + 1);
+            AttackResult r = game.processAttack(idPlayer, direction);
+            if (r.performed) {
+                std::string msg = "ATTACK_RESULT:" + std::to_string(r.attackerId) + ":" +
+                                  std::to_string(static_cast<int>(r.targetType)) + ":" +
+                                  std::to_string(r.targetId) + ":" + std::to_string(r.damage) +
+                                  ":" + std::to_string(r.hit ? 1 : 0);
+                clientQueues.broadcast(msg);
+                // El target sufrió daño → mandarle sus stats actualizados.
+                if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
+                    uint16_t hp = game.getPlayerHealth(r.targetId);
+                    uint16_t maxHp = game.getPlayerMaxHealth(r.targetId);
+                    uint8_t lvl = game.getPlayerLevel(r.targetId);
+                    std::string stats = "STATS:" + std::to_string(hp) + ":" +
+                                        std::to_string(maxHp) + ":" +
+                                        std::to_string(static_cast<int>(lvl));
+                    clientQueues.sendToClient(r.targetId, stats);
+                }
+            }
+        }
+        return;
+    }
+
     // "cheat.<code>" — aplica un cheat y reenvía los stats actualizados.
     if (cmd == "cheat") {
         if (game.hasPlayer(idPlayer)) {

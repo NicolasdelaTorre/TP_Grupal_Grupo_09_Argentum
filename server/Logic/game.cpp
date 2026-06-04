@@ -25,10 +25,6 @@ bool Game::processCommand(int playerId, const std::string& command) {
     } else if (dataType == "turn") {
         std::string direction = command.substr(commandPosition + 1);
         return turnPlayer(playerId, direction);
-    } else if (dataType == "attack") {
-        // Format: "attack"
-        std::string direction = command.substr(commandPosition + 1);
-        return processAttack(playerId, direction);
     } else if (dataType == "heal") {
         // Format: "heal"
         return processHeal(playerId);
@@ -265,37 +261,59 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     return true;
 }
 
-bool Game::processAttack(int playerId, const std::string& direction) {
+AttackResult Game::processAttack(int playerId, const std::string& direction) {
+    AttackResult result;
+    result.attackerId = static_cast<uint16_t>(playerId);
+
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
 
     if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return false;
+        return result;  // performed = false
     }
 
     uint8_t entityId = map.isEntityInSight(itPlayer->second.getX(), itPlayer->second.getY(),
                                            direction, itPlayer->second.hasLongDistanceWeapon());
 
-    if (entityId == 0)
-        return false;
+    if (entityId == 0) {
+        return result;  // sin víctima en línea de vista
+    }
 
+    // TODO(team-gameplay): cuando existan NPCs, distinguir player vs npc por
+    // rango de id (ej. id >= 1000 = NPC). Hoy todo lo que devuelve
+    // isEntityInSight es un player.
     auto itTarget = players.find(entityId);
     if (itTarget == players.end()) {
         throw std::runtime_error("Game Error: player in sight not found");
     }
 
-    std::cout << "Player " << itPlayer->second.getName() << " attacks player "
-              << itTarget->second.getName() << " with " << itTarget->second.getData().health
-              << " for " << itPlayer->second.dealDamage() << " damage!" << std::endl;
+    result.performed = true;
+    result.targetType = 0;  // player
+    result.targetId = static_cast<uint16_t>(entityId);
 
-    itTarget->second.receiveDamage(itPlayer->second.dealDamage());
+    if (tryEvade(playerId, entityId)) {
+        result.hit = false;
+        result.damage = 0;
+        return result;
+    }
 
-    std::cout << "Player " << itTarget->second.getName() << " has "
-              << itTarget->second.getData().health << " health left!" << std::endl;
+    // Calculamos el daño UNA vez (cada llamada a dealDamage es random).
+    uint16_t damage = itPlayer->second.dealDamage();
+    itTarget->second.receiveDamage(damage);
 
-    return true;
+    result.hit = true;
+    result.damage = damage;
+    return result;
+}
+
+bool Game::tryEvade(int /*attackerId*/, int /*targetId*/) const {
+    // TODO(team-gameplay): implementar fórmula real.
+    // Idea: comparar dexterity del defensor vs del atacante.
+    //   chance_evade = clamp((def_dex - atk_dex) * factor, min%, max%)
+    // Por ahora nadie evade.
+    return false;
 }
 
 bool Game::processHeal(int playerId) {

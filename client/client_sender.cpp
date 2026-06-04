@@ -10,8 +10,9 @@ client_sender::client_sender(client_protocol& protocol, Queue<std::string>& even
 
 
 // Formato de eventos esperados en la queue:
-//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT" — cruzó un tile, send_move
-//   "TURN_TOP" / "TURN_BOTTOM" / etc. — giró sin moverse, send_turn
+//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT"             — cruzó un tile, send_move
+//   "TURN_TOP" / "TURN_BOTTOM" / etc.               — giró sin moverse, send_turn
+//   "ATTACK_TOP" / "ATTACK_BOTTOM" / etc.           — ataca en esa dirección
 //   "CHEAT_SUICIDE" / "CHEAT_GOLD" / "CHEAT_EXPERIENCE" — sendCheat con el code
 void client_sender::run() {
     try {
@@ -33,6 +34,14 @@ void client_sender::run() {
                 protocol.send_turn(ClientMsg::LEFT);
             else if (event == "TURN_RIGHT")
                 protocol.send_turn(ClientMsg::RIGHT);
+            else if (event == "ATTACK_TOP")
+                protocol.send_attack(ClientMsg::TOP);
+            else if (event == "ATTACK_BOTTOM")
+                protocol.send_attack(ClientMsg::BOTTOM);
+            else if (event == "ATTACK_LEFT")
+                protocol.send_attack(ClientMsg::LEFT);
+            else if (event == "ATTACK_RIGHT")
+                protocol.send_attack(ClientMsg::RIGHT);
             else if (event == "CHEAT_SUICIDE")
                 protocol.sendCheat(CheatCode::SUICIDE);
             else if (event == "CHEAT_GOLD")

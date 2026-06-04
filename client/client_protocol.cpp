@@ -108,6 +108,21 @@ void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(skinId);
 }
 
+void client_protocol::send_attack(ClientMsg direction) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
+    protocol.sendByte(static_cast<uint8_t>(direction));
+}
+
+AttackResultEvent client_protocol::recv_attack_result_payload() {
+    AttackResultEvent ev;
+    ev.attackerId = protocol.receive_two_bytes_number();
+    ev.targetType = protocol.receive_byte();
+    ev.targetId = protocol.receive_two_bytes_number();
+    ev.damage = protocol.receive_two_bytes_number();
+    ev.hit = (protocol.receive_byte() != 0);
+    return ev;
+}
+
 std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {
     uint16_t count = protocol.receive_two_bytes_number();
     std::vector<DroppedItem> items;

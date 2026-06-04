@@ -145,6 +145,24 @@ bool GameScreen::handleEvents(float dt) {
                     case SDLK_F3:
                         events_queue.push("CHEAT_EXPERIENCE");
                         break;
+                    case SDLK_k: {
+                        // Atacamos en la dirección que el jugador está mirando.
+                        switch (player.dir) {
+                            case Direction::UP:
+                                events_queue.push("ATTACK_TOP");
+                                break;
+                            case Direction::DOWN:
+                                events_queue.push("ATTACK_BOTTOM");
+                                break;
+                            case Direction::LEFT:
+                                events_queue.push("ATTACK_LEFT");
+                                break;
+                            case Direction::RIGHT:
+                                events_queue.push("ATTACK_RIGHT");
+                                break;
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -345,6 +363,25 @@ void GameScreen::consumeServerEvents() {
             size_t c1 = event.find(':');
             int id = std::stoi(event.substr(c1 + 1));
             otherPlayers.erase(id);
+        } else if (event.rfind("ATTACK_RESULT:", 0) == 0) {
+            // ATTACK_RESULT:<atk>:<ttype>:<tid>:<dmg>:<hit>
+            // TODO(team-ui): mostrar feedback visual (número flotante de daño
+            // sobre el target si hit==1, "MISS" si hit==0, animación de impacto).
+            // Por ahora solo loggeamos para confirmar que el evento llega.
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            size_t c4 = event.find(':', c3 + 1);
+            size_t c5 = event.find(':', c4 + 1);
+            if (c5 == std::string::npos)
+                continue;
+            int atk = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int tid = std::stoi(event.substr(c3 + 1, c4 - c3 - 1));
+            int dmg = std::stoi(event.substr(c4 + 1, c5 - c4 - 1));
+            int hit = std::stoi(event.substr(c5 + 1));
+            std::cout << "ATTACK: " << atk << " -> " << tid
+                      << (hit ? " hit for " : " MISS (")
+                      << dmg << (hit ? " dmg" : ")") << std::endl;
         } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
             // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
             droppedItems.clear();

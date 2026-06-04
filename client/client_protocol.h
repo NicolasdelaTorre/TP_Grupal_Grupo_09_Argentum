@@ -45,6 +45,15 @@ struct StatsEvent {
     uint8_t level;
 };
 
+// Resultado de un ataque (ATTACK_RESULT). Broadcast a todos.
+struct AttackResultEvent {
+    uint16_t attackerId;
+    uint8_t targetType;  // 0 = player, 1 = npc
+    uint16_t targetId;
+    uint16_t damage;
+    bool hit;  // false => evasión, damage = 0
+};
+
 class client_protocol {
     common_protocol protocol;
 
@@ -74,9 +83,13 @@ public:
     PlayerEvent recv_player_moved_payload();
     uint16_t recv_player_disconnected_payload();
     StatsEvent recv_stats_payload();
+    AttackResultEvent recv_attack_result_payload();
 
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
+
+    // Envía un ataque en la dirección dada (TOP, BOTTOM, LEFT, RIGHT).
+    void send_attack(ClientMsg direction);
 
     // Recibe la lista completa de NPCs dinámicos (criaturas).
     std::vector<NpcEntity> recv_npc_list_payload();
