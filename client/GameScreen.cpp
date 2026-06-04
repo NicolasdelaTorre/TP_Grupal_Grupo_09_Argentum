@@ -112,12 +112,20 @@ void GameScreen::render() {
         const auto& op = playerEntry.second;
         mapRenderer.renderPlayer(op.visual, camX, camY);
         mapRenderer.renderWeapon(op.visual, camX, camY);
+        mapRenderer.renderShield(op.visual, camX, camY);
         mapRenderer.renderHead(op.visual, camX, camY);
+        mapRenderer.renderHelmet(op.visual, camX, camY);
     }
 
     mapRenderer.renderPlayer(player, camX, camY);
     mapRenderer.renderWeapon(player, camX, camY);
+    mapRenderer.renderShield(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
+    mapRenderer.renderHelmet(player, camX, camY);
+
+    mapRenderer.renderArrows(arrows, camX, camY);
+
+    renderBloodEffects(camX, camY);
 
     renderHUD();
 
@@ -125,12 +133,52 @@ void GameScreen::render() {
 }
 
 bool GameScreen::handleEvents(float dt) {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+    float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
+    float camY = player.y * TILE_SIZE - screenH / 2.0f + TILE_SIZE / 2.0f;
+    camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
+    camY = std::max(0.0f, std::min(camY, (float)(map.height * TILE_SIZE - screenH)));
+
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return false;
         if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
             return false;
+        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+            int clickTileX = (int)((e.button.x + camX) / TILE_SIZE);
+            int clickTileY = (int)((e.button.y + camY) / TILE_SIZE);
+            for (const auto& entry : otherPlayers) {
+                const auto& op = entry.second;
+                int opTileX = (int)(op.visual.x + HEAD_OFFSET);
+                int opTileY = (int)(op.visual.y + FEET_OFFSET);
+                if (opTileX == clickTileX && opTileY == clickTileY) {
+                    events_queue.push("ATTACK:" + std::to_string(myId) + ":" +
+                                      std::to_string(entry.first));
+                    if (player.weaponId == 2) {  // Arco
+                        float sx = player.x + 0.5f;
+                        float sy = player.y + 0.5f;
+                        float tx = op.visual.x + 0.5f;
+                        float ty = op.visual.y + 0.5f;
+                        float dx = tx - sx;
+                        float dy = ty - sy;
+                        float dist = std::sqrt(dx * dx + dy * dy);
+                        if (dist > 0.0f) {
+                            ArrowProjectile arrow;
+                            arrow.x = sx;
+                            arrow.y = sy;
+                            arrow.vx = (dx / dist) * ARROW_SPEED;
+                            arrow.vy = (dy / dist) * ARROW_SPEED;
+                            arrow.lifetime = dist / ARROW_SPEED + 0.3f;
+                            arrow.arrowType = 0;
+                            arrows.push_back(arrow);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     // Movimiento continuo con teclas sostenidas
@@ -150,6 +198,7 @@ bool GameScreen::handleEvents(float dt) {
         player.dir = Direction::LEFT;
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
+        std::cout << player.id << std::endl;
         player.dir = Direction::RIGHT;
     } else if (keys[SDL_SCANCODE_F1]) {
         msg = "CHEAT_SUICIDE";
@@ -157,6 +206,12 @@ bool GameScreen::handleEvents(float dt) {
         msg = "CHEAT_GOLD";
     } else if (keys[SDL_SCANCODE_F3]) {
         msg = "CHEAT_EXPERIENCE";
+    }else if (keys[SDL_SCANCODE_F4]){
+        droppedItems.push_back({(int16_t)player.x, (int16_t)player.y, 0, this->a++});
+        SDL_Delay(200);
+    }else if (keys[SDL_SCANCODE_F5]){
+        bloodEffects.push_back({player.x, player.y, BLOOD_DURATION});
+        SDL_Delay(200);
     }
 
     if (msg) {
@@ -236,6 +291,25 @@ void GameScreen::update(float dt) {
     // Consumimos eventos del servidor antes de animar.
     consumeServerEvents();
 
+    // Tick blood effects and remove expired ones.
+    for (auto& b : bloodEffects)
+        b.timer -= dt;
+    bloodEffects.erase(
+        std::remove_if(bloodEffects.begin(), bloodEffects.end(),
+                       [](const BloodEffect& b) { return b.timer <= 0.0f; }),
+        bloodEffects.end());
+
+    // Tick arrows and remove ones that reached the target or expired.
+    for (auto& arrow : arrows) {
+        arrow.x += arrow.vx * dt;
+        arrow.y += arrow.vy * dt;
+        arrow.lifetime -= dt;
+    }
+    arrows.erase(
+        std::remove_if(arrows.begin(), arrows.end(),
+                       [](const ArrowProjectile& a) { return a.lifetime <= 0.0f; }),
+        arrows.end());
+
     // Interpolamos a los otros jugadores hacia su tile destino para que se vea
     // un walk fluido en vez de saltos de tile en tile.
     for (auto& entry: otherPlayers) {
@@ -303,7 +377,7 @@ void GameScreen::consumeServerEvents() {
             size_t c6 = event.find(':', c5 + 1);
             if (c6 == std::string::npos)
                 continue;
-            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            player.id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
             int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
             int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
@@ -316,6 +390,8 @@ void GameScreen::consumeServerEvents() {
             op.visual.skin = skin;
             op.name = event.substr(c6 + 1);
             otherPlayers[id] = std::move(op);
+            op.name = event.substr(c5 + 1);
+            otherPlayers[player.id] = std::move(op);
         } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
             // PLAYER_MOVED:<id>:<x>:<y>:<dir>
             size_t c1 = event.find(':');
@@ -374,6 +450,16 @@ void GameScreen::consumeServerEvents() {
             maxHealth = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
             level = static_cast<uint8_t>(std::stoi(event.substr(c3 + 1)));
         }
+    }
+}
+
+void GameScreen::renderBloodEffects(float camX, float camY) {
+    static constexpr int BLOOD_FRAMES = 5;
+    for (const auto& b : bloodEffects) {
+        float elapsed = BLOOD_DURATION - b.timer;
+        int frame = std::min(BLOOD_FRAMES - 1,
+                             (int)(elapsed / (BLOOD_DURATION / BLOOD_FRAMES)));
+        mapRenderer.renderBlood(b.x, b.y, frame, 255, camX, camY);
     }
 }
 
