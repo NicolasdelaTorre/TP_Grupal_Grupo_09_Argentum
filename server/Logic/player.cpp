@@ -23,6 +23,8 @@ Player::Player(const std::string& name, Position position, const std::string& ra
     data.equippedArmor = 0;
     data.equippedHelmet = 0;
     data.equippedShield = 0;
+    data.headSkinId = 0;
+    data.bodySkinId = 0;
     data.isGhost = false;
 
     for (int i = 0; i < N; ++i) {
@@ -244,6 +246,11 @@ uint16_t Player::heal() {
     data.health += healAmount;
 
     return healAmount;
+}
+
+void Player::setSkin(uint8_t bodySkinId, uint8_t headSkinId) {
+    data.bodySkinId = bodySkinId;
+    data.headSkinId = headSkinId;
 }
 
 void Player::resetStats() {

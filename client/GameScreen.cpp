@@ -57,18 +57,19 @@ static Direction wireDirToSpriteDir(uint8_t wireDir) {
 
 GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                        Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-                       const ReceivedMap& mapData, Position spawn):
+                       const ReceivedMap& mapData, Position spawn, Player player):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
         map(convertToGameMap(mapData)),
         events_queue(events_queue),
-        server_queue(server_queue) {
-    tileToPlayerCoords(spawn.x, spawn.y, player);
+        server_queue(server_queue),
+        player(player) {
+    tileToPlayerCoords(spawn.x, spawn.y, this->player);
 
-    lastTileX = (int)(player.x + HEAD_OFFSET);
-    lastTileY = (int)(player.y + FEET_OFFSET);
-    lastSentDir = player.dir;
+    lastTileX = (int)(this->player.x + HEAD_OFFSET);
+    lastTileY = (int)(this->player.y + FEET_OFFSET);
+    lastSentDir = this->player.dir;
 }
 
 bool GameScreen::run() {
@@ -293,24 +294,27 @@ void GameScreen::consumeServerEvents() {
     std::string event;
     while (server_queue.try_pop(event)) {
         if (event.rfind("NEW_PLAYER:", 0) == 0) {
-            // NEW_PLAYER:<id>:<x>:<y>:<dir>:<name>
+            // NEW_PLAYER:<id>:<x>:<y>:<dir>:<skin>:<name>
             size_t c1 = event.find(':');
             size_t c2 = event.find(':', c1 + 1);
             size_t c3 = event.find(':', c2 + 1);
             size_t c4 = event.find(':', c3 + 1);
             size_t c5 = event.find(':', c4 + 1);
-            if (c5 == std::string::npos)
+            size_t c6 = event.find(':', c5 + 1);
+            if (c6 == std::string::npos)
                 continue;
             int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
             int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
             int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
+            uint8_t skin = static_cast<uint8_t>(std::stoi(event.substr(c5 + 1, c6 - c5 - 1)));
             OtherPlayer op;
             tileToPlayerCoords(x, y, op.visual);
             op.targetX = static_cast<float>(x);
             op.targetY = static_cast<float>(y);
             op.visual.dir = wireDirToSpriteDir(dir);
-            op.name = event.substr(c5 + 1);
+            op.visual.skin = skin;
+            op.name = event.substr(c6 + 1);
             otherPlayers[id] = std::move(op);
         } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
             // PLAYER_MOVED:<id>:<x>:<y>:<dir>

@@ -31,6 +31,8 @@ struct PlayerData {
     uint8_t equippedArmor;
     uint8_t equippedHelmet;
     uint8_t equippedShield;
+    uint8_t headSkinId;
+    uint8_t bodySkinId;
     bool isGhost;
 
     uint8_t inventory[N];
@@ -95,6 +97,8 @@ public:
     bool unequipItem(ItemType type);
 
     uint16_t heal();
+
+    void setSkin(uint8_t bodySkinId, uint8_t headSkinId);
 
     void resetStats();
 };

@@ -45,6 +45,8 @@ public:
 
     uint8_t getPlayerDirection(int playerId) const;
 
+    uint8_t getPlayerSkin(int playerId) const;
+
     uint16_t getPlayerHealth(int playerId) const;
 
     uint16_t getPlayerMaxHealth(int playerId) const;
@@ -56,6 +58,8 @@ public:
     std::vector<int> getPlayerIds() const;
 
     void updatePlayerData(int playerId);
+
+    void setSkin(int playerId, const std::string& skinId);
 
     void removePlayer(int playerId);
 

@@ -22,7 +22,8 @@ void client_receiver::run() {
                     PlayerEvent ev = protocol.recv_new_player_payload();
                     server_queue.push("NEW_PLAYER:" + std::to_string(ev.id) + ":" +
                                       std::to_string(ev.x) + ":" + std::to_string(ev.y) + ":" +
-                                      std::to_string(ev.dir) + ":" + ev.name);
+                                      std::to_string(ev.dir) + ":" + std::to_string(ev.skin) + ":" +
+                                      ev.name);
                     break;
                 }
 

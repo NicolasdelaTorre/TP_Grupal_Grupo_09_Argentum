@@ -166,6 +166,14 @@ uint8_t Game::getPlayerDirection(int playerId) const {
     return it->second.getDirection();
 }
 
+uint8_t Game::getPlayerSkin(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().bodySkinId;
+}
+
 uint16_t Game::getPlayerHealth(int playerId) const {
     auto it = players.find(playerId);
     if (it == players.end()) {
@@ -310,6 +318,16 @@ bool Game::processHeal(int playerId) {
               << " health!" << std::endl;
 
     return true;
+}
+
+void Game::setSkin(int playerId, const std::string& skinId) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    // Cambiar el cero proximamente
+    itPlayer->second.setSkin(std::stoi(skinId), 0);
 }
 
 Game::~Game() {

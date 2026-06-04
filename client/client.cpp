@@ -43,6 +43,8 @@ void client::run() {
         return;
     }
 
+    Player player;
+
     // Usuario nuevo: pasamos por char creation y mandamos la skin elegida.
     // Después el server manda LOGIN_OK con el spawn point.
     if (type == ServerMsg::FIRST_LOGIN) {
@@ -51,6 +53,7 @@ void client::run() {
         if (!charResult.confirmed)
             return;
         protocol.send_skin_selected(static_cast<uint8_t>(charResult.skinId));
+        player.skin = charResult.skinId;
         type = protocol.recv_msg_type();
     }
 
@@ -73,7 +76,7 @@ void client::run() {
     sender.start();
     receiver.start();
 
-    GameScreen game(renderer, "AO_IMGS", events_queue, server_queue, mapData, spawn);
+    GameScreen game(renderer, "AO_IMGS", events_queue, server_queue, mapData, spawn, player);
     game.run();
 
     // Cleanup: cerramos queues/socket para desbloquear los threads

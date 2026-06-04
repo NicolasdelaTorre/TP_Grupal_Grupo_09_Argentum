@@ -73,6 +73,7 @@ PlayerEvent client_protocol::recv_new_player_payload() {
     ev.x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     ev.y = static_cast<int16_t>(protocol.receive_two_bytes_number());
     ev.dir = protocol.receive_byte();
+    ev.skin = protocol.receive_byte();
     uint16_t nameLen = protocol.receive_two_bytes_number();
     ev.name = protocol.receive_message(nameLen);
     return ev;

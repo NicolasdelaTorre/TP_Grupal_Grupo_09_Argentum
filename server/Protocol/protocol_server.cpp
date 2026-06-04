@@ -233,27 +233,30 @@ void ProtocolServer::sendLoginOk(common_protocol& client, const std::string& mes
 }
 
 void ProtocolServer::sendNewPlayer(common_protocol& client, const std::string& message) {
-    // Formato: "NEW_PLAYER:<id>:<x>:<y>:<dir>:<name>"
+    // Formato: "NEW_PLAYER:<id>:<x>:<y>:<dir>:<skin>:<name>"
     size_t c1 = message.find(':');
     size_t c2 = message.find(':', c1 + 1);
     size_t c3 = message.find(':', c2 + 1);
     size_t c4 = message.find(':', c3 + 1);
     size_t c5 = message.find(':', c4 + 1);
+    size_t c6 = message.find(':', c5 + 1);
     if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos ||
-        c4 == std::string::npos || c5 == std::string::npos) {
+        c4 == std::string::npos || c5 == std::string::npos || c6 == std::string::npos) {
         throw std::runtime_error("Protocol Error: malformed NEW_PLAYER message: " + message);
     }
     uint16_t id = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
     int16_t x = static_cast<int16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
     int16_t y = static_cast<int16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
     uint8_t dir = static_cast<uint8_t>(std::stoi(message.substr(c4 + 1, c5 - c4 - 1)));
-    std::string name = message.substr(c5 + 1);
+    uint8_t skin = static_cast<uint8_t>(std::stoi(message.substr(c5 + 1, c6 - c5 - 1)));
+    std::string name = message.substr(c6 + 1);
 
     client.sendByte(static_cast<uint8_t>(ServerMsg::NEW_PLAYER));
     client.send_two_bytes_number(id);
     client.send_two_bytes_number(static_cast<uint16_t>(x));
     client.send_two_bytes_number(static_cast<uint16_t>(y));
     client.sendByte(dir);
+    client.sendByte(skin);
     client.send_two_bytes_number(static_cast<uint16_t>(name.size()));
     client.send_message(std::vector<char>(name.begin(), name.end()));
 }
