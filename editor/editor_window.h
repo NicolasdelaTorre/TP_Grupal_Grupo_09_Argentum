@@ -56,6 +56,7 @@ private:
     void setupNewMapPage();
     void resetNewMapPage();
     void onCreateNewMap();
+    void openExistingMap();
     void applyActiveTool();
     void selectTool(EditorTool tool);
     void selectSpawnMode();

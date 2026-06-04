@@ -38,6 +38,17 @@ QString SceneController::nextZoneId() { return QStringLiteral("zone_%1").arg(nex
 
 QString SceneController::nextWallId() { return QStringLiteral("wall_%1").arg(next_wall_id_++); }
 
+void SceneController::bumpCounter(int& counter, const QString& id, const QString& prefix) {
+    if (!id.startsWith(prefix)) {
+        return;
+    }
+    bool ok = false;
+    const int value = id.mid(prefix.size()).toInt(&ok);
+    if (ok && value + 1 > counter) {
+        counter = value + 1;
+    }
+}
+
 // obtener item en celda
 QGraphicsItem* SceneController::topLevelItemAtCell(int cell_x, int cell_y) const {
     const QRectF area(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE,
@@ -109,6 +120,7 @@ bool SceneController::placeCityZone(const ToolInfo& tool, int cell_x, int cell_y
     const QColor fill = resolveZoneColor(city ? city->color : std::string(), true);
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
+    bumpCounter(next_zone_id_, id, QStringLiteral("zone_"));
     auto* item =
             item_builder_.buildZone(id, ZONE_TYPE_CITY, tool.city_template_id, width, height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
@@ -169,6 +181,7 @@ bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QS
     }
 
     const QString id = wall_id.isEmpty() ? nextWallId() : wall_id;
+    bumpCounter(next_wall_id_, id, QStringLiteral("wall_"));
     auto* item = item_builder_.buildWall(id, QString::fromStdString(wall_tpl->id), wall_tpl->width,
                                          wall_tpl->height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
@@ -193,6 +206,7 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
     const QColor fill = resolveZoneColor(biome ? biome->color : std::string(), false);
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
+    bumpCounter(next_zone_id_, id, QStringLiteral("zone_"));
     auto* item = item_builder_.buildZone(id, ZONE_TYPE_BIOME, tool.biome_template_id, width, height,
                                          fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
@@ -217,15 +231,50 @@ DeletedItem SceneController::deleteAtCell(int cell_x, int cell_y) {
     result.type = item_type;
     result.id = item_id;
 
+    int city_x = 0;
+    int city_y = 0;
+    int city_w = 0;
+    int city_h = 0;
     if (item_type == BIOME_ZONE_TYPE) {
         biome_spawns_.remove(item_id);
     } else if (item_type == ENTRY_TYPE) {
         result.environment_id = item->data(DATA_ENVIRONMENT_ID).toString();
+    } else if (item_type == CITY_ZONE_TYPE) {
+        city_x = static_cast<int>(item->pos().x()) / CELL_DISPLAY_SIZE;
+        city_y = static_cast<int>(item->pos().y()) / CELL_DISPLAY_SIZE;
+        city_w = item->data(DATA_WIDTH).toInt();
+        city_h = item->data(DATA_HEIGHT).toInt();
     }
 
     scene_->removeItem(item);
     delete item;
+
+    // Al borrar una ciudad, arrastramos todos los obstáculos que contiene.
+    if (item_type == CITY_ZONE_TYPE) {
+        deleteObstaclesInArea(city_x, city_y, city_w, city_h);
+    }
     return result;
+}
+
+void SceneController::deleteObstaclesInArea(int x, int y, int w, int h) {
+    if (w <= 0 || h <= 0) {
+        return;
+    }
+    std::vector<QGraphicsItem*> to_delete;
+    for (auto* item: scene_->items()) {
+        if (item->data(DATA_TYPE).toString() != OBSTACLE_TYPE) {
+            continue;
+        }
+        const int cell_x = static_cast<int>(item->pos().x()) / CELL_DISPLAY_SIZE;
+        const int cell_y = static_cast<int>(item->pos().y()) / CELL_DISPLAY_SIZE;
+        if (cell_x >= x && cell_x < x + w && cell_y >= y && cell_y < y + h) {
+            to_delete.push_back(item);
+        }
+    }
+    for (auto* item: to_delete) {
+        scene_->removeItem(item);
+        delete item;
+    }
 }
 
 const QHash<QString, std::vector<CreatureSpawn>>& SceneController::biome_spawns() const {

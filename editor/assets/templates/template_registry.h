@@ -11,6 +11,14 @@ struct NpcTemplate {
     int relative_y = 0;
 };
 
+// Obstáculo predefinido de una ciudad. `type` referencia el template_id de un
+// obstáculo; la posición es relativa a la esquina de la ciudad.
+struct CityObstacleTemplate {
+    std::string type;
+    int relative_x = 0;
+    int relative_y = 0;
+};
+
 struct CityTemplate {
     std::string id;
     std::string name;
@@ -18,6 +26,7 @@ struct CityTemplate {
     int default_height = 0;
     std::string color;
     std::vector<NpcTemplate> fixed_npcs;
+    std::vector<CityObstacleTemplate> fixed_obstacles;
 };
 
 struct BiomeTemplate {
@@ -26,7 +35,6 @@ struct BiomeTemplate {
     int default_width = 0;
     int default_height = 0;
     std::string color;
-    // ruta absoluta a la textura del bioma (opcional). Si está vacía, se usa color.
     std::string texture;
     std::vector<std::string> allowed_creatures;
 };
@@ -37,7 +45,6 @@ struct ObstacleTemplate {
     int width = 1;
     int height = 1;
     std::string color;
-    // ruta absoluta a la textura del obstáculo (opcional). Si está vacía, se usa color.
     std::string texture;
 };
 

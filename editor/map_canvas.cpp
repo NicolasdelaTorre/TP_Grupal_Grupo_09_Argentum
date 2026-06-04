@@ -431,6 +431,20 @@ void MapCanvas::placeCityAt(int cell_x, int cell_y) {
     if (!controller_->placeCityZone(active_tool_, cell_x, cell_y, city->default_width,
                                     city->default_height, error)) {
         QMessageBox::warning(this, QStringLiteral("Ciudad"), error);
+        return;
+    }
+
+    // Los obstáculos fijos de la ciudad se materializan como obstáculos normales
+    // (se ven en el editor y se guardan junto al resto). Al cargar un mapa ya
+    // vienen en la lista de obstáculos, por eso esto sólo corre al colocar la
+    // ciudad de forma interactiva.
+    for (const auto& fixed: city->fixed_obstacles) {
+        ToolInfo obstacle_tool;
+        obstacle_tool.tool = EditorTool::Obstacle;
+        obstacle_tool.obstacle_template_id = QString::fromStdString(fixed.type);
+        QString obstacle_error;
+        controller_->placeObstacle(obstacle_tool, cell_x + fixed.relative_x,
+                                   cell_y + fixed.relative_y, obstacle_error);
     }
 }
 

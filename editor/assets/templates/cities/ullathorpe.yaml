@@ -10,4 +10,10 @@ fixed_npcs:
   - { type: merchant, name: "Comerciante", position: [20, 8] }
   - { type: merchant, name: "Comerciante", position: [26, 8] }
   - { type: banker, name: "Banquero", position: [32, 8] }
+fixed_obstacles:
+  - { type: lampara_ciudad, position: [2, 2] }
+  - { type: lampara_ciudad, position: [37, 2] }
+  - { type: lampara_ciudad, position: [2, 27] }
+  - { type: carretilla_de_madera, position: [5, 20] }
+  - { type: molino, position: [30, 20] }
 

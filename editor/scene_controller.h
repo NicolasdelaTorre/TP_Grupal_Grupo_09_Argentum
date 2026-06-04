@@ -61,8 +61,15 @@ private:
     QString nextObstacleId();
     QString nextZoneId();
     QString nextWallId();
+    // Avanza `counter` para que quede por encima del sufijo numérico de un id ya
+    // existente (ej. "zone_7" -> counter >= 8), evitando colisiones al cargar un mapa.
+    static void bumpCounter(int& counter, const QString& id, const QString& prefix);
     QGraphicsItem* topLevelItemAtCell(int cell_x, int cell_y) const;
     QColor resolveZoneColor(const std::string& template_color, bool is_city) const;
+    // Borra todos los obstáculos cuya celda de origen cae dentro del rectángulo
+    // [x, x+w) x [y, y+h). Se usa al eliminar una ciudad para arrastrar consigo
+    // todos los obstáculos que contiene (fijos y colocados a mano).
+    void deleteObstaclesInArea(int x, int y, int w, int h);
 };
 
 #endif

@@ -1,6 +1,7 @@
 #include "editor_window.h"
 
 #include <QComboBox>
+#include <QFileDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -182,6 +183,8 @@ EditorWindow::EditorWindow(QWidget* parent):
 
     connect(ui_->btnNewMapCreate, &QPushButton::clicked, this, &EditorWindow::onCreateNewMap);
 
+    connect(ui_->btnOpenMap, &QPushButton::clicked, this, &EditorWindow::openExistingMap);
+
     connect(ui_->btnBack, &QPushButton::clicked, this,
             [this] { ui_->stackedWidget->setCurrentWidget(ui_->pageMainMenu); });
 
@@ -195,6 +198,23 @@ EditorWindow::EditorWindow(QWidget* parent):
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
     connect(map_canvas_, &MapCanvas::saveRequested, this, &EditorWindow::saveMap);
     connect(map_canvas_, &MapCanvas::biomeHoverInfo, ui_->labelBiomeHoverSpawns, &QLabel::setText);
+
+    connect(ui_->btnApplyResize, &QPushButton::clicked, this, &EditorWindow::onApplyMapResize);
+
+    auto* resize_action_group = new QButtonGroup(this);
+    resize_action_group->setExclusive(true);
+    resize_action_group->addButton(ui_->btnResizeExpand);
+    resize_action_group->addButton(ui_->btnResizeShrink);
+
+    auto* resize_direction_group = new QButtonGroup(this);
+    resize_direction_group->setExclusive(true);
+    resize_direction_group->addButton(ui_->btnResizeUp);
+    resize_direction_group->addButton(ui_->btnResizeDown);
+    resize_direction_group->addButton(ui_->btnResizeLeft);
+    resize_direction_group->addButton(ui_->btnResizeRight);
+
+    ui_->btnResizeExpand->setChecked(true);
+    ui_->btnResizeRight->setChecked(true);
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
@@ -344,8 +364,9 @@ void EditorWindow::selectDefaultMode() {
 }
 
 void EditorWindow::updateDimensionsLabel() {
-    ui_->labelMapDimensions->setText(
-            QStringLiteral("%1 x %2").arg(map_canvas_->map_width()).arg(map_canvas_->map_height()));
+    ui_->labelMapDimensions->setText(QStringLiteral("Map Size: %1 x %2")
+                                             .arg(map_canvas_->map_width())
+                                             .arg(map_canvas_->map_height()));
 }
 
 void EditorWindow::onApplyMapResize() {
@@ -496,6 +517,56 @@ void EditorWindow::startNewMainMap(const QString& map_id, const QString& map_nam
     setMainOnlySectionsVisible(true);
     updateDimensionsLabel();
     selectDefaultMode();
+}
+
+void EditorWindow::openExistingMap() {
+    const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Abrir mapa"),
+                                                      QStringLiteral(SAVE_MAP),
+                                                      QStringLiteral("Mapas YAML (*.yaml *.yml)"));
+    if (path.isEmpty()) {
+        return;
+    }
+
+    MapDocument loaded;
+    if (!YamlMapIO::load(loaded, path.toStdString())) {
+        QMessageBox::warning(this, QStringLiteral("Error"),
+                             QStringLiteral("No se pudo abrir el mapa:\n%1").arg(path));
+        return;
+    }
+
+    main_doc_ = loaded;
+    current_environment_id_.clear();
+
+    // Reanudar los contadores por encima de los ids ya usados para no pisarlos.
+    auto index_after = [](const std::string& id, const QString& prefix) -> int {
+        const QString qid = QString::fromStdString(id);
+        if (!qid.startsWith(prefix)) {
+            return 0;
+        }
+        bool ok = false;
+        const int value = qid.mid(prefix.size()).toInt(&ok);
+        return ok ? value + 1 : 0;
+    };
+
+    next_entry_index_ = 1;
+    next_environment_index_ = 1;
+    for (const auto& entry: main_doc_.entries) {
+        next_entry_index_ =
+                std::max(next_entry_index_, index_after(entry.id, QStringLiteral("entry_")));
+    }
+    for (const auto& env: main_doc_.environments) {
+        next_environment_index_ =
+                std::max(next_environment_index_, index_after(env.id, QStringLiteral("env_")));
+    }
+
+    map_canvas_->loadFromDocument(main_doc_, EditingMode::MainMap);
+    refreshEnvironmentsList();
+    ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
+    ui_->btnBackToMainMap->setVisible(false);
+    setMainOnlySectionsVisible(true);
+    updateDimensionsLabel();
+    selectDefaultMode();
+    ui_->stackedWidget->setCurrentWidget(ui_->pageEditor);
 }
 
 void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cell_x, int cell_y) {

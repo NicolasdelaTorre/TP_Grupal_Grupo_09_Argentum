@@ -44,8 +44,7 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
         out << YAML::Key << "height" << YAML::Value << document.map.height;
         out << YAML::EndMap;
 
-        // Grid de biomas pre-calculado: un caracter por celda ('0' + BiomeType),
-        // una fila por línea. El cliente lo lee tal cual sin recomputar Dijkstra.
+        // Grid de biomas pre-calculado
         if (!document.biome_grid.empty() && document.map.width > 0 && document.map.height > 0) {
             write_biome_map(out, document);
         }
@@ -210,6 +209,186 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
             return false;
         }
         file << out.c_str();
+        return true;
+    } catch (const YAML::Exception&) {
+        return false;
+    }
+}
+
+PlayerSpawn YamlMapIO::read_player_spawn(const YAML::Node& node) {
+    PlayerSpawn spawn;
+    if (node && node["position"] && node["position"].size() >= 2) {
+        spawn.x = node["position"][0].as<int>();
+        spawn.y = node["position"][1].as<int>();
+        spawn.placed = true;
+    }
+    return spawn;
+}
+
+Obstacle YamlMapIO::read_obstacle(const YAML::Node& node) {
+    Obstacle obstacle;
+    obstacle.id = node["id"] ? node["id"].as<std::string>() : std::string();
+    obstacle.type = node["type"] ? node["type"].as<std::string>() : std::string();
+    if (node["position"] && node["position"].size() >= 2) {
+        obstacle.x = node["position"][0].as<int>();
+        obstacle.y = node["position"][1].as<int>();
+    }
+    if (node["size"] && node["size"].size() >= 2) {
+        obstacle.width = node["size"][0].as<int>();
+        obstacle.height = node["size"][1].as<int>();
+    }
+    if (node["texture"]) {
+        obstacle.texture = node["texture"].as<std::string>();
+    }
+    return obstacle;
+}
+
+Zone YamlMapIO::read_zone(const YAML::Node& node) {
+    Zone zone;
+    zone.id = node["id"] ? node["id"].as<std::string>() : std::string();
+    zone.type = node["type"] ? node["type"].as<std::string>() : std::string();
+    zone.template_id = node["template"] ? node["template"].as<std::string>() : std::string();
+    if (node["area"]) {
+        const auto& area = node["area"];
+        zone.area_x = area["x"] ? area["x"].as<int>() : 0;
+        zone.area_y = area["y"] ? area["y"].as<int>() : 0;
+        zone.area_width = area["width"] ? area["width"].as<int>() : 0;
+        zone.area_height = area["height"] ? area["height"].as<int>() : 0;
+    }
+    if (node["texture"]) {
+        zone.texture = node["texture"].as<std::string>();
+    }
+    if (node["spawns"]) {
+        for (const auto& spawn_node: node["spawns"]) {
+            CreatureSpawn spawn;
+            spawn.creature = spawn_node["creature"] ? spawn_node["creature"].as<std::string>() :
+                                                      std::string();
+            spawn.max_population =
+                    spawn_node["max_population"] ? spawn_node["max_population"].as<int>() : 0;
+            zone.spawns.push_back(spawn);
+        }
+    }
+    if (node["fixed_npcs"]) {
+        for (const auto& npc_node: node["fixed_npcs"]) {
+            NpcInstance npc;
+            npc.type = npc_node["type"] ? npc_node["type"].as<std::string>() : std::string();
+            npc.name = npc_node["name"] ? npc_node["name"].as<std::string>() : std::string();
+            if (npc_node["position"] && npc_node["position"].size() >= 2) {
+                npc.x = npc_node["position"][0].as<int>();
+                npc.y = npc_node["position"][1].as<int>();
+            }
+            zone.fixed_npcs.push_back(npc);
+        }
+    }
+    return zone;
+}
+
+Entry YamlMapIO::read_entry(const YAML::Node& node) {
+    Entry entry;
+    entry.id = node["id"] ? node["id"].as<std::string>() : std::string();
+    entry.type = node["type"] ? node["type"].as<std::string>() : std::string();
+    entry.environment_id =
+            node["environment"] ? node["environment"].as<std::string>() : std::string();
+    if (node["position"] && node["position"].size() >= 2) {
+        entry.x = node["position"][0].as<int>();
+        entry.y = node["position"][1].as<int>();
+    }
+    if (node["size"] && node["size"].size() >= 2) {
+        entry.width = node["size"][0].as<int>();
+        entry.height = node["size"][1].as<int>();
+    }
+    return entry;
+}
+
+Wall YamlMapIO::read_wall(const YAML::Node& node) {
+    Wall wall;
+    wall.id = node["id"] ? node["id"].as<std::string>() : std::string();
+    wall.template_id = node["template"] ? node["template"].as<std::string>() : std::string();
+    if (node["position"] && node["position"].size() >= 2) {
+        wall.x = node["position"][0].as<int>();
+        wall.y = node["position"][1].as<int>();
+    }
+    if (node["size"] && node["size"].size() >= 2) {
+        wall.width = node["size"][0].as<int>();
+        wall.height = node["size"][1].as<int>();
+    }
+    return wall;
+}
+
+Environment YamlMapIO::read_environment(const YAML::Node& node) {
+    Environment env;
+    env.id = node["id"] ? node["id"].as<std::string>() : std::string();
+    env.name = node["name"] ? node["name"].as<std::string>() : std::string();
+    env.type = node["type"] ? node["type"].as<std::string>() : std::string();
+    if (node["size"] && node["size"].size() >= 2) {
+        env.width = node["size"][0].as<int>();
+        env.height = node["size"][1].as<int>();
+    }
+    if (node["player_spawn"]) {
+        env.player_spawn = read_player_spawn(node["player_spawn"]);
+    }
+    if (node["obstacles"]) {
+        for (const auto& obstacle_node: node["obstacles"]) {
+            env.obstacles.push_back(read_obstacle(obstacle_node));
+        }
+    }
+    if (node["walls"]) {
+        for (const auto& wall_node: node["walls"]) {
+            env.walls.push_back(read_wall(wall_node));
+        }
+    }
+    if (node["floor_color"]) {
+        env.floor_color = node["floor_color"].as<std::string>();
+    }
+    return env;
+}
+
+bool YamlMapIO::load(MapDocument& document, const std::string& path) {
+    try {
+        const YAML::Node root = YAML::LoadFile(path);
+        if (!root["map"] || !root["map"]["width"] || !root["map"]["height"]) {
+            return false;
+        }
+
+        document = MapDocument();
+        document.version = root["version"] ? root["version"].as<int>() : 1;
+
+        const auto& map = root["map"];
+        document.map.id = map["id"] ? map["id"].as<std::string>() : std::string();
+        document.map.name = map["name"] ? map["name"].as<std::string>() : std::string();
+        document.map.width = map["width"].as<int>();
+        document.map.height = map["height"].as<int>();
+
+        if (root["player_spawn"]) {
+            document.player_spawn = read_player_spawn(root["player_spawn"]);
+        }
+
+        if (root["obstacles"]) {
+            for (const auto& node: root["obstacles"]) {
+                document.obstacles.push_back(read_obstacle(node));
+            }
+        }
+
+        if (root["zones"]) {
+            for (const auto& node: root["zones"]) {
+                document.zones.push_back(read_zone(node));
+            }
+        }
+
+        if (root["entries"]) {
+            for (const auto& node: root["entries"]) {
+                document.entries.push_back(read_entry(node));
+            }
+        }
+
+        if (root["environments"]) {
+            for (const auto& node: root["environments"]) {
+                document.environments.push_back(read_environment(node));
+            }
+        }
+
+        // El biome_grid no se parsea: se reconstruye con Dijkstra a partir de las
+        // zonas de bioma al volver a guardar (ver SceneController::buildDocument).
         return true;
     } catch (const YAML::Exception&) {
         return false;
