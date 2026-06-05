@@ -154,54 +154,11 @@ bool GameScreen::handleEvents(float dt) {
         if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE)
                 return false;
-            if (e.key.repeat == 0) {
-                switch (e.key.keysym.sym) {
-                    case SDLK_F1:
-                        events_queue.push("CHEAT_SUICIDE");
-                        break;
-                    case SDLK_F2:
-                        events_queue.push("CHEAT_GOLD");
-                        break;
-                    case SDLK_F3:
-                        events_queue.push("CHEAT_EXPERIENCE");
-                        break;
-                    case SDLK_k: {
-                        // Atacamos en la dirección que el jugador está mirando.
-                        switch (player.dir) {
-                            case Direction::UP:
-                                events_queue.push("ATTACK_TOP");
-                                break;
-                            case Direction::DOWN:
-                                events_queue.push("ATTACK_BOTTOM");
-                                break;
-                            case Direction::LEFT:
-                                events_queue.push("ATTACK_LEFT");
-                                break;
-                            case Direction::RIGHT:
-                                events_queue.push("ATTACK_RIGHT");
-                                break;
-                        }
-                        break;
-                    }
-                    case SDLK_g:
-                        events_queue.push("PICK_UP");
-                        break;
-                    default: {
-                        // 1..9 — equip de la slot N-1. Con Shift → drop.
-                        SDL_Keycode k = e.key.keysym.sym;
-                        if (k >= SDLK_1 && k <= SDLK_9) {
-                            int slot = k - SDLK_1;  // 0..8
-                            bool shift = (e.key.keysym.mod & KMOD_SHIFT) != 0;
-                            events_queue.push((shift ? "DROP:" : "EQUIP:") + std::to_string(slot));
-                        }
-                        break;
-                    }
-                }
-            }
         }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            // Click en un otherPlayer = ataque. Server resuelve por dirección,
-            // así que traducimos el delta a la dirección dominante.
+            // Click sobre otro player → ATTACK con id del target.
+            // Server valida si el atacante tiene arma equipada, si es de rango
+            // o si está adyacente (para melee), etc. El cliente no decide nada.
             int clickTileX = (int)((e.button.x + camX) / TILE_SIZE);
             int clickTileY = (int)((e.button.y + camY) / TILE_SIZE);
             for (const auto& entry: otherPlayers) {
@@ -209,43 +166,7 @@ bool GameScreen::handleEvents(float dt) {
                 int opTileX = (int)(op.visual.x + HEAD_OFFSET);
                 int opTileY = (int)(op.visual.y + FEET_OFFSET);
                 if (opTileX == clickTileX && opTileY == clickTileY) {
-                    // Decisión: si el arma es de rango (arco/magia), mando
-                    // TARGETED_ATTACK con el id del target — sirve para
-                    // diagonales y cualquier distancia. Si es melee, mando
-                    // ATTACK con la dirección dominante.
-                    const bool isRanged = (player.weaponId == 2);
-                    if (isRanged) {
-                        events_queue.push("TARGETED_ATTACK:0:" + std::to_string(entry.first));
-                    } else {
-                        int myTileX = (int)(player.x + HEAD_OFFSET);
-                        int myTileY = (int)(player.y + FEET_OFFSET);
-                        int ddx = opTileX - myTileX;
-                        int ddy = opTileY - myTileY;
-                        if (std::abs(ddx) >= std::abs(ddy)) {
-                            events_queue.push(ddx >= 0 ? "ATTACK_RIGHT" : "ATTACK_LEFT");
-                        } else {
-                            events_queue.push(ddy >= 0 ? "ATTACK_BOTTOM" : "ATTACK_TOP");
-                        }
-                    }
-                    if (isRanged) {  // Arco — visual de flecha
-                        float sx = player.x + 0.5f;
-                        float sy = player.y + 0.5f;
-                        float tx = op.visual.x + 0.5f;
-                        float ty = op.visual.y + 0.5f;
-                        float ax = tx - sx;
-                        float ay = ty - sy;
-                        float dist = std::sqrt(ax * ax + ay * ay);
-                        if (dist > 0.0f) {
-                            ArrowProjectile arrow;
-                            arrow.x = sx;
-                            arrow.y = sy;
-                            arrow.vx = (ax / dist) * ARROW_SPEED;
-                            arrow.vy = (ay / dist) * ARROW_SPEED;
-                            arrow.lifetime = dist / ARROW_SPEED + 0.3f;
-                            arrow.arrowType = 0;
-                            arrows.push_back(arrow);
-                        }
-                    }
+                    events_queue.push("ATTACK:0:" + std::to_string(entry.first));
                     break;
                 }
             }
@@ -509,6 +430,11 @@ void GameScreen::consumeServerEvents() {
                 pos = next;
                 droppedItems.push_back(di);
             }
+        } else if (event.rfind("EQUIPPED:", 0) == 0) {
+            // EQUIPPED:<playerId>:<slot>:<itemId>
+            // TODO(team-ui): aplicar al sprite. El mapping itemId → columna
+            // del spritesheet lo define la capa de render.
+            std::cout << "PLAYER_EQUIPPED " << event << std::endl;
         } else if (event.rfind("INVENTORY:", 0) == 0) {
             // INVENTORY:<n>:<id1>:...:<eqW>:<eqA>:<eqH>:<eqS>
             // TODO(team-ui): dibujar el inventario en el HUD y resaltar lo
@@ -554,37 +480,7 @@ void GameScreen::renderBloodEffects(float camX, float camY) {
 }
 
 void GameScreen::renderHUD() {
-    if (maxHealth == 0)
-        return;  // no recibimos stats todavía
-
-    static constexpr int HUD_X = 10;
-    static constexpr int HUD_Y = 10;
-    static constexpr int BAR_W = 200;
-    static constexpr int BAR_H = 20;
-    static constexpr int BAR_GAP = 4;
-
-    // Vida (roja).
-    renderer.SetDrawColor(60, 60, 60, 220);
-    SDL_Rect bgHp{HUD_X, HUD_Y, BAR_W, BAR_H};
-    SDL_RenderFillRect(renderer.Get(), &bgHp);
-    int filledHp = static_cast<int>(BAR_W * (float)health / (float)maxHealth);
-    renderer.SetDrawColor(180, 30, 30, 255);
-    SDL_Rect hp{HUD_X, HUD_Y, filledHp, BAR_H};
-    SDL_RenderFillRect(renderer.Get(), &hp);
-    renderer.SetDrawColor(0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer.Get(), &bgHp);
-
-    // Mana (azul). Solo si maxMana > 0 (el guerrero siempre tiene 0).
-    if (maxMana > 0) {
-        int yMana = HUD_Y + BAR_H + BAR_GAP;
-        renderer.SetDrawColor(60, 60, 60, 220);
-        SDL_Rect bgMp{HUD_X, yMana, BAR_W, BAR_H};
-        SDL_RenderFillRect(renderer.Get(), &bgMp);
-        int filledMp = static_cast<int>(BAR_W * (float)mana / (float)maxMana);
-        renderer.SetDrawColor(30, 80, 200, 255);
-        SDL_Rect mp{HUD_X, yMana, filledMp, BAR_H};
-        SDL_RenderFillRect(renderer.Get(), &mp);
-        renderer.SetDrawColor(0, 0, 0, 255);
-        SDL_RenderDrawRect(renderer.Get(), &bgMp);
-    }
+    // TODO(team-ui): dibujar HUD con HP/MP/oro/exp/nivel a partir de los
+    // miembros `health/maxHealth/mana/maxMana/gold/experience/nextLevelExp/level`
+    // que ya se actualizan al recibir STATS_JUGADOR.
 }

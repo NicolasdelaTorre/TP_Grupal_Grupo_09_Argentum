@@ -47,23 +47,14 @@ int client_protocol::send_user_arrival(const std::vector<char>& name, const std:
     return 0;
 }
 
-uint16_t client_protocol::recv_my_player_id() {
-    return protocol.receive_two_bytes_number();
-}
-
 Position client_protocol::recv_login_ok_payload() {
     int16_t x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(protocol.receive_two_bytes_number());
     return Position{x, y};
 }
 
-void client_protocol::send_attack(ClientMsg direction) {
+void client_protocol::send_attack(uint8_t targetType, uint16_t targetId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
-    protocol.sendByte(static_cast<uint8_t>(direction));
-}
-
-void client_protocol::send_targeted_attack(uint8_t targetType, uint16_t targetId) {
-    protocol.sendByte(static_cast<uint8_t>(ClientMsg::TARGETED_ATTACK));
     protocol.sendByte(targetType);
     protocol.send_two_bytes_number(targetId);
 }
@@ -161,6 +152,14 @@ void client_protocol::send_equip_item(uint8_t invSlot) {
 void client_protocol::send_unequip_item(uint8_t slotType) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::UNEQUIP_ITEM));
     protocol.sendByte(slotType);
+}
+
+EquipmentEvent client_protocol::recv_player_equipped_payload() {
+    EquipmentEvent ev;
+    ev.playerId = protocol.receive_two_bytes_number();
+    ev.slot = protocol.receive_byte();
+    ev.itemId = protocol.receive_byte();
+    return ev;
 }
 
 InventoryEvent client_protocol::recv_inventory_update_payload() {

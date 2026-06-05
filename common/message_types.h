@@ -11,10 +11,12 @@ enum class ClientMsg : uint8_t {
     RIGHT = 0x06,
     SKIN_SELECTED = 0x07,  // [opcode][skin_id:1]
     TURN = 0x08,           // [opcode][direccion:1] — gira sin moverse de celda
-    ATTACK = 0x09,         // [opcode][direccion:1] — ataca al primero en línea de vista (server-authoritative)
+    ATTACK = 0x09,         // [opcode][target_type:1][target_id:2] — click sobre target.
+                           // Server resuelve si el atacante tiene arma y alcance.
+                           // target_type: 0=player, 1=npc.
     HEAD_SELECTED = 0x0A,  // [opcode][head_id:1]
     CHEAT = 0x0B,          // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
-    TARGETED_ATTACK = 0x0C,// [opcode][target_type:1][target_id:2] — ataque a target específico (ranged/magia)
+    // 0x0C — reservado (era TARGETED_ATTACK, ahora unificado con ATTACK).
     PICK_UP_ITEM = 0x0D,   // [opcode] — `/tomar`, server resuelve por posición del jugador
     DROP_ITEM = 0x0E,      // [opcode][inv_slot:1] — `/tirar`, slot del inventario
     EQUIP_ITEM = 0x0F,     // [opcode][inv_slot:1] — equipa, o usa si es poción (consume)
@@ -42,7 +44,10 @@ enum class ServerMsg : uint8_t {
     DROPPED_ITEMS = 0x8D,        // [opcode][count:2][[x:2][y:2][sheetId:1][itemId:2]...]
     ATTACK_RESULT = 0x8E,        // [opcode][attacker_id:2][target_type:1][target_id:2][damage:2][hit:1]
                                  // target_type: 0=player, 1=npc. hit: 1=impactó, 0=evadió.
-    INVENTORY_UPDATE = 0x8F      // [opcode][count:1][[itemId:1]...×count]
+    INVENTORY_UPDATE = 0x8F,     // [opcode][count:1][[itemId:1]...×count]
                                  // [eqWeapon:1][eqArmor:1][eqHelmet:1][eqShield:1]
                                  // Snapshot del inventario, sólo al dueño. 0 = slot vacío.
+    PLAYER_EQUIPPED = 0x90,      // [opcode][playerId:2][slot:1][itemId:1]
+                                 // Broadcast cuando alguien equipa/desequipa.
+                                 // slot: 0=arma, 1=armor, 2=casco, 3=escudo. itemId=0 = unequip.
 };

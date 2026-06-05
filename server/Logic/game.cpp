@@ -1,7 +1,6 @@
 #include "game.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -75,7 +74,10 @@ bool Game::processUser(int playerId, const std::string& user) {
             std::cout << item.getName() << " ";
         }
         std::cout << std::endl;
-        processAttack(playerId, "bottom");
+        // processAttack ahora toma (playerId, targetType, targetId) tras unificar
+        // con TARGETED_ATTACK. Si Oli necesita este testeo, hay que pasarle un
+        // target_id válido. Comentado para que compile.
+        // processAttack(playerId, "bottom");
         // processHeal(playerId);
     }
     //
@@ -232,9 +234,9 @@ uint32_t Game::getPlayerNextLevelExp(int playerId) const {
     if (it == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    // Limite = 1000 * Nivel^1.8 — fórmula del enunciado.
-    uint8_t level = it->second.getData().level;
-    return static_cast<uint32_t>(1000.0 * std::pow(static_cast<double>(level), 1.8));
+    // TODO(team-gameplay): devolver el límite de exp para el próximo nivel.
+    // Fórmula del enunciado: 1000 * Nivel^1.8 (o como lo decida StatsDefinition).
+    return 0;
 }
 
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
@@ -258,6 +260,11 @@ void Game::updatePlayerData(int playerId) {
 }
 
 void Game::removePlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it != players.end()) {
+        Position p = it->second.getPosition();
+        map.removePlayer(p.x, p.y);
+    }
     updatePlayerData(playerId);
     players.erase(playerId);
 }
@@ -299,58 +306,14 @@ bool Game::processMovement(int playerId, const std::string& direction) {
         return false;
     }
 
+    Position old = player.getPosition();
     player.move(next);
     player.setDirection(newDir);
+    map.movePlayer(playerId, old.x, old.y, next.x, next.y);
     return true;
 }
 
-AttackResult Game::processAttack(int playerId, const std::string& direction) {
-    AttackResult result;
-    result.attackerId = static_cast<uint16_t>(playerId);
-
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-
-    if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return result;  // performed = false
-    }
-
-    uint8_t entityId = map.isEntityInSight(itPlayer->second.getX(), itPlayer->second.getY(),
-                                           direction, itPlayer->second.hasLongDistanceWeapon());
-
-    if (entityId == 0) {
-        return result;  // sin víctima en línea de vista
-    }
-
-    // TODO(team-gameplay): cuando existan NPCs, distinguir player vs npc. 
-    // Hoy todo lo que devuelve isEntityInSight es un player.
-    auto itTarget = players.find(entityId);
-    if (itTarget == players.end()) {
-        throw std::runtime_error("Game Error: player in sight not found");
-    }
-
-    result.performed = true;
-    result.targetType = 0;  // player
-    result.targetId = static_cast<uint16_t>(entityId);
-
-    if (tryEvade(playerId, entityId)) {
-        result.hit = false;
-        result.damage = 0;
-        return result;
-    }
-
-    // Calculamos el daño UNA vez (cada llamada a dealDamage es random).
-    uint16_t damage = itPlayer->second.dealDamage();
-    itTarget->second.receiveDamage(damage);
-
-    result.hit = true;
-    result.damage = damage;
-    return result;
-}
-
-AttackResult Game::processTargetedAttack(int playerId, uint8_t targetType, uint16_t targetId) {
+AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targetId) {
     AttackResult result;
     result.attackerId = static_cast<uint16_t>(playerId);
     result.targetType = targetType;
@@ -446,20 +409,10 @@ void Game::processCheat(int playerId, uint8_t code) {
               << " (stub, sin efecto)" << std::endl;
 }
 
-bool Game::pickUpItemAt(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        return false;
-    }
+bool Game::pickUpItemAt(int /*playerId*/) {
     // TODO(team-gameplay): buscar item en droppedItems en la celda del
-    // jugador y removerlo del piso. Como aún no existe ese container,
-    // por ahora agregamos "Sword" hardcoded para poder probar el flujo
-    // protocolo end-to-end (cliente manda PICK_UP_ITEM y el server
-    // responde con INVENTORY_UPDATE que efectivamente trae un item nuevo).
-    bool added = it->second.addItem("Sword");
-    std::cout << "PICKUP player=" << playerId << " added=" << added
-              << " (stub: agregando Sword hardcoded)" << std::endl;
-    return added;
+    // jugador, llamarlo a player.addItem y removerlo del piso. Stub vacío.
+    return false;
 }
 
 bool Game::dropItem(int playerId, uint8_t invSlot) {

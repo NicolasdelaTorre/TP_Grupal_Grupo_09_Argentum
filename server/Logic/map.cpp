@@ -99,3 +99,18 @@ void Map::placePlayer(int playerId, int16_t x, int16_t y) {
 
     cells[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(playerId);
 }
+
+void Map::movePlayer(int playerId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY) {
+    if (isInBounds(oldX, oldY)) {
+        cells[static_cast<size_t>(oldY) * width + oldX].playerId = 0;
+    }
+    if (isInBounds(newX, newY)) {
+        cells[static_cast<size_t>(newY) * width + newX].playerId = static_cast<uint8_t>(playerId);
+    }
+}
+
+void Map::removePlayer(int16_t x, int16_t y) {
+    if (isInBounds(x, y)) {
+        cells[static_cast<size_t>(y) * width + x].playerId = 0;
+    }
+}

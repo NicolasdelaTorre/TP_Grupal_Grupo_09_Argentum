@@ -68,8 +68,6 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnTurn(message, clientId);
         case static_cast<uint8_t>(ClientMsg::ATTACK):
             return returnAttack(message, clientId);
-        case static_cast<uint8_t>(ClientMsg::TARGETED_ATTACK):
-            return returnTargetedAttack(message, clientId);
         case static_cast<uint8_t>(ClientMsg::CHEAT):
             return returnCheat(message, clientId);
         case static_cast<uint8_t>(ClientMsg::HEAD_SELECTED):
@@ -126,20 +124,6 @@ int ProtocolServer::returnUnequip(std::string& message, const int clientId) {
     return 1;
 }
 
-int ProtocolServer::returnTargetedAttack(std::string& message, const int clientId) {
-    auto it = clientSockets.find(clientId);
-    if (it == clientSockets.end()) {
-        return 0;
-    }
-    uint8_t targetType = it->second.receive_byte();
-    uint16_t targetId = it->second.receive_two_bytes_number();
-    message += "targeted_attack.";
-    message += std::to_string(targetType);
-    message += ".";
-    message += std::to_string(targetId);
-    return 1;
-}
-
 int ProtocolServer::returnHead(std::string& message, const int clientId) {
     auto it = clientSockets.find(clientId);
     if (it == clientSockets.end()) {
@@ -167,24 +151,12 @@ int ProtocolServer::returnAttack(std::string& message, const int clientId) {
     if (it == clientSockets.end()) {
         return 0;
     }
-    uint8_t receivedByte = it->second.receive_byte();
+    uint8_t targetType = it->second.receive_byte();
+    uint16_t targetId = it->second.receive_two_bytes_number();
     message += "attack.";
-    switch (receivedByte) {
-        case static_cast<uint8_t>(ClientMsg::TOP):
-            message += "top";
-            break;
-        case static_cast<uint8_t>(ClientMsg::BOTTOM):
-            message += "bottom";
-            break;
-        case static_cast<uint8_t>(ClientMsg::LEFT):
-            message += "left";
-            break;
-        case static_cast<uint8_t>(ClientMsg::RIGHT):
-            message += "right";
-            break;
-        default:
-            throw std::runtime_error("Protocol Error: unknown attack direction");
-    }
+    message += std::to_string(targetType);
+    message += ".";
+    message += std::to_string(targetId);
     return 1;
 }
 
@@ -326,6 +298,8 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
             sendAttackResult(it->second, message);
         } else if (message.rfind("INVENTORY:", 0) == 0) {
             sendInventoryUpdate(it->second, message);
+        } else if (message.rfind("PLAYER_EQUIPPED:", 0) == 0) {
+            sendPlayerEquipped(it->second, message);
         } else {
             throw std::runtime_error("Protocol Error: unknown server's command: " + message);
         }
@@ -521,6 +495,24 @@ void ProtocolServer::sendInventoryUpdate(common_protocol& client, const std::str
     client.sendByte(eqA);
     client.sendByte(eqH);
     client.sendByte(eqS);
+}
+
+void ProtocolServer::sendPlayerEquipped(common_protocol& client, const std::string& message) {
+    // Formato: "PLAYER_EQUIPPED:<playerId>:<slot>:<itemId>"
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    size_t c3 = message.find(':', c2 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed PLAYER_EQUIPPED message: " + message);
+    }
+    uint16_t playerId = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+    uint8_t slot = static_cast<uint8_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
+    uint8_t itemId = static_cast<uint8_t>(std::stoi(message.substr(c3 + 1)));
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_EQUIPPED));
+    client.send_two_bytes_number(playerId);
+    client.sendByte(slot);
+    client.sendByte(itemId);
 }
 
 void ProtocolServer::sendMap(common_protocol& client) {

@@ -87,15 +87,11 @@ public:
 
     void setSkin(int playerId, const std::string& skinId);
 
-    // Resuelve un ataque desde playerId en la dirección dada. La lógica de
-    // sight, daño y evasión vive adentro; el gameloop solo arma el broadcast
-    // a partir del AttackResult.
-    AttackResult processAttack(int playerId, const std::string& direction);
-
-    // Resuelve un ataque dirigido a un target específico (para ranged/magia).
-    // targetType: 0 = player, 1 = npc. El server valida que el target exista,
-    // esté vivo y esté en rango del arma equipada antes de aplicar el daño.
-    AttackResult processTargetedAttack(int playerId, uint8_t targetType, uint16_t targetId);
+    // Resuelve un ataque del playerId contra un target. El gameloop solo
+    // arma el broadcast a partir del AttackResult. La lógica de validar
+    // arma equipada, alcance (ranged vs adyacencia melee) y daño vive adentro.
+    // targetType: 0 = player, 1 = npc.
+    AttackResult processAttack(int playerId, uint8_t targetType, uint16_t targetId);
 
     // Aplica un cheat al jugador. code mapea al enum CheatCode (common/DTOs.h):
     // 0 = SUICIDE, 1 = GOLD, 2 = EXPERIENCE.

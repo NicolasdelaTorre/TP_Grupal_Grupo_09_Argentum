@@ -46,39 +46,17 @@ void Gameloop::processCommand(const std::string& command) {
         return;
     }
 
-    // "attack.<dir>" — resuelve el ataque y broadcast del resultado a todos.
+    // "attack.<type>.<id>" — ataque a un target específico. El server valida
+    // arma equipada y alcance (rango/adyacencia). Broadcast del resultado a todos.
     if (cmd == "attack") {
-        if (game.hasPlayer(idPlayer)) {
-            std::string direction = command.substr(posCommand + 1);
-            AttackResult r = game.processAttack(idPlayer, direction);
-            std::cout << "ATTACK from player=" << idPlayer << " dir=" << direction
-                      << " performed=" << r.performed << " hit=" << r.hit
-                      << " target=" << r.targetId << " dmg=" << r.damage << std::endl;
-            if (r.performed) {
-                std::string msg = "ATTACK_RESULT:" + std::to_string(r.attackerId) + ":" +
-                                  std::to_string(static_cast<int>(r.targetType)) + ":" +
-                                  std::to_string(r.targetId) + ":" + std::to_string(r.damage) +
-                                  ":" + std::to_string(r.hit ? 1 : 0);
-                clientQueues.broadcast(msg);
-                // El target sufrió daño → mandarle sus stats actualizados.
-                if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
-                    clientQueues.sendToClient(r.targetId, buildStatsMessage(r.targetId));
-                }
-            }
-        }
-        return;
-    }
-
-    // "targeted_attack.<type>.<id>" — ataque a un target específico (ranged/magia).
-    if (cmd == "targeted_attack") {
         if (game.hasPlayer(idPlayer)) {
             std::string payload = command.substr(posCommand + 1);
             size_t dot = payload.find('.');
             if (dot != std::string::npos) {
                 uint8_t targetType = static_cast<uint8_t>(std::stoi(payload.substr(0, dot)));
                 uint16_t targetId = static_cast<uint16_t>(std::stoi(payload.substr(dot + 1)));
-                AttackResult r = game.processTargetedAttack(idPlayer, targetType, targetId);
-                std::cout << "TARGETED_ATTACK from player=" << idPlayer
+                AttackResult r = game.processAttack(idPlayer, targetType, targetId);
+                std::cout << "ATTACK from player=" << idPlayer
                           << " ttype=" << (int)targetType << " tid=" << targetId
                           << " performed=" << r.performed << " hit=" << r.hit
                           << " dmg=" << r.damage << std::endl;
@@ -119,11 +97,13 @@ void Gameloop::processCommand(const std::string& command) {
     }
 
     // Comandos de inventario: pickup / drop / equip / unequip.
-    // Todos terminan mandando INVENTORY_UPDATE sólo al dueño.
+    // Todos mandan INVENTORY_UPDATE al dueño; si cambió algún slot equipado,
+    // además broadcast PLAYER_EQUIPPED para que los demás vean la vestimenta.
     if (cmd == "pickup" || cmd == "drop" || cmd == "equip" || cmd == "unequip") {
         if (!game.hasPlayer(idPlayer)) {
             return;
         }
+        auto before = game.getInventorySnapshot(idPlayer);
         bool ok = false;
         if (cmd == "pickup") {
             ok = game.pickUpItemAt(idPlayer);
@@ -140,17 +120,34 @@ void Gameloop::processCommand(const std::string& command) {
         if (!ok) {
             return;
         }
-        // Armamos el INVENTORY_UPDATE como string interno.
-        auto snap = game.getInventorySnapshot(idPlayer);
-        std::string msg = "INVENTORY:" + std::to_string(snap.items.size());
-        for (uint8_t id: snap.items) {
+        auto after = game.getInventorySnapshot(idPlayer);
+
+        // INVENTORY_UPDATE al dueño (snapshot completo).
+        std::string msg = "INVENTORY:" + std::to_string(after.items.size());
+        for (uint8_t id: after.items) {
             msg += ":" + std::to_string(static_cast<int>(id));
         }
-        msg += ":" + std::to_string(static_cast<int>(snap.equippedWeapon));
-        msg += ":" + std::to_string(static_cast<int>(snap.equippedArmor));
-        msg += ":" + std::to_string(static_cast<int>(snap.equippedHelmet));
-        msg += ":" + std::to_string(static_cast<int>(snap.equippedShield));
+        msg += ":" + std::to_string(static_cast<int>(after.equippedWeapon));
+        msg += ":" + std::to_string(static_cast<int>(after.equippedArmor));
+        msg += ":" + std::to_string(static_cast<int>(after.equippedHelmet));
+        msg += ":" + std::to_string(static_cast<int>(after.equippedShield));
         clientQueues.sendToClient(idPlayer, msg);
+
+        // PLAYER_EQUIPPED broadcast por cada slot equipado que cambió.
+        const uint8_t beforeSlots[4] = {before.equippedWeapon, before.equippedArmor,
+                                        before.equippedHelmet, before.equippedShield};
+        const uint8_t afterSlots[4] = {after.equippedWeapon, after.equippedArmor,
+                                       after.equippedHelmet, after.equippedShield};
+        // Al dueño NO le mandamos PLAYER_EQUIPPED: ya recibió INVENTORY_UPDATE
+        // con todos sus slots equipados. Solo notificamos a los demás.
+        for (uint8_t s = 0; s < 4; s++) {
+            if (beforeSlots[s] != afterSlots[s]) {
+                std::string eqMsg = "PLAYER_EQUIPPED:" + std::to_string(idPlayer) + ":" +
+                                    std::to_string(static_cast<int>(s)) + ":" +
+                                    std::to_string(static_cast<int>(afterSlots[s]));
+                clientQueues.broadcastExcept(idPlayer, eqMsg);
+            }
+        }
         return;
     }
 
@@ -199,7 +196,7 @@ void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
     // Stats iniciales (hp/mana/gold/exp/level — snapshot completo).
     clientQueues.sendToClient(idPlayer, buildStatsMessage(idPlayer));
 
-    // Mandarle un NEW_PLAYER por cada jugador que ya estaba.
+    // Mandarle un NEW_PLAYER por cada jugador que ya estaba + sus PLAYER_EQUIPPED.
     for (int otherId: game.getPlayerIds()) {
         if (otherId == idPlayer)
             continue;
@@ -211,9 +208,10 @@ void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
                          ":" + std::to_string(op.y) + ":" + std::to_string(odir) + ":" +
                          std::to_string(oskin) + ":" + oname;
         clientQueues.sendToClient(idPlayer, np);
+        sendEquipmentSnapshot(otherId, idPlayer);
     }
 
-    // Avisarles a los demás del recién llegado.
+    // Avisarles a los demás del recién llegado + su vestimenta.
     const std::string& myName = game.getPlayerName(idPlayer);
     uint8_t myDir = game.getPlayerDirection(idPlayer);
     uint8_t mySkin = game.getPlayerSkin(idPlayer);
@@ -221,6 +219,25 @@ void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
                                std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
                                std::to_string(myDir) + ":" + std::to_string(mySkin) + ":" + myName;
     clientQueues.broadcastExcept(idPlayer, broadcastMsg);
+    sendEquipmentSnapshot(idPlayer, -1);  // -1 = broadcast a todos menos a él mismo
+}
+
+void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
+    auto snap = game.getInventorySnapshot(idPlayer);
+    const uint8_t slots[4] = {snap.equippedWeapon, snap.equippedArmor,
+                              snap.equippedHelmet, snap.equippedShield};
+    for (uint8_t s = 0; s < 4; s++) {
+        if (slots[s] == 0)
+            continue;  // nada equipado, no mando
+        std::string eqMsg = "PLAYER_EQUIPPED:" + std::to_string(idPlayer) + ":" +
+                            std::to_string(static_cast<int>(s)) + ":" +
+                            std::to_string(static_cast<int>(slots[s]));
+        if (recipientId < 0) {
+            clientQueues.broadcastExcept(idPlayer, eqMsg);
+        } else {
+            clientQueues.sendToClient(recipientId, eqMsg);
+        }
+    }
 }
 
 std::string Gameloop::buildStatsMessage(int idPlayer) {

@@ -44,11 +44,8 @@ private:
     // Deserializa la cabeza elegida en char creation: "head.<id>".
     int returnHead(std::string& message, const int clientId);
 
-    // Deserializa un ataque del cliente: "attack.<direccion>".
+    // Deserializa un ataque del cliente: "attack.<type>.<id>".
     int returnAttack(std::string& message, const int clientId);
-
-    // Deserializa un ataque a target específico: "targeted_attack.<type>.<id>".
-    int returnTargetedAttack(std::string& message, const int clientId);
 
     // Deserializa un /tomar: "pickup.".
     int returnPickUp(std::string& message, const int clientId);
@@ -85,6 +82,9 @@ private:
 
     // Parsea "INVENTORY:n:id1:id2:...:eqW:eqA:eqH:eqS" y manda INVENTORY_UPDATE.
     void sendInventoryUpdate(common_protocol& client, const std::string& message);
+
+    // Parsea "PLAYER_EQUIPPED:playerId:slot:itemId" y manda PLAYER_EQUIPPED.
+    void sendPlayerEquipped(common_protocol& client, const std::string& message);
 
 public:
     explicit ProtocolServer(const char* port);

@@ -64,6 +64,14 @@ void client_receiver::run() {
                     break;
                 }
 
+                case ServerMsg::PLAYER_EQUIPPED: {
+                    EquipmentEvent ev = protocol.recv_player_equipped_payload();
+                    server_queue.push("EQUIPPED:" + std::to_string(ev.playerId) + ":" +
+                                      std::to_string(static_cast<int>(ev.slot)) + ":" +
+                                      std::to_string(static_cast<int>(ev.itemId)));
+                    break;
+                }
+
                 case ServerMsg::INVENTORY_UPDATE: {
                     InventoryEvent ev = protocol.recv_inventory_update_payload();
                     std::string msg = "INVENTORY:" + std::to_string(ev.items.size());
