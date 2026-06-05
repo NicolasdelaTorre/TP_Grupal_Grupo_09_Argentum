@@ -5,6 +5,8 @@
 #include <iostream>
 #include <utility>
 
+#include "tile_textures.h"
+
 namespace {
 
 // ReceivedMap (wire) → GameMap (lo que pinta el MapRenderer).
@@ -15,14 +17,16 @@ GameMap convertToGameMap(const ReceivedMap& m) {
     gm.tiles.resize(m.cells.size());
     for (size_t i = 0; i < m.cells.size(); i++) {
         const auto& cell = m.cells[i];
+        // safeZone fuerza piso de ciudad (priority sobre textureId del bioma).
+        if (cell.safeZone) {
+            gm.tiles[i].floor = TileType::INTERIOR;
+        } else {
+            gm.tiles[i].floor = tileTypeFromTextureId(cell.textureId);
+        }
         if (cell.obstacleId != 0) {
             gm.tiles[i].blocked = true;
             gm.tiles[i].obstacleType = static_cast<ObstacleType>(cell.obstacleId);
-        } else if (cell.safeZone) {
-            gm.tiles[i].floor = TileType::INTERIOR;
-            gm.tiles[i].blocked = false;
         } else {
-            gm.tiles[i].floor = TileType::GRASS;
             gm.tiles[i].blocked = false;
         }
     }
@@ -133,6 +137,7 @@ void GameScreen::render() {
 }
 
 bool GameScreen::handleEvents(float dt) {
+    // Para resolver clicks en coords de mundo necesitamos la cámara.
     int screenW, screenH;
     SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
     float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
@@ -140,36 +145,89 @@ bool GameScreen::handleEvents(float dt) {
     camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
     camY = std::max(0.0f, std::min(camY, (float)(map.height * TILE_SIZE - screenH)));
 
+    // Acciones edge-triggered: un evento = una acción. Filtramos los repeats
+    // sintéticos del OS con e.key.repeat == 0.
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return false;
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
-            return false;
+        if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_ESCAPE)
+                return false;
+            if (e.key.repeat == 0) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_F1:
+                        events_queue.push("CHEAT_SUICIDE");
+                        break;
+                    case SDLK_F2:
+                        events_queue.push("CHEAT_GOLD");
+                        break;
+                    case SDLK_F3:
+                        events_queue.push("CHEAT_EXPERIENCE");
+                        break;
+                    case SDLK_k: {
+                        // Atacamos en la dirección que el jugador está mirando.
+                        switch (player.dir) {
+                            case Direction::UP:
+                                events_queue.push("ATTACK_TOP");
+                                break;
+                            case Direction::DOWN:
+                                events_queue.push("ATTACK_BOTTOM");
+                                break;
+                            case Direction::LEFT:
+                                events_queue.push("ATTACK_LEFT");
+                                break;
+                            case Direction::RIGHT:
+                                events_queue.push("ATTACK_RIGHT");
+                                break;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+            // Click en un otherPlayer = ataque. Server resuelve por dirección,
+            // así que traducimos el delta a la dirección dominante.
             int clickTileX = (int)((e.button.x + camX) / TILE_SIZE);
             int clickTileY = (int)((e.button.y + camY) / TILE_SIZE);
-            for (const auto& entry : otherPlayers) {
+            for (const auto& entry: otherPlayers) {
                 const auto& op = entry.second;
                 int opTileX = (int)(op.visual.x + HEAD_OFFSET);
                 int opTileY = (int)(op.visual.y + FEET_OFFSET);
                 if (opTileX == clickTileX && opTileY == clickTileY) {
-                    events_queue.push("ATTACK:" + std::to_string(myId) + ":" +
-                                      std::to_string(entry.first));
-                    if (player.weaponId == 2) {  // Arco
+                    // Decisión: si el arma es de rango (arco/magia), mando
+                    // TARGETED_ATTACK con el id del target — sirve para
+                    // diagonales y cualquier distancia. Si es melee, mando
+                    // ATTACK con la dirección dominante.
+                    const bool isRanged = (player.weaponId == 2);
+                    if (isRanged) {
+                        events_queue.push("TARGETED_ATTACK:0:" + std::to_string(entry.first));
+                    } else {
+                        int myTileX = (int)(player.x + HEAD_OFFSET);
+                        int myTileY = (int)(player.y + FEET_OFFSET);
+                        int ddx = opTileX - myTileX;
+                        int ddy = opTileY - myTileY;
+                        if (std::abs(ddx) >= std::abs(ddy)) {
+                            events_queue.push(ddx >= 0 ? "ATTACK_RIGHT" : "ATTACK_LEFT");
+                        } else {
+                            events_queue.push(ddy >= 0 ? "ATTACK_BOTTOM" : "ATTACK_TOP");
+                        }
+                    }
+                    if (isRanged) {  // Arco — visual de flecha
                         float sx = player.x + 0.5f;
                         float sy = player.y + 0.5f;
                         float tx = op.visual.x + 0.5f;
                         float ty = op.visual.y + 0.5f;
-                        float dx = tx - sx;
-                        float dy = ty - sy;
-                        float dist = std::sqrt(dx * dx + dy * dy);
+                        float ax = tx - sx;
+                        float ay = ty - sy;
+                        float dist = std::sqrt(ax * ax + ay * ay);
                         if (dist > 0.0f) {
                             ArrowProjectile arrow;
                             arrow.x = sx;
                             arrow.y = sy;
-                            arrow.vx = (dx / dist) * ARROW_SPEED;
-                            arrow.vy = (dy / dist) * ARROW_SPEED;
+                            arrow.vx = (ax / dist) * ARROW_SPEED;
+                            arrow.vy = (ay / dist) * ARROW_SPEED;
                             arrow.lifetime = dist / ARROW_SPEED + 0.3f;
                             arrow.arrowType = 0;
                             arrows.push_back(arrow);
@@ -181,11 +239,9 @@ bool GameScreen::handleEvents(float dt) {
         }
     }
 
-    // Movimiento continuo con teclas sostenidas
+    // Movimiento continuo con teclas sostenidas (level-triggered).
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
-
-    const char* msg = nullptr;
 
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
@@ -198,25 +254,9 @@ bool GameScreen::handleEvents(float dt) {
         player.dir = Direction::LEFT;
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
-        std::cout << player.id << std::endl;
         player.dir = Direction::RIGHT;
-    } else if (keys[SDL_SCANCODE_F1]) {
-        msg = "CHEAT_SUICIDE";
-    } else if (keys[SDL_SCANCODE_F2]) {
-        msg = "CHEAT_GOLD";
-    } else if (keys[SDL_SCANCODE_F3]) {
-        msg = "CHEAT_EXPERIENCE";
-    }else if (keys[SDL_SCANCODE_F4]){
-        droppedItems.push_back({(int16_t)player.x, (int16_t)player.y, 0, this->a++});
-        SDL_Delay(200);
-    }else if (keys[SDL_SCANCODE_F5]){
-        bloodEffects.push_back({player.x, player.y, BLOOD_DURATION});
-        SDL_Delay(200);
     }
 
-    if (msg) {
-        events_queue.push(msg);
-    }
     player.moving = (dx != 0 || dy != 0);
 
     // Mover si el tile destino no está bloqueado
@@ -377,7 +417,7 @@ void GameScreen::consumeServerEvents() {
             size_t c6 = event.find(':', c5 + 1);
             if (c6 == std::string::npos)
                 continue;
-            player.id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
             int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
             int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
@@ -390,8 +430,6 @@ void GameScreen::consumeServerEvents() {
             op.visual.skin = skin;
             op.name = event.substr(c6 + 1);
             otherPlayers[id] = std::move(op);
-            op.name = event.substr(c5 + 1);
-            otherPlayers[player.id] = std::move(op);
         } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
             // PLAYER_MOVED:<id>:<x>:<y>:<dir>
             size_t c1 = event.find(':');
@@ -415,6 +453,25 @@ void GameScreen::consumeServerEvents() {
             size_t c1 = event.find(':');
             int id = std::stoi(event.substr(c1 + 1));
             otherPlayers.erase(id);
+        } else if (event.rfind("ATTACK_RESULT:", 0) == 0) {
+            // ATTACK_RESULT:<atk>:<ttype>:<tid>:<dmg>:<hit>
+            // TODO(team-ui): mostrar feedback visual (número flotante de daño
+            // sobre el target si hit==1, "MISS" si hit==0, animación de impacto).
+            // Por ahora solo loggeamos para confirmar que el evento llega.
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            size_t c4 = event.find(':', c3 + 1);
+            size_t c5 = event.find(':', c4 + 1);
+            if (c5 == std::string::npos)
+                continue;
+            int atk = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int tid = std::stoi(event.substr(c3 + 1, c4 - c3 - 1));
+            int dmg = std::stoi(event.substr(c4 + 1, c5 - c4 - 1));
+            int hit = std::stoi(event.substr(c5 + 1));
+            std::cout << "ATTACK: " << atk << " -> " << tid
+                      << (hit ? " hit for " : " MISS (")
+                      << dmg << (hit ? " dmg" : ")") << std::endl;
         } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
             // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
             droppedItems.clear();

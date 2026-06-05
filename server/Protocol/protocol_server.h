@@ -38,6 +38,18 @@ private:
     // Deserializa el TURN (gira sin moverse): "turn.<direccion>".
     int returnTurn(std::string& message, const int clientId);
 
+    // Deserializa un cheat del cliente: "cheat.<code>". Ver enum CheatCode en common/DTOs.h.
+    int returnCheat(std::string& message, const int clientId);
+
+    // Deserializa la cabeza elegida en char creation: "head.<id>".
+    int returnHead(std::string& message, const int clientId);
+
+    // Deserializa un ataque del cliente: "attack.<direccion>".
+    int returnAttack(std::string& message, const int clientId);
+
+    // Deserializa un ataque a target específico: "targeted_attack.<type>.<id>".
+    int returnTargetedAttack(std::string& message, const int clientId);
+
     // Manda el mapa entero (opcode + width + height + cellCount + cells).
     void sendMap(common_protocol& client);
 
@@ -55,6 +67,9 @@ private:
 
     // Parsea "STATS:hp:maxHp:level" y manda STATS_JUGADOR.
     void sendStats(common_protocol& client, const std::string& message);
+
+    // Parsea "ATTACK_RESULT:atk:ttype:tid:dmg:hit" y manda ATTACK_RESULT.
+    void sendAttackResult(common_protocol& client, const std::string& message);
 
 public:
     explicit ProtocolServer(const char* port);

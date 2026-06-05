@@ -25,10 +25,6 @@ bool Game::processCommand(int playerId, const std::string& command) {
     } else if (dataType == "turn") {
         std::string direction = command.substr(commandPosition + 1);
         return turnPlayer(playerId, direction);
-    } else if (dataType == "attack") {
-        // Format: "attack"
-        std::string direction = command.substr(commandPosition + 1);
-        return processAttack(playerId, direction);
     } else if (dataType == "heal") {
         // Format: "heal"
         return processHeal(playerId);
@@ -265,37 +261,100 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     return true;
 }
 
-bool Game::processAttack(int playerId, const std::string& direction) {
+AttackResult Game::processAttack(int playerId, const std::string& direction) {
+    AttackResult result;
+    result.attackerId = static_cast<uint16_t>(playerId);
+
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
 
     if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return false;
+        return result;  // performed = false
     }
 
     uint8_t entityId = map.isEntityInSight(itPlayer->second.getX(), itPlayer->second.getY(),
                                            direction, itPlayer->second.hasLongDistanceWeapon());
 
-    if (entityId == 0)
-        return false;
+    if (entityId == 0) {
+        return result;  // sin víctima en línea de vista
+    }
 
+    // TODO(team-gameplay): cuando existan NPCs, distinguir player vs npc. 
+    // Hoy todo lo que devuelve isEntityInSight es un player.
     auto itTarget = players.find(entityId);
     if (itTarget == players.end()) {
         throw std::runtime_error("Game Error: player in sight not found");
     }
 
-    std::cout << "Player " << itPlayer->second.getName() << " attacks player "
-              << itTarget->second.getName() << " with " << itTarget->second.getData().health
-              << " for " << itPlayer->second.dealDamage() << " damage!" << std::endl;
+    result.performed = true;
+    result.targetType = 0;  // player
+    result.targetId = static_cast<uint16_t>(entityId);
 
-    itTarget->second.receiveDamage(itPlayer->second.dealDamage());
+    if (tryEvade(playerId, entityId)) {
+        result.hit = false;
+        result.damage = 0;
+        return result;
+    }
 
-    std::cout << "Player " << itTarget->second.getName() << " has "
-              << itTarget->second.getData().health << " health left!" << std::endl;
+    // Calculamos el daño UNA vez (cada llamada a dealDamage es random).
+    uint16_t damage = itPlayer->second.dealDamage();
+    itTarget->second.receiveDamage(damage);
 
-    return true;
+    result.hit = true;
+    result.damage = damage;
+    return result;
+}
+
+AttackResult Game::processTargetedAttack(int playerId, uint8_t targetType, uint16_t targetId) {
+    AttackResult result;
+    result.attackerId = static_cast<uint16_t>(playerId);
+    result.targetType = targetType;
+    result.targetId = targetId;
+
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
+        return result;  // performed = false
+    }
+
+    // TODO(team-gameplay): validar rango. El cliente puede mandar cualquier
+    // target_id; el server debe rechazar si no está al alcance del arma
+
+    if (targetType == 0) {
+        // target = player
+        auto itTarget = players.find(targetId);
+        if (itTarget == players.end() || !itTarget->second.isAlive()) {
+            return result;
+        }
+        result.performed = true;
+        if (tryEvade(playerId, static_cast<int>(targetId))) {
+            return result;  // hit = false, damage = 0
+        }
+        uint16_t damage = itPlayer->second.dealDamage();
+        itTarget->second.receiveDamage(damage);
+        result.hit = true;
+        result.damage = damage;
+    } else if (targetType == 1) {
+        // target = npc. TODO(team-gameplay): damageNpc(targetId, damage).
+        result.performed = true;
+        result.hit = false;
+        result.damage = 0;
+    }
+
+    return result;
+}
+
+bool Game::tryEvade(int /*attackerId*/, int /*targetId*/) const {
+    // TODO(team-gameplay): implementar fórmula real.
+    // Idea: comparar dexterity del defensor vs del atacante.
+    //   chance_evade = clamp((def_dex - atk_dex) * factor, min%, max%)
+    // Por ahora nadie evade.
+    return false;
 }
 
 bool Game::processHeal(int playerId) {
@@ -328,6 +387,20 @@ void Game::setSkin(int playerId, const std::string& skinId) {
 
     // Cambiar el cero proximamente
     itPlayer->second.setSkin(std::stoi(skinId), 0);
+}
+
+void Game::processCheat(int playerId, uint8_t code) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    // TODO(team-gameplay): implementar la lógica de cada cheat.
+    //   0 = SUICIDE     → player.receiveDamage(player.getHealth())
+    //   1 = GOLD        → sumar 1000 al gold persistido
+    //   2 = EXPERIENCE  → sumar 1000 a la experiencia, levelup si corresponde
+    // Hoy solo loggeamos para confirmar que el mensaje llegó end-to-end.
+    std::cout << "Cheat recibido: player=" << playerId << " code=" << static_cast<int>(code)
+              << " (stub, sin efecto)" << std::endl;
 }
 
 Game::~Game() {

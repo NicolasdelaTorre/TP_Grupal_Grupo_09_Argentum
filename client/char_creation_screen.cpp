@@ -7,7 +7,7 @@
 // Skins disponibles en AO_IMGS/Skins/ (excluye Cabezas.png y Gorros.png)
 const char* const CharCreationScreen::SKIN_FILES[NUM_SKINS] = {
         "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",   "Hechicero.png",
-        "Hechicera.png",    "skin_default.png",     "Caballero_blanco.png", "Gladiador_azul.png",
+        "Hechicera.png",    "skin_default.png",     "Caballero_blanco.png", "Gladiador_violeta.png",
         "Hechicero.png",    "Hechicera.png",
 };
 

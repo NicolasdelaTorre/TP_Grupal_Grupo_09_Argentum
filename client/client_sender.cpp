@@ -10,9 +10,10 @@ client_sender::client_sender(client_protocol& protocol, Queue<std::string>& even
 
 
 // Formato de eventos esperados en la queue:
-//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT"       — cruzó un tile, send_move
-//   "TURN_TOP" / "TURN_BOTTOM" / etc.          — giró sin moverse, send_turn
-//   "ATTACK:<attackerId>:<targetId>"            — ataque a otro jugador
+//   "TOP" / "BOTTOM" / "LEFT" / "RIGHT"                — cruzó un tile, send_move
+//   "TURN_TOP" / "TURN_BOTTOM" / etc.                  — giró sin moverse, send_turn
+//   "ATTACK_TOP" / "ATTACK_BOTTOM" / etc.              — ataca en esa dirección
+//   "CHEAT_SUICIDE" / "CHEAT_GOLD" / "CHEAT_EXPERIENCE"— sendCheat con el code
 void client_sender::run() {
     try {
         while (should_keep_running()) {
@@ -33,13 +34,28 @@ void client_sender::run() {
                 protocol.send_turn(ClientMsg::LEFT);
             else if (event == "TURN_RIGHT")
                 protocol.send_turn(ClientMsg::RIGHT);
-            else if (event.rfind("ATTACK:", 0) == 0) {
+            else if (event == "ATTACK_TOP")
+                protocol.send_attack(ClientMsg::TOP);
+            else if (event == "ATTACK_BOTTOM")
+                protocol.send_attack(ClientMsg::BOTTOM);
+            else if (event == "ATTACK_LEFT")
+                protocol.send_attack(ClientMsg::LEFT);
+            else if (event == "ATTACK_RIGHT")
+                protocol.send_attack(ClientMsg::RIGHT);
+            else if (event.rfind("TARGETED_ATTACK:", 0) == 0) {
+                // Formato: "TARGETED_ATTACK:<type>:<id>"
                 size_t c1 = event.find(':');
                 size_t c2 = event.find(':', c1 + 1);
-                uint16_t attackerId = static_cast<uint16_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
-                uint16_t targetId   = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1)));
-                protocol.send_attack(attackerId, targetId);
+                uint8_t type = static_cast<uint8_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
+                uint16_t tid = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1)));
+                protocol.send_targeted_attack(type, tid);
             }
+            else if (event == "CHEAT_SUICIDE")
+                protocol.sendCheat(CheatCode::SUICIDE);
+            else if (event == "CHEAT_GOLD")
+                protocol.sendCheat(CheatCode::GOLD);
+            else if (event == "CHEAT_EXPERIENCE")
+                protocol.sendCheat(CheatCode::EXPERIENCE);
         }
     } catch (const ClosedQueue&) {}
 }

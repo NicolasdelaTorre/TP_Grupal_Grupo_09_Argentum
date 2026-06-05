@@ -27,7 +27,10 @@ ServerMsg client_protocol::recv_msg_type() {
     return static_cast<ServerMsg>(opcode);
 }
 
-void client_protocol::sendCheat(CheatCode cheat) { protocol.sendByte(static_cast<uint8_t>(cheat)); }
+void client_protocol::sendCheat(CheatCode cheat) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::CHEAT));
+    protocol.sendByte(static_cast<uint8_t>(cheat));
+}
 
 void client_protocol::close() { protocol.shutdown(); }
 
@@ -54,10 +57,25 @@ Position client_protocol::recv_login_ok_payload() {
     return Position{x, y};
 }
 
-void client_protocol::send_attack(uint16_t attackerId, uint16_t targetId) {
+void client_protocol::send_attack(ClientMsg direction) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
-    protocol.send_two_bytes_number(attackerId);
+    protocol.sendByte(static_cast<uint8_t>(direction));
+}
+
+void client_protocol::send_targeted_attack(uint8_t targetType, uint16_t targetId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::TARGETED_ATTACK));
+    protocol.sendByte(targetType);
     protocol.send_two_bytes_number(targetId);
+}
+
+AttackResultEvent client_protocol::recv_attack_result_payload() {
+    AttackResultEvent ev;
+    ev.attackerId = protocol.receive_two_bytes_number();
+    ev.targetType = protocol.receive_byte();
+    ev.targetId = protocol.receive_two_bytes_number();
+    ev.damage = protocol.receive_two_bytes_number();
+    ev.hit = (protocol.receive_byte() != 0);
+    return ev;
 }
 
 ReceivedMap client_protocol::recv_map() {
@@ -120,6 +138,7 @@ void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);
 }
+
 std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {
     uint16_t count = protocol.receive_two_bytes_number();
     std::vector<DroppedItem> items;

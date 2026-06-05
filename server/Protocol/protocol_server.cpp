@@ -67,11 +67,78 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
         case static_cast<uint8_t>(ClientMsg::TURN):
             return returnTurn(message, clientId);
         case static_cast<uint8_t>(ClientMsg::ATTACK):
-            std::cout << "Received attack command from client " << clientId << std::endl;
-            return 1;
+            return returnAttack(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::TARGETED_ATTACK):
+            return returnTargetedAttack(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::CHEAT):
+            return returnCheat(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::HEAD_SELECTED):
+            return returnHead(message, clientId);
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }
+}
+
+int ProtocolServer::returnTargetedAttack(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t targetType = it->second.receive_byte();
+    uint16_t targetId = it->second.receive_two_bytes_number();
+    message += "targeted_attack.";
+    message += std::to_string(targetType);
+    message += ".";
+    message += std::to_string(targetId);
+    return 1;
+}
+
+int ProtocolServer::returnHead(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t headId = it->second.receive_byte();
+    message += "head.";
+    message += std::to_string(headId);
+    return 1;
+}
+
+int ProtocolServer::returnCheat(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t code = it->second.receive_byte();
+    message += "cheat.";
+    message += std::to_string(code);
+    return 1;
+}
+
+int ProtocolServer::returnAttack(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t receivedByte = it->second.receive_byte();
+    message += "attack.";
+    switch (receivedByte) {
+        case static_cast<uint8_t>(ClientMsg::TOP):
+            message += "top";
+            break;
+        case static_cast<uint8_t>(ClientMsg::BOTTOM):
+            message += "bottom";
+            break;
+        case static_cast<uint8_t>(ClientMsg::LEFT):
+            message += "left";
+            break;
+        case static_cast<uint8_t>(ClientMsg::RIGHT):
+            message += "right";
+            break;
+        default:
+            throw std::runtime_error("Protocol Error: unknown attack direction");
+    }
+    return 1;
 }
 
 int ProtocolServer::returnSkin(std::string& message, const int clientId) {
@@ -208,6 +275,8 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
             sendPlayerDisconnected(it->second, message);
         } else if (message.rfind("STATS:", 0) == 0) {
             sendStats(it->second, message);
+        } else if (message.rfind("ATTACK_RESULT:", 0) == 0) {
+            sendAttackResult(it->second, message);
         } else {
             throw std::runtime_error("Protocol Error: unknown server's command: " + message);
         }
@@ -316,6 +385,31 @@ void ProtocolServer::sendStats(common_protocol& client, const std::string& messa
     client.send_two_bytes_number(hp);
     client.send_two_bytes_number(maxHp);
     client.sendByte(level);
+}
+
+void ProtocolServer::sendAttackResult(common_protocol& client, const std::string& message) {
+    // Formato: "ATTACK_RESULT:<atk>:<ttype>:<tid>:<dmg>:<hit>"
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    size_t c3 = message.find(':', c2 + 1);
+    size_t c4 = message.find(':', c3 + 1);
+    size_t c5 = message.find(':', c4 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos ||
+        c4 == std::string::npos || c5 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed ATTACK_RESULT message: " + message);
+    }
+    uint16_t atk = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+    uint8_t ttype = static_cast<uint8_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
+    uint16_t tid = static_cast<uint16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
+    uint16_t dmg = static_cast<uint16_t>(std::stoi(message.substr(c4 + 1, c5 - c4 - 1)));
+    uint8_t hit = static_cast<uint8_t>(std::stoi(message.substr(c5 + 1)));
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::ATTACK_RESULT));
+    client.send_two_bytes_number(atk);
+    client.sendByte(ttype);
+    client.send_two_bytes_number(tid);
+    client.send_two_bytes_number(dmg);
+    client.sendByte(hit);
 }
 
 void ProtocolServer::sendMap(common_protocol& client) {

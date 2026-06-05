@@ -46,6 +46,95 @@ void Gameloop::processCommand(const std::string& command) {
         return;
     }
 
+    // "attack.<dir>" — resuelve el ataque y broadcast del resultado a todos.
+    if (cmd == "attack") {
+        if (game.hasPlayer(idPlayer)) {
+            std::string direction = command.substr(posCommand + 1);
+            AttackResult r = game.processAttack(idPlayer, direction);
+            std::cout << "ATTACK from player=" << idPlayer << " dir=" << direction
+                      << " performed=" << r.performed << " hit=" << r.hit
+                      << " target=" << r.targetId << " dmg=" << r.damage << std::endl;
+            if (r.performed) {
+                std::string msg = "ATTACK_RESULT:" + std::to_string(r.attackerId) + ":" +
+                                  std::to_string(static_cast<int>(r.targetType)) + ":" +
+                                  std::to_string(r.targetId) + ":" + std::to_string(r.damage) +
+                                  ":" + std::to_string(r.hit ? 1 : 0);
+                clientQueues.broadcast(msg);
+                // El target sufrió daño → mandarle sus stats actualizados.
+                if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
+                    uint16_t hp = game.getPlayerHealth(r.targetId);
+                    uint16_t maxHp = game.getPlayerMaxHealth(r.targetId);
+                    uint8_t lvl = game.getPlayerLevel(r.targetId);
+                    std::string stats = "STATS:" + std::to_string(hp) + ":" +
+                                        std::to_string(maxHp) + ":" +
+                                        std::to_string(static_cast<int>(lvl));
+                    clientQueues.sendToClient(r.targetId, stats);
+                }
+            }
+        }
+        return;
+    }
+
+    // "targeted_attack.<type>.<id>" — ataque a un target específico (ranged/magia).
+    if (cmd == "targeted_attack") {
+        if (game.hasPlayer(idPlayer)) {
+            std::string payload = command.substr(posCommand + 1);
+            size_t dot = payload.find('.');
+            if (dot != std::string::npos) {
+                uint8_t targetType = static_cast<uint8_t>(std::stoi(payload.substr(0, dot)));
+                uint16_t targetId = static_cast<uint16_t>(std::stoi(payload.substr(dot + 1)));
+                AttackResult r = game.processTargetedAttack(idPlayer, targetType, targetId);
+                std::cout << "TARGETED_ATTACK from player=" << idPlayer
+                          << " ttype=" << (int)targetType << " tid=" << targetId
+                          << " performed=" << r.performed << " hit=" << r.hit
+                          << " dmg=" << r.damage << std::endl;
+                if (r.performed) {
+                    std::string msg = "ATTACK_RESULT:" + std::to_string(r.attackerId) + ":" +
+                                      std::to_string(static_cast<int>(r.targetType)) + ":" +
+                                      std::to_string(r.targetId) + ":" +
+                                      std::to_string(r.damage) + ":" +
+                                      std::to_string(r.hit ? 1 : 0);
+                    clientQueues.broadcast(msg);
+                    if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
+                        uint16_t hp = game.getPlayerHealth(r.targetId);
+                        uint16_t maxHp = game.getPlayerMaxHealth(r.targetId);
+                        uint8_t lvl = game.getPlayerLevel(r.targetId);
+                        std::string stats = "STATS:" + std::to_string(hp) + ":" +
+                                            std::to_string(maxHp) + ":" +
+                                            std::to_string(static_cast<int>(lvl));
+                        clientQueues.sendToClient(r.targetId, stats);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    // "head.<id>" — cabeza elegida en char creation. TODO(team-gameplay):
+    // guardar headSkinId en el Player y reenviarlo en NEW_PLAYER cuando se
+    // implemente la renderización de cabeza separada del cuerpo. Por ahora
+    // solo lo aceptamos para que el cliente no rompa el flujo de login.
+    if (cmd == "head") {
+        return;
+    }
+
+    // "cheat.<code>" — aplica un cheat y reenvía los stats actualizados.
+    if (cmd == "cheat") {
+        if (game.hasPlayer(idPlayer)) {
+            uint8_t code = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
+            game.processCheat(idPlayer, code);
+            // Los stats pueden haber cambiado (vida=0 en suicide, gold/exp etc).
+            // Reenviamos para que el HUD del cliente se actualice.
+            uint16_t hp = game.getPlayerHealth(idPlayer);
+            uint16_t maxHp = game.getPlayerMaxHealth(idPlayer);
+            uint8_t level = game.getPlayerLevel(idPlayer);
+            std::string statsMsg = "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) +
+                                   ":" + std::to_string(static_cast<int>(level));
+            clientQueues.sendToClient(idPlayer, statsMsg);
+        }
+        return;
+    }
+
     bool success = game.processCommand(idPlayer, command.substr(posId + 1));
 
     if (cmd == "user") {
