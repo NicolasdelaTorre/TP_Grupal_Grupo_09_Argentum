@@ -183,6 +183,19 @@ bool GameScreen::handleEvents(float dt) {
                         }
                         break;
                     }
+                    case SDLK_g:
+                        events_queue.push("PICK_UP");
+                        break;
+                    default: {
+                        // 1..9 — equip de la slot N-1. Con Shift → drop.
+                        SDL_Keycode k = e.key.keysym.sym;
+                        if (k >= SDLK_1 && k <= SDLK_9) {
+                            int slot = k - SDLK_1;  // 0..8
+                            bool shift = (e.key.keysym.mod & KMOD_SHIFT) != 0;
+                            events_queue.push((shift ? "DROP:" : "EQUIP:") + std::to_string(slot));
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -496,6 +509,11 @@ void GameScreen::consumeServerEvents() {
                 pos = next;
                 droppedItems.push_back(di);
             }
+        } else if (event.rfind("INVENTORY:", 0) == 0) {
+            // INVENTORY:<n>:<id1>:...:<eqW>:<eqA>:<eqH>:<eqS>
+            // TODO(team-ui): dibujar el inventario en el HUD y resaltar lo
+            // equipado. Por ahora solo loggeamos para confirmar el flujo.
+            std::cout << "INVENTORY_UPDATE: " << event << std::endl;
         } else if (event.rfind("STATS:", 0) == 0) {
             // STATS:<hp>:<maxHp>:<level>
             size_t c1 = event.find(':');

@@ -14,6 +14,8 @@ client_sender::client_sender(client_protocol& protocol, Queue<std::string>& even
 //   "TURN_TOP" / "TURN_BOTTOM" / etc.                  — giró sin moverse, send_turn
 //   "ATTACK_TOP" / "ATTACK_BOTTOM" / etc.              — ataca en esa dirección
 //   "CHEAT_SUICIDE" / "CHEAT_GOLD" / "CHEAT_EXPERIENCE"— sendCheat con el code
+//   "PICK_UP"                                          — /tomar
+//   "DROP:<slot>" / "EQUIP:<slot>" / "UNEQUIP:<type>"  — inventario
 void client_sender::run() {
     try {
         while (should_keep_running()) {
@@ -56,6 +58,20 @@ void client_sender::run() {
                 protocol.sendCheat(CheatCode::GOLD);
             else if (event == "CHEAT_EXPERIENCE")
                 protocol.sendCheat(CheatCode::EXPERIENCE);
+            else if (event == "PICK_UP")
+                protocol.send_pick_up_item();
+            else if (event.rfind("DROP:", 0) == 0) {
+                uint8_t slot = static_cast<uint8_t>(std::stoi(event.substr(5)));
+                protocol.send_drop_item(slot);
+            }
+            else if (event.rfind("EQUIP:", 0) == 0) {
+                uint8_t slot = static_cast<uint8_t>(std::stoi(event.substr(6)));
+                protocol.send_equip_item(slot);
+            }
+            else if (event.rfind("UNEQUIP:", 0) == 0) {
+                uint8_t slotType = static_cast<uint8_t>(std::stoi(event.substr(8)));
+                protocol.send_unequip_item(slotType);
+            }
         }
     } catch (const ClosedQueue&) {}
 }

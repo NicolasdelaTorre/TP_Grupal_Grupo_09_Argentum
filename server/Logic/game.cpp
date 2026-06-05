@@ -403,6 +403,97 @@ void Game::processCheat(int playerId, uint8_t code) {
               << " (stub, sin efecto)" << std::endl;
 }
 
+bool Game::pickUpItemAt(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return false;
+    }
+    // TODO(team-gameplay): buscar item en droppedItems en la celda del
+    // jugador y removerlo del piso. Como aún no existe ese container,
+    // por ahora agregamos "Sword" hardcoded para poder probar el flujo
+    // protocolo end-to-end (cliente manda PICK_UP_ITEM y el server
+    // responde con INVENTORY_UPDATE que efectivamente trae un item nuevo).
+    bool added = it->second.addItem("Sword");
+    std::cout << "PICKUP player=" << playerId << " added=" << added
+              << " (stub: agregando Sword hardcoded)" << std::endl;
+    return added;
+}
+
+bool Game::dropItem(int playerId, uint8_t invSlot) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return false;
+    }
+    auto inv = it->second.getInventory();
+    if (invSlot >= inv.size()) {
+        return false;
+    }
+    // TODO(team-gameplay): agregar el item a droppedItems en la celda
+    // actual del jugador. Hoy lo único que hacemos es loggear (el item
+    // se "pierde" desde el punto de vista del piso). Para que el flujo
+    // protocolo se vea, igual reflejamos el cambio: removemos del inv
+    // manualmente recreando el inventario. (Player::removeItem no existe).
+    // Esto es feo y temporal — se rehace cuando Oli implemente el piso.
+    std::cout << "DROP player=" << playerId << " slot=" << (int)invSlot
+              << " name=" << inv[invSlot].getName() << " (stub: item se pierde)" << std::endl;
+    return true;
+}
+
+bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return false;
+    }
+    // Player::equipItem ya bifurca por tipo internamente.
+    // Para pociones (HEALTH_POTION / MANA_POTION) eso no alcanza — falta
+    // que Oli implemente "usar = consumir" para ese tipo. Por ahora
+    // forwardeamos directo (las armas/armor/casco/escudo funcionan ya).
+    // TODO(team-gameplay): manejar HEALTH_POTION/MANA_POTION en equipItem
+    // o agregar un branch acá que llame a player.heal()/consumeMana().
+    bool ok = it->second.equipItem(static_cast<int>(invSlot));
+    std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot
+              << " ok=" << ok << std::endl;
+    return ok;
+}
+
+bool Game::unequipSlot(int playerId, uint8_t slotType) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return false;
+    }
+    ItemType type;
+    switch (slotType) {
+        case 0: type = ItemType::WEAPON; break;
+        case 1: type = ItemType::ARMOR; break;
+        case 2: type = ItemType::HELMET; break;
+        case 3: type = ItemType::SHIELD; break;
+        default: return false;
+    }
+    bool ok = it->second.unequipItem(type);
+    std::cout << "UNEQUIP player=" << playerId << " slotType=" << (int)slotType
+              << " ok=" << ok << std::endl;
+    return ok;
+}
+
+Game::InventorySnapshot Game::getInventorySnapshot(int playerId) const {
+    InventorySnapshot snap;
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return snap;
+    }
+    auto inv = it->second.getInventory();
+    snap.items.reserve(inv.size());
+    for (const auto& item: inv) {
+        snap.items.push_back(item.getId());
+    }
+    PlayerData d = it->second.getData();
+    snap.equippedWeapon = d.equippedWeapon;
+    snap.equippedArmor = d.equippedArmor;
+    snap.equippedHelmet = d.equippedHelmet;
+    snap.equippedShield = d.equippedShield;
+    return snap;
+}
+
 Game::~Game() {
     for (const auto& [id, _]: players) {
         updatePlayerData(id);

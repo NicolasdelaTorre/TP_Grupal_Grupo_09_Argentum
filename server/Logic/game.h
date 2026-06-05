@@ -92,6 +92,37 @@ public:
     // sumar oro, sumar experiencia). Hoy es un stub que solo loggea.
     void processCheat(int playerId, uint8_t code);
 
+    // Recoge lo que haya en la celda del jugador (`/tomar`).
+    // TODO(team-gameplay): buscar item en droppedItems en la posición del
+    // jugador, llamarlo a player.addItem y removerlo del piso. Hoy stub.
+    bool pickUpItemAt(int playerId);
+
+    // Tira el item del slot al piso (`/tirar`).
+    // TODO(team-gameplay): sacar de player.inventory[invSlot] y agregar a
+    // droppedItems en la posición del jugador. Hoy stub.
+    bool dropItem(int playerId, uint8_t invSlot);
+
+    // Equipa o usa el item del slot según su tipo (ver ADR-002).
+    // TODO(team-gameplay): si arma/armor/casco/escudo → player.equipItem(slot).
+    // Si poción → consumir y aplicar efecto (heal / mana). Hoy stub.
+    bool equipOrUseItem(int playerId, uint8_t invSlot);
+
+    // Desequipa el slot indicado. slotType: 0=arma, 1=armor, 2=casco, 3=escudo.
+    // TODO(team-gameplay): mapear slotType → ItemType y llamar a
+    // player.unequipItem. Hoy stub.
+    bool unequipSlot(int playerId, uint8_t slotType);
+
+    // Devuelve el inventario actual del jugador para serializar INVENTORY_UPDATE.
+    // {invItemIds, equippedWeaponId, equippedArmorId, equippedHelmetId, equippedShieldId}
+    struct InventorySnapshot {
+        std::vector<uint8_t> items;  // ids de items en el inv (sin slots vacíos)
+        uint8_t equippedWeapon = 0;
+        uint8_t equippedArmor = 0;
+        uint8_t equippedHelmet = 0;
+        uint8_t equippedShield = 0;
+    };
+    InventorySnapshot getInventorySnapshot(int playerId) const;
+
     void removePlayer(int playerId);
 
     ~Game();

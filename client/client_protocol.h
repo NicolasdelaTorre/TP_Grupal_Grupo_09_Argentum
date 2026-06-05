@@ -54,6 +54,17 @@ struct AttackResultEvent {
     bool hit;  // false => evasión, damage = 0
 };
 
+// Snapshot del inventario del jugador local (INVENTORY_UPDATE).
+// `items` son ids de cada item en una slot ocupada (sin slots vacías).
+// Los `equipped*` son ids de item, 0 = nada equipado.
+struct InventoryEvent {
+    std::vector<uint8_t> items;
+    uint8_t equippedWeapon;
+    uint8_t equippedArmor;
+    uint8_t equippedHelmet;
+    uint8_t equippedShield;
+};
+
 class client_protocol {
     common_protocol protocol;
 
@@ -85,6 +96,7 @@ public:
     uint16_t recv_player_disconnected_payload();
     StatsEvent recv_stats_payload();
     AttackResultEvent recv_attack_result_payload();
+    InventoryEvent recv_inventory_update_payload();
 
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
@@ -106,6 +118,15 @@ public:
     std::vector<DroppedItem> recv_dropped_items_payload();
 
     void sendCheat(CheatCode cheat);
+
+    // /tomar — server resuelve qué item hay en la celda del jugador.
+    void send_pick_up_item();
+    // /tirar — slot del inventario.
+    void send_drop_item(uint8_t invSlot);
+    // Equipar o usar (poción) el item de la slot. El server decide según tipo.
+    void send_equip_item(uint8_t invSlot);
+    // Desequipar slot_type: 0=arma, 1=armadura, 2=casco, 3=escudo.
+    void send_unequip_item(uint8_t slotType);
 };
 
 

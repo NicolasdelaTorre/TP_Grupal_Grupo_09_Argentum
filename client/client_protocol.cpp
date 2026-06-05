@@ -139,6 +139,39 @@ void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(skinId);
 }
 
+void client_protocol::send_pick_up_item() {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::PICK_UP_ITEM));
+}
+
+void client_protocol::send_drop_item(uint8_t invSlot) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::DROP_ITEM));
+    protocol.sendByte(invSlot);
+}
+
+void client_protocol::send_equip_item(uint8_t invSlot) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::EQUIP_ITEM));
+    protocol.sendByte(invSlot);
+}
+
+void client_protocol::send_unequip_item(uint8_t slotType) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::UNEQUIP_ITEM));
+    protocol.sendByte(slotType);
+}
+
+InventoryEvent client_protocol::recv_inventory_update_payload() {
+    InventoryEvent ev;
+    uint8_t count = protocol.receive_byte();
+    ev.items.reserve(count);
+    for (uint8_t i = 0; i < count; i++) {
+        ev.items.push_back(protocol.receive_byte());
+    }
+    ev.equippedWeapon = protocol.receive_byte();
+    ev.equippedArmor = protocol.receive_byte();
+    ev.equippedHelmet = protocol.receive_byte();
+    ev.equippedShield = protocol.receive_byte();
+    return ev;
+}
+
 std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {
     uint16_t count = protocol.receive_two_bytes_number();
     std::vector<DroppedItem> items;

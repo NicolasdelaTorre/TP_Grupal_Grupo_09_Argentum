@@ -135,6 +135,42 @@ void Gameloop::processCommand(const std::string& command) {
         return;
     }
 
+    // Comandos de inventario: pickup / drop / equip / unequip.
+    // Todos terminan mandando INVENTORY_UPDATE sólo al dueño.
+    if (cmd == "pickup" || cmd == "drop" || cmd == "equip" || cmd == "unequip") {
+        if (!game.hasPlayer(idPlayer)) {
+            return;
+        }
+        bool ok = false;
+        if (cmd == "pickup") {
+            ok = game.pickUpItemAt(idPlayer);
+        } else if (cmd == "drop") {
+            uint8_t slot = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
+            ok = game.dropItem(idPlayer, slot);
+        } else if (cmd == "equip") {
+            uint8_t slot = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
+            ok = game.equipOrUseItem(idPlayer, slot);
+        } else {  // unequip
+            uint8_t slotType = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
+            ok = game.unequipSlot(idPlayer, slotType);
+        }
+        if (!ok) {
+            return;
+        }
+        // Armamos el INVENTORY_UPDATE como string interno.
+        auto snap = game.getInventorySnapshot(idPlayer);
+        std::string msg = "INVENTORY:" + std::to_string(snap.items.size());
+        for (uint8_t id: snap.items) {
+            msg += ":" + std::to_string(static_cast<int>(id));
+        }
+        msg += ":" + std::to_string(static_cast<int>(snap.equippedWeapon));
+        msg += ":" + std::to_string(static_cast<int>(snap.equippedArmor));
+        msg += ":" + std::to_string(static_cast<int>(snap.equippedHelmet));
+        msg += ":" + std::to_string(static_cast<int>(snap.equippedShield));
+        clientQueues.sendToClient(idPlayer, msg);
+        return;
+    }
+
     bool success = game.processCommand(idPlayer, command.substr(posId + 1));
 
     if (cmd == "user") {

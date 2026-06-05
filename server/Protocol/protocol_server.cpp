@@ -74,9 +74,56 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnCheat(message, clientId);
         case static_cast<uint8_t>(ClientMsg::HEAD_SELECTED):
             return returnHead(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::PICK_UP_ITEM):
+            return returnPickUp(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::DROP_ITEM):
+            return returnDrop(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::EQUIP_ITEM):
+            return returnEquip(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::UNEQUIP_ITEM):
+            return returnUnequip(message, clientId);
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }
+}
+
+int ProtocolServer::returnPickUp(std::string& message, const int /*clientId*/) {
+    // Sin payload — la lógica del server resuelve por la posición del jugador.
+    message += "pickup.";
+    return 1;
+}
+
+int ProtocolServer::returnDrop(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t invSlot = it->second.receive_byte();
+    message += "drop.";
+    message += std::to_string(invSlot);
+    return 1;
+}
+
+int ProtocolServer::returnEquip(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t invSlot = it->second.receive_byte();
+    message += "equip.";
+    message += std::to_string(invSlot);
+    return 1;
+}
+
+int ProtocolServer::returnUnequip(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t slotType = it->second.receive_byte();
+    message += "unequip.";
+    message += std::to_string(slotType);
+    return 1;
 }
 
 int ProtocolServer::returnTargetedAttack(std::string& message, const int clientId) {
@@ -277,6 +324,8 @@ int ProtocolServer::sendMessage(const std::string& message, const int clientId) 
             sendStats(it->second, message);
         } else if (message.rfind("ATTACK_RESULT:", 0) == 0) {
             sendAttackResult(it->second, message);
+        } else if (message.rfind("INVENTORY:", 0) == 0) {
+            sendInventoryUpdate(it->second, message);
         } else {
             throw std::runtime_error("Protocol Error: unknown server's command: " + message);
         }
@@ -410,6 +459,51 @@ void ProtocolServer::sendAttackResult(common_protocol& client, const std::string
     client.send_two_bytes_number(tid);
     client.send_two_bytes_number(dmg);
     client.sendByte(hit);
+}
+
+void ProtocolServer::sendInventoryUpdate(common_protocol& client, const std::string& message) {
+    // Formato interno: "INVENTORY:<n>:<id1>:<id2>:...:<eqW>:<eqA>:<eqH>:<eqS>"
+    // Mínimo siempre llegan 5 campos después de "INVENTORY:": count + 4 equipped.
+    size_t c1 = message.find(':');
+    size_t c2 = message.find(':', c1 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos) {
+        throw std::runtime_error("Protocol Error: malformed INVENTORY message: " + message);
+    }
+    uint8_t count = static_cast<uint8_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
+
+    std::vector<uint8_t> ids;
+    ids.reserve(count);
+    size_t cur = c2;
+    for (uint8_t i = 0; i < count; i++) {
+        size_t next = message.find(':', cur + 1);
+        if (next == std::string::npos) {
+            throw std::runtime_error("Protocol Error: short INVENTORY items: " + message);
+        }
+        ids.push_back(static_cast<uint8_t>(std::stoi(message.substr(cur + 1, next - cur - 1))));
+        cur = next;
+    }
+    // Después de los items vienen 4 equipped, separados por ":".
+    size_t cW = cur;
+    size_t cA = message.find(':', cW + 1);
+    size_t cH = message.find(':', cA + 1);
+    size_t cS = message.find(':', cH + 1);
+    if (cA == std::string::npos || cH == std::string::npos || cS == std::string::npos) {
+        throw std::runtime_error("Protocol Error: short INVENTORY equipped: " + message);
+    }
+    uint8_t eqW = static_cast<uint8_t>(std::stoi(message.substr(cW + 1, cA - cW - 1)));
+    uint8_t eqA = static_cast<uint8_t>(std::stoi(message.substr(cA + 1, cH - cA - 1)));
+    uint8_t eqH = static_cast<uint8_t>(std::stoi(message.substr(cH + 1, cS - cH - 1)));
+    uint8_t eqS = static_cast<uint8_t>(std::stoi(message.substr(cS + 1)));
+
+    client.sendByte(static_cast<uint8_t>(ServerMsg::INVENTORY_UPDATE));
+    client.sendByte(count);
+    for (uint8_t id: ids) {
+        client.sendByte(id);
+    }
+    client.sendByte(eqW);
+    client.sendByte(eqA);
+    client.sendByte(eqH);
+    client.sendByte(eqS);
 }
 
 void ProtocolServer::sendMap(common_protocol& client) {

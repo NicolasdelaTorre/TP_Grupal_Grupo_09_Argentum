@@ -59,6 +59,20 @@ void client_receiver::run() {
                     break;
                 }
 
+                case ServerMsg::INVENTORY_UPDATE: {
+                    InventoryEvent ev = protocol.recv_inventory_update_payload();
+                    std::string msg = "INVENTORY:" + std::to_string(ev.items.size());
+                    for (uint8_t id: ev.items) {
+                        msg += ":" + std::to_string(static_cast<int>(id));
+                    }
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedWeapon));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedArmor));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedHelmet));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedShield));
+                    server_queue.push(msg);
+                    break;
+                }
+
                 case ServerMsg::DROPPED_ITEMS: {
                     auto items = protocol.recv_dropped_items_payload();
                     std::string msg = "DROPPED_ITEMS:" + std::to_string(items.size());
