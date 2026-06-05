@@ -58,7 +58,7 @@ void client::run() {
         if (!charResult.confirmed)
             return;
         protocol.send_skin_selected(static_cast<uint8_t>(charResult.skinId));
-        protocol.send_head_selected(static_cast<uint8_t>(headResult.headId));
+        // protocol.send_head_selected(static_cast<uint8_t>(headResult.headId));
         player.skin = charResult.skinId;
         type = protocol.recv_msg_type();
     }

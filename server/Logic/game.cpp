@@ -25,6 +25,10 @@ bool Game::processCommand(int playerId, const std::string& command) {
     } else if (dataType == "turn") {
         std::string direction = command.substr(commandPosition + 1);
         return turnPlayer(playerId, direction);
+    } else if (dataType == "attack") {
+        // Format: "attack.player.id // attack.npc.id"
+        // return processAttack(playerId, command.substr(commandPosition + 1));
+        return false;
     } else if (dataType == "heal") {
         // Format: "heal"
         return processHeal(playerId);
@@ -56,9 +60,9 @@ bool Game::processUser(int playerId, const std::string& user) {
         spawn = players.at(playerId).getPosition();
     }
 
-    map.placePlayer(playerId, spawn.x, spawn.y);
+    map.placeEntity(playerId, spawn.x, spawn.y, true);
 
-    // Codigo de testeo
+    /* Codigo de testeo
     if (players.size() > 1) {
         // players.at(playerId).addItem("Elven Flute");
         // players.at(playerId).addItem("Sword");
@@ -80,7 +84,7 @@ bool Game::processUser(int playerId, const std::string& user) {
         // processAttack(playerId, "bottom");
         // processHeal(playerId);
     }
-    //
+    */
 
     std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
               << ", " << spawn.y << ")" << std::endl;
@@ -328,13 +332,26 @@ AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targ
         return result;  // performed = false
     }
 
-    // TODO(team-gameplay): validar rango. El cliente puede mandar cualquier
-    // target_id; el server debe rechazar si no está al alcance del arma
+    uint8_t entityId = 0;
+    if (targetType == 0) {
+        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true);
+    } else if (targetType == 1) {
+        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false);
+    } else {
+        throw std::runtime_error("Game Error: malformed attack command (expected player.id or npc.id)");
+    }
+
+    if (entityId != targetId)
+        return result;
+
+    auto itTarget = players.find(entityId);
+    if (itTarget == players.end()) {
+        throw std::runtime_error("Game Error: player in sight not found");
+    }
 
     if (targetType == 0) {
         // target = player
-        auto itTarget = players.find(targetId);
-        if (itTarget == players.end() || !itTarget->second.isAlive()) {
+        if (!itTarget->second.isAlive()) {
             return result;
         }
         result.performed = true;

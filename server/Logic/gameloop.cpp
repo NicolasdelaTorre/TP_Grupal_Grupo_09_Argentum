@@ -99,6 +99,7 @@ void Gameloop::processCommand(const std::string& command) {
     // Comandos de inventario: pickup / drop / equip / unequip.
     // Todos mandan INVENTORY_UPDATE al dueño; si cambió algún slot equipado,
     // además broadcast PLAYER_EQUIPPED para que los demás vean la vestimenta.
+    // Format: cmd:
     if (cmd == "pickup" || cmd == "drop" || cmd == "equip" || cmd == "unequip") {
         if (!game.hasPlayer(idPlayer)) {
             return;

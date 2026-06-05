@@ -20,6 +20,7 @@ void Map::initializeMap() {
         cell.textureId = 0;
         cell.obstacleId = 0;
         cell.playerId = 0;
+        cell.npcId = 0;
         cell.isWalkable = true;
         cell.safeZone = false;
     }
@@ -48,48 +49,72 @@ bool Map::isWalkable(int16_t x, int16_t y) const {
     return cells[static_cast<size_t>(y) * width + x].isWalkable;
 }
 
-bool Map::occupiedByPlayer(int16_t x, int16_t y) const {
+bool Map::occupiedByEntity(int16_t x, int16_t y) const {
     if (!isInBounds(x, y))
         return false;
-    return cells[static_cast<size_t>(y) * width + x].playerId != 0;
+    return cells[static_cast<size_t>(y) * width + x].playerId != 0 || cells[static_cast<size_t>(y) * width + x].npcId != 0;
 }
 
-uint8_t Map::isEntityInSight(int16_t x, int16_t y, const std::string& direction,
-                             bool distanceWeapon) {
-    size_t iterations = distanceWeapon ? 5 : 1;
-    for (size_t i = 0; i < iterations; i++) {
-        if (direction == "top") {
-            y -= 1;
-        } else if (direction == "bottom") {
-            y += 1;
-        } else if (direction == "left") {
-            x -= 1;
-        } else if (direction == "right") {
-            x += 1;
-        } else {
-            throw std::invalid_argument("Map Error: invalid direction");
+uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer) {
+    for (size_t i = 0; i < 4; i++) {
+        // Check position in the current direction
+        switch (i) {
+            case 0: y -= 1; break;  // Up
+            case 1: y += 1; break;  // Down
+            case 2: x -= 1; break;  // Left
+            case 3: x += 1; break;  // Right
         }
 
         if (!isInBounds(x, y)) {
-            return 0;  // out of bounds
+            continue;  // out of bounds
         }
 
         Cell cell = getCell(static_cast<size_t>(y) * width + x);
-        if (cell.playerId != 0) {
+        if (isPlayer && cell.playerId != 0) {
             return cell.playerId;  // player in sight
+        }
+
+        if (!isPlayer && cell.npcId != 0) {
+            return cell.npcId;  // npc in sight
         }
     }
 
-    return 0;  // no player in sight
+    return 0;  // no entity in sight
 }
 
-void Map::placePlayer(int playerId, int16_t x, int16_t y) {
-    if (!isInBounds(x, y)) {
-        throw std::out_of_range("Map Error: trying to place player out of bounds");
+uint8_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer) {
+    for (int16_t dy = -3; dy <= 3; ++dy) {
+        for (int16_t dx = -3; dx <= 3; ++dx) {
+            if (dx == 0 && dy == 0) {
+                continue;
+            }
+
+            int16_t checkX = x + dx;
+            int16_t checkY = y + dy;
+            if (!isInBounds(checkX, checkY)) {
+                continue;
+            }
+
+            Cell cell = getCell(static_cast<size_t>(checkY) * width + checkX);
+            if (isPlayer && cell.playerId != 0) {
+                return cell.playerId;  // player in distance
+            }
+
+            if (!isPlayer && cell.npcId != 0) {
+                return cell.npcId;  // npc in distance
+            }
+        }
     }
 
-    // Preguntar a Martín sobre si el juego esta full cargado de jugadores
-    while (occupiedByPlayer(x, y)) {
+    return 0;  // no entity in distance
+}
+
+void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer) {
+    if (!isInBounds(x, y)) {
+        throw std::out_of_range("Map Error: trying to place player/NPC out of bounds");
+    }
+
+    while (occupiedByEntity(x, y)) {
         // If the cell is already occupied by another player, look for the next free cell.
         x = (x + 1) % width;
         if (x == 0) {
@@ -97,7 +122,34 @@ void Map::placePlayer(int playerId, int16_t x, int16_t y) {
         }
     }
 
-    cells[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(playerId);
+    if (isPlayer) {
+        cells[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(entityId);
+    } else {
+        cells[static_cast<size_t>(y) * width + x].npcId = static_cast<uint8_t>(entityId);
+    }
+}
+
+Position Map::searchPlayer(int16_t x, int16_t y) {
+    for (int16_t dy = -3; dy <= 3; ++dy) {
+        for (int16_t dx = -3; dx <= 3; ++dx) {
+            if (dx == 0 && dy == 0) {
+                continue;
+            }
+
+            int16_t checkX = x + dx;
+            int16_t checkY = y + dy;
+            if (!isInBounds(checkX, checkY)) {
+                continue;
+            }
+
+            Cell cell = getCell(static_cast<size_t>(checkY) * width + checkX);
+            if (cell.playerId != 0) {
+                return Position{checkX, checkY};
+            }
+        }
+    }
+
+    return Position{-1, -1};
 }
 
 void Map::movePlayer(int playerId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY) {

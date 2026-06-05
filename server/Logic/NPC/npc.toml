@@ -1,0 +1,35 @@
+[[npc]]
+id = 1
+name = "Goblin"
+maxHealth = 100
+damage = 15
+
+[[npc]]
+id = 2
+name = "Squeleton"
+maxHealth = 80
+damage = 18
+
+[[npc]]
+id = 3
+name = "Zombie"
+maxHealth = 130
+damage = 11
+
+[[npc]]
+id = 4
+name = "Spider"
+maxHealth = 70
+damage = 13
+
+[[npc]]
+id = 5
+name = "Orc"
+maxHealth = 170
+damage = 20
+
+[[npc]]
+id = 6
+name = "Golem"
+maxHealth = 200
+damage = 22
