@@ -38,10 +38,15 @@ struct PlayerEvent {
     std::string name;
 };
 
-// Stats del jugador local (STATS_JUGADOR).
+// Stats del jugador local (STATS_JUGADOR). Snapshot completo.
 struct StatsEvent {
     uint16_t health;
     uint16_t maxHealth;
+    uint16_t mana;
+    uint16_t maxMana;
+    uint32_t gold;
+    uint32_t experience;
+    uint32_t nextLevelExp;
     uint8_t level;
 };
 
@@ -52,6 +57,27 @@ struct AttackResultEvent {
     uint16_t targetId;
     uint16_t damage;
     bool hit;  // false => evasión, damage = 0
+};
+
+// Cambio de equipamiento de un jugador visible (PLAYER_EQUIPPED).
+// Broadcast a todos: cuando un jugador equipa/desequipa, los demás clientes
+// actualizan su render.  slot: 0=arma, 1=armor, 2=casco, 3=escudo.
+// itemId=0 → unequip.
+struct EquipmentEvent {
+    uint16_t playerId;
+    uint8_t slot;
+    uint8_t itemId;
+};
+
+// Snapshot del inventario del jugador local (INVENTORY_UPDATE).
+// `items` son ids de cada item en una slot ocupada (sin slots vacías).
+// Los `equipped*` son ids de item, 0 = nada equipado.
+struct InventoryEvent {
+    std::vector<uint8_t> items;
+    uint8_t equippedWeapon;
+    uint8_t equippedArmor;
+    uint8_t equippedHelmet;
+    uint8_t equippedShield;
 };
 
 class client_protocol {
@@ -77,7 +103,6 @@ public:
                           const std::string& class_);
 
     // Las funciones recv_*_payload asumen que el opcode ya fue consumido vía recv_msg_type().
-    uint16_t recv_my_player_id();
     Position recv_login_ok_payload();
     ReceivedMap recv_map();
     PlayerEvent recv_new_player_payload();
@@ -85,6 +110,8 @@ public:
     uint16_t recv_player_disconnected_payload();
     StatsEvent recv_stats_payload();
     AttackResultEvent recv_attack_result_payload();
+    InventoryEvent recv_inventory_update_payload();
+    EquipmentEvent recv_player_equipped_payload();
 
     // Envía la skin elegida en la pantalla de creación de personaje.
     void send_skin_selected(uint8_t skinId);
@@ -92,12 +119,10 @@ public:
     // Envía la cabeza elegida en la pantalla de creación de personaje.
     void send_head_selected(uint8_t headId);
 
-    // Envía un ataque en la dirección dada (TOP, BOTTOM, LEFT, RIGHT).
-    // El server resuelve quién es el target por línea de vista
-    void send_attack(ClientMsg direction);
-
-    // Envía un ataque a un target específico (para arcos/magia que apuntan a un jugador o NPC). targetType: 0 = player, 1 = npc. Server valida rango.
-    void send_targeted_attack(uint8_t targetType, uint16_t targetId);
+    // Envía un ataque a un target específico (player o NPC). El server valida
+    // si el atacante tiene arma equipada y si está en alcance (ranged o
+    // adyacencia para melee). targetType: 0=player, 1=npc.
+    void send_attack(uint8_t targetType, uint16_t targetId);
 
     // Recibe la lista completa de NPCs dinámicos (criaturas).
     std::vector<NpcEntity> recv_npc_list_payload();
@@ -106,6 +131,15 @@ public:
     std::vector<DroppedItem> recv_dropped_items_payload();
 
     void sendCheat(CheatCode cheat);
+
+    // /tomar — server resuelve qué item hay en la celda del jugador.
+    void send_pick_up_item();
+    // /tirar — slot del inventario.
+    void send_drop_item(uint8_t invSlot);
+    // Equipar o usar (poción) el item de la slot. El server decide según tipo.
+    void send_equip_item(uint8_t invSlot);
+    // Desequipar slot_type: 0=arma, 1=armadura, 2=casco, 3=escudo.
+    void send_unequip_item(uint8_t slotType);
 };
 
 

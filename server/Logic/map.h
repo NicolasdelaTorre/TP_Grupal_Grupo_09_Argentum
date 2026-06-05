@@ -49,6 +49,12 @@ public:
                             bool distanceWeapon);
 
     void placePlayer(int playerId, int16_t x, int16_t y);
+
+    // Mueve el playerId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
+    void movePlayer(int playerId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY);
+
+    // Limpia el playerId de la celda. Se llama al desconectar / morir.
+    void removePlayer(int16_t x, int16_t y);
 };
 
 #endif

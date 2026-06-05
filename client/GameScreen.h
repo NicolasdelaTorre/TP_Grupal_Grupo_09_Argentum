@@ -69,8 +69,12 @@ private:
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;
     uint16_t maxHealth = 0;
+    uint16_t mana = 0;
+    uint16_t maxMana = 0;
+    uint32_t gold = 0;
+    uint32_t experience = 0;
+    uint32_t nextLevelExp = 0;
     uint8_t level = 1;
-    uint16_t myId = 0;
 
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);

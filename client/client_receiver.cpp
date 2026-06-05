@@ -45,6 +45,11 @@ void client_receiver::run() {
                     StatsEvent ev = protocol.recv_stats_payload();
                     server_queue.push("STATS:" + std::to_string(ev.health) + ":" +
                                       std::to_string(ev.maxHealth) + ":" +
+                                      std::to_string(ev.mana) + ":" +
+                                      std::to_string(ev.maxMana) + ":" +
+                                      std::to_string(ev.gold) + ":" +
+                                      std::to_string(ev.experience) + ":" +
+                                      std::to_string(ev.nextLevelExp) + ":" +
                                       std::to_string(static_cast<int>(ev.level)));
                     break;
                 }
@@ -56,6 +61,28 @@ void client_receiver::run() {
                                       std::to_string(ev.targetId) + ":" +
                                       std::to_string(ev.damage) + ":" +
                                       std::to_string(ev.hit ? 1 : 0));
+                    break;
+                }
+
+                case ServerMsg::PLAYER_EQUIPPED: {
+                    EquipmentEvent ev = protocol.recv_player_equipped_payload();
+                    server_queue.push("EQUIPPED:" + std::to_string(ev.playerId) + ":" +
+                                      std::to_string(static_cast<int>(ev.slot)) + ":" +
+                                      std::to_string(static_cast<int>(ev.itemId)));
+                    break;
+                }
+
+                case ServerMsg::INVENTORY_UPDATE: {
+                    InventoryEvent ev = protocol.recv_inventory_update_payload();
+                    std::string msg = "INVENTORY:" + std::to_string(ev.items.size());
+                    for (uint8_t id: ev.items) {
+                        msg += ":" + std::to_string(static_cast<int>(id));
+                    }
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedWeapon));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedArmor));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedHelmet));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedShield));
+                    server_queue.push(msg);
                     break;
                 }
 

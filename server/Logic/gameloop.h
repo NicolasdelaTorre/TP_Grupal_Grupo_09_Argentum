@@ -25,6 +25,14 @@ private:
     // al final del char creation (cuando llega "skin").
     void finalizePlayerLogin(int idPlayer, const std::string& skinId);
 
+    // Arma el string interno "STATS:hp:maxHp:mana:maxMana:gold:exp:nextLvlExp:level"
+    // a partir del estado actual del jugador. Se reusa donde haga falta.
+    std::string buildStatsMessage(int idPlayer);
+
+    // Manda PLAYER_EQUIPPED por cada slot equipado del jugador.
+    // recipientId == -1 → broadcast a todos menos a él. Sino, sólo a ese cliente.
+    void sendEquipmentSnapshot(int idPlayer, int recipientId);
+
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
              ProtocolServer& protocol, Position playerSpawn);
