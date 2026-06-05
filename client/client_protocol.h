@@ -93,8 +93,11 @@ public:
     void send_head_selected(uint8_t headId);
 
     // Envía un ataque en la dirección dada (TOP, BOTTOM, LEFT, RIGHT).
-    // El server resuelve quién es el target por línea de vista (server-authoritative).
+    // El server resuelve quién es el target por línea de vista
     void send_attack(ClientMsg direction);
+
+    // Envía un ataque a un target específico (para arcos/magia que apuntan a un jugador o NPC). targetType: 0 = player, 1 = npc. Server valida rango.
+    void send_targeted_attack(uint8_t targetType, uint16_t targetId);
 
     // Recibe la lista completa de NPCs dinámicos (criaturas).
     std::vector<NpcEntity> recv_npc_list_payload();

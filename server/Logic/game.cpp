@@ -281,9 +281,8 @@ AttackResult Game::processAttack(int playerId, const std::string& direction) {
         return result;  // sin víctima en línea de vista
     }
 
-    // TODO(team-gameplay): cuando existan NPCs, distinguir player vs npc por
-    // rango de id (ej. id >= 1000 = NPC). Hoy todo lo que devuelve
-    // isEntityInSight es un player.
+    // TODO(team-gameplay): cuando existan NPCs, distinguir player vs npc. 
+    // Hoy todo lo que devuelve isEntityInSight es un player.
     auto itTarget = players.find(entityId);
     if (itTarget == players.end()) {
         throw std::runtime_error("Game Error: player in sight not found");
@@ -305,6 +304,48 @@ AttackResult Game::processAttack(int playerId, const std::string& direction) {
 
     result.hit = true;
     result.damage = damage;
+    return result;
+}
+
+AttackResult Game::processTargetedAttack(int playerId, uint8_t targetType, uint16_t targetId) {
+    AttackResult result;
+    result.attackerId = static_cast<uint16_t>(playerId);
+    result.targetType = targetType;
+    result.targetId = targetId;
+
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
+        return result;  // performed = false
+    }
+
+    // TODO(team-gameplay): validar rango. El cliente puede mandar cualquier
+    // target_id; el server debe rechazar si no está al alcance del arma
+
+    if (targetType == 0) {
+        // target = player
+        auto itTarget = players.find(targetId);
+        if (itTarget == players.end() || !itTarget->second.isAlive()) {
+            return result;
+        }
+        result.performed = true;
+        if (tryEvade(playerId, static_cast<int>(targetId))) {
+            return result;  // hit = false, damage = 0
+        }
+        uint16_t damage = itPlayer->second.dealDamage();
+        itTarget->second.receiveDamage(damage);
+        result.hit = true;
+        result.damage = damage;
+    } else if (targetType == 1) {
+        // target = npc. TODO(team-gameplay): damageNpc(targetId, damage).
+        result.performed = true;
+        result.hit = false;
+        result.damage = 0;
+    }
+
     return result;
 }
 

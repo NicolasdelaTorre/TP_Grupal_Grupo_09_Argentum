@@ -42,6 +42,14 @@ void client_sender::run() {
                 protocol.send_attack(ClientMsg::LEFT);
             else if (event == "ATTACK_RIGHT")
                 protocol.send_attack(ClientMsg::RIGHT);
+            else if (event.rfind("TARGETED_ATTACK:", 0) == 0) {
+                // Formato: "TARGETED_ATTACK:<type>:<id>"
+                size_t c1 = event.find(':');
+                size_t c2 = event.find(':', c1 + 1);
+                uint8_t type = static_cast<uint8_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
+                uint16_t tid = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1)));
+                protocol.send_targeted_attack(type, tid);
+            }
             else if (event == "CHEAT_SUICIDE")
                 protocol.sendCheat(CheatCode::SUICIDE);
             else if (event == "CHEAT_GOLD")

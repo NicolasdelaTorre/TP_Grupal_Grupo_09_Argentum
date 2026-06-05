@@ -13,7 +13,8 @@ enum class ClientMsg : uint8_t {
     TURN = 0x08,           // [opcode][direccion:1] — gira sin moverse de celda
     ATTACK = 0x09,         // [opcode][direccion:1] — ataca al primero en línea de vista (server-authoritative)
     HEAD_SELECTED = 0x0A,  // [opcode][head_id:1]
-    CHEAT = 0x0B           // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
+    CHEAT = 0x0B,          // [opcode][cheat_code:1] — cheat_code ∈ CheatCode (common/DTOs.h)
+    TARGETED_ATTACK = 0x0C // [opcode][target_type:1][target_id:2] — ataque a target específico (ranged/magia)
 };
 
 // Mensajes Servidor → Cliente

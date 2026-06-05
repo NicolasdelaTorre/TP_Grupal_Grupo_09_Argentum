@@ -68,11 +68,40 @@ int ProtocolServer::receiveMessage(std::string& message, const int clientId) {
             return returnTurn(message, clientId);
         case static_cast<uint8_t>(ClientMsg::ATTACK):
             return returnAttack(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::TARGETED_ATTACK):
+            return returnTargetedAttack(message, clientId);
         case static_cast<uint8_t>(ClientMsg::CHEAT):
             return returnCheat(message, clientId);
+        case static_cast<uint8_t>(ClientMsg::HEAD_SELECTED):
+            return returnHead(message, clientId);
         default:
             throw std::runtime_error("Protocol Error: unknown client's command");
     }
+}
+
+int ProtocolServer::returnTargetedAttack(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t targetType = it->second.receive_byte();
+    uint16_t targetId = it->second.receive_two_bytes_number();
+    message += "targeted_attack.";
+    message += std::to_string(targetType);
+    message += ".";
+    message += std::to_string(targetId);
+    return 1;
+}
+
+int ProtocolServer::returnHead(std::string& message, const int clientId) {
+    auto it = clientSockets.find(clientId);
+    if (it == clientSockets.end()) {
+        return 0;
+    }
+    uint8_t headId = it->second.receive_byte();
+    message += "head.";
+    message += std::to_string(headId);
+    return 1;
 }
 
 int ProtocolServer::returnCheat(std::string& message, const int clientId) {

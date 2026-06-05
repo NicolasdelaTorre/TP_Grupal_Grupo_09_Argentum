@@ -81,6 +81,11 @@ public:
     // a partir del AttackResult.
     AttackResult processAttack(int playerId, const std::string& direction);
 
+    // Resuelve un ataque dirigido a un target específico (para ranged/magia).
+    // targetType: 0 = player, 1 = npc. El server valida que el target exista,
+    // esté vivo y esté en rango del arma equipada antes de aplicar el daño.
+    AttackResult processTargetedAttack(int playerId, uint8_t targetType, uint16_t targetId);
+
     // Aplica un cheat al jugador. code mapea al enum CheatCode (common/DTOs.h):
     // 0 = SUICIDE, 1 = GOLD, 2 = EXPERIENCE.
     // TODO(team-gameplay): implementar la lógica concreta (matar al jugador,

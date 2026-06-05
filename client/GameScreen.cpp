@@ -5,6 +5,8 @@
 #include <iostream>
 #include <utility>
 
+#include "tile_textures.h"
+
 namespace {
 
 // ReceivedMap (wire) → GameMap (lo que pinta el MapRenderer).
@@ -15,14 +17,16 @@ GameMap convertToGameMap(const ReceivedMap& m) {
     gm.tiles.resize(m.cells.size());
     for (size_t i = 0; i < m.cells.size(); i++) {
         const auto& cell = m.cells[i];
+        // safeZone fuerza piso de ciudad (priority sobre textureId del bioma).
+        if (cell.safeZone) {
+            gm.tiles[i].floor = TileType::INTERIOR;
+        } else {
+            gm.tiles[i].floor = tileTypeFromTextureId(cell.textureId);
+        }
         if (cell.obstacleId != 0) {
             gm.tiles[i].blocked = true;
             gm.tiles[i].obstacleType = static_cast<ObstacleType>(cell.obstacleId);
-        } else if (cell.safeZone) {
-            gm.tiles[i].floor = TileType::INTERIOR;
-            gm.tiles[i].blocked = false;
         } else {
-            gm.tiles[i].floor = TileType::GRASS;
             gm.tiles[i].blocked = false;
         }
     }
@@ -192,16 +196,25 @@ bool GameScreen::handleEvents(float dt) {
                 int opTileX = (int)(op.visual.x + HEAD_OFFSET);
                 int opTileY = (int)(op.visual.y + FEET_OFFSET);
                 if (opTileX == clickTileX && opTileY == clickTileY) {
-                    int myTileX = (int)(player.x + HEAD_OFFSET);
-                    int myTileY = (int)(player.y + FEET_OFFSET);
-                    int ddx = opTileX - myTileX;
-                    int ddy = opTileY - myTileY;
-                    if (std::abs(ddx) >= std::abs(ddy)) {
-                        events_queue.push(ddx >= 0 ? "ATTACK_RIGHT" : "ATTACK_LEFT");
+                    // Decisión: si el arma es de rango (arco/magia), mando
+                    // TARGETED_ATTACK con el id del target — sirve para
+                    // diagonales y cualquier distancia. Si es melee, mando
+                    // ATTACK con la dirección dominante.
+                    const bool isRanged = (player.weaponId == 2);
+                    if (isRanged) {
+                        events_queue.push("TARGETED_ATTACK:0:" + std::to_string(entry.first));
                     } else {
-                        events_queue.push(ddy >= 0 ? "ATTACK_BOTTOM" : "ATTACK_TOP");
+                        int myTileX = (int)(player.x + HEAD_OFFSET);
+                        int myTileY = (int)(player.y + FEET_OFFSET);
+                        int ddx = opTileX - myTileX;
+                        int ddy = opTileY - myTileY;
+                        if (std::abs(ddx) >= std::abs(ddy)) {
+                            events_queue.push(ddx >= 0 ? "ATTACK_RIGHT" : "ATTACK_LEFT");
+                        } else {
+                            events_queue.push(ddy >= 0 ? "ATTACK_BOTTOM" : "ATTACK_TOP");
+                        }
                     }
-                    if (player.weaponId == 2) {  // Arco — visual de flecha
+                    if (isRanged) {  // Arco — visual de flecha
                         float sx = player.x + 0.5f;
                         float sy = player.y + 0.5f;
                         float tx = op.visual.x + 0.5f;

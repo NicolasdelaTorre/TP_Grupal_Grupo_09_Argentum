@@ -41,8 +41,14 @@ private:
     // Deserializa un cheat del cliente: "cheat.<code>". Ver enum CheatCode en common/DTOs.h.
     int returnCheat(std::string& message, const int clientId);
 
+    // Deserializa la cabeza elegida en char creation: "head.<id>".
+    int returnHead(std::string& message, const int clientId);
+
     // Deserializa un ataque del cliente: "attack.<direccion>".
     int returnAttack(std::string& message, const int clientId);
+
+    // Deserializa un ataque a target específico: "targeted_attack.<type>.<id>".
+    int returnTargetedAttack(std::string& message, const int clientId);
 
     // Manda el mapa entero (opcode + width + height + cellCount + cells).
     void sendMap(common_protocol& client);
