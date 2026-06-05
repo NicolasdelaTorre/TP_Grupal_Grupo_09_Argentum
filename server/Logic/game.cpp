@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -192,6 +193,48 @@ uint8_t Game::getPlayerLevel(int playerId) const {
         throw std::runtime_error("Game Error: player not found");
     }
     return it->second.getData().level;
+}
+
+uint16_t Game::getPlayerMana(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().mana;
+}
+
+uint16_t Game::getPlayerMaxMana(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getMaxMana();
+}
+
+uint32_t Game::getPlayerGold(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().gold;
+}
+
+uint32_t Game::getPlayerExperience(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().experience;
+}
+
+uint32_t Game::getPlayerNextLevelExp(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    // Limite = 1000 * Nivel^1.8 — fórmula del enunciado.
+    uint8_t level = it->second.getData().level;
+    return static_cast<uint32_t>(1000.0 * std::pow(static_cast<double>(level), 1.8));
 }
 
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }

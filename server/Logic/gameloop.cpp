@@ -62,13 +62,7 @@ void Gameloop::processCommand(const std::string& command) {
                 clientQueues.broadcast(msg);
                 // El target sufrió daño → mandarle sus stats actualizados.
                 if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
-                    uint16_t hp = game.getPlayerHealth(r.targetId);
-                    uint16_t maxHp = game.getPlayerMaxHealth(r.targetId);
-                    uint8_t lvl = game.getPlayerLevel(r.targetId);
-                    std::string stats = "STATS:" + std::to_string(hp) + ":" +
-                                        std::to_string(maxHp) + ":" +
-                                        std::to_string(static_cast<int>(lvl));
-                    clientQueues.sendToClient(r.targetId, stats);
+                    clientQueues.sendToClient(r.targetId, buildStatsMessage(r.targetId));
                 }
             }
         }
@@ -96,13 +90,7 @@ void Gameloop::processCommand(const std::string& command) {
                                       std::to_string(r.hit ? 1 : 0);
                     clientQueues.broadcast(msg);
                     if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
-                        uint16_t hp = game.getPlayerHealth(r.targetId);
-                        uint16_t maxHp = game.getPlayerMaxHealth(r.targetId);
-                        uint8_t lvl = game.getPlayerLevel(r.targetId);
-                        std::string stats = "STATS:" + std::to_string(hp) + ":" +
-                                            std::to_string(maxHp) + ":" +
-                                            std::to_string(static_cast<int>(lvl));
-                        clientQueues.sendToClient(r.targetId, stats);
+                        clientQueues.sendToClient(r.targetId, buildStatsMessage(r.targetId));
                     }
                 }
             }
@@ -125,12 +113,7 @@ void Gameloop::processCommand(const std::string& command) {
             game.processCheat(idPlayer, code);
             // Los stats pueden haber cambiado (vida=0 en suicide, gold/exp etc).
             // Reenviamos para que el HUD del cliente se actualice.
-            uint16_t hp = game.getPlayerHealth(idPlayer);
-            uint16_t maxHp = game.getPlayerMaxHealth(idPlayer);
-            uint8_t level = game.getPlayerLevel(idPlayer);
-            std::string statsMsg = "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) +
-                                   ":" + std::to_string(static_cast<int>(level));
-            clientQueues.sendToClient(idPlayer, statsMsg);
+            clientQueues.sendToClient(idPlayer, buildStatsMessage(idPlayer));
         }
         return;
     }
@@ -213,13 +196,8 @@ void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
     clientQueues.sendToClient(idPlayer, loginMsg);
     clientQueues.sendToClient(idPlayer, "MAP");
 
-    // Stats iniciales (vida actual / vida máxima / nivel)
-    uint32_t hp = game.getPlayerHealth(idPlayer);
-    uint32_t maxHp = game.getPlayerMaxHealth(idPlayer);
-    uint8_t level = game.getPlayerLevel(idPlayer);
-    std::string statsMsg = "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) + ":" +
-                           std::to_string(static_cast<int>(level));
-    clientQueues.sendToClient(idPlayer, statsMsg);
+    // Stats iniciales (hp/mana/gold/exp/level — snapshot completo).
+    clientQueues.sendToClient(idPlayer, buildStatsMessage(idPlayer));
 
     // Mandarle un NEW_PLAYER por cada jugador que ya estaba.
     for (int otherId: game.getPlayerIds()) {
@@ -243,6 +221,21 @@ void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
                                std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
                                std::to_string(myDir) + ":" + std::to_string(mySkin) + ":" + myName;
     clientQueues.broadcastExcept(idPlayer, broadcastMsg);
+}
+
+std::string Gameloop::buildStatsMessage(int idPlayer) {
+    uint16_t hp = game.getPlayerHealth(idPlayer);
+    uint16_t maxHp = game.getPlayerMaxHealth(idPlayer);
+    uint16_t mana = game.getPlayerMana(idPlayer);
+    uint16_t maxMana = game.getPlayerMaxMana(idPlayer);
+    uint32_t gold = game.getPlayerGold(idPlayer);
+    uint32_t exp = game.getPlayerExperience(idPlayer);
+    uint32_t nextLvlExp = game.getPlayerNextLevelExp(idPlayer);
+    uint8_t level = game.getPlayerLevel(idPlayer);
+    return "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) + ":" +
+           std::to_string(mana) + ":" + std::to_string(maxMana) + ":" +
+           std::to_string(gold) + ":" + std::to_string(exp) + ":" +
+           std::to_string(nextLvlExp) + ":" + std::to_string(static_cast<int>(level));
 }
 
 void Gameloop::stop() { gameFinished = true; }

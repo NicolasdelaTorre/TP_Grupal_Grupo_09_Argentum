@@ -38,10 +38,15 @@ struct PlayerEvent {
     std::string name;
 };
 
-// Stats del jugador local (STATS_JUGADOR).
+// Stats del jugador local (STATS_JUGADOR). Snapshot completo.
 struct StatsEvent {
     uint16_t health;
     uint16_t maxHealth;
+    uint16_t mana;
+    uint16_t maxMana;
+    uint32_t gold;
+    uint32_t experience;
+    uint32_t nextLevelExp;
     uint8_t level;
 };
 

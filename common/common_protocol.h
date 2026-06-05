@@ -24,9 +24,13 @@ public:
 
     int send_two_bytes_number(u_int16_t number);
 
+    int send_four_bytes_number(u_int32_t number);
+
     u_int8_t receive_byte();
 
     u_int16_t receive_two_bytes_number();
+
+    u_int32_t receive_four_bytes_number();
 
     void send_message(std::vector<char> message);
 

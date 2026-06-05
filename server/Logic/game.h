@@ -66,6 +66,17 @@ public:
 
     uint16_t getPlayerMaxHealth(int playerId) const;
 
+    uint16_t getPlayerMana(int playerId) const;
+
+    uint16_t getPlayerMaxMana(int playerId) const;
+
+    uint32_t getPlayerGold(int playerId) const;
+
+    uint32_t getPlayerExperience(int playerId) const;
+
+    // Limite = 1000 * Nivel^1.8 (sección "Puntos de experiencia" del enunciado).
+    uint32_t getPlayerNextLevelExp(int playerId) const;
+
     uint8_t getPlayerLevel(int playerId) const;
 
     bool hasPlayer(int playerId) const;

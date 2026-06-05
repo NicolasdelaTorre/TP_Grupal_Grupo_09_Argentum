@@ -45,6 +45,11 @@ void client_receiver::run() {
                     StatsEvent ev = protocol.recv_stats_payload();
                     server_queue.push("STATS:" + std::to_string(ev.health) + ":" +
                                       std::to_string(ev.maxHealth) + ":" +
+                                      std::to_string(ev.mana) + ":" +
+                                      std::to_string(ev.maxMana) + ":" +
+                                      std::to_string(ev.gold) + ":" +
+                                      std::to_string(ev.experience) + ":" +
+                                      std::to_string(ev.nextLevelExp) + ":" +
                                       std::to_string(static_cast<int>(ev.level)));
                     break;
                 }

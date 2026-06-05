@@ -515,15 +515,30 @@ void GameScreen::consumeServerEvents() {
             // equipado. Por ahora solo loggeamos para confirmar el flujo.
             std::cout << "INVENTORY_UPDATE: " << event << std::endl;
         } else if (event.rfind("STATS:", 0) == 0) {
-            // STATS:<hp>:<maxHp>:<level>
+            // STATS:<hp>:<maxHp>:<mana>:<maxMana>:<gold>:<exp>:<nextLvlExp>:<level>
             size_t c1 = event.find(':');
             size_t c2 = event.find(':', c1 + 1);
             size_t c3 = event.find(':', c2 + 1);
-            if (c3 == std::string::npos)
+            size_t c4 = event.find(':', c3 + 1);
+            size_t c5 = event.find(':', c4 + 1);
+            size_t c6 = event.find(':', c5 + 1);
+            size_t c7 = event.find(':', c6 + 1);
+            size_t c8 = event.find(':', c7 + 1);
+            if (c8 == std::string::npos)
                 continue;
             health = static_cast<uint16_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
             maxHealth = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
-            level = static_cast<uint8_t>(std::stoi(event.substr(c3 + 1)));
+            mana = static_cast<uint16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
+            maxMana = static_cast<uint16_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
+            gold = static_cast<uint32_t>(std::stoul(event.substr(c5 + 1, c6 - c5 - 1)));
+            experience = static_cast<uint32_t>(std::stoul(event.substr(c6 + 1, c7 - c6 - 1)));
+            nextLevelExp = static_cast<uint32_t>(std::stoul(event.substr(c7 + 1, c8 - c7 - 1)));
+            level = static_cast<uint8_t>(std::stoi(event.substr(c8 + 1)));
+            std::cout << "STATS hp=" << health << "/" << maxHealth
+                      << " mana=" << mana << "/" << maxMana
+                      << " gold=" << gold
+                      << " exp=" << experience << "/" << nextLevelExp
+                      << " lvl=" << (int)level << std::endl;
         }
     }
 }
@@ -542,25 +557,34 @@ void GameScreen::renderHUD() {
     if (maxHealth == 0)
         return;  // no recibimos stats todavía
 
-    // Barra de vida en la esquina superior izquierda
     static constexpr int HUD_X = 10;
     static constexpr int HUD_Y = 10;
     static constexpr int BAR_W = 200;
     static constexpr int BAR_H = 20;
+    static constexpr int BAR_GAP = 4;
 
-    // Fondo gris
+    // Vida (roja).
     renderer.SetDrawColor(60, 60, 60, 220);
-    SDL_Rect bg{HUD_X, HUD_Y, BAR_W, BAR_H};
-    SDL_RenderFillRect(renderer.Get(), &bg);
-
-    // Vida actual (rojo)
-    int filledW = static_cast<int>(BAR_W * (float)health / (float)maxHealth);
+    SDL_Rect bgHp{HUD_X, HUD_Y, BAR_W, BAR_H};
+    SDL_RenderFillRect(renderer.Get(), &bgHp);
+    int filledHp = static_cast<int>(BAR_W * (float)health / (float)maxHealth);
     renderer.SetDrawColor(180, 30, 30, 255);
-    SDL_Rect fill{HUD_X, HUD_Y, filledW, BAR_H};
-    SDL_RenderFillRect(renderer.Get(), &fill);
-
-    // Borde
+    SDL_Rect hp{HUD_X, HUD_Y, filledHp, BAR_H};
+    SDL_RenderFillRect(renderer.Get(), &hp);
     renderer.SetDrawColor(0, 0, 0, 255);
-    SDL_Rect border{HUD_X, HUD_Y, BAR_W, BAR_H};
-    SDL_RenderDrawRect(renderer.Get(), &border);
+    SDL_RenderDrawRect(renderer.Get(), &bgHp);
+
+    // Mana (azul). Solo si maxMana > 0 (el guerrero siempre tiene 0).
+    if (maxMana > 0) {
+        int yMana = HUD_Y + BAR_H + BAR_GAP;
+        renderer.SetDrawColor(60, 60, 60, 220);
+        SDL_Rect bgMp{HUD_X, yMana, BAR_W, BAR_H};
+        SDL_RenderFillRect(renderer.Get(), &bgMp);
+        int filledMp = static_cast<int>(BAR_W * (float)mana / (float)maxMana);
+        renderer.SetDrawColor(30, 80, 200, 255);
+        SDL_Rect mp{HUD_X, yMana, filledMp, BAR_H};
+        SDL_RenderFillRect(renderer.Get(), &mp);
+        renderer.SetDrawColor(0, 0, 0, 255);
+        SDL_RenderDrawRect(renderer.Get(), &bgMp);
+    }
 }

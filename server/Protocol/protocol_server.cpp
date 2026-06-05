@@ -419,20 +419,37 @@ void ProtocolServer::sendPlayerDisconnected(common_protocol& client, const std::
 }
 
 void ProtocolServer::sendStats(common_protocol& client, const std::string& message) {
-    // Formato: "STATS:<hp>:<maxHp>:<level>"
+    // Formato: "STATS:<hp>:<maxHp>:<mana>:<maxMana>:<gold>:<exp>:<nextLvlExp>:<level>"
     size_t c1 = message.find(':');
     size_t c2 = message.find(':', c1 + 1);
     size_t c3 = message.find(':', c2 + 1);
-    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos) {
+    size_t c4 = message.find(':', c3 + 1);
+    size_t c5 = message.find(':', c4 + 1);
+    size_t c6 = message.find(':', c5 + 1);
+    size_t c7 = message.find(':', c6 + 1);
+    size_t c8 = message.find(':', c7 + 1);
+    if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos ||
+        c4 == std::string::npos || c5 == std::string::npos || c6 == std::string::npos ||
+        c7 == std::string::npos || c8 == std::string::npos) {
         throw std::runtime_error("Protocol Error: malformed STATS message: " + message);
     }
     uint16_t hp = static_cast<uint16_t>(std::stoi(message.substr(c1 + 1, c2 - c1 - 1)));
     uint16_t maxHp = static_cast<uint16_t>(std::stoi(message.substr(c2 + 1, c3 - c2 - 1)));
-    uint8_t level = static_cast<uint8_t>(std::stoi(message.substr(c3 + 1)));
+    uint16_t mana = static_cast<uint16_t>(std::stoi(message.substr(c3 + 1, c4 - c3 - 1)));
+    uint16_t maxMana = static_cast<uint16_t>(std::stoi(message.substr(c4 + 1, c5 - c4 - 1)));
+    uint32_t gold = static_cast<uint32_t>(std::stoul(message.substr(c5 + 1, c6 - c5 - 1)));
+    uint32_t exp = static_cast<uint32_t>(std::stoul(message.substr(c6 + 1, c7 - c6 - 1)));
+    uint32_t nextLvlExp = static_cast<uint32_t>(std::stoul(message.substr(c7 + 1, c8 - c7 - 1)));
+    uint8_t level = static_cast<uint8_t>(std::stoi(message.substr(c8 + 1)));
 
     client.sendByte(static_cast<uint8_t>(ServerMsg::STATS_JUGADOR));
     client.send_two_bytes_number(hp);
     client.send_two_bytes_number(maxHp);
+    client.send_two_bytes_number(mana);
+    client.send_two_bytes_number(maxMana);
+    client.send_four_bytes_number(gold);
+    client.send_four_bytes_number(exp);
+    client.send_four_bytes_number(nextLvlExp);
     client.sendByte(level);
 }
 

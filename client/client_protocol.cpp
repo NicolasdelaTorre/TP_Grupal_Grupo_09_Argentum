@@ -124,6 +124,11 @@ StatsEvent client_protocol::recv_stats_payload() {
     StatsEvent ev;
     ev.health = protocol.receive_two_bytes_number();
     ev.maxHealth = protocol.receive_two_bytes_number();
+    ev.mana = protocol.receive_two_bytes_number();
+    ev.maxMana = protocol.receive_two_bytes_number();
+    ev.gold = protocol.receive_four_bytes_number();
+    ev.experience = protocol.receive_four_bytes_number();
+    ev.nextLevelExp = protocol.receive_four_bytes_number();
     ev.level = protocol.receive_byte();
     return ev;
 }

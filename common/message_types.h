@@ -24,8 +24,9 @@ enum class ClientMsg : uint8_t {
 // Mensajes Servidor → Cliente
 enum class ServerMsg : uint8_t {
     POSICION_JUGADORES = 0x80,   // [opcode][cant:2][[id:1][x:2][y:2]...]
-    STATS_JUGADOR = 0x81,        // [opcode][vida:2][maxVida:2][nivel:1]
-                                 // (mana/exp/oro cuando estén implementados)
+    STATS_JUGADOR = 0x81,        // [opcode][hp:2][maxHp:2][mana:2][maxMana:2]
+                                 // [gold:4][exp:4][nextLevelExp:4][level:1]
+                                 // Snapshot completo de stats del jugador local.
     CHAT_MSG = 0x82,             // [opcode][len:2][texto]
     MAP = 0x83,                  // [opcode][width:2][height:2][CellCount:2]
                                  // [[textureId:2][obstacleId:2][safeZone:1]]... (row-major)
