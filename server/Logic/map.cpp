@@ -23,7 +23,17 @@ void Map::initializeMap() {
         cell.npcId = 0;
         cell.isWalkable = true;
         cell.safeZone = false;
+        cell.ocuppiedByMerchant = false;
+        cell.ocuppiedByBanker = false;
     }
+
+    /*
+    for (auto& biome: biomes) {
+        biome.typeBiome = 0;
+        biome.size = 0;
+        biome.creaturesCount = 0;
+    }
+        */
 }
 
 uint16_t Map::getWidth() const { return width; }

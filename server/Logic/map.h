@@ -15,6 +15,15 @@ struct Cell {
     uint8_t npcId;
     bool isWalkable;
     bool safeZone;
+    bool ocuppiedByMerchant;
+    bool ocuppiedByBanker;
+};
+
+struct Biome {
+    uint8_t typeBiome;
+    uint16_t size;
+    uint8_t creaturesCount;
+    std::vector<Position> biomeCells;
 };
 
 // Mapa estático: no cambia una vez cargado. Los jugadores los maneja el Game.
@@ -23,6 +32,7 @@ private:
     uint16_t width;
     uint16_t height;
     std::vector<Cell> cells;
+    // std::vector<Biome> biomes;
 
     void initializeMap();
 
