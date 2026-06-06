@@ -266,23 +266,20 @@ void GameScreen::update(float dt) {
     consumeServerEvents();
 
     // Tick blood effects and remove expired ones.
-    for (auto& b : bloodEffects)
-        b.timer -= dt;
-    bloodEffects.erase(
-        std::remove_if(bloodEffects.begin(), bloodEffects.end(),
-                       [](const BloodEffect& b) { return b.timer <= 0.0f; }),
-        bloodEffects.end());
+    for (auto& b: bloodEffects) b.timer -= dt;
+    bloodEffects.erase(std::remove_if(bloodEffects.begin(), bloodEffects.end(),
+                                      [](const BloodEffect& b) { return b.timer <= 0.0f; }),
+                       bloodEffects.end());
 
     // Tick arrows and remove ones that reached the target or expired.
-    for (auto& arrow : arrows) {
+    for (auto& arrow: arrows) {
         arrow.x += arrow.vx * dt;
         arrow.y += arrow.vy * dt;
         arrow.lifetime -= dt;
     }
-    arrows.erase(
-        std::remove_if(arrows.begin(), arrows.end(),
-                       [](const ArrowProjectile& a) { return a.lifetime <= 0.0f; }),
-        arrows.end());
+    arrows.erase(std::remove_if(arrows.begin(), arrows.end(),
+                                [](const ArrowProjectile& a) { return a.lifetime <= 0.0f; }),
+                 arrows.end());
 
     // Interpolamos a los otros jugadores hacia su tile destino para que se vea
     // un walk fluido en vez de saltos de tile en tile.
@@ -403,8 +400,7 @@ void GameScreen::consumeServerEvents() {
             int tid = std::stoi(event.substr(c3 + 1, c4 - c3 - 1));
             int dmg = std::stoi(event.substr(c4 + 1, c5 - c4 - 1));
             int hit = std::stoi(event.substr(c5 + 1));
-            std::cout << "ATTACK: " << atk << " -> " << tid
-                      << (hit ? " hit for " : " MISS (")
+            std::cout << "ATTACK: " << atk << " -> " << tid << (hit ? " hit for " : " MISS (")
                       << dmg << (hit ? " dmg" : ")") << std::endl;
         } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
             // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
@@ -460,10 +456,8 @@ void GameScreen::consumeServerEvents() {
             experience = static_cast<uint32_t>(std::stoul(event.substr(c6 + 1, c7 - c6 - 1)));
             nextLevelExp = static_cast<uint32_t>(std::stoul(event.substr(c7 + 1, c8 - c7 - 1)));
             level = static_cast<uint8_t>(std::stoi(event.substr(c8 + 1)));
-            std::cout << "STATS hp=" << health << "/" << maxHealth
-                      << " mana=" << mana << "/" << maxMana
-                      << " gold=" << gold
-                      << " exp=" << experience << "/" << nextLevelExp
+            std::cout << "STATS hp=" << health << "/" << maxHealth << " mana=" << mana << "/"
+                      << maxMana << " gold=" << gold << " exp=" << experience << "/" << nextLevelExp
                       << " lvl=" << (int)level << std::endl;
         }
     }
@@ -471,10 +465,9 @@ void GameScreen::consumeServerEvents() {
 
 void GameScreen::renderBloodEffects(float camX, float camY) {
     static constexpr int BLOOD_FRAMES = 5;
-    for (const auto& b : bloodEffects) {
+    for (const auto& b: bloodEffects) {
         float elapsed = BLOOD_DURATION - b.timer;
-        int frame = std::min(BLOOD_FRAMES - 1,
-                             (int)(elapsed / (BLOOD_DURATION / BLOOD_FRAMES)));
+        int frame = std::min(BLOOD_FRAMES - 1, (int)(elapsed / (BLOOD_DURATION / BLOOD_FRAMES)));
         mapRenderer.renderBlood(b.x, b.y, frame, 255, camX, camY);
     }
 }

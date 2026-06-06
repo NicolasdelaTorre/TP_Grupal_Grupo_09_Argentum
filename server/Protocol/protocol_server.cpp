@@ -1,7 +1,7 @@
 #include "protocol_server.h"
 
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 #include <utility>
 
 #include <sys/socket.h>

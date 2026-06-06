@@ -1,9 +1,9 @@
-#include "npc.h"
+#include "creature.h"
 #include "../toml.hpp"
 
 #include <ctime>
 
-NPC::NPC(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map) : name(name), map(map) {
+Creature::Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map) : name(name), map(map) {
     // Set level
     srand(time(nullptr));
     if (mapId == 0) {
@@ -33,7 +33,7 @@ NPC::NPC(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& ma
     position.y = y;
 }
 
-void NPC::stalkPlayer() {
+void Creature::stalkPlayer() {
     Position playerPosition = map.searchPlayer(position.x, position.y);
 
     // No player in sight
@@ -46,7 +46,7 @@ void NPC::stalkPlayer() {
     position.y += (dy > 0) - (dy < 0);
 }
 
-uint16_t NPC::attackPlayer() {
+uint16_t Creature::attackPlayer() {
     uint8_t playerId = map.nextEntity(position.x, position.y, false);
 
     if (!playerId) {
@@ -56,7 +56,7 @@ uint16_t NPC::attackPlayer() {
     return damage;
 }
 
-void NPC::receiveDamage(uint16_t damage) {
+void Creature::receiveDamage(uint16_t damage) {
     if (damage >= health) {
         health = 0;
     } else {

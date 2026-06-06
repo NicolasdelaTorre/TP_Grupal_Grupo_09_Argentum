@@ -60,6 +60,5 @@ void client_sender::run() {
                 protocol.send_unequip_item(slotType);
             }
         }
-    } catch (const ClosedQueue&) {
-    }
+    } catch (const ClosedQueue&) {}
 }

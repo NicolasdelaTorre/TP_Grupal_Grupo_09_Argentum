@@ -334,11 +334,19 @@ AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targ
 
     uint8_t entityId = 0;
     if (targetType == 0) {
-        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true);
+        if (itPlayer->second.hasLongDistanceWeapon())
+            entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), true);
+        else
+            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true);
     } else if (targetType == 1) {
-        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false);
+        if (itPlayer->second.hasLongDistanceWeapon())
+            entityId =
+                    map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), false);
+        else
+            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false);
     } else {
-        throw std::runtime_error("Game Error: malformed attack command (expected player.id or npc.id)");
+        throw std::runtime_error(
+                "Game Error: malformed attack command (expected player.id or npc.id)");
     }
 
     if (entityId != targetId)
@@ -464,8 +472,8 @@ bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
     // TODO(team-gameplay): manejar HEALTH_POTION/MANA_POTION en equipItem
     // o agregar un branch acá que llame a player.heal()/consumeMana().
     bool ok = it->second.equipItem(static_cast<int>(invSlot));
-    std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot
-              << " ok=" << ok << std::endl;
+    std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot << " ok=" << ok
+              << std::endl;
     return ok;
 }
 
@@ -476,15 +484,24 @@ bool Game::unequipSlot(int playerId, uint8_t slotType) {
     }
     ItemType type;
     switch (slotType) {
-        case 0: type = ItemType::WEAPON; break;
-        case 1: type = ItemType::ARMOR; break;
-        case 2: type = ItemType::HELMET; break;
-        case 3: type = ItemType::SHIELD; break;
-        default: return false;
+        case 0:
+            type = ItemType::WEAPON;
+            break;
+        case 1:
+            type = ItemType::ARMOR;
+            break;
+        case 2:
+            type = ItemType::HELMET;
+            break;
+        case 3:
+            type = ItemType::SHIELD;
+            break;
+        default:
+            return false;
     }
     bool ok = it->second.unequipItem(type);
-    std::cout << "UNEQUIP player=" << playerId << " slotType=" << (int)slotType
-              << " ok=" << ok << std::endl;
+    std::cout << "UNEQUIP player=" << playerId << " slotType=" << (int)slotType << " ok=" << ok
+              << std::endl;
     return ok;
 }
 

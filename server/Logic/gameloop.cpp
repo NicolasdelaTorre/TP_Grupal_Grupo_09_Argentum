@@ -56,16 +56,14 @@ void Gameloop::processCommand(const std::string& command) {
                 uint8_t targetType = static_cast<uint8_t>(std::stoi(payload.substr(0, dot)));
                 uint16_t targetId = static_cast<uint16_t>(std::stoi(payload.substr(dot + 1)));
                 AttackResult r = game.processAttack(idPlayer, targetType, targetId);
-                std::cout << "ATTACK from player=" << idPlayer
-                          << " ttype=" << (int)targetType << " tid=" << targetId
-                          << " performed=" << r.performed << " hit=" << r.hit
+                std::cout << "ATTACK from player=" << idPlayer << " ttype=" << (int)targetType
+                          << " tid=" << targetId << " performed=" << r.performed << " hit=" << r.hit
                           << " dmg=" << r.damage << std::endl;
                 if (r.performed) {
                     std::string msg = "ATTACK_RESULT:" + std::to_string(r.attackerId) + ":" +
                                       std::to_string(static_cast<int>(r.targetType)) + ":" +
-                                      std::to_string(r.targetId) + ":" +
-                                      std::to_string(r.damage) + ":" +
-                                      std::to_string(r.hit ? 1 : 0);
+                                      std::to_string(r.targetId) + ":" + std::to_string(r.damage) +
+                                      ":" + std::to_string(r.hit ? 1 : 0);
                     clientQueues.broadcast(msg);
                     if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
                         clientQueues.sendToClient(r.targetId, buildStatsMessage(r.targetId));
@@ -225,8 +223,8 @@ void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
 
 void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
     auto snap = game.getInventorySnapshot(idPlayer);
-    const uint8_t slots[4] = {snap.equippedWeapon, snap.equippedArmor,
-                              snap.equippedHelmet, snap.equippedShield};
+    const uint8_t slots[4] = {snap.equippedWeapon, snap.equippedArmor, snap.equippedHelmet,
+                              snap.equippedShield};
     for (uint8_t s = 0; s < 4; s++) {
         if (slots[s] == 0)
             continue;  // nada equipado, no mando
@@ -251,9 +249,9 @@ std::string Gameloop::buildStatsMessage(int idPlayer) {
     uint32_t nextLvlExp = game.getPlayerNextLevelExp(idPlayer);
     uint8_t level = game.getPlayerLevel(idPlayer);
     return "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) + ":" +
-           std::to_string(mana) + ":" + std::to_string(maxMana) + ":" +
-           std::to_string(gold) + ":" + std::to_string(exp) + ":" +
-           std::to_string(nextLvlExp) + ":" + std::to_string(static_cast<int>(level));
+           std::to_string(mana) + ":" + std::to_string(maxMana) + ":" + std::to_string(gold) + ":" +
+           std::to_string(exp) + ":" + std::to_string(nextLvlExp) + ":" +
+           std::to_string(static_cast<int>(level));
 }
 
 void Gameloop::stop() { gameFinished = true; }

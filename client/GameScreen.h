@@ -15,8 +15,8 @@
 static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
 
-static constexpr float BLOOD_DURATION = 0.5f;   // seconds a blood splatter stays visible
-static constexpr float ARROW_SPEED    = 10.0f;  // tiles/sec
+static constexpr float BLOOD_DURATION = 0.5f;  // seconds a blood splatter stays visible
+static constexpr float ARROW_SPEED = 10.0f;    // tiles/sec
 
 struct BloodEffect {
     float x, y;   // world tile position where the hit occurred
@@ -41,7 +41,7 @@ public:
 
     // Retorna false cuando el jugador quiere salir
     bool run();
-    
+
 
 private:
     SDL2pp::Renderer& renderer;

@@ -17,7 +17,7 @@ struct ArrowProjectile {
     float x, y;    // posición en tiles (centro del sprite)
     float vx, vy;  // velocidad en tiles/seg
     float lifetime;
-    int arrowType; // 0–8, columna en Flechas.png
+    int arrowType;  // 0–8, columna en Flechas.png
 };
 
 // ── Datos de un tile del mapa ─────────────────────────────────

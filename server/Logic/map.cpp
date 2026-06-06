@@ -52,17 +52,26 @@ bool Map::isWalkable(int16_t x, int16_t y) const {
 bool Map::occupiedByEntity(int16_t x, int16_t y) const {
     if (!isInBounds(x, y))
         return false;
-    return cells[static_cast<size_t>(y) * width + x].playerId != 0 || cells[static_cast<size_t>(y) * width + x].npcId != 0;
+    return cells[static_cast<size_t>(y) * width + x].playerId != 0 ||
+           cells[static_cast<size_t>(y) * width + x].npcId != 0;
 }
 
 uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer) {
     for (size_t i = 0; i < 4; i++) {
         // Check position in the current direction
         switch (i) {
-            case 0: y -= 1; break;  // Up
-            case 1: y += 1; break;  // Down
-            case 2: x -= 1; break;  // Left
-            case 3: x += 1; break;  // Right
+            case 0:
+                y -= 1;
+                break;  // Up
+            case 1:
+                y += 1;
+                break;  // Down
+            case 2:
+                x -= 1;
+                break;  // Left
+            case 3:
+                x += 1;
+                break;  // Right
         }
 
         if (!isInBounds(x, y)) {

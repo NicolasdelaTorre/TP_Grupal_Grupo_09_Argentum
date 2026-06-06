@@ -55,7 +55,7 @@ public:
 
     // Limpia el playerId de la celda. Se llama al desconectar / morir.
     void removePlayer(int16_t x, int16_t y);
-    
+
     uint8_t entityInDistance(int16_t x, int16_t y, bool isPlayer);
 
     void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer);

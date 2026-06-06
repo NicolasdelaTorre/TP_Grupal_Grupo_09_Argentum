@@ -1,5 +1,5 @@
-#ifndef NPC_H
-#define NPC_H
+#ifndef CREATURE_H
+#define CREATURE_H
 
 #include <cstdint>
 #include <string>
@@ -7,7 +7,7 @@
 #include "../../common/position.h"
 #include "../map.h"
 
-class NPC {
+class Creature {
     private:
         uint8_t id;
         const std::string& name;
@@ -19,7 +19,7 @@ class NPC {
         Map& map;
 
     public:
-        NPC(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map);
+        Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map);
 
         void stalkPlayer();
 

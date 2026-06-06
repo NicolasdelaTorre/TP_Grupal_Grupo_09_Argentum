@@ -182,11 +182,6 @@ bool Player::equipItem(int inventorySlot) {
             throw std::runtime_error("Player Error: trying to equip an item that is not exist");
     }
 
-    // Delete the item from the inventory
-    inventory.erase(inventory.begin() + inventorySlot);
-    data.inventory[inventorySlot] = 0;
-    data.equippedWeapon = equippedWeapon.getId();
-
     return true;
 }
 
@@ -195,28 +190,24 @@ bool Player::unequipItem(ItemType type) {
         case ItemType::WEAPON:
             if (equippedWeapon.emptyItem())
                 return false;
-            inventory.push_back(equippedWeapon);
             data.equippedWeapon = 0;
             equippedWeapon = Item();
             break;
         case ItemType::ARMOR:
             if (equippedArmor.emptyItem())
                 return false;
-            inventory.push_back(equippedArmor);
             data.equippedArmor = 0;
             equippedArmor = Item();
             break;
         case ItemType::HELMET:
             if (equippedHelmet.emptyItem())
                 return false;
-            inventory.push_back(equippedHelmet);
             data.equippedHelmet = 0;
             equippedHelmet = Item();
             break;
         case ItemType::SHIELD:
             if (equippedShield.emptyItem())
                 return false;
-            inventory.push_back(equippedShield);
             data.equippedShield = 0;
             equippedShield = Item();
             break;

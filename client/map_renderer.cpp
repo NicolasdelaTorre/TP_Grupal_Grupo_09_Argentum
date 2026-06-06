@@ -313,10 +313,10 @@ void MapRenderer::renderHelmet(const Player& player, float camX, float camY) {
     if (player.killed || player.helmetId < 0)
         return;
 
-    static constexpr int HELMET_CELL_W   = 27;  // 46
-    static constexpr int HELMET_CELL_H   = 64;  // 256
-    static constexpr int HEAD_CELL_W     = 27;
-    static constexpr int HEAD_CELL_H     = 64;
+    static constexpr int HELMET_CELL_W = 27;  // 46
+    static constexpr int HELMET_CELL_H = 64;  // 256
+    static constexpr int HEAD_CELL_W = 27;
+    static constexpr int HEAD_CELL_H = 64;
 
     int col = player.helmetId;
     int row = static_cast<int>(player.dir);  // DOWN=0, UP=1, LEFT=2, RIGHT=3
@@ -325,8 +325,8 @@ void MapRenderer::renderHelmet(const Player& player, float camX, float camY) {
 
     int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
     int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
-    int headX   = screenX + SPRITE_W / 2 - HEAD_CELL_W / 2;
-    int headY   = screenY - HEAD_CELL_H / 4 - 3;
+    int headX = screenX + SPRITE_W / 2 - HEAD_CELL_W / 2;
+    int headY = screenY - HEAD_CELL_H / 4 - 3;
 
     SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
 
@@ -386,10 +386,9 @@ void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, floa
 
 void MapRenderer::renderBlood(float x, float y, int texIndex, Uint8 alpha, float camX, float camY) {
     static constexpr int BLOOD_DRAW_SIZE = 32;
-    static const char* bloodFiles[] = {
-        "/Skins/Sangre_1.png", "/Skins/Sangre_2.png", "/Skins/Sangre_3.png",
-        "/Skins/Sangre_4.png", "/Skins/Sangre_5.png"
-    };
+    static const char* bloodFiles[] = {"/Skins/Sangre_1.png", "/Skins/Sangre_2.png",
+                                       "/Skins/Sangre_3.png", "/Skins/Sangre_4.png",
+                                       "/Skins/Sangre_5.png"};
     if (texIndex < 0 || texIndex >= 5)
         return;
 
@@ -409,11 +408,11 @@ void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float
     // Flechas.png: 512×512, 9 arrow types in a single row at the top.
     // Each cell is 512/9 ≈ 56 px wide. Sprites point upper-right (45° CW from north),
     // so the SDL2 rotation formula is: atan2(vx, -vy) * 180/π − 45.
-    static constexpr int ARROW_COLS      = 9;
-    static constexpr int ARROW_CELL_W    = 32;
+    static constexpr int ARROW_COLS = 9;
+    static constexpr int ARROW_CELL_W = 32;
     static constexpr int ARROW_DRAW_SIZE = 32;
 
-    for (const auto& arrow : arrows) {
+    for (const auto& arrow: arrows) {
         int screenX = (int)(arrow.x * TILE_SIZE - camX) - ARROW_DRAW_SIZE / 2;
         int screenY = (int)(arrow.y * TILE_SIZE - camY) - ARROW_DRAW_SIZE / 2;
 
@@ -424,8 +423,8 @@ void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float
         double angle_deg = std::atan2(arrow.vx, -arrow.vy) * 180.0 / M_PI - 45.0;
 
         try {
-            SDL_RenderCopyEx(renderer.Get(), cache.get("/Armas/Flechas.png").Get(),
-                             &src, &dst, angle_deg, nullptr, SDL_FLIP_NONE);
+            SDL_RenderCopyEx(renderer.Get(), cache.get("/Armas/Flechas.png").Get(), &src, &dst,
+                             angle_deg, nullptr, SDL_FLIP_NONE);
         } catch (...) {}
     }
 }

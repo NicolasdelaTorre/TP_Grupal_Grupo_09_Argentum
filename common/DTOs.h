@@ -117,8 +117,8 @@ struct Player {
     int skin = 2;
     int headId = 6;
     int helmetId = 10;  // 0–21 = column in Gorros.png, -1 = no helmet
-    int weaponId = 2;  // 0=Espada, 1=Daga, 2=Arco, 3=Baculo, -1=sin arma
-    int shieldId = 0;  // 0 = Escudo.png, -1 = no shield
+    int weaponId = 2;   // 0=Espada, 1=Daga, 2=Arco, 3=Baculo, -1=sin arma
+    int shieldId = 0;   // 0 = Escudo.png, -1 = no shield
     Race race = Race::HUMAN;
     Classtype classtype = Classtype::MAGE;
     std::vector<Obj> inventory;
