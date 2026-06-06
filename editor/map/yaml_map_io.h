@@ -11,9 +11,7 @@ class YamlMapIO {
 public:
     static bool save(const MapDocument& document, const std::string& path);
 
-    // Carga un mapa previamente guardado. Reconstruye el MapDocument completo
-    // (mapa principal + environments) para poder seguir editándolo. Devuelve
-    // false si el archivo no existe o el YAML es inválido.
+    // CReconstruye el MapDocument completo para poder seguir editándolo.
     static bool load(MapDocument& document, const std::string& path);
 
 private:

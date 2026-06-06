@@ -51,12 +51,33 @@ uint8_t obstacleTypeFromString(const std::string& type) {
     return static_cast<uint8_t>(ObstacleType::ROCK);
 }
 
+// Marca en la celda el bool del NPC fijo correspondiente (comerciante,
+// banquero o curandero) según su "type" del YAML.
+void markNpcOccupancy(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight, int16_t x,
+                      int16_t y, const std::string& npcType) {
+    if (x < 0 || y < 0 || x >= static_cast<int16_t>(mapWidth) ||
+        y >= static_cast<int16_t>(mapHeight))
+        return;
+    Cell& cell = cells[static_cast<size_t>(y) * mapWidth + x];
+    if (npcType == "merchant")
+        cell.ocuppiedByMerchant = true;
+    else if (npcType == "banker")
+        cell.ocuppiedByBanker = true;
+    else if (npcType == "priest")
+        cell.ocuppiedByPriest = true;
+}
+
 void initializeDefaultCells(std::vector<Cell>& cells) {
     for (auto& c: cells) {
         c.textureId = 0;
         c.obstacleId = 0;
+        c.playerId = 0;
+        c.npcId = 0;
         c.isWalkable = true;
         c.safeZone = false;
+        c.ocuppiedByMerchant = false;
+        c.ocuppiedByBanker = false;
+        c.ocuppiedByPriest = false;
     }
 }
 
@@ -104,6 +125,61 @@ void applyBiomeMap(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
     }
 }
 
+// Parsea una zona de tipo "biome": tipo (a partir del template), área
+// (posición + tamaño) y la lista de spawns de criaturas.
+Biome parseBiome(const YAML::Node& zone) {
+    Biome biome;
+    if (zone["template"])
+        biome.type = biome_from_template_id(zone["template"].as<std::string>());
+
+    const auto area = zone["area"];
+    if (!area || !area["x"] || !area["y"] || !area["width"] || !area["height"]) {
+        throw std::runtime_error("YAML Loader Error: biome zone missing area");
+    }
+    biome.position.x = area["x"].as<int16_t>();
+    biome.position.y = area["y"].as<int16_t>();
+    biome.width = area["width"].as<int16_t>();
+    biome.height = area["height"].as<int16_t>();
+
+    if (zone["spawns"]) {
+        for (const auto& spawnNode: zone["spawns"]) {
+            CreatureSpawn spawn;
+            if (spawnNode["creature"])
+                spawn.creature = spawnNode["creature"].as<std::string>();
+            if (spawnNode["max_population"])
+                spawn.maxPopulation = spawnNode["max_population"].as<uint16_t>();
+            biome.spawns.push_back(std::move(spawn));
+        }
+    }
+
+    return biome;
+}
+
+// Aplica una lista de obstáculos/paredes del environment sobre sus celdas.
+// `typeKey` es la clave del YAML que tiene el tipo ("type" u "template").
+void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16_t envHeight,
+                               const YAML::Node& nodes, const char* typeKey) {
+    if (!nodes)
+        return;
+    for (const auto& node: nodes) {
+        const std::string type = node[typeKey] ? node[typeKey].as<std::string>() : std::string();
+        int16_t x = 0;
+        int16_t y = 0;
+        int16_t w = 1;
+        int16_t h = 1;
+        if (node["position"] && node["position"].size() >= 2) {
+            x = node["position"][0].as<int16_t>();
+            y = node["position"][1].as<int16_t>();
+        }
+        if (node["size"] && node["size"].size() >= 2) {
+            w = node["size"][0].as<int16_t>();
+            h = node["size"][1].as<int16_t>();
+        }
+        applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
+                      y, w, h, obstacleTypeFromString(type));
+    }
+}
+
 std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
     std::vector<LoadedEnvironment> environments;
     if (!root["environments"]) {
@@ -122,46 +198,26 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
             env.width = envNode["size"][0].as<int16_t>();
             env.height = envNode["size"][1].as<int16_t>();
         }
+        if (env.width > 0 && env.height > 0) {
+            env.cells.resize(static_cast<size_t>(env.width) * static_cast<size_t>(env.height));
+            initializeDefaultCells(env.cells);
+        }
 
         const auto spawnNode = envNode["player_spawn"];
-        if (spawnNode && spawnNode["position"] && spawnNode["position"].size() >= 2) {
-            env.hasPlayerSpawn = true;
-            env.playerSpawn.x = spawnNode["position"][0].as<int16_t>();
-            env.playerSpawn.y = spawnNode["position"][1].as<int16_t>();
+        if (!spawnNode || !spawnNode["position"] || spawnNode["position"].size() < 2) {
+            throw std::runtime_error(
+                    "YAML Loader Error: environment missing player_spawn.position");
         }
+        env.playerSpawn.x = spawnNode["position"][0].as<int16_t>();
+        env.playerSpawn.y = spawnNode["position"][1].as<int16_t>();
 
-        if (envNode["obstacles"]) {
-            for (const auto& obsNode: envNode["obstacles"]) {
-                EnvironmentObstacle obstacle;
-                if (obsNode["type"])
-                    obstacle.type = obsNode["type"].as<std::string>();
-                if (obsNode["position"] && obsNode["position"].size() >= 2) {
-                    obstacle.x = obsNode["position"][0].as<int16_t>();
-                    obstacle.y = obsNode["position"][1].as<int16_t>();
-                }
-                if (obsNode["size"] && obsNode["size"].size() >= 2) {
-                    obstacle.width = obsNode["size"][0].as<int16_t>();
-                    obstacle.height = obsNode["size"][1].as<int16_t>();
-                }
-                env.obstacles.push_back(obstacle);
-            }
-        }
-
-        if (envNode["walls"]) {
-            for (const auto& wallNode: envNode["walls"]) {
-                EnvironmentObstacle wall;
-                if (wallNode["template"])
-                    wall.type = wallNode["template"].as<std::string>();
-                if (wallNode["position"] && wallNode["position"].size() >= 2) {
-                    wall.x = wallNode["position"][0].as<int16_t>();
-                    wall.y = wallNode["position"][1].as<int16_t>();
-                }
-                if (wallNode["size"] && wallNode["size"].size() >= 2) {
-                    wall.width = wallNode["size"][0].as<int16_t>();
-                    wall.height = wallNode["size"][1].as<int16_t>();
-                }
-                env.walls.push_back(wall);
-            }
+        // Obstáculos y paredes se vuelcan directamente en las celdas del
+        // environment (las paredes traen su tipo en "template" en vez de "type").
+        if (!env.cells.empty()) {
+            applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["obstacles"],
+                                      "type");
+            applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
+                                      "template");
         }
 
         if (envNode["floor_color"])
@@ -171,6 +227,15 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
     }
 
     return environments;
+}
+
+const LoadedEnvironment* findEnvironmentById(const std::vector<LoadedEnvironment>& environments,
+                                             const std::string& id) {
+    for (const auto& environment: environments) {
+        if (environment.id == id)
+            return &environment;
+    }
+    return nullptr;
 }
 
 }  // namespace
@@ -210,11 +275,16 @@ LoadedMap loadMapFromYaml(const std::string& path) {
         }
     }
 
-    // Zonas tipo ciudad -> safe zone + fixed_npcs bloquean su celda.
-    // Biomes y otros tipos por ahora se ignoran.
+    // Zonas: las de tipo ciudad -> safe zone + fixed_npcs bloquean su celda;
+    // las de tipo bioma se cargan con su posición, tamaño y spawns de criaturas.
+    std::vector<Biome> biomes;
     if (root["zones"]) {
         for (const auto& zone: root["zones"]) {
             std::string type = zone["type"].as<std::string>();
+            if (type == "biome") {
+                biomes.push_back(parseBiome(zone));
+                continue;
+            }
             if (type != "city")
                 continue;
             int16_t zx = zone["area"]["x"].as<int16_t>();
@@ -230,13 +300,16 @@ LoadedMap loadMapFromYaml(const std::string& path) {
                     const std::string npcType =
                             npc["type"] ? npc["type"].as<std::string>() : std::string();
                     applyObstacle(cells, width, height, nx, ny, 1, 1, npcTypeFromString(npcType));
+                    markNpcOccupancy(cells, width, height, nx, ny, npcType);
                 }
             }
         }
     }
 
+    std::vector<LoadedEnvironment> environments = parseEnvironments(root);
+
     // Entries (portales a cuevas): bloquean su rectángulo en el mapa principal
-    // y, además, se guardan con su relación al environment.
+    // y, además, guardan una copia del environment al que llevan.
     std::vector<LoadedEntry> entries;
     if (root["entries"]) {
         for (const auto& entry: root["entries"]) {
@@ -252,8 +325,17 @@ LoadedMap loadMapFromYaml(const std::string& path) {
                 loadedEntry.id = entry["id"].as<std::string>();
             if (entry["type"])
                 loadedEntry.type = entry["type"].as<std::string>();
-            if (entry["environment"])
-                loadedEntry.environmentId = entry["environment"].as<std::string>();
+            if (entry["environment"]) {
+                const std::string environmentId = entry["environment"].as<std::string>();
+                const LoadedEnvironment* environment =
+                        findEnvironmentById(environments, environmentId);
+                if (!environment) {
+                    throw std::runtime_error(
+                            "YAML Loader Error: entry references unknown environment '" +
+                            environmentId + "'");
+                }
+                loadedEntry.environment = *environment;
+            }
             loadedEntry.x = ex;
             loadedEntry.y = ey;
             loadedEntry.width = ew;
@@ -268,12 +350,10 @@ LoadedMap loadMapFromYaml(const std::string& path) {
         spawn.y = root["player_spawn"]["position"][1].as<int16_t>();
     }
 
-    std::vector<LoadedEnvironment> environments = parseEnvironments(root);
-
     std::cout << "Map loaded (" << width << "x" << height << "), spawn at (" << spawn.x << ", "
               << spawn.y << "), " << entries.size() << " entr(y/ies), " << environments.size()
-              << " environment(s)" << std::endl;
+              << " environment(s), " << biomes.size() << " biome(s)" << std::endl;
 
     return LoadedMap{Map(width, height, std::move(cells)), spawn, std::move(entries),
-                     std::move(environments)};
+                     std::move(environments), std::move(biomes)};
 }

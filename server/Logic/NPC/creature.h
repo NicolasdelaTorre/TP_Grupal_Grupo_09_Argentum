@@ -8,24 +8,24 @@
 #include "../map.h"
 
 class Creature {
-    private:
-        uint8_t id;
-        const std::string& name;
-        uint8_t level;
-        uint16_t health;
-        uint16_t maxHealth;
-        uint16_t damage;
-        Position position;
-        Map& map;
+private:
+    uint8_t id;
+    const std::string& name;
+    uint8_t level;
+    uint16_t health;
+    uint16_t maxHealth;
+    uint16_t damage;
+    Position position;
+    Map& map;
 
-    public:
-        Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map);
+public:
+    Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map);
 
-        void stalkPlayer();
+    void stalkPlayer();
 
-        uint16_t attackPlayer();
+    uint16_t attackPlayer();
 
-        void receiveDamage(uint16_t damage);
+    void receiveDamage(uint16_t damage);
 };
 
 #endif

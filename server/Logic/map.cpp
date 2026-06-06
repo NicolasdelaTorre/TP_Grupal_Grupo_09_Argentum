@@ -25,15 +25,8 @@ void Map::initializeMap() {
         cell.safeZone = false;
         cell.ocuppiedByMerchant = false;
         cell.ocuppiedByBanker = false;
+        cell.ocuppiedByPriest = false;
     }
-
-    /*
-    for (auto& biome: biomes) {
-        biome.typeBiome = 0;
-        biome.size = 0;
-        biome.creaturesCount = 0;
-    }
-        */
 }
 
 uint16_t Map::getWidth() const { return width; }
