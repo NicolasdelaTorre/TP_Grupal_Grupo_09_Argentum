@@ -796,9 +796,7 @@ void MapCanvas::rebuildBiomeTint() {
     QImage img(W, H, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
 
-    // recolectar zonas de bioma, color y textura (si tiene). El orden de
-    // recorrido debe coincidir con SceneController::buildDocument para que el
-    // grid mostrado y el persistido sean idénticos.
+    // recolectar zonas de bioma, color y textura.
     struct BiomeZone {
         QColor color;
         QString texture_path;
