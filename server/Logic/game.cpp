@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 Game::Game(Map& map, Position playerSpawn):
-        map(map), playerSpawn(playerSpawn), parser(BinaryParser()) {}
+        map(map), playerSpawn(playerSpawn), parser(BinaryParser()), banker(Banker(parser)) {}
 
 bool Game::processCommand(int playerId, const std::string& command) {
     size_t commandPosition = command.find('.');
@@ -60,6 +60,7 @@ bool Game::processUser(int playerId, const std::string& user) {
         spawn = players.at(playerId).getPosition();
     }
 
+    banker.addPlayer(name);
     map.placeEntity(playerId, spawn.x, spawn.y, true);
 
     /* Codigo de testeo

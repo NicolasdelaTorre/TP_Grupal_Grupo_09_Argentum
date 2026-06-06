@@ -18,6 +18,7 @@ target_sources(taller_server
         Logic/items.cpp
         Logic/NPC/creature.cpp
         Logic/NPC/merchant.cpp
+        Logic/NPC/banker.cpp
         Protocol/protocol_server.cpp
     PUBLIC
         server.h
@@ -39,6 +40,7 @@ target_sources(taller_server
         Logic/items.h
         Logic/NPC/creature.h
         Logic/NPC/merchant.h
+        Logic/NPC/banker.h
         Protocol/protocol_server.h
     )
 

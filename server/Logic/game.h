@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../../common/position.h"
+#include "NPC/banker.h"
 
 #include "binary_parser.h"
 #include "map.h"
@@ -30,7 +31,7 @@ private:
     Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
     BinaryParser parser;
-
+    Banker banker;
     // Encuentra una posición libre para spawnear. Tira excepción si no hay ninguna.
     Position findSpawnPosition() const;
 
