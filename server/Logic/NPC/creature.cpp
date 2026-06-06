@@ -1,9 +1,11 @@
 #include "creature.h"
-#include "../toml.hpp"
 
 #include <ctime>
 
-Creature::Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map) : name(name), map(map) {
+#include "../toml.hpp"
+
+Creature::Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map):
+        name(name), map(map) {
     // Set level
     srand(time(nullptr));
     if (mapId == 0) {
@@ -37,7 +39,8 @@ void Creature::stalkPlayer() {
     Position playerPosition = map.searchPlayer(position.x, position.y);
 
     // No player in sight
-    if (playerPosition.x == -1) return;
+    if (playerPosition.x == -1)
+        return;
 
     int16_t dx = playerPosition.x - position.x;
     int16_t dy = playerPosition.y - position.y;

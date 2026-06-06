@@ -3,21 +3,21 @@
 
 #include <string>
 
-enum class MerchantType: uint8_t {PRIEST, TRADER};
+enum class MerchantType : uint8_t { PRIEST, TRADER };
 
 class Merchant {
-    private:
-        MerchantType type;
+private:
+    MerchantType type;
 
-    public:
-        bool canRevive;
-        bool canHeal;
-        bool canSellMagicWeapons;
-        bool canSellPotions;
-        bool canBuy;
-        bool canSellArmory;
+public:
+    bool canRevive;
+    bool canHeal;
+    bool canSellMagicWeapons;
+    bool canSellPotions;
+    bool canBuy;
+    bool canSellArmory;
 
-        Merchant(const std::string& merchant);
+    Merchant(const std::string& merchant);
 };
 
 #endif
