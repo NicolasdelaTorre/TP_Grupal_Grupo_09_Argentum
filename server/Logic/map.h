@@ -5,13 +5,25 @@
 #include <string>
 #include <vector>
 
+#include "../../common/position.h"
+
 // Tile del mapa (datos estáticos).
 struct Cell {
     uint16_t textureId;
     uint16_t obstacleId;  // 0 si no hay obstáculo
     uint8_t playerId;
+    uint8_t npcId;
     bool isWalkable;
     bool safeZone;
+    bool ocuppiedByMerchant;
+    bool ocuppiedByBanker;
+};
+
+struct Biome {
+    uint8_t typeBiome;
+    uint16_t size;
+    uint8_t creaturesCount;
+    std::vector<Position> biomeCells;
 };
 
 // Mapa estático: no cambia una vez cargado. Los jugadores los maneja el Game.
@@ -20,6 +32,7 @@ private:
     uint16_t width;
     uint16_t height;
     std::vector<Cell> cells;
+    // std::vector<Biome> biomes;
 
     void initializeMap();
 
@@ -43,12 +56,21 @@ public:
     // Devuelve true si (x, y) está en bounds y es transitable.
     bool isWalkable(int16_t x, int16_t y) const;
 
-    bool occupiedByPlayer(int16_t x, int16_t y) const;
+    bool occupiedByEntity(int16_t x, int16_t y) const;
 
-    uint8_t isEntityInSight(int16_t x, int16_t y, const std::string& direction,
-                            bool distanceWeapon);
+    uint8_t nextEntity(int16_t x, int16_t y, bool isPlayer);
 
-    void placePlayer(int playerId, int16_t x, int16_t y);
+    // Mueve el playerId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
+    void movePlayer(int playerId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY);
+
+    // Limpia el playerId de la celda. Se llama al desconectar / morir.
+    void removePlayer(int16_t x, int16_t y);
+
+    uint8_t entityInDistance(int16_t x, int16_t y, bool isPlayer);
+
+    void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer);
+
+    Position searchPlayer(int16_t x, int16_t y);
 };
 
 #endif

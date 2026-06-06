@@ -27,7 +27,10 @@ ServerMsg client_protocol::recv_msg_type() {
     return static_cast<ServerMsg>(opcode);
 }
 
-void client_protocol::sendCheat(CheatCode cheat) { protocol.sendByte(static_cast<uint8_t>(cheat)); }
+void client_protocol::sendCheat(CheatCode cheat) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::CHEAT));
+    protocol.sendByte(static_cast<uint8_t>(cheat));
+}
 
 void client_protocol::close() { protocol.shutdown(); }
 
@@ -48,6 +51,22 @@ Position client_protocol::recv_login_ok_payload() {
     int16_t x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(protocol.receive_two_bytes_number());
     return Position{x, y};
+}
+
+void client_protocol::send_attack(uint8_t targetType, uint16_t targetId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::ATTACK));
+    protocol.sendByte(targetType);
+    protocol.send_two_bytes_number(targetId);
+}
+
+AttackResultEvent client_protocol::recv_attack_result_payload() {
+    AttackResultEvent ev;
+    ev.attackerId = protocol.receive_two_bytes_number();
+    ev.targetType = protocol.receive_byte();
+    ev.targetId = protocol.receive_two_bytes_number();
+    ev.damage = protocol.receive_two_bytes_number();
+    ev.hit = (protocol.receive_byte() != 0);
+    return ev;
 }
 
 ReceivedMap client_protocol::recv_map() {
@@ -73,6 +92,7 @@ PlayerEvent client_protocol::recv_new_player_payload() {
     ev.x = static_cast<int16_t>(protocol.receive_two_bytes_number());
     ev.y = static_cast<int16_t>(protocol.receive_two_bytes_number());
     ev.dir = protocol.receive_byte();
+    ev.skin = protocol.receive_byte();
     uint16_t nameLen = protocol.receive_two_bytes_number();
     ev.name = protocol.receive_message(nameLen);
     return ev;
@@ -95,13 +115,65 @@ StatsEvent client_protocol::recv_stats_payload() {
     StatsEvent ev;
     ev.health = protocol.receive_two_bytes_number();
     ev.maxHealth = protocol.receive_two_bytes_number();
+    ev.mana = protocol.receive_two_bytes_number();
+    ev.maxMana = protocol.receive_two_bytes_number();
+    ev.gold = protocol.receive_four_bytes_number();
+    ev.experience = protocol.receive_four_bytes_number();
+    ev.nextLevelExp = protocol.receive_four_bytes_number();
     ev.level = protocol.receive_byte();
     return ev;
 }
 
+void client_protocol::send_head_selected(uint8_t headId) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::HEAD_SELECTED));
+    protocol.sendByte(headId);
+}
+
+
 void client_protocol::send_skin_selected(uint8_t skinId) {
     protocol.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     protocol.sendByte(skinId);
+}
+
+void client_protocol::send_pick_up_item() {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::PICK_UP_ITEM));
+}
+
+void client_protocol::send_drop_item(uint8_t invSlot) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::DROP_ITEM));
+    protocol.sendByte(invSlot);
+}
+
+void client_protocol::send_equip_item(uint8_t invSlot) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::EQUIP_ITEM));
+    protocol.sendByte(invSlot);
+}
+
+void client_protocol::send_unequip_item(uint8_t slotType) {
+    protocol.sendByte(static_cast<uint8_t>(ClientMsg::UNEQUIP_ITEM));
+    protocol.sendByte(slotType);
+}
+
+EquipmentEvent client_protocol::recv_player_equipped_payload() {
+    EquipmentEvent ev;
+    ev.playerId = protocol.receive_two_bytes_number();
+    ev.slot = protocol.receive_byte();
+    ev.itemId = protocol.receive_byte();
+    return ev;
+}
+
+InventoryEvent client_protocol::recv_inventory_update_payload() {
+    InventoryEvent ev;
+    uint8_t count = protocol.receive_byte();
+    ev.items.reserve(count);
+    for (uint8_t i = 0; i < count; i++) {
+        ev.items.push_back(protocol.receive_byte());
+    }
+    ev.equippedWeapon = protocol.receive_byte();
+    ev.equippedArmor = protocol.receive_byte();
+    ev.equippedHelmet = protocol.receive_byte();
+    ev.equippedShield = protocol.receive_byte();
+    return ev;
 }
 
 std::vector<DroppedItem> client_protocol::recv_dropped_items_payload() {

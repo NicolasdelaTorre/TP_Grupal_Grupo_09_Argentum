@@ -5,6 +5,8 @@
 #include <iostream>
 #include <utility>
 
+#include "tile_textures.h"
+
 namespace {
 
 // ReceivedMap (wire) → GameMap (lo que pinta el MapRenderer).
@@ -15,14 +17,16 @@ GameMap convertToGameMap(const ReceivedMap& m) {
     gm.tiles.resize(m.cells.size());
     for (size_t i = 0; i < m.cells.size(); i++) {
         const auto& cell = m.cells[i];
+        // safeZone fuerza piso de ciudad (priority sobre textureId del bioma).
+        if (cell.safeZone) {
+            gm.tiles[i].floor = TileType::INTERIOR;
+        } else {
+            gm.tiles[i].floor = tileTypeFromTextureId(cell.textureId);
+        }
         if (cell.obstacleId != 0) {
             gm.tiles[i].blocked = true;
             gm.tiles[i].obstacleType = static_cast<ObstacleType>(cell.obstacleId);
-        } else if (cell.safeZone) {
-            gm.tiles[i].floor = TileType::INTERIOR;
-            gm.tiles[i].blocked = false;
         } else {
-            gm.tiles[i].floor = TileType::GRASS;
             gm.tiles[i].blocked = false;
         }
     }
@@ -57,18 +61,19 @@ static Direction wireDirToSpriteDir(uint8_t wireDir) {
 
 GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                        Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-                       const ReceivedMap& mapData, Position spawn):
+                       const ReceivedMap& mapData, Position spawn, Player player):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
         map(convertToGameMap(mapData)),
         events_queue(events_queue),
-        server_queue(server_queue) {
-    tileToPlayerCoords(spawn.x, spawn.y, player);
+        server_queue(server_queue),
+        player(player) {
+    tileToPlayerCoords(spawn.x, spawn.y, this->player);
 
-    lastTileX = (int)(player.x + HEAD_OFFSET);
-    lastTileY = (int)(player.y + FEET_OFFSET);
-    lastSentDir = player.dir;
+    lastTileX = (int)(this->player.x + HEAD_OFFSET);
+    lastTileY = (int)(this->player.y + FEET_OFFSET);
+    lastSentDir = this->player.dir;
 }
 
 bool GameScreen::run() {
@@ -111,12 +116,20 @@ void GameScreen::render() {
         const auto& op = playerEntry.second;
         mapRenderer.renderPlayer(op.visual, camX, camY);
         mapRenderer.renderWeapon(op.visual, camX, camY);
+        mapRenderer.renderShield(op.visual, camX, camY);
         mapRenderer.renderHead(op.visual, camX, camY);
+        mapRenderer.renderHelmet(op.visual, camX, camY);
     }
 
     mapRenderer.renderPlayer(player, camX, camY);
     mapRenderer.renderWeapon(player, camX, camY);
+    mapRenderer.renderShield(player, camX, camY);
     mapRenderer.renderHead(player, camX, camY);
+    mapRenderer.renderHelmet(player, camX, camY);
+
+    mapRenderer.renderArrows(arrows, camX, camY);
+
+    renderBloodEffects(camX, camY);
 
     renderHUD();
 
@@ -124,19 +137,45 @@ void GameScreen::render() {
 }
 
 bool GameScreen::handleEvents(float dt) {
+    // Para resolver clicks en coords de mundo necesitamos la cámara.
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+    float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
+    float camY = player.y * TILE_SIZE - screenH / 2.0f + TILE_SIZE / 2.0f;
+    camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
+    camY = std::max(0.0f, std::min(camY, (float)(map.height * TILE_SIZE - screenH)));
+
+    // Acciones edge-triggered: un evento = una acción. Filtramos los repeats
+    // sintéticos del OS con e.key.repeat == 0.
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return false;
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
-            return false;
+        if (e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_ESCAPE)
+                return false;
+        }
+        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+            // Click sobre otro player → ATTACK con id del target.
+            // Server valida si el atacante tiene arma equipada, si es de rango
+            // o si está adyacente (para melee), etc. El cliente no decide nada.
+            int clickTileX = (int)((e.button.x + camX) / TILE_SIZE);
+            int clickTileY = (int)((e.button.y + camY) / TILE_SIZE);
+            for (const auto& entry: otherPlayers) {
+                const auto& op = entry.second;
+                int opTileX = (int)(op.visual.x + HEAD_OFFSET);
+                int opTileY = (int)(op.visual.y + FEET_OFFSET);
+                if (opTileX == clickTileX && opTileY == clickTileY) {
+                    events_queue.push("ATTACK:0:" + std::to_string(entry.first));
+                    break;
+                }
+            }
+        }
     }
 
-    // Movimiento continuo con teclas sostenidas
+    // Movimiento continuo con teclas sostenidas (level-triggered).
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
-
-    const char* msg = nullptr;
 
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
@@ -150,17 +189,8 @@ bool GameScreen::handleEvents(float dt) {
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
-    } else if (keys[SDL_SCANCODE_F1]) {
-        msg = "CHEAT_SUICIDE";
-    } else if (keys[SDL_SCANCODE_F2]) {
-        msg = "CHEAT_GOLD";
-    } else if (keys[SDL_SCANCODE_F3]) {
-        msg = "CHEAT_EXPERIENCE";
     }
 
-    if (msg) {
-        events_queue.push(msg);
-    }
     player.moving = (dx != 0 || dy != 0);
 
     // Mover si el tile destino no está bloqueado
@@ -235,6 +265,22 @@ void GameScreen::update(float dt) {
     // Consumimos eventos del servidor antes de animar.
     consumeServerEvents();
 
+    // Tick blood effects and remove expired ones.
+    for (auto& b: bloodEffects) b.timer -= dt;
+    bloodEffects.erase(std::remove_if(bloodEffects.begin(), bloodEffects.end(),
+                                      [](const BloodEffect& b) { return b.timer <= 0.0f; }),
+                       bloodEffects.end());
+
+    // Tick arrows and remove ones that reached the target or expired.
+    for (auto& arrow: arrows) {
+        arrow.x += arrow.vx * dt;
+        arrow.y += arrow.vy * dt;
+        arrow.lifetime -= dt;
+    }
+    arrows.erase(std::remove_if(arrows.begin(), arrows.end(),
+                                [](const ArrowProjectile& a) { return a.lifetime <= 0.0f; }),
+                 arrows.end());
+
     // Interpolamos a los otros jugadores hacia su tile destino para que se vea
     // un walk fluido en vez de saltos de tile en tile.
     for (auto& entry: otherPlayers) {
@@ -293,24 +339,27 @@ void GameScreen::consumeServerEvents() {
     std::string event;
     while (server_queue.try_pop(event)) {
         if (event.rfind("NEW_PLAYER:", 0) == 0) {
-            // NEW_PLAYER:<id>:<x>:<y>:<dir>:<name>
+            // NEW_PLAYER:<id>:<x>:<y>:<dir>:<skin>:<name>
             size_t c1 = event.find(':');
             size_t c2 = event.find(':', c1 + 1);
             size_t c3 = event.find(':', c2 + 1);
             size_t c4 = event.find(':', c3 + 1);
             size_t c5 = event.find(':', c4 + 1);
-            if (c5 == std::string::npos)
+            size_t c6 = event.find(':', c5 + 1);
+            if (c6 == std::string::npos)
                 continue;
             int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
             int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
             int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
             uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
+            uint8_t skin = static_cast<uint8_t>(std::stoi(event.substr(c5 + 1, c6 - c5 - 1)));
             OtherPlayer op;
             tileToPlayerCoords(x, y, op.visual);
             op.targetX = static_cast<float>(x);
             op.targetY = static_cast<float>(y);
             op.visual.dir = wireDirToSpriteDir(dir);
-            op.name = event.substr(c5 + 1);
+            op.visual.skin = skin;
+            op.name = event.substr(c6 + 1);
             otherPlayers[id] = std::move(op);
         } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
             // PLAYER_MOVED:<id>:<x>:<y>:<dir>
@@ -335,6 +384,24 @@ void GameScreen::consumeServerEvents() {
             size_t c1 = event.find(':');
             int id = std::stoi(event.substr(c1 + 1));
             otherPlayers.erase(id);
+        } else if (event.rfind("ATTACK_RESULT:", 0) == 0) {
+            // ATTACK_RESULT:<atk>:<ttype>:<tid>:<dmg>:<hit>
+            // TODO(team-ui): mostrar feedback visual (número flotante de daño
+            // sobre el target si hit==1, "MISS" si hit==0, animación de impacto).
+            // Por ahora solo loggeamos para confirmar que el evento llega.
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            size_t c3 = event.find(':', c2 + 1);
+            size_t c4 = event.find(':', c3 + 1);
+            size_t c5 = event.find(':', c4 + 1);
+            if (c5 == std::string::npos)
+                continue;
+            int atk = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            int tid = std::stoi(event.substr(c3 + 1, c4 - c3 - 1));
+            int dmg = std::stoi(event.substr(c4 + 1, c5 - c4 - 1));
+            int hit = std::stoi(event.substr(c5 + 1));
+            std::cout << "ATTACK: " << atk << " -> " << tid << (hit ? " hit for " : " MISS (")
+                      << dmg << (hit ? " dmg" : ")") << std::endl;
         } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
             // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
             droppedItems.clear();
@@ -359,43 +426,54 @@ void GameScreen::consumeServerEvents() {
                 pos = next;
                 droppedItems.push_back(di);
             }
+        } else if (event.rfind("EQUIPPED:", 0) == 0) {
+            // EQUIPPED:<playerId>:<slot>:<itemId>
+            // TODO(team-ui): aplicar al sprite. El mapping itemId → columna
+            // del spritesheet lo define la capa de render.
+            std::cout << "PLAYER_EQUIPPED " << event << std::endl;
+        } else if (event.rfind("INVENTORY:", 0) == 0) {
+            // INVENTORY:<n>:<id1>:...:<eqW>:<eqA>:<eqH>:<eqS>
+            // TODO(team-ui): dibujar el inventario en el HUD y resaltar lo
+            // equipado. Por ahora solo loggeamos para confirmar el flujo.
+            std::cout << "INVENTORY_UPDATE: " << event << std::endl;
         } else if (event.rfind("STATS:", 0) == 0) {
-            // STATS:<hp>:<maxHp>:<level>
+            // STATS:<hp>:<maxHp>:<mana>:<maxMana>:<gold>:<exp>:<nextLvlExp>:<level>
             size_t c1 = event.find(':');
             size_t c2 = event.find(':', c1 + 1);
             size_t c3 = event.find(':', c2 + 1);
-            if (c3 == std::string::npos)
+            size_t c4 = event.find(':', c3 + 1);
+            size_t c5 = event.find(':', c4 + 1);
+            size_t c6 = event.find(':', c5 + 1);
+            size_t c7 = event.find(':', c6 + 1);
+            size_t c8 = event.find(':', c7 + 1);
+            if (c8 == std::string::npos)
                 continue;
             health = static_cast<uint16_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
             maxHealth = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
-            level = static_cast<uint8_t>(std::stoi(event.substr(c3 + 1)));
+            mana = static_cast<uint16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
+            maxMana = static_cast<uint16_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
+            gold = static_cast<uint32_t>(std::stoul(event.substr(c5 + 1, c6 - c5 - 1)));
+            experience = static_cast<uint32_t>(std::stoul(event.substr(c6 + 1, c7 - c6 - 1)));
+            nextLevelExp = static_cast<uint32_t>(std::stoul(event.substr(c7 + 1, c8 - c7 - 1)));
+            level = static_cast<uint8_t>(std::stoi(event.substr(c8 + 1)));
+            std::cout << "STATS hp=" << health << "/" << maxHealth << " mana=" << mana << "/"
+                      << maxMana << " gold=" << gold << " exp=" << experience << "/" << nextLevelExp
+                      << " lvl=" << (int)level << std::endl;
         }
     }
 }
 
+void GameScreen::renderBloodEffects(float camX, float camY) {
+    static constexpr int BLOOD_FRAMES = 5;
+    for (const auto& b: bloodEffects) {
+        float elapsed = BLOOD_DURATION - b.timer;
+        int frame = std::min(BLOOD_FRAMES - 1, (int)(elapsed / (BLOOD_DURATION / BLOOD_FRAMES)));
+        mapRenderer.renderBlood(b.x, b.y, frame, 255, camX, camY);
+    }
+}
+
 void GameScreen::renderHUD() {
-    if (maxHealth == 0)
-        return;  // no recibimos stats todavía
-
-    // Barra de vida en la esquina superior izquierda
-    static constexpr int HUD_X = 10;
-    static constexpr int HUD_Y = 10;
-    static constexpr int BAR_W = 200;
-    static constexpr int BAR_H = 20;
-
-    // Fondo gris
-    renderer.SetDrawColor(60, 60, 60, 220);
-    SDL_Rect bg{HUD_X, HUD_Y, BAR_W, BAR_H};
-    SDL_RenderFillRect(renderer.Get(), &bg);
-
-    // Vida actual (rojo)
-    int filledW = static_cast<int>(BAR_W * (float)health / (float)maxHealth);
-    renderer.SetDrawColor(180, 30, 30, 255);
-    SDL_Rect fill{HUD_X, HUD_Y, filledW, BAR_H};
-    SDL_RenderFillRect(renderer.Get(), &fill);
-
-    // Borde
-    renderer.SetDrawColor(0, 0, 0, 255);
-    SDL_Rect border{HUD_X, HUD_Y, BAR_W, BAR_H};
-    SDL_RenderDrawRect(renderer.Get(), &border);
+    // TODO(team-ui): dibujar HUD con HP/MP/oro/exp/nivel a partir de los
+    // miembros `health/maxHealth/mana/maxMana/gold/experience/nextLevelExp/level`
+    // que ya se actualizan al recibir STATS_JUGADOR.
 }

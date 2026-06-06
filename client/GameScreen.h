@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <SDL2pp/SDL2pp.hh>
 
@@ -13,6 +14,14 @@
 
 static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
+
+static constexpr float BLOOD_DURATION = 0.5f;  // seconds a blood splatter stays visible
+static constexpr float ARROW_SPEED = 10.0f;    // tiles/sec
+
+struct BloodEffect {
+    float x, y;   // world tile position where the hit occurred
+    float timer;  // remaining display time in seconds
+};
 
 // Jugador remoto del que recibimos eventos por broadcast del servidor.
 // target* es el tile destino que mandó el server; visual.x/y avanzan hacia ahí
@@ -28,18 +37,19 @@ class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-               const ReceivedMap& mapData, Position spawn);
+               const ReceivedMap& mapData, Position spawn, Player player);
 
     // Retorna false cuando el jugador quiere salir
     bool run();
-    uint16_t a = 0;
+
 
 private:
     SDL2pp::Renderer& renderer;
     TextureCache cache;
     MapRenderer mapRenderer;
     GameMap map;
-    Player player;
+
+    uint16_t a = 0;
 
     // Queue al sender: pusheamos "TOP"/"BOTTOM"/"LEFT"/"RIGHT" cuando el jugador cruza un tile.
     Queue<std::string>& events_queue;
@@ -50,12 +60,20 @@ private:
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
     // pushea.
     Queue<std::string>& server_queue;
+    Player player;
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::vector<DroppedItem> droppedItems;
+    std::vector<BloodEffect> bloodEffects;
+    std::vector<ArrowProjectile> arrows;
 
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;
     uint16_t maxHealth = 0;
+    uint16_t mana = 0;
+    uint16_t maxMana = 0;
+    uint32_t gold = 0;
+    uint32_t experience = 0;
+    uint32_t nextLevelExp = 0;
     uint8_t level = 1;
 
     // ── Input ─────────────────────────────────────────────────
@@ -81,4 +99,7 @@ private:
 
     // Dibuja la barra de vida en la esquina superior izquierda.
     void renderHUD();
+
+    // Dibuja todos los efectos de sangre activos.
+    void renderBloodEffects(float camX, float camY);
 };

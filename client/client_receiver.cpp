@@ -22,7 +22,8 @@ void client_receiver::run() {
                     PlayerEvent ev = protocol.recv_new_player_payload();
                     server_queue.push("NEW_PLAYER:" + std::to_string(ev.id) + ":" +
                                       std::to_string(ev.x) + ":" + std::to_string(ev.y) + ":" +
-                                      std::to_string(ev.dir) + ":" + ev.name);
+                                      std::to_string(ev.dir) + ":" + std::to_string(ev.skin) + ":" +
+                                      ev.name);
                     break;
                 }
 
@@ -42,9 +43,44 @@ void client_receiver::run() {
 
                 case ServerMsg::STATS_JUGADOR: {
                     StatsEvent ev = protocol.recv_stats_payload();
-                    server_queue.push("STATS:" + std::to_string(ev.health) + ":" +
-                                      std::to_string(ev.maxHealth) + ":" +
-                                      std::to_string(static_cast<int>(ev.level)));
+                    server_queue.push(
+                            "STATS:" + std::to_string(ev.health) + ":" +
+                            std::to_string(ev.maxHealth) + ":" + std::to_string(ev.mana) + ":" +
+                            std::to_string(ev.maxMana) + ":" + std::to_string(ev.gold) + ":" +
+                            std::to_string(ev.experience) + ":" + std::to_string(ev.nextLevelExp) +
+                            ":" + std::to_string(static_cast<int>(ev.level)));
+                    break;
+                }
+
+                case ServerMsg::ATTACK_RESULT: {
+                    AttackResultEvent ev = protocol.recv_attack_result_payload();
+                    server_queue.push("ATTACK_RESULT:" + std::to_string(ev.attackerId) + ":" +
+                                      std::to_string(static_cast<int>(ev.targetType)) + ":" +
+                                      std::to_string(ev.targetId) + ":" +
+                                      std::to_string(ev.damage) + ":" +
+                                      std::to_string(ev.hit ? 1 : 0));
+                    break;
+                }
+
+                case ServerMsg::PLAYER_EQUIPPED: {
+                    EquipmentEvent ev = protocol.recv_player_equipped_payload();
+                    server_queue.push("EQUIPPED:" + std::to_string(ev.playerId) + ":" +
+                                      std::to_string(static_cast<int>(ev.slot)) + ":" +
+                                      std::to_string(static_cast<int>(ev.itemId)));
+                    break;
+                }
+
+                case ServerMsg::INVENTORY_UPDATE: {
+                    InventoryEvent ev = protocol.recv_inventory_update_payload();
+                    std::string msg = "INVENTORY:" + std::to_string(ev.items.size());
+                    for (uint8_t id: ev.items) {
+                        msg += ":" + std::to_string(static_cast<int>(id));
+                    }
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedWeapon));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedArmor));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedHelmet));
+                    msg += ":" + std::to_string(static_cast<int>(ev.equippedShield));
+                    server_queue.push(msg);
                     break;
                 }
 

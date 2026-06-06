@@ -12,6 +12,14 @@
 #include "texture_cache.h"
 
 
+// ── Proyectil de flecha (puramente visual, lado cliente) ──────
+struct ArrowProjectile {
+    float x, y;    // posición en tiles (centro del sprite)
+    float vx, vy;  // velocidad en tiles/seg
+    float lifetime;
+    int arrowType;  // 0–8, columna en Flechas.png
+};
+
 // ── Datos de un tile del mapa ─────────────────────────────────
 struct TileData {
     TileType floor = TileType::GRASS;
@@ -44,7 +52,9 @@ public:
 
     void renderPlayer(const Player& player, float camX, float camY);
     void renderWeapon(const Player& player, float camX, float camY);
+    void renderShield(const Player& player, float camX, float camY);
     void renderHead(const Player& player, float camX, float camY);
+    void renderHelmet(const Player& player, float camX, float camY);
 
     // Renderiza los NPCs estáticos de ciudad (tiles con ObstacleType::NPC_*)
     void renderCityNpcs(const GameMap& map, float camX, float camY);
@@ -54,6 +64,14 @@ public:
 
     // Renderiza items tirados en el piso, encima de los tiles pero debajo de entidades.
     void renderDroppedItems(const std::vector<DroppedItem>& items, float camX, float camY);
+
+    // Renderiza un efecto de sangre centrado en la posición de tile (x, y).
+    // texIndex: 0–4 → Sangre_1.png … Sangre_5.png
+    // alpha: 0–255 para fade-out
+    void renderBlood(float x, float y, int texIndex, Uint8 alpha, float camX, float camY);
+
+    // Renderiza flechas en vuelo (Armas/Flechas.png), rotadas según su dirección.
+    void renderArrows(const std::vector<ArrowProjectile>& arrows, float camX, float camY);
 
 private:
     SDL2pp::Renderer& renderer;

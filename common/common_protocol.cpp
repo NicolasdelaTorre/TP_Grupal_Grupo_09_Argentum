@@ -18,6 +18,11 @@ int common_protocol::send_two_bytes_number(const u_int16_t number) {
     return skt.sendall(&net_number, sizeof(net_number));
 }
 
+int common_protocol::send_four_bytes_number(const u_int32_t number) {
+    const u_int32_t net_number = htonl(number);
+    return skt.sendall(&net_number, sizeof(net_number));
+}
+
 int common_protocol::sendByte(const u_int8_t byte) { return skt.sendall(&byte, sizeof(byte)); }
 
 u_int8_t common_protocol::receive_byte() {
@@ -30,6 +35,12 @@ u_int16_t common_protocol::receive_two_bytes_number() {
     u_int16_t net_number;
     skt.recvall(&net_number, sizeof(net_number));
     return ntohs(net_number);
+}
+
+u_int32_t common_protocol::receive_four_bytes_number() {
+    u_int32_t net_number;
+    skt.recvall(&net_number, sizeof(net_number));
+    return ntohl(net_number);
 }
 
 void common_protocol::send_message(std::vector<char> message) {

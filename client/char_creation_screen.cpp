@@ -7,14 +7,16 @@
 // Skins disponibles en AO_IMGS/Skins/ (excluye Cabezas.png y Gorros.png)
 const char* const CharCreationScreen::SKIN_FILES[NUM_SKINS] = {
         "skin_default.png", "Caballero_blanco.png", "Gladiador_azul.png",   "Hechicero.png",
-        "Hechicera.png",    "skin_default.png",     "Caballero_blanco.png", "Gladiador_azul.png",
+        "Hechicera.png",    "skin_default.png",     "Caballero_blanco.png", "Gladiador_violeta.png",
         "Hechicero.png",    "Hechicera.png",
 };
 
-CharCreationScreen::CharCreationScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath):
+CharCreationScreen::CharCreationScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
+                                       int headId):
         renderer(renderer),
         background(renderer, SDL2pp::Surface(assetsPath + "/Pantallas/Seleccion_personaje.png")),
-        cache(renderer, assetsPath) {
+        cache(renderer, assetsPath),
+        chosenHeadId(headId) {
     int winW, winH;
     SDL_GetRendererOutputSize(renderer.Get(), &winW, &winH);
 
@@ -177,8 +179,8 @@ void CharCreationScreen::renderSkinInBox(int skinIdx, const SDL2pp::Rect& boxRec
     SDL2pp::Rect bodySrc(0, 0, SPRITE_W, SPRITE_H);
     SDL2pp::Rect bodyDst(startX, bodyY, bodyW, bodyH);
 
-    // Cabeza: dirección DOWN (row 0), headId DEFAULT_HEAD (col)
-    SDL2pp::Rect headSrc(DEFAULT_HEAD * HEAD_CELL_W, 0, HEAD_CELL_W, HEAD_CELL_H);
+    // Cabeza: dirección DOWN (row 0), headId elegido
+    SDL2pp::Rect headSrc(chosenHeadId * HEAD_CELL_W, 0, HEAD_CELL_W, HEAD_CELL_H);
     SDL2pp::Rect headDst(headX, headY, headW, headH);
 
     try {

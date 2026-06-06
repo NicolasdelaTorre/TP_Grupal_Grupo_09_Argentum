@@ -23,6 +23,8 @@ Player::Player(const std::string& name, Position position, const std::string& ra
     data.equippedArmor = 0;
     data.equippedHelmet = 0;
     data.equippedShield = 0;
+    data.headSkinId = 0;
+    data.bodySkinId = 0;
     data.isGhost = false;
 
     for (int i = 0; i < N; ++i) {
@@ -180,11 +182,6 @@ bool Player::equipItem(int inventorySlot) {
             throw std::runtime_error("Player Error: trying to equip an item that is not exist");
     }
 
-    // Delete the item from the inventory
-    inventory.erase(inventory.begin() + inventorySlot);
-    data.inventory[inventorySlot] = 0;
-    data.equippedWeapon = equippedWeapon.getId();
-
     return true;
 }
 
@@ -193,28 +190,24 @@ bool Player::unequipItem(ItemType type) {
         case ItemType::WEAPON:
             if (equippedWeapon.emptyItem())
                 return false;
-            inventory.push_back(equippedWeapon);
             data.equippedWeapon = 0;
             equippedWeapon = Item();
             break;
         case ItemType::ARMOR:
             if (equippedArmor.emptyItem())
                 return false;
-            inventory.push_back(equippedArmor);
             data.equippedArmor = 0;
             equippedArmor = Item();
             break;
         case ItemType::HELMET:
             if (equippedHelmet.emptyItem())
                 return false;
-            inventory.push_back(equippedHelmet);
             data.equippedHelmet = 0;
             equippedHelmet = Item();
             break;
         case ItemType::SHIELD:
             if (equippedShield.emptyItem())
                 return false;
-            inventory.push_back(equippedShield);
             data.equippedShield = 0;
             equippedShield = Item();
             break;
@@ -244,6 +237,11 @@ uint16_t Player::heal() {
     data.health += healAmount;
 
     return healAmount;
+}
+
+void Player::setSkin(uint8_t bodySkinId, uint8_t headSkinId) {
+    data.bodySkinId = bodySkinId;
+    data.headSkinId = headSkinId;
 }
 
 void Player::resetStats() {

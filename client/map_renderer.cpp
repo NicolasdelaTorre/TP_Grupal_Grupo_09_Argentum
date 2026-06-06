@@ -1,6 +1,7 @@
 #include "map_renderer.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace {
 
@@ -197,15 +198,17 @@ void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
 }
 
 std::string MapRenderer::get_path(int skin) {
-    switch (skin) {
+    switch (skin % 5) {
         case 0:
-            return "/Skins/Caballero_blanco.png";
+            return "/Skins/skin_default.png";
         case 1:
-            return "/Skins/Gladiador_violeta.png";
+            return "/Skins/Caballero_blanco.png";
         case 2:
             return "/Skins/Gladiador_azul.png";
         case 3:
             return "/Skins/Hechicero.png";
+        case 4:
+            return "/Skins/Hechicera.png";
         default:
             return "/Skins/skin_default.png";
     }
@@ -260,6 +263,26 @@ void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
     renderer.Copy(cache.get(weaponFiles[player.weaponId]), src, dst);
 }
 
+void MapRenderer::renderShield(const Player& player, float camX, float camY) {
+    if (player.killed || player.shieldId < 0 || player.dir == Direction::UP)
+        return;
+
+    static const char* shieldFiles[] = {"/Armas/Escudo.png"};
+    if (player.shieldId >= static_cast<int>(std::size(shieldFiles)))
+        return;
+
+    int row = static_cast<int>(player.dir);
+    int col = player.moving ? player.animFrame : 0;
+
+    SDL2pp::Rect src(col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H);
+
+    int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
+    int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
+    SDL2pp::Rect dst(screenX, screenY, SPRITE_W, SPRITE_H);
+
+    renderer.Copy(cache.get(shieldFiles[player.shieldId]), src, dst);
+}
+
 void MapRenderer::renderHead(const Player& player, float camX, float camY) {
     if (player.killed)
         return;
@@ -284,6 +307,32 @@ void MapRenderer::renderHead(const Player& player, float camX, float camY) {
     SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
 
     renderer.Copy(cache.get("/Skins/Cabezas.png"), src, dst);
+}
+
+void MapRenderer::renderHelmet(const Player& player, float camX, float camY) {
+    if (player.killed || player.helmetId < 0)
+        return;
+
+    static constexpr int HELMET_CELL_W = 27;  // 46
+    static constexpr int HELMET_CELL_H = 64;  // 256
+    static constexpr int HEAD_CELL_W = 27;
+    static constexpr int HEAD_CELL_H = 64;
+
+    int col = player.helmetId;
+    int row = static_cast<int>(player.dir);  // DOWN=0, UP=1, LEFT=2, RIGHT=3
+
+    SDL2pp::Rect src(col * HELMET_CELL_W, row * HELMET_CELL_H, HELMET_CELL_W, HELMET_CELL_H);
+
+    int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
+    int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
+    int headX = screenX + SPRITE_W / 2 - HEAD_CELL_W / 2;
+    int headY = screenY - HEAD_CELL_H / 4 - 3;
+
+    SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
+
+    try {
+        renderer.Copy(cache.get("/Skins/Gorros.png"), src, dst);
+    } catch (...) {}
 }
 
 void MapRenderer::renderCityNpcs(const GameMap& map, float camX, float camY) {
@@ -331,6 +380,51 @@ void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, floa
 
         try {
             renderer.Copy(cache.get(tex), src, dst);
+        } catch (...) {}
+    }
+}
+
+void MapRenderer::renderBlood(float x, float y, int texIndex, Uint8 alpha, float camX, float camY) {
+    static constexpr int BLOOD_DRAW_SIZE = 32;
+    static const char* bloodFiles[] = {"/Skins/Sangre_1.png", "/Skins/Sangre_2.png",
+                                       "/Skins/Sangre_3.png", "/Skins/Sangre_4.png",
+                                       "/Skins/Sangre_5.png"};
+    if (texIndex < 0 || texIndex >= 5)
+        return;
+
+    int screenX = (int)(x * TILE_SIZE - camX) + TILE_SIZE / 2 - BLOOD_DRAW_SIZE / 2;
+    int screenY = (int)(y * TILE_SIZE - camY) + TILE_SIZE / 2 - BLOOD_DRAW_SIZE / 2;
+    SDL2pp::Rect dst(screenX, screenY, BLOOD_DRAW_SIZE, BLOOD_DRAW_SIZE);
+
+    try {
+        SDL2pp::Texture& tex = cache.get(bloodFiles[texIndex]);
+        tex.SetAlphaMod(alpha);
+        renderer.Copy(tex, SDL2pp::NullOpt, dst);
+        tex.SetAlphaMod(255);
+    } catch (...) {}
+}
+
+void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float camX, float camY) {
+    // Flechas.png: 512×512, 9 arrow types in a single row at the top.
+    // Each cell is 512/9 ≈ 56 px wide. Sprites point upper-right (45° CW from north),
+    // so the SDL2 rotation formula is: atan2(vx, -vy) * 180/π − 45.
+    static constexpr int ARROW_COLS = 9;
+    static constexpr int ARROW_CELL_W = 32;
+    static constexpr int ARROW_DRAW_SIZE = 32;
+
+    for (const auto& arrow: arrows) {
+        int screenX = (int)(arrow.x * TILE_SIZE - camX) - ARROW_DRAW_SIZE / 2;
+        int screenY = (int)(arrow.y * TILE_SIZE - camY) - ARROW_DRAW_SIZE / 2;
+
+        int col = std::max(0, std::min(arrow.arrowType, ARROW_COLS - 1));
+        SDL_Rect src = {col * ARROW_CELL_W, 0, ARROW_CELL_W, ARROW_CELL_W};
+        SDL_Rect dst = {screenX, screenY, ARROW_DRAW_SIZE, ARROW_DRAW_SIZE};
+
+        double angle_deg = std::atan2(arrow.vx, -arrow.vy) * 180.0 / M_PI - 45.0;
+
+        try {
+            SDL_RenderCopyEx(renderer.Get(), cache.get("/Armas/Flechas.png").Get(), &src, &dst,
+                             angle_deg, nullptr, SDL_FLIP_NONE);
         } catch (...) {}
     }
 }

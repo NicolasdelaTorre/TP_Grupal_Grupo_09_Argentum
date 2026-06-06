@@ -16,6 +16,8 @@ target_sources(taller_server
         Logic/attribute_manager.cpp
         Logic/binary_parser.cpp
         Logic/items.cpp
+        Logic/NPC/creature.cpp
+        Logic/NPC/merchant.cpp
         Protocol/protocol_server.cpp
     PUBLIC
         server.h
@@ -35,6 +37,8 @@ target_sources(taller_server
         Logic/class_.h
         Logic/binary_parser.h
         Logic/items.h
+        Logic/NPC/creature.h
+        Logic/NPC/merchant.h
         Protocol/protocol_server.h
     )
 
