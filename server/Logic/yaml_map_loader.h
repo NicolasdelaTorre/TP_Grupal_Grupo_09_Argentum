@@ -43,8 +43,8 @@ struct LoadedEntry {
     int16_t height = 1;
 };
 
-// Map parseado del YAML + spawn point para los jugadores. 
-// cada `entrie` corresponde a un `environment`
+// Map parseado del YAML + spawn point para los jugadores. `entries` y
+// `environments` se parsean pero todavía no se usan en el juego.
 struct LoadedMap {
     Map map;
     Position playerSpawn;
