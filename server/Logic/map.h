@@ -132,6 +132,8 @@ public:
     bool checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId);
 
     void placePlayerIntoTheDungeon(int playerId, const std::string& mapId);
+
+    void placePlayerIntoTheOverworld(int playerId, uint8_t mapId);
 };
 
 #endif

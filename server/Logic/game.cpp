@@ -333,17 +333,20 @@ void Game::checkEntry(int playerId) {
     Position pos = itPlayer->second.getPosition();
 
     if (map.checkIfThePositionHasAnEntry(pos.x, pos.y, itPlayer->second.getMapId())) {
-        // The Position is a Entry to a Dungeon
-        // The Player is no more in the Overworld
-        map.removePlayer(pos.x, pos.y, itPlayer->second.getMapId());
+        // The Position is a Entry to a Dungeon or a Dungeon Exit (if the player is in a dungeon)
+        // The Player is no more in the Overworld/Dungeon
+        uint8_t currentMapId = itPlayer->second.getMapId();
+        map.removePlayer(pos.x, pos.y, currentMapId);
 
         // New Map Id
         std::string mapId = map.getMapId(pos.x, pos.y);
 
         if (!mapId.empty()) {
-            // It's a real Dungeon
+            // It's a real Dungeon Entrance/Exit
             // Place the Player in the Dungeon
-            map.placePlayerIntoTheDungeon(playerId, mapId);
+            if (currentMapId == 0)
+                map.placePlayerIntoTheDungeon(playerId, mapId);
+            else map.placePlayerIntoTheOverworld(playerId, currentMapId);
 
             // Save Map Id
             itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
