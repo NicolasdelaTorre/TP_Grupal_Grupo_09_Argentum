@@ -67,7 +67,7 @@ enum class Direction : uint8_t { UP = 1, LEFT = 2, DOWN = 0, RIGHT = 3 };
 
 enum class Direction_phantom : uint8_t { UP = 1, LEFT = 3, DOWN = 0, RIGHT = 2 };
 
-enum class Race : uint8_t { HUMAN = 0, ELF, DWARF, GNOME };
+enum class RaceCode : uint8_t { HUMAN = 0, ELF, DWARF, GNOME };
 
 enum class Classtype : uint8_t { MAGE = 0, CLERIC, PALADIN, WARRIOR };
 
@@ -107,7 +107,7 @@ struct DroppedItem {
     uint16_t itemId = 0;  // row * cols_per_row + col
 };
 
-struct Player {
+struct Player_ {
     uint16_t id = 0;
     float x = 5.0f, y = 5.0f;  // posición en tiles
     Direction dir = Direction::DOWN;
@@ -119,7 +119,7 @@ struct Player {
     int helmetId = 10;  // 0–21 = column in Gorros.png, -1 = no helmet
     int weaponId = 2;   // 0=Espada, 1=Daga, 2=Arco, 3=Baculo, -1=sin arma
     int shieldId = 0;   // 0 = Escudo.png, -1 = no shield
-    Race race = Race::HUMAN;
+    RaceCode race = RaceCode::HUMAN;
     Classtype classtype = Classtype::MAGE;
     std::vector<Obj> inventory;
     bool killed = false;

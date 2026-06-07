@@ -1,35 +1,35 @@
 [[npc]]
-id = 1
+type = "CREATURE"
 name = "Goblin"
 maxHealth = 100
 damage = 15
 
 [[npc]]
-id = 2
+type = "CREATURE"
 name = "Squeleton"
 maxHealth = 80
 damage = 18
 
 [[npc]]
-id = 3
+type = "CREATURE"
 name = "Zombie"
 maxHealth = 130
 damage = 11
 
 [[npc]]
-id = 4
+type = "CREATURE"
 name = "Spider"
 maxHealth = 70
 damage = 13
 
 [[npc]]
-id = 5
+type = "CREATURE"
 name = "Orc"
 maxHealth = 170
 damage = 20
 
 [[npc]]
-id = 6
+type = "CREATURE"
 name = "Golem"
 maxHealth = 200
 damage = 22

@@ -3,36 +3,84 @@
 
 #include <cstdint>
 #include <vector>
+#include <unordered_map>
+#include <memory>
 
 #include "../../common/position.h"
+
+#include "../../common/common_biome.h"
+
+#include "NPC/npc.h"
 
 // Tile del mapa (datos estáticos).
 struct Cell {
     uint16_t textureId;
     uint16_t obstacleId;  // 0 si no hay obstáculo
     uint8_t playerId;
-    uint8_t npcId;
+    uint16_t npcId;
     bool isWalkable;
     bool safeZone;
-    bool ocuppiedByMerchant;
-    bool ocuppiedByBanker;
-    bool ocuppiedByPriest;
+};
+
+// Environment asociado a una entrada del mapa principal.
+struct LoadedEnvironment {
+    std::string id;
+    std::string name;
+    std::string type;
+    int16_t width = 0;
+    int16_t height = 0;
+    Position playerSpawn;
+    std::vector<Cell> cells;  // obstáculos y paredes acá
+    std::string floorColor;
+};
+
+// Entrada con el environment al que lleva.
+struct LoadedEntry {
+    std::string id;
+    std::string type;
+    LoadedEnvironment environment;
+    int16_t x = 0;
+    int16_t y = 0;
+    int16_t width = 1;
+    int16_t height = 1;
+};
+
+// Spawn de criaturas asociado a un bioma: qué criatura y cuántas como máximo.
+struct CreatureSpawn {
+    std::string creature;
+    uint16_t maxPopulation = 0;
+};
+
+// Bioma cargado desde el editor (zona de tipo "biome"): tipo, posición/tamaño
+// del área que ocupa y los spawns de criaturas que tiene.
+struct Biome {
+    BiomeType type = BiomeType::NONE;
+    Position position;  // esquina sup izquierda del área
+    int16_t width = 0;
+    int16_t height = 0;
+    std::vector<CreatureSpawn> spawns;
 };
 
 // Mapa estático: no cambia una vez cargado. Los jugadores los maneja el Game.
 class Map {
 private:
+    uint8_t id;
+    uint16_t npcIdCounter;
     uint16_t width;
     uint16_t height;
     std::vector<Cell> cells;
+    Position spawn;
+    std::vector<LoadedEntry> entries;
+    std::vector<Biome> biomes;
+    std::unordered_map<uint16_t, std::unique_ptr<NPC>> npcs;
 
-    void initializeMap();
+    void setNPC();
+
+    void spawnNPC(const Biome& biome);
 
 public:
-    Map(uint16_t width, uint16_t height);
-
     // Constructor con celdas ya armadas (lo usa el YAML loader).
-    Map(uint16_t width, uint16_t height, std::vector<Cell> cells);
+    Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes);
 
     uint16_t getWidth() const;
 
@@ -41,6 +89,8 @@ public:
     uint16_t getCellCount() const;
 
     Cell getCell(size_t index) const;
+
+    Position getPlayerSpawn();
 
     // Devuelve true si (x, y) está dentro de los límites del mapa.
     bool isInBounds(int16_t x, int16_t y) const;

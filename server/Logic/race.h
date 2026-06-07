@@ -5,11 +5,11 @@
 #include <stdexcept>
 #include <string>
 
+#include "../../common/DTOs.h"
+
 class Race {
 private:
 public:
-    enum class RaceCode : uint8_t { HUMAN = 0, ELF = 1, DWARF = 2, GNOME = 3 };
-
     static RaceCode fromString(const std::string& raceName) {
         if (raceName == "Human") {
             return RaceCode::HUMAN;

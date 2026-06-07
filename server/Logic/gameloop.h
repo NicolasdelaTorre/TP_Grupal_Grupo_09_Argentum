@@ -34,8 +34,8 @@ private:
     void sendEquipmentSnapshot(int idPlayer, int recipientId);
 
 public:
-    Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
-             ProtocolServer& protocol, Position playerSpawn);
+    Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
+             ProtocolServer& protocol);
 
     virtual void run() override;
 

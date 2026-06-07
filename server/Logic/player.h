@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../../common/position.h"
+#include "../../common/DTOs.h"
 
 #include "class_.h"
 #include "items.h"
@@ -23,7 +24,7 @@ struct PlayerData {
     uint16_t health;
     uint16_t mana;
 
-    Race::RaceCode race;
+    RaceCode race;
     Class_::ClassCode class_;
     uint8_t mapId;
     uint8_t level;

@@ -1,11 +1,11 @@
 #include "gameloop.h"
 
-Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& map,
-                   ProtocolServer& protocol, Position playerSpawn):
+Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
+                   ProtocolServer& protocol):
         commands(commands),
         clientQueues(clientQueues),
         gameFinished(false),
-        game(map, playerSpawn),
+        game(world),
         protocol(protocol) {}
 
 void Gameloop::run() {

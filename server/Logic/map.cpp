@@ -2,30 +2,122 @@
 
 #include <stdexcept>
 #include <utility>
+#include <random>
+#include <algorithm>
+#include <memory>
 
-Map::Map(uint16_t width, uint16_t height): width(width), height(height) {
-    cells.resize(static_cast<size_t>(width) * height);
-    initializeMap();
-}
+#include "NPC/creature.h"
+#include "NPC/merchant.h"
+#include "NPC/banker.h"
+#include "../../common/DTOs.h"
 
-Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells):
-        width(width), height(height), cells(std::move(cells)) {
+Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes):
+        npcIdCounter(1), width(width), height(height), cells(std::move(cells)), spawn(spawn), entries(std::move(entries)), biomes(std::move(biomes)) {
     if (this->cells.size() != static_cast<size_t>(width) * height) {
         throw std::invalid_argument("Map Error: cells vector size does not match width * height");
     }
+
+    setNPC();
 }
 
-void Map::initializeMap() {
-    for (auto& cell: cells) {
-        cell.textureId = 0;
-        cell.obstacleId = 0;
-        cell.playerId = 0;
-        cell.npcId = 0;
-        cell.isWalkable = true;
-        cell.safeZone = false;
-        cell.ocuppiedByMerchant = false;
-        cell.ocuppiedByBanker = false;
-        cell.ocuppiedByPriest = false;
+void Map::setNPC() {
+    // Friendly NPCs
+    for (size_t i = 0; i < cells.size(); ++i) {
+        Cell& cell = cells[i];
+        std::string npcType;
+        switch (cell.obstacleId) {
+            case static_cast<uint8_t>(ObstacleType::NPC_BANKER):
+                npcType = "banker";
+                break;
+            case static_cast<uint8_t>(ObstacleType::NPC_MERCHANT):
+                npcType = "trader";
+                break;
+            case static_cast<uint8_t>(ObstacleType::NPC_PRIEST):
+                npcType = "priest";
+                break;
+            default:
+                // No NPC
+                continue;
+        }
+
+        int16_t x = static_cast<int16_t>(i % width);
+        int16_t y = static_cast<int16_t>(i / width);
+
+        uint16_t newNpcId = npcIdCounter;
+        npcIdCounter++;
+
+        cell.npcId = newNpcId;
+        
+        if (npcType == "trader" || npcType == "priest")
+            npcs[newNpcId] = std::make_unique<Merchant>(newNpcId, npcType, x, y);
+        else if (npcType == "banker")
+            npcs[newNpcId] = std::make_unique<Banker>(newNpcId, npcType, x, y);
+    }
+
+    // Aggresive NPCs
+    // Overworld
+    for (const auto& biome : biomes) {
+        spawnNPC(biome);
+    }
+
+    // Dungeons
+    // Proximamente
+}
+
+void Map::spawnNPC(const Biome& biome) {
+    std::vector<Position> validCells;
+
+    uint16_t startX = biome.position.x;
+    int16_t startY = biome.position.y;
+    int16_t endX = startX + biome.width;
+    int16_t endY = startY + biome.height;
+
+    for (int16_t y = startY; y < endY; ++y) {
+        for (int16_t x = startX; x < endX; ++x) {
+            if (!isInBounds(x, y)) continue;
+
+            Cell& cell = cells[static_cast<size_t>(y) * width + x];
+
+            if (cell.isWalkable && 
+                !cell.safeZone && 
+                cell.playerId == 0 && 
+                cell.npcId == 0) {
+                    // Save valid cell
+                validCells.push_back({x, y});
+            }
+        }
+    }
+
+    // No valid positions
+    if (validCells.empty()) return;
+
+    // Radomize the valid cells
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(validCells.begin(), validCells.end(), gen);
+
+    // Create the npcs
+    size_t indexCell = 0;
+
+    for (const auto& spawnInfo : biome.spawns) {
+        for (uint16_t i = 0; i < spawnInfo.maxPopulation; ++i) {
+            
+            // No more valid cells
+            if (indexCell >= validCells.size()) return; 
+
+            Position pos = validCells[indexCell];
+            indexCell++;
+
+            uint16_t newNpcId = npcIdCounter++;
+
+            // Ocuppy cell
+            Cell& targetCell = cells[static_cast<size_t>(pos.y) * width + pos.x];
+            targetCell.npcId = newNpcId;
+            targetCell.isWalkable = false;
+
+            // Save npc
+            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, id, pos.x, pos.y);
+        }
     }
 }
 
@@ -40,6 +132,10 @@ Cell Map::getCell(size_t index) const {
         throw std::out_of_range("Map Error: cell index out of range");
     }
     return cells[index];
+}
+
+Position Map::getPlayerSpawn() {
+    return spawn;
 }
 
 bool Map::isInBounds(int16_t x, int16_t y) const {

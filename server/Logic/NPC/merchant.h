@@ -3,12 +3,9 @@
 
 #include <string>
 
-enum class MerchantType : uint8_t { PRIEST, TRADER };
+#include "npc.h"
 
-class Merchant {
-private:
-    MerchantType type;
-
+class Merchant : public NPC {
 public:
     bool canRevive;
     bool canHeal;
@@ -17,7 +14,7 @@ public:
     bool canBuy;
     bool canSellArmory;
 
-    Merchant(const std::string& merchant);
+    Merchant(uint16_t id, const std::string& merchant, uint16_t x, uint16_t y);
 };
 
 #endif

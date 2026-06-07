@@ -1,6 +1,6 @@
 #include "banker.h"
 
-Banker::Banker(BinaryParser& parser): parser(parser) {}
+Banker::Banker(uint16_t id, const std::string& name, uint16_t x, uint16_t y) : NPC(id, name, x, y), parser() {}
 
 void Banker::addPlayer(const std::string& name) {
     if (parser.checkBankAccountExists(name)) {

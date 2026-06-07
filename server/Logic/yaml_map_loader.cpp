@@ -51,22 +51,6 @@ uint8_t obstacleTypeFromString(const std::string& type) {
     return static_cast<uint8_t>(ObstacleType::ROCK);
 }
 
-// Marca en la celda el bool del NPC fijo correspondiente (comerciante,
-// banquero o curandero) según su "type" del YAML.
-void markNpcOccupancy(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight, int16_t x,
-                      int16_t y, const std::string& npcType) {
-    if (x < 0 || y < 0 || x >= static_cast<int16_t>(mapWidth) ||
-        y >= static_cast<int16_t>(mapHeight))
-        return;
-    Cell& cell = cells[static_cast<size_t>(y) * mapWidth + x];
-    if (npcType == "merchant")
-        cell.ocuppiedByMerchant = true;
-    else if (npcType == "banker")
-        cell.ocuppiedByBanker = true;
-    else if (npcType == "priest")
-        cell.ocuppiedByPriest = true;
-}
-
 void initializeDefaultCells(std::vector<Cell>& cells) {
     for (auto& c: cells) {
         c.textureId = 0;
@@ -75,9 +59,6 @@ void initializeDefaultCells(std::vector<Cell>& cells) {
         c.npcId = 0;
         c.isWalkable = true;
         c.safeZone = false;
-        c.ocuppiedByMerchant = false;
-        c.ocuppiedByBanker = false;
-        c.ocuppiedByPriest = false;
     }
 }
 
@@ -240,7 +221,7 @@ const LoadedEnvironment* findEnvironmentById(const std::vector<LoadedEnvironment
 
 }  // namespace
 
-LoadedMap loadMapFromYaml(const std::string& path) {
+Map loadMapFromYaml(const std::string& path) {
     YAML::Node root;
     try {
         root = YAML::LoadFile(path);
@@ -300,7 +281,7 @@ LoadedMap loadMapFromYaml(const std::string& path) {
                     const std::string npcType =
                             npc["type"] ? npc["type"].as<std::string>() : std::string();
                     applyObstacle(cells, width, height, nx, ny, 1, 1, npcTypeFromString(npcType));
-                    markNpcOccupancy(cells, width, height, nx, ny, npcType);
+                    // markNpcOccupancy(cells, width, height, nx, ny, npcType);
                 }
             }
         }
@@ -354,6 +335,5 @@ LoadedMap loadMapFromYaml(const std::string& path) {
               << spawn.y << "), " << entries.size() << " entr(y/ies), " << environments.size()
               << " environment(s), " << biomes.size() << " biome(s)" << std::endl;
 
-    return LoadedMap{Map(width, height, std::move(cells)), spawn, std::move(entries),
-                     std::move(environments), std::move(biomes)};
+    return Map(width, height, std::move(cells), spawn, std::move(entries), std::move(biomes));
 }

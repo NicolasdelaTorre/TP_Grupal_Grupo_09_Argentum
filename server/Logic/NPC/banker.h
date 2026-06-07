@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../binary_parser.h"
+#include "npc.h"
 
 #define N 9
 
@@ -15,13 +16,13 @@ struct BankAccount {
     uint8_t items[N];
 };
 
-class Banker {
+class Banker : public NPC {
     private:
         std::vector<BankAccount> accounts;
-        BinaryParser& parser;
+        BinaryParser parser;
 
     public:
-        Banker(BinaryParser& parser);
+        Banker(uint16_t id, const std::string& name, uint16_t x, uint16_t y);
 
         void addPlayer(const std::string& name);
 
@@ -33,7 +34,7 @@ class Banker {
 
         uint8_t withdrawItem(const std::string& name, uint8_t itemId);
 
-        ~Banker();
+        ~Banker() override;
 };
 
 #endif
