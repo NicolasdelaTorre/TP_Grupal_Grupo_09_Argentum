@@ -57,14 +57,25 @@ void Map::setNPC() {
     // Aggresive NPCs
     // Overworld
     for (const auto& biome : biomes) {
-        spawnNPC(biome);
+        spawnNPC(biome, cells);
     }
 
     // Dungeons
-    // Proximamente
+    for (auto& entry : entries) {
+        if (entry.type == "") {
+            Biome biome;
+            biome.type = entry.environment.type;
+            biome.position = {entry.x, entry.y};
+            biome.width = entry.width;
+            biome.height = entry.height;
+            biome.spawns = entry.environment.spawns;
+
+            spawnNPC(biome, entry.environment.cells);
+        }
+    }
 }
 
-void Map::spawnNPC(const Biome& biome) {
+void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells) {
     std::vector<Position> validCells;
 
     uint16_t startX = biome.position.x;

@@ -77,7 +77,7 @@ private:
 
     void setNPC();
 
-    void spawnNPC(const Biome& biome);
+    void spawnNPC(const Biome& biome, std::vector<Cell>& cells);
 
 public:
     // Constructor con celdas ya armadas (lo usa el YAML loader).
