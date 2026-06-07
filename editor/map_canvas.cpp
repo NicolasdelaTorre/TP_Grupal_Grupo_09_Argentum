@@ -235,6 +235,8 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
         controller_->placeWall(tool, wall.x, wall.y, error, QString::fromStdString(wall.id));
     }
 
+    loadFloorsFromGrid(document);
+
     rebuildBiomeTint();
     rebuildEnvironmentLayers();
 
@@ -312,6 +314,9 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
             break;
         case EditorTool::Wall:
             placeWallAt(cell_x, cell_y);
+            break;
+        case EditorTool::FloorModifier:
+            placeFloorAt(cell_x, cell_y);
             break;
         default:
             break;
@@ -434,6 +439,18 @@ void MapCanvas::placeCityAt(int cell_x, int cell_y) {
         return;
     }
 
+    // Los pisos fijos de la ciudad se materializan como modificadores de piso
+    // normales (quedan grabados en el grid y se reconstruyen al cargar). Se
+    // colocan antes que los obstáculos para que estos queden visualmente encima.
+    for (const auto& fixed: city->fixed_floors) {
+        ToolInfo floor_tool;
+        floor_tool.tool = EditorTool::FloorModifier;
+        floor_tool.floor_template_id = QString::fromStdString(fixed.type);
+        QString floor_error;
+        controller_->placeFloor(floor_tool, cell_x + fixed.relative_x, cell_y + fixed.relative_y,
+                                floor_error);
+    }
+
     // Los obstáculos fijos de la ciudad se materializan como obstáculos normales
     // (se ven en el editor y se guardan junto al resto). Al cargar un mapa ya
     // vienen en la lista de obstáculos, por eso esto sólo corre al colocar la
@@ -492,6 +509,48 @@ void MapCanvas::placeWallAt(int cell_x, int cell_y) {
         return;
     }
     rebuildEnvironmentLayers();
+}
+
+void MapCanvas::loadFloorsFromGrid(const MapDocument& document) {
+    const int W = document.map.width;
+    const int H = document.map.height;
+    if (W <= 0 || H <= 0 || document.biome_grid.empty()) {
+        return;
+    }
+    QString error;
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            const size_t idx = static_cast<size_t>(y) * W + x;
+            if (idx >= document.biome_grid.size()) {
+                continue;
+            }
+            const int value = document.biome_grid[idx];
+            const auto* floor = templates_.find_floor_by_grid_value(value);
+            if (!floor) {
+                continue;
+            }
+            ToolInfo tool;
+            tool.tool = EditorTool::FloorModifier;
+            tool.floor_template_id = QString::fromStdString(floor->id);
+            controller_->placeFloor(tool, x, y, error);
+        }
+    }
+}
+
+// colocar modificador de piso en celda (click único). No bloquea el paso, solo
+// cambia el número del grid y muestra la textura de 64x64.
+void MapCanvas::placeFloorAt(int cell_x, int cell_y) {
+    const auto* floor = templates_.find_floor(active_tool_.floor_template_id.toStdString());
+    if (!floor) {
+        QMessageBox::warning(this, QStringLiteral("Piso"),
+                             QStringLiteral("Modificador de piso inválido."));
+        return;
+    }
+
+    QString error;
+    if (!controller_->placeFloor(active_tool_, cell_x, cell_y, error)) {
+        QMessageBox::warning(this, QStringLiteral("Piso"), error);
+    }
 }
 
 QGraphicsItem* MapCanvas::biomeZoneAtCell(int cell_x, int cell_y) const {
@@ -796,9 +855,7 @@ void MapCanvas::rebuildBiomeTint() {
     QImage img(W, H, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
 
-    // recolectar zonas de bioma, color y textura (si tiene). El orden de
-    // recorrido debe coincidir con SceneController::buildDocument para que el
-    // grid mostrado y el persistido sean idénticos.
+    // recolectar zonas de bioma, color y textura.
     struct BiomeZone {
         QColor color;
         QString texture_path;

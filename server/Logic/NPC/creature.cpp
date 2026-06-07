@@ -1,9 +1,11 @@
 #include "creature.h"
-#include "../toml.hpp"
 
 #include <ctime>
 
-Creature::Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map) : name(name), map(map) {
+#include "../toml.hpp"
+#include <iostream>
+
+Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y, mapId), isAlive(true) {
     // Set level
     srand(time(nullptr));
     if (mapId == 0) {
@@ -11,55 +13,68 @@ Creature::Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t 
         level = 1 + rand() % 5;
     } else {
         // Dungeons
-        level = 5 + rand() % 10;
+        level = 5 + rand() % 6;
     }
 
-    const toml::value config = toml::parse("server/Logic/NPC/npcs.toml");
+    const toml::value config = toml::parse("server/Logic/NPC/npc.toml");
 
     const auto npcs = toml::find<std::vector<toml::value>>(config, "npc");
 
     for (const auto& npc: npcs) {
         if (toml::find<std::string>(npc, "name") == name) {
-            id = toml::find<uint8_t>(npc, "id");
-            maxHealth = toml::find<uint16_t>(npc, "health") * level;
+            maxHealth = toml::find<uint16_t>(npc, "maxHealth") * level;
             health = maxHealth;
             damage = toml::find<uint16_t>(npc, "damage") * level;
             break;
         }
     }
 
-    // Set position
-    position.x = x;
-    position.y = y;
+    std::cout << "Spawned creature " << name << " with level " << level << ", health " << health
+              << " and damage " << damage << "in position (" << position.x << ", " << position.y << ")" << std::endl;
 }
 
-void Creature::stalkPlayer() {
-    Position playerPosition = map.searchPlayer(position.x, position.y);
-
+Position Creature::stalkPlayer(Position playerPosition) {
     // No player in sight
-    if (playerPosition.x == -1) return;
+    if (playerPosition.x == -1) {
+        return {-1, -1};
+    }
 
     int16_t dx = playerPosition.x - position.x;
     int16_t dy = playerPosition.y - position.y;
 
     position.x += (dx > 0) - (dx < 0);
     position.y += (dy > 0) - (dy < 0);
-}
 
-uint16_t Creature::attackPlayer() {
-    uint8_t playerId = map.nextEntity(position.x, position.y, false);
-
-    if (!playerId) {
-        return 0;
-    }
-
-    return damage;
+    return position;
 }
 
 void Creature::receiveDamage(uint16_t damage) {
     if (damage >= health) {
         health = 0;
+        isAlive = false;
     } else {
         health -= damage;
     }
+}
+
+void Creature::resurrect() {
+    health = maxHealth;
+    isAlive = true;
+}
+
+bool Creature::isDead() {
+    return !isAlive;
+}
+
+Position Creature::getPosition() const {
+    return position;
+}
+
+uint16_t Creature::getDamage() const {
+    std::cout << "Creature " << name << " attacks with " << damage << " damage!" << std::endl;
+    return damage;
+}
+
+uint8_t Creature::getMapId() const {
+    return mapId;
 }

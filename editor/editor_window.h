@@ -63,6 +63,7 @@ private:
     void selectObstacleMode();
     void selectBiomeMode();
     void selectCityMode();
+    void selectFloorMode();
     void selectEnvironmentMode();
     void selectDimensionsMode();
     void selectDefaultMode();
@@ -73,6 +74,7 @@ private:
     void onEntryPlacementRequested(const QString& template_id, int cell_x, int cell_y);
     void onEntryDeleted(const QString& environment_id);
     void onEnvironmentDoubleClicked(QListWidgetItem* item);
+    void onEditEnvironmentCreatures();
     void backToMainMap();
     void saveCurrentToDocument();
     void enterEnvironment(const QString& environment_id);

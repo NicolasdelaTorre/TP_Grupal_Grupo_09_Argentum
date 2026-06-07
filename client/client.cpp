@@ -44,7 +44,7 @@ void Client::run() {
     protocol.send(UserArrivalEvent(name, "Elf", "Mage"));
 
     auto ev = protocol.receiveEvent();
-    Player player;
+    Player_ player;
 
     // Usuario nuevo: char creation + skin/head al server.
     if (auto* op = dynamic_cast<OpcodeOnlyEvent*>(ev.get());

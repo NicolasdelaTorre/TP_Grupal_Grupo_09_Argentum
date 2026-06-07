@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../../common/position.h"
+#include "../../common/DTOs.h"
 
 #include "class_.h"
 #include "items.h"
@@ -23,7 +24,7 @@ struct PlayerData {
     uint16_t health;
     uint16_t mana;
 
-    Race::RaceCode race;
+    RaceCode race;
     Class_::ClassCode class_;
     uint8_t mapId;
     uint8_t level;
@@ -80,6 +81,8 @@ public:
 
     uint16_t getMaxMana() const;
 
+    uint8_t getMapId() const;
+
     bool hasLongDistanceWeapon();
 
     void receiveDamage(uint16_t damage);
@@ -99,6 +102,8 @@ public:
     uint16_t heal();
 
     void setSkin(uint8_t bodySkinId, uint8_t headSkinId);
+
+    void changeMapId(uint8_t newMapId);
 
     void resetStats();
 };

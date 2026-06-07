@@ -13,6 +13,7 @@
 #include "binary_parser.h"
 #include "map.h"
 #include "player.h"
+#include "yaml_map_loader.h"
 
 class Game {
 private:
@@ -20,7 +21,6 @@ private:
     Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
     BinaryParser parser;
-
     // Encuentra una posición libre para spawnear. Tira excepción si no hay ninguna.
     Position findSpawnPosition() const;
 
@@ -31,8 +31,10 @@ private:
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
     bool tryEvade(int attackerId, int targetId) const;
 
+    void checkEntry(int playerId);
+
 public:
-    Game(Map& map, Position playerSpawn);
+    explicit Game(Map& world);
 
     // Da de alta un jugador (nuevo o cargado del binario).
     bool addPlayer(int playerId, const std::string& name, const std::string& race,
@@ -121,7 +123,10 @@ public:
         uint8_t equippedHelmet = 0;
         uint8_t equippedShield = 0;
     };
+
     InventorySnapshot getInventorySnapshot(int playerId) const;
+
+    bool applyNPCAttack(uint8_t playerId, uint16_t damage);
 
     void removePlayer(int playerId);
 

@@ -10,7 +10,7 @@ target_sources(taller_common
     Communication/events/server_events.cpp
     Communication/events/client_events.cpp
     # Compartido (no estrictamente comunicación).
-    common_biome.cpp
+    common_tiles.cpp
     PUBLIC
     Communication/common_protocol.h
     Communication/liberror.h
@@ -23,7 +23,7 @@ target_sources(taller_common
     Communication/events/server_events.h
     Communication/events/client_event.h
     Communication/events/client_events.h
-    common_biome.h
+    common_tiles.h
     position.h
     queue.h
     thread.h

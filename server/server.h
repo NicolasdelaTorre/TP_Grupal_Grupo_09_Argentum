@@ -15,7 +15,8 @@ private:
     ServerProtocol protocol;
     IncomingQueue clientEvents;
     ClientMonitor clientMonitor;
-    LoadedMap loadedMap;
+    // Declarado antes que Gameloop porque éste lo referencia.
+    Map map;
     Gameloop gameloop;
     Acceptor acceptor;
 

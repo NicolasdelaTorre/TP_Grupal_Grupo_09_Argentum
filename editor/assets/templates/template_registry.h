@@ -19,6 +19,14 @@ struct CityObstacleTemplate {
     int relative_y = 0;
 };
 
+// Modificador de piso predefinido de una ciudad. `type` referencia el template_id
+// de un piso; la posición es relativa a la esquina de la ciudad.
+struct CityFloorTemplate {
+    std::string type;
+    int relative_x = 0;
+    int relative_y = 0;
+};
+
 struct CityTemplate {
     std::string id;
     std::string name;
@@ -27,6 +35,7 @@ struct CityTemplate {
     std::string color;
     std::vector<NpcTemplate> fixed_npcs;
     std::vector<CityObstacleTemplate> fixed_obstacles;
+    std::vector<CityFloorTemplate> fixed_floors;
 };
 
 struct BiomeTemplate {
@@ -71,6 +80,16 @@ struct WallTemplate {
     std::string color;
 };
 
+// Modificador de piso: una textura de 64x64 que no bloquea el paso y solo cambia
+// el número de la celda en el grid (`grid_value`). Siempre ocupa 1x1.
+struct FloorTemplate {
+    std::string id;
+    std::string name;
+    std::string color;
+    std::string texture;
+    int grid_value = 0;
+};
+
 class TemplateRegistry {
 public:
     TemplateRegistry() = default;
@@ -81,12 +100,22 @@ public:
     const std::vector<ObstacleTemplate>& obstacles() const;
     const std::vector<EntryTemplate>& entries() const;
     const std::vector<WallTemplate>& walls() const;
+    const std::vector<FloorTemplate>& floors() const;
+
+    // Lista de todas las criaturas disponibles, agregando (sin repetir) las
+    // `allowed_creatures` de todos los biomas. Se usa para poblar el spawn de
+    // criaturas de los entornos, que admiten cualquier criatura del juego.
+    std::vector<std::string> all_creatures() const;
 
     const CityTemplate* find_city(const std::string& id) const;
     const BiomeTemplate* find_biome(const std::string& id) const;
     const ObstacleTemplate* find_obstacle(const std::string& id) const;
     const EntryTemplate* find_entry(const std::string& id) const;
     const WallTemplate* find_wall(const std::string& id) const;
+    const FloorTemplate* find_floor(const std::string& id) const;
+    // Modificador de piso cuyo `grid_value` coincide con el dado (para
+    // reconstruir los pisos al cargar un mapa desde el grid del biome_map).
+    const FloorTemplate* find_floor_by_grid_value(int grid_value) const;
 
 private:
     std::vector<CityTemplate> cities_;
@@ -94,12 +123,14 @@ private:
     std::vector<ObstacleTemplate> obstacles_;
     std::vector<EntryTemplate> entries_;
     std::vector<WallTemplate> walls_;
+    std::vector<FloorTemplate> floors_;
 
     bool load_city_file(const std::string& path);
     bool load_biome_file(const std::string& path);
     bool load_obstacle_file(const std::string& path);
     bool load_entry_file(const std::string& path);
     bool load_wall_file(const std::string& path);
+    bool load_floor_file(const std::string& path);
 };
 
 #endif

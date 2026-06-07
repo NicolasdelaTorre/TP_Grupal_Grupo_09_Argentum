@@ -52,7 +52,7 @@ MoveDirection spriteDirToWire(Direction d) {
 
 // tile del servidor (donde caen los pies) → coords del Player.
 // p.x e p.y = tile del jugador, así el sprite queda centrado en la celda.
-static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player& p) {
+static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player_& p) {
     p.x = static_cast<float>(tileX);
     p.y = static_cast<float>(tileY);
 }
@@ -76,7 +76,7 @@ static Direction wireDirToSpriteDir(uint8_t wireDir) {
 
 GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                        OutgoingQueue& clientEvents, IncomingQueue& serverEvents,
-                       const MapEvent& mapData, Position spawn, Player player):
+                       const MapEvent& mapData, Position spawn, Player_ player):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),

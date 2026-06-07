@@ -91,6 +91,10 @@ private:
     void placeCityAt(int cell_x, int cell_y);
     void placeObstacleAt(int cell_x, int cell_y);
     void placeWallAt(int cell_x, int cell_y);
+    void placeFloorAt(int cell_x, int cell_y);
+    // Reconstruye los modificadores de piso a partir del grid del biome_map
+    // cargado (las celdas cuyo valor coincide con un grid_value de piso).
+    void loadFloorsFromGrid(const MapDocument& document);
     void requestEntryAt(int cell_x, int cell_y);
     void finishBiomeZoneDraw(int end_cell_x, int end_cell_y);
     QGraphicsItem* biomeZoneAtCell(int cell_x, int cell_y) const;

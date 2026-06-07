@@ -5,27 +5,32 @@
 #include <string>
 
 #include "../../common/position.h"
-#include "../map.h"
+#include "npc.h"
 
-class Creature {
-    private:
-        uint8_t id;
-        const std::string& name;
-        uint8_t level;
-        uint16_t health;
-        uint16_t maxHealth;
-        uint16_t damage;
-        Position position;
-        Map& map;
+class Creature : public NPC {
+private:
+    uint8_t level;
+    uint16_t health;
+    uint16_t maxHealth;
+    uint16_t damage;
+    bool isAlive;
 
-    public:
-        Creature(const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, Map& map);
+public:
+    Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y);
 
-        void stalkPlayer();
+    Position stalkPlayer(Position playerPosition);
 
-        uint16_t attackPlayer();
+    void receiveDamage(uint16_t damage);
 
-        void receiveDamage(uint16_t damage);
+    void resurrect();
+
+    bool isDead();
+
+    Position getPosition() const;
+
+    uint16_t getDamage() const;
+
+    uint8_t getMapId() const;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include <utility>
+#include <iostream>
 
 Player::Player(const std::string& name, Position position, const std::string& race,
                const std::string& class_):
@@ -18,7 +19,7 @@ Player::Player(const std::string& name, Position position, const std::string& ra
 
     data.race = Race::fromString(race);
     data.class_ = Class_::fromString(class_);
-    data.mapId = 0;
+    data.mapId = 0; // Overworld
     data.equippedWeapon = 0;
     data.equippedArmor = 0;
     data.equippedHelmet = 0;
@@ -87,7 +88,9 @@ Player::Player(PlayerData data, const std::string& name): data(std::move(data)),
     }
 }
 
-void Player::move(Position newPosition) { data.position = newPosition; }
+void Player::move(Position newPosition) { 
+    data.position = newPosition; 
+}
 
 void Player::setDirection(uint8_t dir) { direction = dir; }
 
@@ -109,10 +112,18 @@ uint16_t Player::getMaxHealth() const { return maxHealth; }
 
 uint16_t Player::getMaxMana() const { return maxMana; }
 
+uint8_t Player::getMapId() const { return data.mapId; }
+
 bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
     // Cambiar proximamente
+    if (data.isGhost) {
+        std::cout << "Player " << name << " is already a ghost and can't receive more damage." << std::endl;
+        return;
+    } else {
+        std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
+    }
     if (damage >= data.health) {
         data.health = 0;
         data.isGhost = true;
@@ -242,6 +253,10 @@ uint16_t Player::heal() {
 void Player::setSkin(uint8_t bodySkinId, uint8_t headSkinId) {
     data.bodySkinId = bodySkinId;
     data.headSkinId = headSkinId;
+}
+
+void Player::changeMapId(uint8_t newMapId) {
+    data.mapId = newMapId;
 }
 
 void Player::resetStats() {

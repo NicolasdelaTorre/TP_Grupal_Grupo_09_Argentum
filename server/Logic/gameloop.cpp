@@ -7,14 +7,17 @@
 #include "../../common/Communication/events/server_events.h"
 #include "../../common/Communication/message_types.h"
 
+#include "NPC/creature.h"
+
 Gameloop::Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
-                   ServerProtocol& protocol, Position playerSpawn):
+                   ServerProtocol& protocol):
         clientEvents(clientEvents),
         clientMonitor(clientMonitor),
         gameFinished(false),
-        game(map, playerSpawn),
+        map(map),
+        game(map),
         protocol(protocol),
-        mapRef(map) {}
+        turnManager(map.getAllNPCIds(), map) {}
 
 void Gameloop::run() {
     while (!gameFinished) {
@@ -22,6 +25,7 @@ void Gameloop::run() {
         while (clientEvents.try_pop(ev)) {
             dispatch(*ev);
         }
+        NPCTurns();
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
@@ -56,6 +60,48 @@ void Gameloop::dispatch(const ClientEvent& ev) {
     }
 }
 
+void Gameloop::NPCTurns() {
+    turnManager.updateTimers();
+
+    // NPCs que toca mover: persiguen al jugador más cercano.
+    std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
+    for (uint16_t npcId: npcsToMove) {
+        Creature* npc = map.getNPC(npcId);
+        Position newPos = npc->stalkPlayer(
+                map.searchPlayer(npc->getPosition().x, npc->getPosition().y, npc->getMapId()));
+        if (newPos.x != -1) {
+            map.moveEntity(npcId, npc->getPosition().x, npc->getPosition().y, newPos.x, newPos.y,
+                           false, npc->getMapId());
+        }
+    }
+
+    // NPCs que toca atacar: si tienen un jugador adyacente, le aplican daño y
+    // notifican al cliente afectado con sus stats actualizados.
+    std::vector<uint16_t> npcsToAttack = turnManager.getNPCsReady(false);
+    for (uint16_t npcId: npcsToAttack) {
+        Creature* npc = map.getNPC(npcId);
+        uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true,
+                                          npc->getMapId());
+        if (playerId == 0)
+            continue;
+        if (game.applyNPCAttack(playerId, npc->getDamage())) {
+            // Broadcast del resultado del ataque (attacker=npcId, target=player).
+            auto atkEv = std::make_shared<AttackResultEvent>(npcId, /*targetType=*/0, playerId,
+                                                            npc->getDamage(), /*hit=*/true);
+            clientMonitor.broadcast(atkEv);
+            // Stats actualizados al jugador afectado.
+            clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+        }
+    }
+
+    // NPCs que se revivan tras el cooldown.
+    std::vector<uint16_t> npcsToRevive = turnManager.reviveNPCs();
+    for (uint16_t npcId: npcsToRevive) {
+        Creature* npc = map.getNPC(npcId);
+        npc->resurrect();
+    }
+}
+
 void Gameloop::stop() { gameFinished = true; }
 
 // ── Handlers ─────────────────────────────────────────────────────────────
@@ -86,16 +132,16 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
     game.setSkin(playerId, skinId);
     clientMonitor.sendToClient(playerId, std::make_shared<LoginOkEvent>(p.x, p.y));
 
-    // MAP: copiamos las celdas que viajan por el wire a un vector<MapCellData>.
+    // MAP del overworld (mapId=0): copiamos las celdas que viajan por el wire.
     std::vector<MapCellData> cells;
-    cells.reserve(mapRef.getCellCount());
-    for (size_t i = 0; i < mapRef.getCellCount(); i++) {
-        Cell c = mapRef.getCell(i);
+    cells.reserve(map.getCellCount(0));
+    for (size_t i = 0; i < map.getCellCount(0); i++) {
+        Cell c = map.getCell(i, 0);
         cells.push_back({c.textureId, c.obstacleId, c.safeZone});
     }
-    clientMonitor.sendToClient(playerId, std::make_shared<MapEvent>(mapRef.getWidth(),
-                                                                  mapRef.getHeight(),
-                                                                  std::move(cells)));
+    clientMonitor.sendToClient(playerId,
+                               std::make_shared<MapEvent>(map.getWidth(0), map.getHeight(0),
+                                                          std::move(cells)));
 
     // Stats iniciales.
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
@@ -119,8 +165,8 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
     uint8_t myDir = game.getPlayerDirection(playerId);
     uint8_t mySkin = game.getPlayerSkin(playerId);
     clientMonitor.broadcastExcept(playerId,
-                                 std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId),
-                                                                  p.x, p.y, myDir, mySkin, myName));
+                                  std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId),
+                                                                   p.x, p.y, myDir, mySkin, myName));
     sendEquipmentSnapshot(playerId, -1);
 }
 
@@ -138,8 +184,8 @@ void Gameloop::handleMovement(int playerId, MoveDirection direction) {
         Position p = game.getPlayerPosition(playerId);
         uint8_t pdir = game.getPlayerDirection(playerId);
         clientMonitor.broadcastExcept(playerId,
-                                     std::make_shared<PlayerMovedEvent>(
-                                             static_cast<uint16_t>(playerId), p.x, p.y, pdir));
+                                      std::make_shared<PlayerMovedEvent>(
+                                              static_cast<uint16_t>(playerId), p.x, p.y, pdir));
     } else {
         clientMonitor.sendToClient(
                 playerId,
@@ -153,8 +199,8 @@ void Gameloop::handleTurn(int playerId, MoveDirection direction) {
         Position p = game.getPlayerPosition(playerId);
         uint8_t pdir = game.getPlayerDirection(playerId);
         clientMonitor.broadcastExcept(playerId,
-                                     std::make_shared<PlayerMovedEvent>(
-                                             static_cast<uint16_t>(playerId), p.x, p.y, pdir));
+                                      std::make_shared<PlayerMovedEvent>(
+                                              static_cast<uint16_t>(playerId), p.x, p.y, pdir));
     }
 }
 
@@ -194,9 +240,9 @@ static void broadcastInventoryChanges(int playerId, const Game::InventorySnapsho
                                       ClientMonitor& clientMonitor) {
     // INVENTORY_UPDATE al dueño.
     clientMonitor.sendToClient(playerId,
-                              std::make_shared<InventoryUpdateEvent>(
-                                      after.items, after.equippedWeapon, after.equippedArmor,
-                                      after.equippedHelmet, after.equippedShield));
+                               std::make_shared<InventoryUpdateEvent>(
+                                       after.items, after.equippedWeapon, after.equippedArmor,
+                                       after.equippedHelmet, after.equippedShield));
 
     // PLAYER_EQUIPPED broadcast por cada slot equipado que cambió.
     const uint8_t beforeSlots[4] = {before.equippedWeapon, before.equippedArmor,
@@ -270,7 +316,7 @@ void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
         if (slots[s] == 0)
             continue;
         auto ev = std::make_shared<PlayerEquippedEvent>(static_cast<uint16_t>(idPlayer), s,
-                                                       slots[s]);
+                                                        slots[s]);
         if (recipientId < 0) {
             clientMonitor.broadcastExcept(idPlayer, ev);
         } else {

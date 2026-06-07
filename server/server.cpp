@@ -4,8 +4,8 @@ Server::Server(const char* port):
         protocol(port),
         clientEvents(),
         clientMonitor(),
-        loadedMap(loadMapFromYaml("server/assets/maps/mapa_completo.yaml")),
-        gameloop(clientEvents, clientMonitor, loadedMap.map, protocol, loadedMap.playerSpawn),
+        map(loadMapFromYaml("server/assets/maps/otro_mapa.yaml")),
+        gameloop(clientEvents, clientMonitor, map, protocol),
         acceptor(protocol, clientEvents, clientMonitor) {}
 
 void Server::startGame() {

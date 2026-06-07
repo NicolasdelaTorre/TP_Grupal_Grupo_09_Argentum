@@ -13,15 +13,17 @@
 #include "../Communication/server_protocol.h"
 
 #include "game.h"
+#include "turn_manager.h"
 
 class Gameloop: public Thread {
 private:
     IncomingQueue& clientEvents;
     ClientMonitor& clientMonitor;
     bool gameFinished;
+    Map& map;
     Game game;
     ServerProtocol& protocol;
-    const Map& mapRef;  // para construir MapEvent en el login
+    TurnManager turnManager;
 
     // Construye un StatsEvent con el snapshot actual del jugador.
     std::shared_ptr<ServerEvent> buildStatsEvent(int idPlayer);
@@ -30,9 +32,12 @@ private:
     // recipientId == -1 → broadcast a todos menos a él. Sino, sólo a ese cliente.
     void sendEquipmentSnapshot(int idPlayer, int recipientId);
 
+    // Avanza el turno de cada NPC vivo; si alguno ataca, dispara los eventos al cliente.
+    void NPCTurns();
+
 public:
-    Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map, ServerProtocol& protocol,
-             Position playerSpawn);
+    Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
+             ServerProtocol& protocol);
 
     virtual void run() override;
 

@@ -11,9 +11,11 @@ target_sources(taller_editor
         verificator.cpp
         map/biome_grid.cpp
         map/yaml_map_io.cpp
+        common_biome.cpp
         assets/templates/template_registry.cpp
         dialogs/biome_spawn_dialog.cpp
         dialogs/new_environment_dialog.cpp
+        dialogs/environment_spawn_dialog.cpp
     PUBLIC
     # .h files
         editor_window.h
@@ -26,9 +28,11 @@ target_sources(taller_editor
         map/map_data.h
         map/biome_grid.h
         map/yaml_map_io.h
+        common_biome.h
         assets/templates/template_registry.h
         dialogs/biome_spawn_dialog.h
         dialogs/new_environment_dialog.h
+        dialogs/environment_spawn_dialog.h
     )
 
 target_include_directories(taller_editor
@@ -44,6 +48,7 @@ target_compile_definitions(taller_editor
         EDITOR_TEMPLATES_OBSTACLES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/obstacles"
         EDITOR_TEMPLATES_ENTRIES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/entries"
         EDITOR_TEMPLATES_WALLS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/walls"
-        EDITOR_ASSETS_IMAGES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/images"
+        EDITOR_TEMPLATES_FLOORS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/tiles"
+        EDITOR_ASSETS_IMAGES_PATH="${CMAKE_SOURCE_DIR}/common/assets/images"
         EDITOR_SAVE_MAP_PATH="${CMAKE_SOURCE_DIR}/server/assets/maps"
     )

@@ -81,6 +81,7 @@ struct Environment {
     PlayerSpawn player_spawn;
     std::vector<Obstacle> obstacles;
     std::vector<Wall> walls;
+    std::vector<CreatureSpawn> spawns;
     std::string floor_color;
 };
 
@@ -94,8 +95,6 @@ struct MapDocument {
     std::vector<Environment> environments;
     std::vector<Wall> walls;
     std::string floor_color;
-    // Grid de biomas pre-calculado (Dijkstra), row-major width*height.
-    // Cada celda guarda el valor numérico de BiomeType (0 = sin bioma).
     std::vector<uint8_t> biome_grid;
 };
 
