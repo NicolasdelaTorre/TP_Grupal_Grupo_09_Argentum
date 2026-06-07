@@ -65,6 +65,7 @@ private:
     void selectCityMode();
     void selectFloorMode();
     void selectEnvironmentMode();
+    void selectExitsMode();
     void selectDimensionsMode();
     void selectDefaultMode();
     void updateDimensionsLabel();

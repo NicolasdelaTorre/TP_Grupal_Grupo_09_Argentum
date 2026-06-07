@@ -1,0 +1,8 @@
+template_id: nieve
+name: "Nieve"
+default_size:
+  width: 35
+  height: 25
+texture: "tiles/nieve.png"
+allowed_creatures:
+  - golem

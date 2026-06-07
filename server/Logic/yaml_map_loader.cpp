@@ -72,7 +72,8 @@ uint8_t obstacleTypeFromString(const std::string& type) {
     if (type == "munieco_entrenamiento")
         return static_cast<uint8_t>(ObstacleType::TRAINING_DUMMY);
     if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
-        type == "pilar")
+        type == "pilar" || type == "pared_mazmorra_derecha" ||
+        type == "pared_mazmorra_izquierda" || type == "pared_mazmorra_vertical")
         return static_cast<uint8_t>(ObstacleType::WALL);
     return static_cast<uint8_t>(ObstacleType::ROCK);
 }
@@ -198,10 +199,55 @@ void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16
     }
 }
 
-void markEnvironmentExteriorAsBlocked(std::vector<Cell>& cells, int16_t envWidth,
-                                      int16_t envHeight, const YAML::Node& walls) {
+// Vuelca las salidas del environment en sus celdas: como las paredes, marcan la
+// celda con su obstáculo (ObstacleType::EXIT) y la vuelven no transitable.
+// Devuelve la posición de cada celda ocupada por una salida.
+std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t envWidth,
+                                            int16_t envHeight, const YAML::Node& exits) {
+    std::vector<Position> positions;
+    if (!exits)
+        return positions;
+    for (const auto& node: exits) {
+        int16_t x = 0;
+        int16_t y = 0;
+        int16_t w = 1;
+        int16_t h = 1;
+        if (node["position"] && node["position"].size() >= 2) {
+            x = node["position"][0].as<int16_t>();
+            y = node["position"][1].as<int16_t>();
+        }
+        if (node["size"] && node["size"].size() >= 2) {
+            w = node["size"][0].as<int16_t>();
+            h = node["size"][1].as<int16_t>();
+        }
+        applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
+                      y, w, h, static_cast<uint8_t>(ObstacleType::EXIT));
+        for (int16_t dy = 0; dy < h; ++dy) {
+            for (int16_t dx = 0; dx < w; ++dx) {
+                const int16_t cx = static_cast<int16_t>(x + dx);
+                const int16_t cy = static_cast<int16_t>(y + dy);
+                if (cx < 0 || cy < 0 || cx >= envWidth || cy >= envHeight)
+                    continue;
+                positions.push_back({cx, cy});
+            }
+        }
+    }
+    return positions;
+}
+
+// Resuelve el piso del environment (a partir de su `floor_texture`) y, con el
+// mismo flood-fill que detecta el exterior, estampa cada celda:
+//   - exterior (alcanzable desde el borde sin cruzar paredes): negro + bloqueada.
+//   - interior (y todo si no hay recinto cerrado): textureId del piso.
+// Es decir, el piso es el inverso exacto de las celdas exteriores negras.
+void applyEnvironmentFloorAndExterior(std::vector<Cell>& cells, int16_t envWidth, int16_t envHeight,
+                                      const YAML::Node& walls, const std::string& floorTexture) {
     if (envWidth <= 0 || envHeight <= 0 || cells.empty())
         return;
+
+    const FloorTile* floorTile = floor_tile_from_texture(floorTexture);
+    const bool hasFloor = floorTile != nullptr;
+    const uint16_t floorId = hasFloor ? floorTile->grid_value : 0;
 
     const auto index = [envWidth](int16_t x, int16_t y) {
         return static_cast<size_t>(y) * static_cast<size_t>(envWidth) + static_cast<size_t>(x);
@@ -273,15 +319,16 @@ void markEnvironmentExteriorAsBlocked(std::vector<Cell>& cells, int16_t envWidth
             break;
         }
     }
-    if (!hasInterior)
-        return;
 
-    // Mismo criterio visual que el editor: si hay un recinto cerrado por paredes,
-    // todo lo alcanzable desde el borde sin cruzar paredes es exterior.
+    // Mismo criterio visual que el editor: las celdas exteriores solo cuentan como
+    // tales si hay un recinto cerrado por paredes; si no, todo es interior.
+    const bool enclosed = hasInterior;
     for (size_t i = 0; i < cells.size(); ++i) {
-        if (exterior[i]) {
+        if (enclosed && exterior[i]) {
             cells[i].isWalkable = false;
             cells[i].textureId = EXTERIOR_TILE_VALUE;
+        } else if (hasFloor) {
+            cells[i].textureId = floorId;
         }
     }
 }
@@ -317,20 +364,27 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
         env.playerSpawn.x = spawnNode["position"][0].as<int16_t>();
         env.playerSpawn.y = spawnNode["position"][1].as<int16_t>();
 
-        // Obstáculos y paredes se vuelcan directamente en las celdas del
-        // environment (las paredes traen su tipo en "template" en vez de "type").
+        // La textura de piso solo se usa acá para estampar el textureId de cada
+        // celda; no hace falta guardarla en el environment.
+        const std::string floorTexture =
+                envNode["floor_texture"] ? envNode["floor_texture"].as<std::string>()
+                                         : std::string();
+
+        // Obstáculos, paredes y salidas se vuelcan directamente en las celdas del
+        // environment (las paredes y salidas traen su tipo en "template" en vez de
+        // "type"). Luego, el mismo flood-fill pone el piso en las celdas interiores
+        // y el tile negro en las exteriores.
         if (!env.cells.empty()) {
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["obstacles"],
                                       "type");
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
                                       "template");
-            markEnvironmentExteriorAsBlocked(env.cells, env.width, env.height, envNode["walls"]);
+            env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"]);
+            applyEnvironmentFloorAndExterior(env.cells, env.width, env.height, envNode["walls"],
+                                             floorTexture);
         }
 
         env.spawns = parseSpawns(envNode);
-
-        if (envNode["floor_color"])
-            env.floorColor = envNode["floor_color"].as<std::string>();
 
         environments.push_back(std::move(env));
     }

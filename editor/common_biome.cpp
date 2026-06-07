@@ -17,7 +17,7 @@ constexpr std::array<BiomeName, 8> BIOME_NAMES = {{
         {BiomeType::BOSQUE_ARANAS, "bosque_aranas"},
         {BiomeType::DESIERTO, "desierto"},
         {BiomeType::CEMENTERIO, "cementerio"},
-        {BiomeType::CUEVAS_ORCOS, "cuevas_orcos"},
+        {BiomeType::NIEVE, "nieve"},
         {BiomeType::ROCOSAS, "rocosas"},
         {BiomeType::PANTANO_EMBRUJADO, "pantano_embrujado"},
 }};

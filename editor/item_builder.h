@@ -19,7 +19,9 @@ public:
                                   const QString& environmentId, int width, int height,
                                   const QColor& fill);
     QGraphicsRectItem* buildWall(const QString& id, const QString& templateId, int width,
-                                 int height, const QColor& fill);
+                                 int height, const QString& texturePath);
+    QGraphicsRectItem* buildExit(const QString& id, const QString& templateId, int width,
+                                 int height, const QString& texturePath);
     QGraphicsRectItem* buildFloor(const QString& id, const QString& templateId, const QColor& fill,
                                   const QString& texturePath = QString());
 

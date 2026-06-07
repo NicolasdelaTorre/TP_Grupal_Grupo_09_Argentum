@@ -193,6 +193,28 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                         out << YAML::Key << "size" << YAML::Value;
                         out << YAML::Flow << YAML::BeginSeq << wall.width << wall.height
                             << YAML::EndSeq;
+                        if (!wall.texture.empty()) {
+                            out << YAML::Key << "texture" << YAML::Value << wall.texture;
+                        }
+                        out << YAML::EndMap;
+                    }
+                    out << YAML::EndSeq;
+                }
+
+                if (!env.exits.empty()) {
+                    out << YAML::Key << "exits" << YAML::Value << YAML::BeginSeq;
+                    for (const auto& exit: env.exits) {
+                        out << YAML::BeginMap;
+                        out << YAML::Key << "id" << YAML::Value << exit.id;
+                        out << YAML::Key << "template" << YAML::Value << exit.template_id;
+                        out << YAML::Key << "position" << YAML::Value;
+                        out << YAML::Flow << YAML::BeginSeq << exit.x << exit.y << YAML::EndSeq;
+                        out << YAML::Key << "size" << YAML::Value;
+                        out << YAML::Flow << YAML::BeginSeq << exit.width << exit.height
+                            << YAML::EndSeq;
+                        if (!exit.texture.empty()) {
+                            out << YAML::Key << "texture" << YAML::Value << exit.texture;
+                        }
                         out << YAML::EndMap;
                     }
                     out << YAML::EndSeq;
@@ -211,6 +233,10 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
 
                 if (!env.floor_color.empty()) {
                     out << YAML::Key << "floor_color" << YAML::Value << env.floor_color;
+                }
+
+                if (!env.floor_texture.empty()) {
+                    out << YAML::Key << "floor_texture" << YAML::Value << env.floor_texture;
                 }
 
                 out << YAML::EndMap;
@@ -328,7 +354,28 @@ Wall YamlMapIO::read_wall(const YAML::Node& node) {
         wall.width = node["size"][0].as<int>();
         wall.height = node["size"][1].as<int>();
     }
+    if (node["texture"]) {
+        wall.texture = node["texture"].as<std::string>();
+    }
     return wall;
+}
+
+Exit YamlMapIO::read_exit(const YAML::Node& node) {
+    Exit exit;
+    exit.id = node["id"] ? node["id"].as<std::string>() : std::string();
+    exit.template_id = node["template"] ? node["template"].as<std::string>() : std::string();
+    if (node["position"] && node["position"].size() >= 2) {
+        exit.x = node["position"][0].as<int>();
+        exit.y = node["position"][1].as<int>();
+    }
+    if (node["size"] && node["size"].size() >= 2) {
+        exit.width = node["size"][0].as<int>();
+        exit.height = node["size"][1].as<int>();
+    }
+    if (node["texture"]) {
+        exit.texture = node["texture"].as<std::string>();
+    }
+    return exit;
 }
 
 Environment YamlMapIO::read_environment(const YAML::Node& node) {
@@ -353,6 +400,11 @@ Environment YamlMapIO::read_environment(const YAML::Node& node) {
             env.walls.push_back(read_wall(wall_node));
         }
     }
+    if (node["exits"]) {
+        for (const auto& exit_node: node["exits"]) {
+            env.exits.push_back(read_exit(exit_node));
+        }
+    }
     if (node["spawns"]) {
         for (const auto& spawn_node: node["spawns"]) {
             CreatureSpawn spawn;
@@ -365,6 +417,9 @@ Environment YamlMapIO::read_environment(const YAML::Node& node) {
     }
     if (node["floor_color"]) {
         env.floor_color = node["floor_color"].as<std::string>();
+    }
+    if (node["floor_texture"]) {
+        env.floor_texture = node["floor_texture"].as<std::string>();
     }
     return env;
 }

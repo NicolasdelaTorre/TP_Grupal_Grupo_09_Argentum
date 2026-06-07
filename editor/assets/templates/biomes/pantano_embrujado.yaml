@@ -3,7 +3,7 @@ name: "Pantano embrujado"
 default_size:
   width: 35
   height: 25
-color: "#6B8E23"
+texture: "tiles/pantano.png"
 allowed_creatures:
   - zombie
   - spider

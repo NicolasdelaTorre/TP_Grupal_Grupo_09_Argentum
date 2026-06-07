@@ -3,7 +3,7 @@ name: "Cementerio"
 default_size:
   width: 25
   height: 20
-color: "#7D8C8C"
+texture: "tiles/cementerio.png"
 allowed_creatures:
   - skeleton
   - zombie

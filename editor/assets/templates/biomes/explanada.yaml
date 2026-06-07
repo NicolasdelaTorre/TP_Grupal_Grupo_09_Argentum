@@ -3,6 +3,5 @@ name: "Explanada"
 default_size:
   width: 30
   height: 20
-color: "#A8C97F"
-texture: "tile_pasto_128x128.png"
+texture: "tiles/explanada.png"
 allowed_creatures: []
