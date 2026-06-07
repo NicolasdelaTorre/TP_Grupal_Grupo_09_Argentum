@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <string>
 
-#include "../common/common_biome.h"
+#include "common_biome.h"
 #include "map/biome_grid.h"
 
 #include "editor_constants.h"

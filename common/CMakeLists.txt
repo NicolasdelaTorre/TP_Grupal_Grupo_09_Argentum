@@ -1,7 +1,7 @@
 target_sources(taller_common
     PRIVATE
     # .cpp files
-    common_biome.cpp
+    common_tiles.cpp
     liberror.cpp
     common_protocol.cpp
     protocol_util.cpp
@@ -10,7 +10,7 @@ target_sources(taller_common
     socket.cpp
     PUBLIC
     # .h files
-    common_biome.h
+    common_tiles.h
     liberror.h
     common_protocol.h
     position.h

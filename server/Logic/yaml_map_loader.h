@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "../../common/common_biome.h"
 #include "../../common/position.h"
 
 #include "map.h"

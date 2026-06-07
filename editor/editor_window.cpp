@@ -13,6 +13,7 @@
 #include <QSpinBox>
 #include <algorithm>
 
+#include "dialogs/environment_spawn_dialog.h"
 #include "dialogs/new_environment_dialog.h"
 #include "map/yaml_map_io.h"
 
@@ -192,6 +193,9 @@ EditorWindow::EditorWindow(QWidget* parent):
 
     connect(ui_->listEnvironments, &QListWidget::itemDoubleClicked, this,
             &EditorWindow::onEnvironmentDoubleClicked);
+
+    connect(ui_->btnEnvironmentCreatures, &QPushButton::clicked, this,
+            &EditorWindow::onEditEnvironmentCreatures);
 
     connect(map_canvas_, &MapCanvas::entryPlacementRequested, this,
             &EditorWindow::onEntryPlacementRequested);
@@ -610,6 +614,16 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
         return;
     }
 
+    std::vector<CreatureSpawn> spawns;
+    const auto creatures = templates_.all_creatures();
+    if (!creatures.empty()) {
+        EnvironmentSpawnDialog spawn_dialog(dialog.environment_name(), creatures, this);
+        if (spawn_dialog.exec() != QDialog::Accepted) {
+            return;
+        }
+        spawns = spawn_dialog.selected_spawns();
+    }
+
     QString env_id = QStringLiteral("env_%1").arg(next_environment_index_++);
     QString entry_id = QStringLiteral("entry_%1").arg(next_entry_index_++);
 
@@ -620,6 +634,7 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
     env.width = dialog.environment_width();
     env.height = dialog.environment_height();
     env.floor_color = entry_template->floor_color;
+    env.spawns = spawns;
     main_doc_.environments.push_back(env);
 
     if (!map_canvas_->placeEntryItem(entry_id, env_id, template_id, cell_x, cell_y)) {
@@ -651,6 +666,29 @@ void EditorWindow::onEnvironmentDoubleClicked(QListWidgetItem* item) {
         return;
     }
     enterEnvironment(env_id);
+}
+
+void EditorWindow::onEditEnvironmentCreatures() {
+    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+        return;
+    }
+    Environment* env = find_environment(current_environment_id_);
+    if (!env) {
+        return;
+    }
+
+    const auto creatures = templates_.all_creatures();
+    if (creatures.empty()) {
+        QMessageBox::information(this, QStringLiteral("Criaturas"),
+                                 QStringLiteral("No hay criaturas disponibles."));
+        return;
+    }
+
+    EnvironmentSpawnDialog dialog(QString::fromStdString(env->name), creatures, env->spawns, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    env->spawns = dialog.selected_spawns();
 }
 
 void EditorWindow::backToMainMap() {
@@ -727,6 +765,7 @@ void EditorWindow::setMainOnlySectionsVisible(bool visible) {
     ui_->btnModeDimensions->setVisible(true);
     ui_->btnModeEnvironments->setText(visible ? QStringLiteral("Environments") :
                                                 QStringLiteral("Walls"));
+    ui_->btnEnvironmentCreatures->setVisible(!visible);
 }
 
 void EditorWindow::refreshEnvironmentsList() {

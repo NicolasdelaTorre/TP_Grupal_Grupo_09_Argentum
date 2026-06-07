@@ -102,6 +102,11 @@ public:
     const std::vector<WallTemplate>& walls() const;
     const std::vector<FloorTemplate>& floors() const;
 
+    // Lista de todas las criaturas disponibles, agregando (sin repetir) las
+    // `allowed_creatures` de todos los biomas. Se usa para poblar el spawn de
+    // criaturas de los entornos, que admiten cualquier criatura del juego.
+    std::vector<std::string> all_creatures() const;
+
     const CityTemplate* find_city(const std::string& id) const;
     const BiomeTemplate* find_biome(const std::string& id) const;
     const ObstacleTemplate* find_obstacle(const std::string& id) const;

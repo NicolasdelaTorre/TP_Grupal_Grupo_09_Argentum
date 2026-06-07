@@ -88,6 +88,19 @@ const std::vector<WallTemplate>& TemplateRegistry::walls() const { return walls_
 
 const std::vector<FloorTemplate>& TemplateRegistry::floors() const { return floors_; }
 
+std::vector<std::string> TemplateRegistry::all_creatures() const {
+    std::vector<std::string> creatures;
+    for (const auto& biome: biomes_) {
+        for (const auto& creature: biome.allowed_creatures) {
+            if (std::find(creatures.begin(), creatures.end(), creature) == creatures.end()) {
+                creatures.push_back(creature);
+            }
+        }
+    }
+    std::sort(creatures.begin(), creatures.end());
+    return creatures;
+}
+
 const CityTemplate* TemplateRegistry::find_city(const std::string& id) const {
     const auto it = std::find_if(cities_.begin(), cities_.end(),
                                  [&id](const CityTemplate& city) { return city.id == id; });

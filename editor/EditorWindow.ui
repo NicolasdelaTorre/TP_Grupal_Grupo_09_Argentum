@@ -412,6 +412,13 @@
             </property>
            </spacer>
           </item>
+          <item>
+           <widget class="QPushButton" name="btnEnvironmentCreatures">
+            <property name="text">
+             <string>Criaturas del entorno</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>

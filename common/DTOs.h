@@ -60,6 +60,18 @@ enum class ObstacleType : uint8_t {
     NPC_PRIEST = 14,    // sacerdote → Sacerdote.png
     NPC_MERCHANT = 15,  // comerciante → Sacerdote.png
     NPC_BANKER = 16,    // banquero → Sacerdote.png
+    BANK = 17,           // banco                 → banco.png
+    HOUSE_BLUE = 18,      // casa_madera_azul      → casa_madera_azul.png
+    HOUSE_RED = 19,       // casa_madera_roja      → casa_madera_roja.png
+    HOUSE_SNOW = 20,      // casa_nevada           → casa_nevada.png
+    FENCE = 21,           // cerca_madera          → 638.png
+    TARGET = 22,          // diana                 → diana.png
+    HAYBALE = 23,         // fardo_heno            → haybale.png
+    FOUNTAIN = 24,        // fuente                → fuente.png
+    BLACKSMITH = 25,      // herrero               → herrero.png
+    HOTEL = 26,           // hotel                 → hotel.png
+    CHURCH = 27,          // iglesia               → iglesia.png
+    TRAINING_DUMMY = 28,  // munieco_entrenamiento → munieco.png
 };
 
 // ── Dirección del personaje ───────────────────────────────────
