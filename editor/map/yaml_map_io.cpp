@@ -1,22 +1,26 @@
 #include "yaml_map_io.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <string>
 
-void YamlMapIO::write_biome_map(YAML::Emitter& out, const MapDocument& document) {
+#include "../../common/common_tiles.h"
+
+void YamlMapIO::write_floor_grid(YAML::Emitter& out, const MapDocument& document) {
     const int width = document.map.width;
     const int height = document.map.height;
 
-    // Cada fila del mapa es una línea de `width` caracteres. Soporta hasta 10
-    // biomas (valores 0-9); más biomas requieren cambiar la codificación.
+    // Cada fila del mapa es una línea de `width` caracteres. La codificación es
+    // base 36 (0-9 y luego a-z), un carácter por celda. Cada carácter representa
+    // el grid_value del tile de piso.
     std::string grid;
     grid.reserve(static_cast<size_t>(width + 1) * height);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             const size_t idx = static_cast<size_t>(y) * width + x;
             const uint8_t value = idx < document.biome_grid.size() ? document.biome_grid[idx] : 0;
-            grid.push_back(static_cast<char>('0' + (value % 10)));
+            grid.push_back(grid_value_to_char(value));
         }
         if (y + 1 < height) {
             grid.push_back('\n');
@@ -44,9 +48,10 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
         out << YAML::Key << "height" << YAML::Value << document.map.height;
         out << YAML::EndMap;
 
-        // Grid de biomas pre-calculado
+        // Grid de tiles de piso pre-calculado. Se escribe con la clave histórica
+        // "biome_map" por compatibilidad con mapas existentes.
         if (!document.biome_grid.empty() && document.map.width > 0 && document.map.height > 0) {
-            write_biome_map(out, document);
+            write_floor_grid(out, document);
         }
 
         if (document.player_spawn.placed) {
@@ -188,6 +193,17 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                         out << YAML::Key << "size" << YAML::Value;
                         out << YAML::Flow << YAML::BeginSeq << wall.width << wall.height
                             << YAML::EndSeq;
+                        out << YAML::EndMap;
+                    }
+                    out << YAML::EndSeq;
+                }
+
+                if (!env.spawns.empty()) {
+                    out << YAML::Key << "spawns" << YAML::Value << YAML::BeginSeq;
+                    for (const auto& spawn: env.spawns) {
+                        out << YAML::BeginMap;
+                        out << YAML::Key << "creature" << YAML::Value << spawn.creature;
+                        out << YAML::Key << "max_population" << YAML::Value << spawn.max_population;
                         out << YAML::EndMap;
                     }
                     out << YAML::EndSeq;
@@ -337,6 +353,16 @@ Environment YamlMapIO::read_environment(const YAML::Node& node) {
             env.walls.push_back(read_wall(wall_node));
         }
     }
+    if (node["spawns"]) {
+        for (const auto& spawn_node: node["spawns"]) {
+            CreatureSpawn spawn;
+            spawn.creature = spawn_node["creature"] ? spawn_node["creature"].as<std::string>() :
+                                                      std::string();
+            spawn.max_population =
+                    spawn_node["max_population"] ? spawn_node["max_population"].as<int>() : 0;
+            env.spawns.push_back(spawn);
+        }
+    }
     if (node["floor_color"]) {
         env.floor_color = node["floor_color"].as<std::string>();
     }
@@ -358,6 +384,30 @@ bool YamlMapIO::load(MapDocument& document, const std::string& path) {
         document.map.name = map["name"] ? map["name"].as<std::string>() : std::string();
         document.map.width = map["width"].as<int>();
         document.map.height = map["height"].as<int>();
+
+        // El grid de tiles de piso se recalcula al guardar a partir de las zonas y
+        // los pisos, pero se lee al cargar para reconstruir los tiles independientes
+        // (las celdas con valores que no corresponden a ningún bioma).
+        if (root["biome_map"] && root["biome_map"]["data"]) {
+            const int width = document.map.width;
+            const int height = document.map.height;
+            document.biome_grid.assign(static_cast<size_t>(width) * height, 0);
+            const auto data = root["biome_map"]["data"].as<std::string>();
+            int x = 0;
+            int y = 0;
+            for (const char c: data) {
+                if (c == '\n') {
+                    ++y;
+                    x = 0;
+                    continue;
+                }
+                if (x < width && y < height) {
+                    const size_t idx = static_cast<size_t>(y) * width + x;
+                    document.biome_grid[idx] = grid_char_to_value(c);
+                }
+                ++x;
+            }
+        }
 
         if (root["player_spawn"]) {
             document.player_spawn = read_player_spawn(root["player_spawn"]);
@@ -387,8 +437,6 @@ bool YamlMapIO::load(MapDocument& document, const std::string& path) {
             }
         }
 
-        // El biome_grid no se parsea: se reconstruye con Dijkstra a partir de las
-        // zonas de bioma al volver a guardar (ver SceneController::buildDocument).
         return true;
     } catch (const YAML::Exception&) {
         return false;

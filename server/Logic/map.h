@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include <memory>
 
-#include "../../common/position.h"
+#include <string>
 
-#include "../../common/common_biome.h"
+#include "../../common/position.h"
 
 #include "NPC/npc.h"
 
@@ -22,6 +22,12 @@ struct Cell {
     bool safeZone;
 };
 
+// Spawn de criaturas: qué criatura y cuántas como máximo.
+struct CreatureSpawn {
+    std::string creature;
+    uint16_t maxPopulation = 0;
+};
+
 // Environment asociado a una entrada del mapa principal.
 struct LoadedEnvironment {
     std::string id;
@@ -31,6 +37,7 @@ struct LoadedEnvironment {
     int16_t height = 0;
     Position playerSpawn;
     std::vector<Cell> cells;  // obstáculos y paredes acá
+    std::vector<CreatureSpawn> spawns;
     std::string floorColor;
 };
 
@@ -45,16 +52,10 @@ struct LoadedEntry {
     int16_t height = 1;
 };
 
-// Spawn de criaturas asociado a un bioma: qué criatura y cuántas como máximo.
-struct CreatureSpawn {
-    std::string creature;
-    uint16_t maxPopulation = 0;
-};
-
-// Bioma cargado desde el editor (zona de tipo "biome"): tipo, posición/tamaño
-// del área que ocupa y los spawns de criaturas que tiene.
+// Bioma cargado desde el editor (zona de tipo "biome"): tipo (el `template` de
+// la zona en el YAML), posición/tamaño del área que ocupa y sus spawns.
 struct Biome {
-    BiomeType type = BiomeType::NONE;
+    std::string type;  // template del bioma (ej. "cementerio")
     Position position;  // esquina sup izquierda del área
     int16_t width = 0;
     int16_t height = 0;

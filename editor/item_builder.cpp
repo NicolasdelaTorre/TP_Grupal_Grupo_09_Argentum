@@ -33,9 +33,7 @@ QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& 
     const int pixel_h = height * CELL_DISPLAY_SIZE;
     auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
 
-    // La textura se dibuja a tamaño nativo, anclando su esquina inferior izquierda a la
-    // esquina inferior izquierda del rect (las celdas que ocupa el obstáculo).
-    // Las imágenes "altas" sobresalen hacia arriba, no hacia abajo.
+    // dibuja a tamaño nativo, ancla esquina inferior izquierda a esquina inferior izquierda del rect
     QPixmap pixmap;
     const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
     if (has_texture) {
@@ -86,6 +84,33 @@ QGraphicsRectItem* ItemBuilder::buildWall(const QString& id, const QString& temp
     rect->setData(DATA_SUBTYPE, templateId);
     rect->setData(DATA_WIDTH, width);
     rect->setData(DATA_HEIGHT, height);
+    return rect;
+}
+
+QGraphicsRectItem* ItemBuilder::buildFloor(const QString& id, const QString& templateId,
+                                           const QColor& fill, const QString& texturePath) {
+    auto* rect = new QGraphicsRectItem(0, 0, CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE);
+
+    // Las texturas de piso ya vienen a 64x64 (= CELL_DISPLAY_SIZE), se dibujan
+    // tal cual cubriendo la celda. Si no hay textura, se rellena con el color.
+    QPixmap pixmap;
+    const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
+    if (has_texture) {
+        rect->setBrush(Qt::NoBrush);
+        rect->setPen(Qt::NoPen);
+        auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
+        texture_item->setTransformationMode(Qt::SmoothTransformation);
+        texture_item->setPos(0, 0);
+    } else {
+        rect->setBrush(QBrush(fill));
+        rect->setPen(Qt::NoPen);
+    }
+
+    rect->setData(DATA_TYPE, FLOOR_TYPE);
+    rect->setData(DATA_ID, id);
+    rect->setData(DATA_SUBTYPE, templateId);
+    rect->setData(DATA_WIDTH, 1);
+    rect->setData(DATA_HEIGHT, 1);
     return rect;
 }
 

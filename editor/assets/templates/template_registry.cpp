@@ -13,12 +13,14 @@ bool TemplateRegistry::load() {
     obstacles_.clear();
     entries_.clear();
     walls_.clear();
+    floors_.clear();
 
     if (!std::filesystem::exists(TEMPLATES_CITIES_PATH) ||
         !std::filesystem::exists(TEMPLATES_BIOMES_PATH) ||
         !std::filesystem::exists(TEMPLATES_OBSTACLES_PATH) ||
         !std::filesystem::exists(TEMPLATES_ENTRIES_PATH) ||
-        !std::filesystem::exists(TEMPLATES_WALLS_PATH)) {
+        !std::filesystem::exists(TEMPLATES_WALLS_PATH) ||
+        !std::filesystem::exists(TEMPLATES_FLOORS_PATH)) {
         return false;
     }
 
@@ -62,8 +64,16 @@ bool TemplateRegistry::load() {
         }
     }
 
+    for (const auto& entry: std::filesystem::directory_iterator(TEMPLATES_FLOORS_PATH)) {
+        if (entry.path().extension() == ".yaml") {
+            if (!load_floor_file(entry.path().string())) {
+                return false;
+            }
+        }
+    }
+
     return !cities_.empty() && !biomes_.empty() && !obstacles_.empty() && !entries_.empty() &&
-           !walls_.empty();
+           !walls_.empty() && !floors_.empty();
 }
 
 const std::vector<CityTemplate>& TemplateRegistry::cities() const { return cities_; }
@@ -75,6 +85,21 @@ const std::vector<ObstacleTemplate>& TemplateRegistry::obstacles() const { retur
 const std::vector<EntryTemplate>& TemplateRegistry::entries() const { return entries_; }
 
 const std::vector<WallTemplate>& TemplateRegistry::walls() const { return walls_; }
+
+const std::vector<FloorTemplate>& TemplateRegistry::floors() const { return floors_; }
+
+std::vector<std::string> TemplateRegistry::all_creatures() const {
+    std::vector<std::string> creatures;
+    for (const auto& biome: biomes_) {
+        for (const auto& creature: biome.allowed_creatures) {
+            if (std::find(creatures.begin(), creatures.end(), creature) == creatures.end()) {
+                creatures.push_back(creature);
+            }
+        }
+    }
+    std::sort(creatures.begin(), creatures.end());
+    return creatures;
+}
 
 const CityTemplate* TemplateRegistry::find_city(const std::string& id) const {
     const auto it = std::find_if(cities_.begin(), cities_.end(),
@@ -105,6 +130,19 @@ const WallTemplate* TemplateRegistry::find_wall(const std::string& id) const {
     const auto it = std::find_if(walls_.begin(), walls_.end(),
                                  [&id](const WallTemplate& wall) { return wall.id == id; });
     return it != walls_.end() ? &(*it) : nullptr;
+}
+
+const FloorTemplate* TemplateRegistry::find_floor(const std::string& id) const {
+    const auto it = std::find_if(floors_.begin(), floors_.end(),
+                                 [&id](const FloorTemplate& floor) { return floor.id == id; });
+    return it != floors_.end() ? &(*it) : nullptr;
+}
+
+const FloorTemplate* TemplateRegistry::find_floor_by_grid_value(int grid_value) const {
+    const auto it = std::find_if(floors_.begin(), floors_.end(), [grid_value](const FloorTemplate& floor) {
+        return floor.grid_value == grid_value;
+    });
+    return it != floors_.end() ? &(*it) : nullptr;
 }
 
 bool TemplateRegistry::load_city_file(const std::string& path) {
@@ -150,6 +188,20 @@ bool TemplateRegistry::load_city_file(const std::string& path) {
                     obstacle.relative_y = posNode[1].as<int>();
                 }
                 city.fixed_obstacles.push_back(obstacle);
+            }
+        }
+
+        const auto floorsNode = root["fixed_floors"];
+        if (floorsNode && floorsNode.IsSequence()) {
+            for (const auto& floorNode: floorsNode) {
+                CityFloorTemplate floor;
+                floor.type = floorNode["type"].as<std::string>();
+                const auto posNode = floorNode["position"];
+                if (posNode && posNode.IsSequence() && posNode.size() >= 2) {
+                    floor.relative_x = posNode[0].as<int>();
+                    floor.relative_y = posNode[1].as<int>();
+                }
+                city.fixed_floors.push_back(floor);
             }
         }
 
@@ -289,6 +341,37 @@ bool TemplateRegistry::load_wall_file(const std::string& path) {
         }
 
         walls_.push_back(wall);
+        return true;
+    } catch (const YAML::Exception&) {
+        return false;
+    }
+}
+
+bool TemplateRegistry::load_floor_file(const std::string& path) {
+    try {
+        YAML::Node root = YAML::LoadFile(path);
+        FloorTemplate floor;
+        floor.id = root["template_id"].as<std::string>();
+        floor.name = root["name"].as<std::string>();
+
+        if (const auto colorNode = root["color"]) {
+            floor.color = colorNode.as<std::string>();
+        }
+
+        if (const auto textureNode = root["texture"]) {
+            const auto filename = textureNode.as<std::string>();
+            if (!filename.empty()) {
+                const std::filesystem::path resolved =
+                        std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
+                floor.texture = resolved.string();
+            }
+        }
+
+        if (const auto gridNode = root["grid_value"]) {
+            floor.grid_value = gridNode.as<int>();
+        }
+
+        floors_.push_back(floor);
         return true;
     } catch (const YAML::Exception&) {
         return false;

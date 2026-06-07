@@ -37,6 +37,8 @@ public:
                     const QString& template_id, int cell_x, int cell_y, QString& error);
     bool placeWall(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
                    const QString& wall_id = QString());
+    bool placeFloor(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
+                    const QString& floor_id = QString());
 
     DeletedItem deleteAtCell(int cell_x, int cell_y);
 
@@ -56,11 +58,13 @@ private:
     int next_obstacle_id_ = 1;
     int next_zone_id_ = 1;
     int next_wall_id_ = 1;
+    int next_floor_id_ = 1;
     QHash<QString, std::vector<CreatureSpawn>> biome_spawns_;
 
     QString nextObstacleId();
     QString nextZoneId();
     QString nextWallId();
+    QString nextFloorId();
     // Avanza `counter` para que quede por encima del sufijo numérico de un id ya
     // existente (ej. "zone_7" -> counter >= 8), evitando colisiones al cargar un mapa.
     static void bumpCounter(int& counter, const QString& id, const QString& prefix);

@@ -4,7 +4,14 @@
 #include <cstdint>
 #include <string>
 
-// Tipo de bioma. El valor numérico es lo que se persiste en el grid del mapa
+// La codificación del grid (grid_value <-> char) y la tabla de texturas de piso
+// del grid viven en common_tiles: son un concepto de "tile/textura", separado
+// del de "bioma" (una zona con criaturas). Se incluye acá para que el código que
+// históricamente usaba esas funciones desde common_biome siga compilando.
+#include "../common/common_tiles.h"
+
+// Tipo de bioma. El valor numérico de un bioma coincide con el grid_value del
+// tile de piso que le corresponde (ver common_tiles).
 enum class BiomeType : uint8_t {
     NONE = 0,  // sin bioma
     EXPLANADA = 1,

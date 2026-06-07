@@ -17,7 +17,7 @@ public:
 private:
     static void write_position(YAML::Emitter& out, int x, int y);
     static void write_size(YAML::Emitter& out, int width, int height);
-    static void write_biome_map(YAML::Emitter& out, const MapDocument& document);
+    static void write_floor_grid(YAML::Emitter& out, const MapDocument& document);
 
     static PlayerSpawn read_player_spawn(const YAML::Node& node);
     static Obstacle read_obstacle(const YAML::Node& node);

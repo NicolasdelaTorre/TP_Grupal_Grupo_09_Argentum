@@ -4,7 +4,7 @@ Server::Server(const char* port):
         protocol(port),
         clientCommands(),
         clientQueues(),
-        map(loadMapFromYaml("server/assets/maps/mapa_completo.yaml")),
+        map(loadMapFromYaml("server/assets/maps/otro_mapa.yaml")),
         gameloop(clientCommands, clientQueues, map, protocol),
         acceptor(protocol, clientCommands, clientQueues) {
     protocol.setMap(map);

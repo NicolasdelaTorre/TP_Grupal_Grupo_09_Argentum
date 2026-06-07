@@ -1,6 +1,7 @@
 #include "yaml_map_loader.h"
 
 #include <iostream>
+#include <queue>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -9,6 +10,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "../../common/DTOs.h"
+#include "../../common/common_tiles.h"
 
 namespace {
 
@@ -45,6 +47,30 @@ uint8_t obstacleTypeFromString(const std::string& type) {
         return static_cast<uint8_t>(ObstacleType::CART);
     if (type == "molino")
         return static_cast<uint8_t>(ObstacleType::MILL);
+    if (type == "banco")
+        return static_cast<uint8_t>(ObstacleType::BANK);
+    if (type == "casa_madera_azul")
+        return static_cast<uint8_t>(ObstacleType::HOUSE_BLUE);
+    if (type == "casa_madera_roja")
+        return static_cast<uint8_t>(ObstacleType::HOUSE_RED);
+    if (type == "casa_nevada")
+        return static_cast<uint8_t>(ObstacleType::HOUSE_SNOW);
+    if (type == "cerca_madera")
+        return static_cast<uint8_t>(ObstacleType::FENCE);
+    if (type == "diana")
+        return static_cast<uint8_t>(ObstacleType::TARGET);
+    if (type == "fardo_heno")
+        return static_cast<uint8_t>(ObstacleType::HAYBALE);
+    if (type == "fuente")
+        return static_cast<uint8_t>(ObstacleType::FOUNTAIN);
+    if (type == "herrero")
+        return static_cast<uint8_t>(ObstacleType::BLACKSMITH);
+    if (type == "hotel")
+        return static_cast<uint8_t>(ObstacleType::HOTEL);
+    if (type == "iglesia")
+        return static_cast<uint8_t>(ObstacleType::CHURCH);
+    if (type == "munieco_entrenamiento")
+        return static_cast<uint8_t>(ObstacleType::TRAINING_DUMMY);
     if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
         type == "pilar")
         return static_cast<uint8_t>(ObstacleType::WALL);
@@ -88,22 +114,42 @@ void applySafeZone(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
     }
 }
 
-// Vuelca el grid de biomas por el editor en el textureId de cada celda.
-void applyBiomeMap(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
-                   const std::string& data) {
+// Vuelca el grid de tiles de piso del editor en el textureId de cada celda.
+// La clave YAML sigue siendo "biome_map" por compatibilidad con mapas existentes.
+void applyFloorGrid(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
+                    const std::string& data) {
     std::istringstream stream(data);
     std::string line;
     uint16_t y = 0;
     while (y < mapHeight && std::getline(stream, line)) {
         for (uint16_t x = 0; x < mapWidth && x < line.size(); x++) {
             const char c = line[x];
-            if (c >= '0' && c <= '9') {
+            // Codificación base 36 (0-9 y a-z). Cada carácter es el grid_value
+            // del tile de piso, que se envía al cliente como textureId.
+            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                 cells[static_cast<size_t>(y) * mapWidth + x].textureId =
-                        static_cast<uint16_t>(c - '0');
+                        static_cast<uint16_t>(grid_char_to_value(c));
             }
         }
         y++;
     }
+}
+
+// Lee la lista de spawns de criaturas de un nodo ("spawns": creature +
+// max_population). La usan tanto los biomas como los environments.
+std::vector<CreatureSpawn> parseSpawns(const YAML::Node& node) {
+    std::vector<CreatureSpawn> spawns;
+    if (!node["spawns"])
+        return spawns;
+    for (const auto& spawnNode: node["spawns"]) {
+        CreatureSpawn spawn;
+        if (spawnNode["creature"])
+            spawn.creature = spawnNode["creature"].as<std::string>();
+        if (spawnNode["max_population"])
+            spawn.maxPopulation = spawnNode["max_population"].as<uint16_t>();
+        spawns.push_back(std::move(spawn));
+    }
+    return spawns;
 }
 
 // Parsea una zona de tipo "biome": tipo (a partir del template), área
@@ -111,7 +157,7 @@ void applyBiomeMap(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
 Biome parseBiome(const YAML::Node& zone) {
     Biome biome;
     if (zone["template"])
-        biome.type = biome_from_template_id(zone["template"].as<std::string>());
+        biome.type = zone["template"].as<std::string>();
 
     const auto area = zone["area"];
     if (!area || !area["x"] || !area["y"] || !area["width"] || !area["height"]) {
@@ -122,16 +168,7 @@ Biome parseBiome(const YAML::Node& zone) {
     biome.width = area["width"].as<int16_t>();
     biome.height = area["height"].as<int16_t>();
 
-    if (zone["spawns"]) {
-        for (const auto& spawnNode: zone["spawns"]) {
-            CreatureSpawn spawn;
-            if (spawnNode["creature"])
-                spawn.creature = spawnNode["creature"].as<std::string>();
-            if (spawnNode["max_population"])
-                spawn.maxPopulation = spawnNode["max_population"].as<uint16_t>();
-            biome.spawns.push_back(std::move(spawn));
-        }
-    }
+    biome.spawns = parseSpawns(zone);
 
     return biome;
 }
@@ -158,6 +195,94 @@ void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16
         }
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
                       y, w, h, obstacleTypeFromString(type));
+    }
+}
+
+void markEnvironmentExteriorAsBlocked(std::vector<Cell>& cells, int16_t envWidth,
+                                      int16_t envHeight, const YAML::Node& walls) {
+    if (envWidth <= 0 || envHeight <= 0 || cells.empty())
+        return;
+
+    const auto index = [envWidth](int16_t x, int16_t y) {
+        return static_cast<size_t>(y) * static_cast<size_t>(envWidth) + static_cast<size_t>(x);
+    };
+
+    std::vector<bool> isWall(cells.size(), false);
+    if (walls) {
+        for (const auto& wall: walls) {
+            int16_t x = 0;
+            int16_t y = 0;
+            int16_t w = 1;
+            int16_t h = 1;
+            if (wall["position"] && wall["position"].size() >= 2) {
+                x = wall["position"][0].as<int16_t>();
+                y = wall["position"][1].as<int16_t>();
+            }
+            if (wall["size"] && wall["size"].size() >= 2) {
+                w = wall["size"][0].as<int16_t>();
+                h = wall["size"][1].as<int16_t>();
+            }
+            for (int16_t dy = 0; dy < h; ++dy) {
+                for (int16_t dx = 0; dx < w; ++dx) {
+                    const int16_t cx = static_cast<int16_t>(x + dx);
+                    const int16_t cy = static_cast<int16_t>(y + dy);
+                    if (cx < 0 || cy < 0 || cx >= envWidth || cy >= envHeight)
+                        continue;
+                    isWall[index(cx, cy)] = true;
+                }
+            }
+        }
+    }
+
+    std::vector<bool> exterior(cells.size(), false);
+    std::queue<Position> pending;
+
+    const auto enqueue = [&](int16_t x, int16_t y) {
+        if (x < 0 || y < 0 || x >= envWidth || y >= envHeight)
+            return;
+        const size_t idx = index(x, y);
+        if (exterior[idx] || isWall[idx])
+            return;
+        exterior[idx] = true;
+        pending.push({x, y});
+    };
+
+    for (int16_t x = 0; x < envWidth; ++x) {
+        enqueue(x, 0);
+        enqueue(x, static_cast<int16_t>(envHeight - 1));
+    }
+    for (int16_t y = 0; y < envHeight; ++y) {
+        enqueue(0, y);
+        enqueue(static_cast<int16_t>(envWidth - 1), y);
+    }
+
+    while (!pending.empty()) {
+        const Position current = pending.front();
+        pending.pop();
+
+        enqueue(static_cast<int16_t>(current.x + 1), current.y);
+        enqueue(static_cast<int16_t>(current.x - 1), current.y);
+        enqueue(current.x, static_cast<int16_t>(current.y + 1));
+        enqueue(current.x, static_cast<int16_t>(current.y - 1));
+    }
+
+    bool hasInterior = false;
+    for (size_t i = 0; i < cells.size(); ++i) {
+        if (!isWall[i] && !exterior[i]) {
+            hasInterior = true;
+            break;
+        }
+    }
+    if (!hasInterior)
+        return;
+
+    // Mismo criterio visual que el editor: si hay un recinto cerrado por paredes,
+    // todo lo alcanzable desde el borde sin cruzar paredes es exterior.
+    for (size_t i = 0; i < cells.size(); ++i) {
+        if (exterior[i]) {
+            cells[i].isWalkable = false;
+            cells[i].textureId = EXTERIOR_TILE_VALUE;
+        }
     }
 }
 
@@ -199,7 +324,10 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
                                       "type");
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
                                       "template");
+            markEnvironmentExteriorAsBlocked(env.cells, env.width, env.height, envNode["walls"]);
         }
+
+        env.spawns = parseSpawns(envNode);
 
         if (envNode["floor_color"])
             env.floorColor = envNode["floor_color"].as<std::string>();
@@ -240,7 +368,7 @@ Map loadMapFromYaml(const std::string& path) {
     initializeDefaultCells(cells);
 
     if (root["biome_map"] && root["biome_map"]["data"]) {
-        applyBiomeMap(cells, width, height, root["biome_map"]["data"].as<std::string>());
+        applyFloorGrid(cells, width, height, root["biome_map"]["data"].as<std::string>());
     }
 
     // Obstáculos: cada celda guarda el código de ObstacleType

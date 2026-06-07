@@ -20,6 +20,8 @@ public:
                                   const QColor& fill);
     QGraphicsRectItem* buildWall(const QString& id, const QString& templateId, int width,
                                  int height, const QColor& fill);
+    QGraphicsRectItem* buildFloor(const QString& id, const QString& templateId, const QColor& fill,
+                                  const QString& texturePath = QString());
 
 private:
     static QGraphicsRectItem* make_rect(const QColor& fill, const QColor& border);

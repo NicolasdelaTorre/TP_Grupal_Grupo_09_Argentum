@@ -81,6 +81,7 @@ struct Environment {
     PlayerSpawn player_spawn;
     std::vector<Obstacle> obstacles;
     std::vector<Wall> walls;
+    std::vector<CreatureSpawn> spawns;
     std::string floor_color;
 };
 

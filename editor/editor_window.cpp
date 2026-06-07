@@ -13,6 +13,7 @@
 #include <QSpinBox>
 #include <algorithm>
 
+#include "dialogs/environment_spawn_dialog.h"
 #include "dialogs/new_environment_dialog.h"
 #include "map/yaml_map_io.h"
 
@@ -193,6 +194,9 @@ EditorWindow::EditorWindow(QWidget* parent):
     connect(ui_->listEnvironments, &QListWidget::itemDoubleClicked, this,
             &EditorWindow::onEnvironmentDoubleClicked);
 
+    connect(ui_->btnEnvironmentCreatures, &QPushButton::clicked, this,
+            &EditorWindow::onEditEnvironmentCreatures);
+
     connect(map_canvas_, &MapCanvas::entryPlacementRequested, this,
             &EditorWindow::onEntryPlacementRequested);
     connect(map_canvas_, &MapCanvas::entryDeleted, this, &EditorWindow::onEntryDeleted);
@@ -246,6 +250,14 @@ void EditorWindow::setupTemplates() {
     if (ui_->listObstacleTemplate->count() > 0) {
         ui_->listObstacleTemplate->setCurrentRow(0);
     }
+    for (const auto& floor: templates_.floors()) {
+        auto* item =
+                new QListWidgetItem(QString::fromStdString(floor.name), ui_->listFloorTemplate);
+        item->setData(Qt::UserRole, QString::fromStdString(floor.id));
+    }
+    if (ui_->listFloorTemplate->count() > 0) {
+        ui_->listFloorTemplate->setCurrentRow(0);
+    }
     for (const auto& entry: templates_.entries()) {
         const QString label = QStringLiteral("%1 (%2x%3)")
                                       .arg(QString::fromStdString(entry.name))
@@ -268,6 +280,7 @@ void EditorWindow::setupTools() {
     tool_group_->addButton(ui_->btnModeObstacles);
     tool_group_->addButton(ui_->btnModeBiomes);
     tool_group_->addButton(ui_->btnModeCities);
+    tool_group_->addButton(ui_->btnModeFloors);
     tool_group_->addButton(ui_->btnModeEnvironments);
     tool_group_->addButton(ui_->btnModeDimensions);
 
@@ -275,12 +288,15 @@ void EditorWindow::setupTools() {
     connect(ui_->btnModeObstacles, &QPushButton::clicked, this, &EditorWindow::selectObstacleMode);
     connect(ui_->btnModeBiomes, &QPushButton::clicked, this, &EditorWindow::selectBiomeMode);
     connect(ui_->btnModeCities, &QPushButton::clicked, this, &EditorWindow::selectCityMode);
+    connect(ui_->btnModeFloors, &QPushButton::clicked, this, &EditorWindow::selectFloorMode);
     connect(ui_->btnModeEnvironments, &QPushButton::clicked, this,
             &EditorWindow::selectEnvironmentMode);
     connect(ui_->btnModeDimensions, &QPushButton::clicked, this,
             &EditorWindow::selectDimensionsMode);
 
     connect(ui_->listObstacleTemplate, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
+    connect(ui_->listFloorTemplate, &QListWidget::currentItemChanged, this,
             [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
     connect(ui_->listBiomeTemplate, &QListWidget::currentItemChanged, this,
             [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
@@ -315,6 +331,11 @@ void EditorWindow::applyActiveTool() {
     } else {
         active_tool_.city_template_id.clear();
     }
+    if (auto* item = ui_->listFloorTemplate->currentItem()) {
+        active_tool_.floor_template_id = item->data(Qt::UserRole).toString();
+    } else {
+        active_tool_.floor_template_id.clear();
+    }
     active_tool_.entry_template_id = ui_->comboEntryTemplate->currentData().toString();
     active_tool_.wall_template_id = ui_->comboWallTemplate->currentData().toString();
     map_canvas_->setActiveTool(active_tool_);
@@ -339,6 +360,11 @@ void EditorWindow::selectBiomeMode() {
 void EditorWindow::selectCityMode() {
     ui_->toolsStack->setCurrentWidget(ui_->pageToolCities);
     selectTool(EditorTool::CityZone);
+}
+
+void EditorWindow::selectFloorMode() {
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolFloors);
+    selectTool(EditorTool::FloorModifier);
 }
 
 void EditorWindow::selectEnvironmentMode() {
@@ -588,6 +614,16 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
         return;
     }
 
+    std::vector<CreatureSpawn> spawns;
+    const auto creatures = templates_.all_creatures();
+    if (!creatures.empty()) {
+        EnvironmentSpawnDialog spawn_dialog(dialog.environment_name(), creatures, this);
+        if (spawn_dialog.exec() != QDialog::Accepted) {
+            return;
+        }
+        spawns = spawn_dialog.selected_spawns();
+    }
+
     QString env_id = QStringLiteral("env_%1").arg(next_environment_index_++);
     QString entry_id = QStringLiteral("entry_%1").arg(next_entry_index_++);
 
@@ -598,6 +634,7 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
     env.width = dialog.environment_width();
     env.height = dialog.environment_height();
     env.floor_color = entry_template->floor_color;
+    env.spawns = spawns;
     main_doc_.environments.push_back(env);
 
     if (!map_canvas_->placeEntryItem(entry_id, env_id, template_id, cell_x, cell_y)) {
@@ -629,6 +666,29 @@ void EditorWindow::onEnvironmentDoubleClicked(QListWidgetItem* item) {
         return;
     }
     enterEnvironment(env_id);
+}
+
+void EditorWindow::onEditEnvironmentCreatures() {
+    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+        return;
+    }
+    Environment* env = find_environment(current_environment_id_);
+    if (!env) {
+        return;
+    }
+
+    const auto creatures = templates_.all_creatures();
+    if (creatures.empty()) {
+        QMessageBox::information(this, QStringLiteral("Criaturas"),
+                                 QStringLiteral("No hay criaturas disponibles."));
+        return;
+    }
+
+    EnvironmentSpawnDialog dialog(QString::fromStdString(env->name), creatures, env->spawns, this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    env->spawns = dialog.selected_spawns();
 }
 
 void EditorWindow::backToMainMap() {
@@ -701,9 +761,11 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
 void EditorWindow::setMainOnlySectionsVisible(bool visible) {
     ui_->btnModeBiomes->setVisible(visible);
     ui_->btnModeCities->setVisible(visible);
+    ui_->btnModeFloors->setVisible(visible);
     ui_->btnModeDimensions->setVisible(true);
     ui_->btnModeEnvironments->setText(visible ? QStringLiteral("Environments") :
                                                 QStringLiteral("Walls"));
+    ui_->btnEnvironmentCreatures->setVisible(!visible);
 }
 
 void EditorWindow::refreshEnvironmentsList() {

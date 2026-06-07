@@ -350,6 +350,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="btnModeFloors">
+            <property name="text">
+             <string>Floors</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btnModeDimensions">
             <property name="text">
              <string>Dimensions</string>
@@ -401,6 +411,13 @@
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnEnvironmentCreatures">
+            <property name="text">
+             <string>Criaturas del entorno</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -785,6 +802,43 @@
                  </item>
                  <item>
                   <widget class="QComboBox" name="comboWallTemplate"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageToolFloors">
+                <layout class="QVBoxLayout" name="floorToolsLayout">
+                 <item>
+                  <widget class="QListWidget" name="listFloorTemplate">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>200</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="floorToolsSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="labelFloorHint">
+                   <property name="text">
+                    <string>Click para colocar el modificador de piso. No bloquea el paso.</string>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
