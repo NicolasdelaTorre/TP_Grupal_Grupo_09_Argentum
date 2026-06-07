@@ -1,23 +1,30 @@
 target_sources(taller_common
     PRIVATE
-    # .cpp files
+    # Comunicación (sockets, protocolo, eventos).
+    Communication/common_protocol.cpp
+    Communication/liberror.cpp
+    Communication/protocol_util.cpp
+    Communication/resolver.cpp
+    Communication/resolvererror.cpp
+    Communication/socket.cpp
+    Communication/events/server_events.cpp
+    Communication/events/client_events.cpp
+    # Compartido (no estrictamente comunicación).
     common_biome.cpp
-    liberror.cpp
-    common_protocol.cpp
-    protocol_util.cpp
-    resolver.cpp
-    resolvererror.cpp
-    socket.cpp
     PUBLIC
-    # .h files
+    Communication/common_protocol.h
+    Communication/liberror.h
+    Communication/message_types.h
+    Communication/protocol_util.h
+    Communication/resolver.h
+    Communication/resolvererror.h
+    Communication/socket.h
+    Communication/events/server_event.h
+    Communication/events/server_events.h
+    Communication/events/client_event.h
+    Communication/events/client_events.h
     common_biome.h
-    liberror.h
-    common_protocol.h
     position.h
     queue.h
-    protocol_util.h
-    resolver.h
-    resolvererror.h
-    socket.h
     thread.h
     )

@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
         }
 
 
-        client cli = client(hostname, servicename, fullscreen);
+        Client cli = Client(hostname, servicename, fullscreen);
         cli.run();
 
         return 0;

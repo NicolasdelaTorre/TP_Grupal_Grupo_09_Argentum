@@ -2,11 +2,12 @@ target_sources(taller_server
     PRIVATE
         main.cpp
         server.cpp
-        Comunication/acceptor.cpp
-        Comunication/client_handler.cpp
-        Comunication/client_monitor.cpp
-        Comunication/receiver.cpp
-        Comunication/sender.cpp
+        Communication/acceptor.cpp
+        Communication/client_handler.cpp
+        Communication/client_monitor.cpp
+        Communication/server_receiver.cpp
+        Communication/server_sender.cpp
+        Communication/server_protocol.cpp
         Logic/player.cpp
         Logic/stats_definition.cpp
         Logic/map.cpp
@@ -16,14 +17,14 @@ target_sources(taller_server
         Logic/attribute_manager.cpp
         Logic/binary_parser.cpp
         Logic/items.cpp
-        Protocol/protocol_server.cpp
     PUBLIC
         server.h
-        Comunication/acceptor.h
-        Comunication/client_handler.h
-        Comunication/client_monitor.h
-        Comunication/receiver.h
-        Comunication/sender.h
+        Communication/acceptor.h
+        Communication/client_handler.h
+        Communication/client_monitor.h
+        Communication/server_receiver.h
+        Communication/server_sender.h
+        Communication/server_protocol.h
         Logic/player.h
         Logic/stats_definition.h
         Logic/map.h
@@ -35,13 +36,11 @@ target_sources(taller_server
         Logic/class_.h
         Logic/binary_parser.h
         Logic/items.h
-        Protocol/protocol_server.h
     )
 
 target_include_directories(taller_server
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/Comunication
+        ${CMAKE_CURRENT_SOURCE_DIR}/Communication
         ${CMAKE_CURRENT_SOURCE_DIR}/Logic
-        ${CMAKE_CURRENT_SOURCE_DIR}/Protocol
     )

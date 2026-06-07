@@ -2,20 +2,20 @@
 #define ACEPTADOR_H
 
 #include <list>
-#include <string>
 
 #include "../../common/queue.h"
 #include "../../common/thread.h"
-#include "../Protocol/protocol_server.h"
+#include "../Communication/server_protocol.h"
 
 #include "client_handler.h"
 #include "client_monitor.h"
+#include "server_receiver.h"  // IncomingQueue alias
 
 class Acceptor: public Thread {
 private:
-    ProtocolServer& protocol;
+    ServerProtocol& protocol;
     std::list<ClientHandler*> clients;
-    Queue<std::string>& commands;
+    IncomingQueue& clientEvents;
     ClientMonitor& clientMonitor;
 
     /*
@@ -30,7 +30,7 @@ private:
     void clear();
 
 public:
-    Acceptor(ProtocolServer& protocol, Queue<std::string>& commands, ClientMonitor& clientMonitor);
+    Acceptor(ServerProtocol& protocol, IncomingQueue& clientEvents, ClientMonitor& clientMonitor);
 
     virtual void run() override;
 

@@ -1,28 +1,18 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "../../common/Communication/events/server_events.h"
+#include "../../common/Communication/move_direction.h"
 #include "../../common/position.h"
 
 #include "binary_parser.h"
 #include "map.h"
 #include "player.h"
-
-// Resultado de un ataque, lo arma processAttack y lo consume el gameloop
-// para mandar ATTACK_RESULT por broadcast.
-//   performed=false  → no hubo víctima en línea de vista, no se notifica nada.
-//   performed=true   → hubo víctima; hit indica si pegó o si evadió.
-struct AttackResult {
-    bool performed = false;
-    uint16_t attackerId = 0;
-    uint8_t targetType = 0;  // 0=player, 1=npc
-    uint16_t targetId = 0;
-    uint16_t damage = 0;
-    bool hit = false;
-};
 
 class Game {
 private:
@@ -37,14 +27,6 @@ private:
     // True si ningún jugador está parado en pos.
     bool isPositionFree(Position pos) const;
 
-    bool processUser(int playerId, const std::string& user);
-
-    bool processMovement(int playerId, const std::string& direction);
-
-    bool turnPlayer(int playerId, const std::string& direction);
-
-    bool processHeal(int playerId);
-
     // Stub de evasión. TODO(team-gameplay): implementar fórmula real con
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
     bool tryEvade(int attackerId, int targetId) const;
@@ -52,7 +34,15 @@ private:
 public:
     Game(Map& map, Position playerSpawn);
 
-    bool processCommand(int playerId, const std::string& command);
+    // Da de alta un jugador (nuevo o cargado del binario).
+    bool addPlayer(int playerId, const std::string& name, const std::string& race,
+                   const std::string& class_);
+
+    // Mueve un casillero en la dirección indicada. False si está bloqueado.
+    bool movePlayer(int playerId, MoveDirection direction);
+
+    // Gira sin moverse.
+    bool turnPlayer(int playerId, MoveDirection direction);
 
     Position getPlayerPosition(int playerId) const;
 
@@ -85,13 +75,16 @@ public:
 
     void updatePlayerData(int playerId);
 
-    void setSkin(int playerId, const std::string& skinId);
+    void setSkin(int playerId, uint8_t skinId);
 
-    // Resuelve un ataque del playerId contra un target. El gameloop solo
-    // arma el broadcast a partir del AttackResult. La lógica de validar
-    // arma equipada, alcance (ranged vs adyacencia melee) y daño vive adentro.
+    // Resuelve un ataque del playerId contra un target.
+    // Devuelve directamente el AttackResultEvent listo para broadcast, o
+    // nullptr si el ataque no se ejecutó (sin arma, no hay target en línea
+    // de vista, atacante muerto, etc.). La lógica de validar arma equipada,
+    // alcance (ranged vs adyacencia melee) y daño vive adentro.
     // targetType: 0 = player, 1 = npc.
-    AttackResult processAttack(int playerId, uint8_t targetType, uint16_t targetId);
+    std::shared_ptr<AttackResultEvent> processAttack(int playerId, uint8_t targetType,
+                                                    uint16_t targetId);
 
     // Aplica un cheat al jugador. code mapea al enum CheatCode (common/DTOs.h):
     // 0 = SUICIDE, 1 = GOLD, 2 = EXPERIENCE.

@@ -8,25 +8,21 @@
 
 #include <string>
 
-#include "../common/queue.h"
-
-#include "client_protocol.h"
-#include "client_receiver.h"
-#include "client_sender.h"
+#include "Communication/client_protocol.h"
+#include "Communication/client_receiver.h"
+#include "Communication/client_sender.h"
 
 
-class client {
-
-    client_protocol protocol;
-    std::string username;
-    client_sender sender;
-    client_receiver receiver;
-    Queue<std::string> events_queue;
-    Queue<std::string> server_queue;
+class Client {
+    ClientProtocol protocol;
+    OutgoingQueue clientEvents;
+    IncomingQueue serverEvents;
+    ClientSender sender;
+    ClientReceiver receiver;
     bool fullscreen;
 
 public:
-    client(const char* hostname, const char* port, bool fullscreen);
+    Client(const char* hostname, const char* port, bool fullscreen);
 
     void run();
 };

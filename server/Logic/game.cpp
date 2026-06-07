@@ -8,47 +8,8 @@
 Game::Game(Map& map, Position playerSpawn):
         map(map), playerSpawn(playerSpawn), parser(BinaryParser()) {}
 
-bool Game::processCommand(int playerId, const std::string& command) {
-    size_t commandPosition = command.find('.');
-    if (commandPosition == std::string::npos) {
-        throw std::runtime_error("Game Error: command from client malformed");
-    }
-
-    std::string dataType = command.substr(0, commandPosition);
-
-    if (dataType == "user") {
-        std::string user = command.substr(commandPosition + 1);
-        return processUser(playerId, user);
-    } else if (dataType == "movement") {
-        std::string direction = command.substr(commandPosition + 1);
-        return processMovement(playerId, direction);
-    } else if (dataType == "turn") {
-        std::string direction = command.substr(commandPosition + 1);
-        return turnPlayer(playerId, direction);
-    } else if (dataType == "attack") {
-        // Format: "attack.player.id // attack.npc.id"
-        // return processAttack(playerId, command.substr(commandPosition + 1));
-        return false;
-    } else if (dataType == "heal") {
-        // Format: "heal"
-        return processHeal(playerId);
-    }
-
-    return false;
-}
-
-bool Game::processUser(int playerId, const std::string& user) {
-    // Formato: "NAME:RACE:CLASS"
-    size_t firstColon = user.find(':');
-    size_t secondColon = user.find(':', firstColon + 1);
-    if (firstColon == std::string::npos || secondColon == std::string::npos) {
-        throw std::runtime_error("Game Error: malformed user command (expected NAME:RACE:CLASS)");
-    }
-
-    std::string name = user.substr(0, firstColon);
-    std::string race = user.substr(firstColon + 1, secondColon - firstColon - 1);
-    std::string class_ = user.substr(secondColon + 1);
-
+bool Game::addPlayer(int playerId, const std::string& name, const std::string& race,
+                     const std::string& class_) {
     Position spawn;
 
     if (!parser.checkPlayerExists(name)) {
@@ -62,54 +23,18 @@ bool Game::processUser(int playerId, const std::string& user) {
 
     map.placeEntity(playerId, spawn.x, spawn.y, true);
 
-    /* Codigo de testeo
-    if (players.size() > 1) {
-        // players.at(playerId).addItem("Elven Flute");
-        // players.at(playerId).addItem("Sword");
-        // players.at(playerId).equipItem(0);
-        std::cout << "Inventory: ";
-        for (const auto& item: players.at(playerId).getInventory()) {
-            std::cout << item.getName() << " ";
-        }
-        std::cout << std::endl;
-        // players.at(playerId).equipItem(1);
-        std::cout << "Inventory: ";
-        for (const auto& item: players.at(playerId).getInventory()) {
-            std::cout << item.getName() << " ";
-        }
-        std::cout << std::endl;
-        // processAttack ahora toma (playerId, targetType, targetId) tras unificar
-        // con TARGETED_ATTACK. Si Oli necesita este testeo, hay que pasarle un
-        // target_id válido. Comentado para que compile.
-        // processAttack(playerId, "bottom");
-        // processHeal(playerId);
-    }
-    */
-
     std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
               << ", " << spawn.y << ")" << std::endl;
 
     return true;
 }
 
-bool Game::turnPlayer(int playerId, const std::string& direction) {
+bool Game::turnPlayer(int playerId, MoveDirection direction) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         return false;
     }
-    uint8_t newDir;
-    if (direction == "top")
-        newDir = 3;
-    else if (direction == "bottom")
-        newDir = 4;
-    else if (direction == "left")
-        newDir = 5;
-    else if (direction == "right")
-        newDir = 6;
-    else
-        return false;
-
-    itPlayer->second.setDirection(newDir);
+    itPlayer->second.setDirection(static_cast<uint8_t>(direction));
     return true;
 }
 
@@ -273,7 +198,7 @@ void Game::removePlayer(int playerId) {
     players.erase(playerId);
 }
 
-bool Game::processMovement(int playerId, const std::string& direction) {
+bool Game::movePlayer(int playerId, MoveDirection direction) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
@@ -281,22 +206,13 @@ bool Game::processMovement(int playerId, const std::string& direction) {
 
     Player& player = itPlayer->second;
     Position next = player.getPosition();
-    uint8_t newDir = 4;
 
-    if (direction == "top") {
-        next.y -= 1;
-        newDir = 3;
-    } else if (direction == "bottom") {
-        next.y += 1;
-        newDir = 4;
-    } else if (direction == "left") {
-        next.x -= 1;
-        newDir = 5;
-    } else if (direction == "right") {
-        next.x += 1;
-        newDir = 6;
-    } else {
-        return false;
+    switch (direction) {
+        case MoveDirection::TOP: next.y -= 1; break;
+        case MoveDirection::BOTTOM: next.y += 1; break;
+        case MoveDirection::LEFT: next.x -= 1; break;
+        case MoveDirection::RIGHT: next.x += 1; break;
+        default: return false;
     }
 
     if (!map.isWalkable(next.x, next.y)) {
@@ -312,72 +228,58 @@ bool Game::processMovement(int playerId, const std::string& direction) {
 
     Position old = player.getPosition();
     player.move(next);
-    player.setDirection(newDir);
+    player.setDirection(static_cast<uint8_t>(direction));
     map.movePlayer(playerId, old.x, old.y, next.x, next.y);
     return true;
 }
 
-AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targetId) {
-    AttackResult result;
-    result.attackerId = static_cast<uint16_t>(playerId);
-    result.targetType = targetType;
-    result.targetId = targetId;
-
+std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t targetType,
+                                                       uint16_t targetId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
 
     if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return result;  // performed = false
+        return nullptr;
     }
 
     uint8_t entityId = 0;
-    if (targetType == 0) {
-        if (itPlayer->second.hasLongDistanceWeapon())
-            entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), true);
-        else
-            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true);
-    } else if (targetType == 1) {
-        if (itPlayer->second.hasLongDistanceWeapon())
-            entityId =
-                    map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), false);
-        else
-            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false);
-    } else {
+    bool targetPlayer = (targetType == 0);
+    if (targetType != 0 && targetType != 1) {
         throw std::runtime_error(
                 "Game Error: malformed attack command (expected player.id or npc.id)");
     }
+    if (itPlayer->second.hasLongDistanceWeapon())
+        entityId =
+                map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer);
+    else
+        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer);
 
     if (entityId != targetId)
-        return result;
+        return nullptr;
 
-    auto itTarget = players.find(entityId);
-    if (itTarget == players.end()) {
-        throw std::runtime_error("Game Error: player in sight not found");
-    }
+    uint16_t attackerId = static_cast<uint16_t>(playerId);
 
     if (targetType == 0) {
         // target = player
-        if (!itTarget->second.isAlive()) {
-            return result;
+        auto itTarget = players.find(entityId);
+        if (itTarget == players.end()) {
+            throw std::runtime_error("Game Error: player in sight not found");
         }
-        result.performed = true;
+        if (!itTarget->second.isAlive()) {
+            return nullptr;
+        }
         if (tryEvade(playerId, static_cast<int>(targetId))) {
-            return result;  // hit = false, damage = 0
+            return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, 0, false);
         }
         uint16_t damage = itPlayer->second.dealDamage();
         itTarget->second.receiveDamage(damage);
-        result.hit = true;
-        result.damage = damage;
-    } else if (targetType == 1) {
-        // target = npc. TODO(team-gameplay): damageNpc(targetId, damage).
-        result.performed = true;
-        result.hit = false;
-        result.damage = 0;
+        return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
     }
 
-    return result;
+    // target = npc. TODO(team-gameplay): damageNpc(targetId, damage).
+    return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, 0, false);
 }
 
 bool Game::tryEvade(int /*attackerId*/, int /*targetId*/) const {
@@ -388,36 +290,14 @@ bool Game::tryEvade(int /*attackerId*/, int /*targetId*/) const {
     return false;
 }
 
-bool Game::processHeal(int playerId) {
+void Game::setSkin(int playerId, uint8_t skinId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-
-    if (!itPlayer->second.isAlive()) {
-        return false;
-    }
-
-    uint16_t healedAmount = itPlayer->second.heal();
-
-    if (healedAmount == 0) {
-        return false;
-    }
-
-    std::cout << "Player " << itPlayer->second.getName() << " heals for " << healedAmount
-              << " health!" << std::endl;
-
-    return true;
-}
-
-void Game::setSkin(int playerId, const std::string& skinId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-
-    // Cambiar el cero proximamente
-    itPlayer->second.setSkin(std::stoi(skinId), 0);
+    // TODO(team-gameplay): el segundo parámetro es headId, queda en 0 hasta
+    // que se implemente la selección de cabeza.
+    itPlayer->second.setSkin(static_cast<int>(skinId), 0);
 }
 
 void Game::processCheat(int playerId, uint8_t code) {

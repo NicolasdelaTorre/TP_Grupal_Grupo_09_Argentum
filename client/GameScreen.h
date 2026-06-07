@@ -6,10 +6,12 @@
 
 #include <SDL2pp/SDL2pp.hh>
 
+#include "../common/Communication/events/server_events.h"
 #include "../common/position.h"
 #include "../common/queue.h"
 
-#include "client_protocol.h"  // ReceivedMap
+#include "Communication/client_receiver.h"  // IncomingQueue alias
+#include "Communication/client_sender.h"    // OutgoingQueue alias
 #include "map_renderer.h"
 
 static constexpr float FEET_OFFSET = 0.8f;
@@ -36,8 +38,8 @@ struct OtherPlayer {
 class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
-               Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-               const ReceivedMap& mapData, Position spawn, Player player);
+               OutgoingQueue& clientEvents, IncomingQueue& serverEvents, const MapEvent& mapData,
+               Position spawn, Player player);
 
     // Retorna false cuando el jugador quiere salir
     bool run();
@@ -51,15 +53,15 @@ private:
 
     uint16_t a = 0;
 
-    // Queue al sender: pusheamos "TOP"/"BOTTOM"/"LEFT"/"RIGHT" cuando el jugador cruza un tile.
-    Queue<std::string>& events_queue;
+    // Queue al sender: empujamos ClientEvents ya construidos (MovementEvent, etc.).
+    OutgoingQueue& clientEvents;
     int lastTileX;
     int lastTileY;
     Direction lastSentDir;  // última dirección que mandamos al server (para detectar giros)
 
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
-    // pushea.
-    Queue<std::string>& server_queue;
+    // pushea tipados.
+    IncomingQueue& serverEvents;
     Player player;
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::vector<DroppedItem> droppedItems;

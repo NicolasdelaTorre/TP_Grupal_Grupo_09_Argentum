@@ -7,20 +7,24 @@
 #include <SDL2pp/SDLTTF.hh>
 #include <SDL_image.h>
 
+#include "../common/Communication/events/client_events.h"
+#include "../common/Communication/events/server_events.h"
+#include "../common/Communication/message_types.h"
+
 #include "GameScreen.h"
 #include "char_creation_screen.h"
 #include "head_selection_screen.h"
 #include "login_screen.h"
 
 
-client::client(const char* hostname, const char* port, bool fullscreen):
-        protocol(Socket(hostname, port)),
-        sender(protocol, events_queue),
-        receiver(protocol, server_queue),
+Client::Client(const char* hostname, const char* port, bool fullscreen):
+        protocol(hostname, port),
+        sender(protocol, clientEvents),
+        receiver(protocol, serverEvents),
         fullscreen(fullscreen) {}
 
 
-void client::run() {
+void Client::run() {
     SDL2pp::SDL sdl(SDL_INIT_VIDEO);
     SDL2pp::SDLTTF ttf;
     SDL2pp::SDLImage img(IMG_INIT_PNG);
@@ -34,21 +38,23 @@ void client::run() {
     if (!result.confirmed)
         return;
 
-    // Handshake sincrónico (login + mapa) antes de arrancar los hilos para evitar races.
+    // Handshake sincrónico (login + mapa) antes de arrancar los hilos.
     // Raza/clase hardcodeadas hasta que haya UI para elegirlas.
-    protocol.send_user_arrival(result.username, "Elf", "Mage");
+    std::string name(result.username.begin(), result.username.end());
+    protocol.send(UserArrivalEvent(name, "Elf", "Mage"));
 
-    ServerMsg type = protocol.recv_msg_type();
-    if (type == ServerMsg::LOGIN_FAIL) {
+    auto ev = protocol.receiveEvent();
+    Player player;
+
+    // Usuario nuevo: char creation + skin/head al server.
+    if (auto* op = dynamic_cast<OpcodeOnlyEvent*>(ev.get());
+        op && op->getOpcode() == static_cast<uint8_t>(ServerMsg::LOGIN_FAIL)) {
         std::cerr << "Login failed (server rejected)" << std::endl;
         return;
     }
 
-    Player player;
-
-    // Usuario nuevo: elige cabeza, luego skin, luego manda la skin al server.
-    // default para jugadores que ya existían
-    if (type == ServerMsg::FIRST_LOGIN) {
+    if (auto* op = dynamic_cast<OpcodeOnlyEvent*>(ev.get());
+        op && op->getOpcode() == static_cast<uint8_t>(ServerMsg::FIRST_LOGIN)) {
         HeadSelectionScreen headSelection(renderer, "AO_IMGS");
         HeadSelectionResult headResult = headSelection.run();
         if (!headResult.confirmed)
@@ -57,37 +63,38 @@ void client::run() {
         CharCreationResult charResult = charCreation.run();
         if (!charResult.confirmed)
             return;
-        protocol.send_skin_selected(static_cast<uint8_t>(charResult.skinId));
-        // protocol.send_head_selected(static_cast<uint8_t>(headResult.headId));
+        protocol.send(SkinSelectedEvent(static_cast<uint8_t>(charResult.skinId)));
         player.skin = charResult.skinId;
-        type = protocol.recv_msg_type();
+        ev = protocol.receiveEvent();
     }
 
-    if (type != ServerMsg::LOGIN_OK) {
+    auto* loginOk = dynamic_cast<LoginOkEvent*>(ev.get());
+    if (!loginOk) {
         std::cerr << "Unexpected response from server (expected LOGIN_OK)" << std::endl;
         return;
     }
-    Position spawn = protocol.recv_login_ok_payload();
+    Position spawn{loginOk->getSpawnX(), loginOk->getSpawnY()};
     std::cout << "Login OK — spawn at (" << spawn.x << ", " << spawn.y << ")" << std::endl;
 
-    type = protocol.recv_msg_type();
-    if (type != ServerMsg::MAP) {
+    auto mapEv = protocol.receiveEvent();
+    auto* mapData = dynamic_cast<MapEvent*>(mapEv.get());
+    if (!mapData) {
         std::cerr << "Expected MAP after LOGIN_OK" << std::endl;
         return;
     }
-    ReceivedMap mapData = protocol.recv_map();
-    std::cout << "Map received (" << mapData.width << "x" << mapData.height << ")" << std::endl;
+    std::cout << "Map received (" << mapData->getWidth() << "x" << mapData->getHeight() << ")"
+              << std::endl;
 
     // Arrancamos los hilos
     sender.start();
     receiver.start();
 
-    GameScreen game(renderer, "AO_IMGS", events_queue, server_queue, mapData, spawn, player);
+    GameScreen game(renderer, "AO_IMGS", clientEvents, serverEvents, *mapData, spawn, player);
     game.run();
 
-    // Cleanup: cerramos queues/socket para desbloquear los threads
-    events_queue.close();
-    protocol.close();
+    // Cleanup: cerramos queues/socket para desbloquear los threads.
+    clientEvents.close();
+    protocol.shutdown();
     sender.join();
     receiver.join();
 }

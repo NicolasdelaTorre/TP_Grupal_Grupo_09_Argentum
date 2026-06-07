@@ -2,13 +2,11 @@
 
 Server::Server(const char* port):
         protocol(port),
-        clientCommands(),
-        clientQueues(),
+        clientEvents(),
+        clientMonitor(),
         loadedMap(loadMapFromYaml("server/assets/maps/mapa_completo.yaml")),
-        gameloop(clientCommands, clientQueues, loadedMap.map, protocol, loadedMap.playerSpawn),
-        acceptor(protocol, clientCommands, clientQueues) {
-    protocol.setMap(loadedMap.map);
-}
+        gameloop(clientEvents, clientMonitor, loadedMap.map, protocol, loadedMap.playerSpawn),
+        acceptor(protocol, clientEvents, clientMonitor) {}
 
 void Server::startGame() {
     gameloop.start();

@@ -2,20 +2,19 @@
 #define CLIENT_HANDLER_H
 
 #include <atomic>
-#include <string>
 
 #include "../../common/queue.h"
-#include "../Protocol/protocol_server.h"
+#include "../Communication/server_protocol.h"
 
 #include "client_monitor.h"
-#include "receiver.h"
-#include "sender.h"
+#include "server_receiver.h"
+#include "server_sender.h"
 
 class ClientHandler {
 private:
-    Queue<std::string> clientQueue;
-    Sender sender;
-    Receiver receiver;
+    OutgoingQueue serverEvents;
+    ServerSender sender;
+    ServerReceiver receiver;
     std::atomic<bool> clientConnected;
 
 public:
@@ -25,7 +24,7 @@ public:
      * Create an object to receive messages from the client and another to send messages on behalf
      * of the server.
      */
-    ClientHandler(ProtocolServer& protocol, Queue<std::string>& commands,
+    ClientHandler(ServerProtocol& protocol, IncomingQueue& clientEvents,
                   ClientMonitor& clientMonitor, const int clientId);
 
     bool clientDisconnected();

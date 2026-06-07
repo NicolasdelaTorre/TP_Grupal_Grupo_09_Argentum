@@ -5,18 +5,22 @@
 #include <iostream>
 #include <utility>
 
+#include "../common/Communication/events/client_events.h"
+#include "../common/Communication/message_types.h"
+
 #include "tile_textures.h"
 
 namespace {
 
-// ReceivedMap (wire) → GameMap (lo que pinta el MapRenderer).
-GameMap convertToGameMap(const ReceivedMap& m) {
+// MapEvent (wire) → GameMap (lo que pinta el MapRenderer).
+GameMap convertToGameMap(const MapEvent& m) {
     GameMap gm;
-    gm.width = m.width;
-    gm.height = m.height;
-    gm.tiles.resize(m.cells.size());
-    for (size_t i = 0; i < m.cells.size(); i++) {
-        const auto& cell = m.cells[i];
+    gm.width = m.getWidth();
+    gm.height = m.getHeight();
+    const auto& cells = m.getCells();
+    gm.tiles.resize(cells.size());
+    for (size_t i = 0; i < cells.size(); i++) {
+        const auto& cell = cells[i];
         // safeZone fuerza piso de ciudad (priority sobre textureId del bioma).
         if (cell.safeZone) {
             gm.tiles[i].floor = TileType::INTERIOR;
@@ -31,6 +35,17 @@ GameMap convertToGameMap(const ReceivedMap& m) {
         }
     }
     return gm;
+}
+
+// Convierte un Direction (sprite) al MoveDirection del wire.
+MoveDirection spriteDirToWire(Direction d) {
+    switch (d) {
+        case Direction::UP: return MoveDirection::TOP;
+        case Direction::DOWN: return MoveDirection::BOTTOM;
+        case Direction::LEFT: return MoveDirection::LEFT;
+        case Direction::RIGHT: return MoveDirection::RIGHT;
+    }
+    return MoveDirection::BOTTOM;
 }
 
 }  // namespace
@@ -60,14 +75,14 @@ static Direction wireDirToSpriteDir(uint8_t wireDir) {
 }
 
 GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
-                       Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-                       const ReceivedMap& mapData, Position spawn, Player player):
+                       OutgoingQueue& clientEvents, IncomingQueue& serverEvents,
+                       const MapEvent& mapData, Position spawn, Player player):
         renderer(renderer),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
         map(convertToGameMap(mapData)),
-        events_queue(events_queue),
-        server_queue(server_queue),
+        clientEvents(clientEvents),
+        serverEvents(serverEvents),
         player(player) {
     tileToPlayerCoords(spawn.x, spawn.y, this->player);
 
@@ -166,7 +181,8 @@ bool GameScreen::handleEvents(float dt) {
                 int opTileX = (int)(op.visual.x + HEAD_OFFSET);
                 int opTileY = (int)(op.visual.y + FEET_OFFSET);
                 if (opTileX == clickTileX && opTileY == clickTileY) {
-                    events_queue.push("ATTACK:0:" + std::to_string(entry.first));
+                    clientEvents.push(std::make_shared<AttackEvent>(
+                            0, static_cast<uint16_t>(entry.first)));
                     break;
                 }
             }
@@ -222,23 +238,7 @@ bool GameScreen::handleEvents(float dt) {
 void GameScreen::notifyDirectionChange() {
     if (player.dir == lastSentDir)
         return;
-    const char* msg = nullptr;
-    switch (player.dir) {
-        case Direction::UP:
-            msg = "TURN_TOP";
-            break;
-        case Direction::DOWN:
-            msg = "TURN_BOTTOM";
-            break;
-        case Direction::LEFT:
-            msg = "TURN_LEFT";
-            break;
-        case Direction::RIGHT:
-            msg = "TURN_RIGHT";
-            break;
-    }
-    if (msg)
-        events_queue.push(msg);
+    clientEvents.push(std::make_shared<TurnEvent>(spriteDirToWire(player.dir)));
     lastSentDir = player.dir;
 }
 
@@ -251,10 +251,12 @@ void GameScreen::notifyTileChange() {
     }
 
     if (curTileX != lastTileX) {
-        events_queue.push(curTileX > lastTileX ? "RIGHT" : "LEFT");
+        clientEvents.push(std::make_shared<MovementEvent>(
+                curTileX > lastTileX ? MoveDirection::RIGHT : MoveDirection::LEFT));
     }
     if (curTileY != lastTileY) {
-        events_queue.push(curTileY > lastTileY ? "BOTTOM" : "TOP");
+        clientEvents.push(std::make_shared<MovementEvent>(
+                curTileY > lastTileY ? MoveDirection::BOTTOM : MoveDirection::TOP));
     }
 
     lastTileX = curTileX;
@@ -336,126 +338,54 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
 }
 
 void GameScreen::consumeServerEvents() {
-    std::string event;
-    while (server_queue.try_pop(event)) {
-        if (event.rfind("NEW_PLAYER:", 0) == 0) {
-            // NEW_PLAYER:<id>:<x>:<y>:<dir>:<skin>:<name>
-            size_t c1 = event.find(':');
-            size_t c2 = event.find(':', c1 + 1);
-            size_t c3 = event.find(':', c2 + 1);
-            size_t c4 = event.find(':', c3 + 1);
-            size_t c5 = event.find(':', c4 + 1);
-            size_t c6 = event.find(':', c5 + 1);
-            if (c6 == std::string::npos)
-                continue;
-            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
-            int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
-            int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
-            uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
-            uint8_t skin = static_cast<uint8_t>(std::stoi(event.substr(c5 + 1, c6 - c5 - 1)));
+    std::shared_ptr<ServerEvent> ev;
+    while (serverEvents.try_pop(ev)) {
+        if (auto* np = dynamic_cast<NewPlayerEvent*>(ev.get())) {
             OtherPlayer op;
-            tileToPlayerCoords(x, y, op.visual);
-            op.targetX = static_cast<float>(x);
-            op.targetY = static_cast<float>(y);
-            op.visual.dir = wireDirToSpriteDir(dir);
-            op.visual.skin = skin;
-            op.name = event.substr(c6 + 1);
-            otherPlayers[id] = std::move(op);
-        } else if (event.rfind("PLAYER_MOVED:", 0) == 0) {
-            // PLAYER_MOVED:<id>:<x>:<y>:<dir>
-            size_t c1 = event.find(':');
-            size_t c2 = event.find(':', c1 + 1);
-            size_t c3 = event.find(':', c2 + 1);
-            size_t c4 = event.find(':', c3 + 1);
-            if (c4 == std::string::npos)
-                continue;
-            int id = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
-            int16_t x = static_cast<int16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
-            int16_t y = static_cast<int16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
-            uint8_t dir = static_cast<uint8_t>(std::stoi(event.substr(c4 + 1)));
-            auto it = otherPlayers.find(id);
+            tileToPlayerCoords(np->getX(), np->getY(), op.visual);
+            op.targetX = static_cast<float>(np->getX());
+            op.targetY = static_cast<float>(np->getY());
+            op.visual.dir = wireDirToSpriteDir(np->getDir());
+            op.visual.skin = np->getSkin();
+            op.name = np->getName();
+            otherPlayers[np->getId()] = std::move(op);
+        } else if (auto* pm = dynamic_cast<PlayerMovedEvent*>(ev.get())) {
+            auto it = otherPlayers.find(pm->getId());
             if (it != otherPlayers.end()) {
-                it->second.targetX = static_cast<float>(x);
-                it->second.targetY = static_cast<float>(y);
-                it->second.visual.dir = wireDirToSpriteDir(dir);
+                it->second.targetX = static_cast<float>(pm->getX());
+                it->second.targetY = static_cast<float>(pm->getY());
+                it->second.visual.dir = wireDirToSpriteDir(pm->getDir());
             }
-        } else if (event.rfind("PLAYER_DISCONNECTED:", 0) == 0) {
-            // PLAYER_DISCONNECTED:<id>
-            size_t c1 = event.find(':');
-            int id = std::stoi(event.substr(c1 + 1));
-            otherPlayers.erase(id);
-        } else if (event.rfind("ATTACK_RESULT:", 0) == 0) {
-            // ATTACK_RESULT:<atk>:<ttype>:<tid>:<dmg>:<hit>
-            // TODO(team-ui): mostrar feedback visual (número flotante de daño
-            // sobre el target si hit==1, "MISS" si hit==0, animación de impacto).
-            // Por ahora solo loggeamos para confirmar que el evento llega.
-            size_t c1 = event.find(':');
-            size_t c2 = event.find(':', c1 + 1);
-            size_t c3 = event.find(':', c2 + 1);
-            size_t c4 = event.find(':', c3 + 1);
-            size_t c5 = event.find(':', c4 + 1);
-            if (c5 == std::string::npos)
-                continue;
-            int atk = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
-            int tid = std::stoi(event.substr(c3 + 1, c4 - c3 - 1));
-            int dmg = std::stoi(event.substr(c4 + 1, c5 - c4 - 1));
-            int hit = std::stoi(event.substr(c5 + 1));
-            std::cout << "ATTACK: " << atk << " -> " << tid << (hit ? " hit for " : " MISS (")
-                      << dmg << (hit ? " dmg" : ")") << std::endl;
-        } else if (event.rfind("DROPPED_ITEMS:", 0) == 0) {
-            // DROPPED_ITEMS:<count>:<x>:<y>:<sheetId>:<itemId>:...
-            droppedItems.clear();
-            size_t pos = event.find(':');
-            size_t next = event.find(':', pos + 1);
-            int count = std::stoi(event.substr(pos + 1, next - pos - 1));
-            pos = next;
-            for (int i = 0; i < count && pos != std::string::npos; i++) {
-                DroppedItem di;
-                next = event.find(':', pos + 1);
-                di.x = static_cast<int16_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
-                pos = next;
-                next = event.find(':', pos + 1);
-                di.y = static_cast<int16_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
-                pos = next;
-                next = event.find(':', pos + 1);
-                di.sheetId = static_cast<uint8_t>(std::stoi(event.substr(pos + 1, next - pos - 1)));
-                pos = next;
-                next = event.find(':', pos + 1);
-                di.itemId = static_cast<uint16_t>(std::stoi(event.substr(
-                        pos + 1, next == std::string::npos ? std::string::npos : next - pos - 1)));
-                pos = next;
-                droppedItems.push_back(di);
+        } else if (auto* pd = dynamic_cast<PlayerDisconnectedEvent*>(ev.get())) {
+            auto it = otherPlayers.find(pd->getId());
+            if (it != otherPlayers.end()) {
+                std::cout << "Player " << it->second.name << " (id=" << pd->getId()
+                          << ") disconnected" << std::endl;
             }
-        } else if (event.rfind("EQUIPPED:", 0) == 0) {
-            // EQUIPPED:<playerId>:<slot>:<itemId>
-            // TODO(team-ui): aplicar al sprite. El mapping itemId → columna
-            // del spritesheet lo define la capa de render.
-            std::cout << "PLAYER_EQUIPPED " << event << std::endl;
-        } else if (event.rfind("INVENTORY:", 0) == 0) {
-            // INVENTORY:<n>:<id1>:...:<eqW>:<eqA>:<eqH>:<eqS>
-            // TODO(team-ui): dibujar el inventario en el HUD y resaltar lo
-            // equipado. Por ahora solo loggeamos para confirmar el flujo.
-            std::cout << "INVENTORY_UPDATE: " << event << std::endl;
-        } else if (event.rfind("STATS:", 0) == 0) {
-            // STATS:<hp>:<maxHp>:<mana>:<maxMana>:<gold>:<exp>:<nextLvlExp>:<level>
-            size_t c1 = event.find(':');
-            size_t c2 = event.find(':', c1 + 1);
-            size_t c3 = event.find(':', c2 + 1);
-            size_t c4 = event.find(':', c3 + 1);
-            size_t c5 = event.find(':', c4 + 1);
-            size_t c6 = event.find(':', c5 + 1);
-            size_t c7 = event.find(':', c6 + 1);
-            size_t c8 = event.find(':', c7 + 1);
-            if (c8 == std::string::npos)
-                continue;
-            health = static_cast<uint16_t>(std::stoi(event.substr(c1 + 1, c2 - c1 - 1)));
-            maxHealth = static_cast<uint16_t>(std::stoi(event.substr(c2 + 1, c3 - c2 - 1)));
-            mana = static_cast<uint16_t>(std::stoi(event.substr(c3 + 1, c4 - c3 - 1)));
-            maxMana = static_cast<uint16_t>(std::stoi(event.substr(c4 + 1, c5 - c4 - 1)));
-            gold = static_cast<uint32_t>(std::stoul(event.substr(c5 + 1, c6 - c5 - 1)));
-            experience = static_cast<uint32_t>(std::stoul(event.substr(c6 + 1, c7 - c6 - 1)));
-            nextLevelExp = static_cast<uint32_t>(std::stoul(event.substr(c7 + 1, c8 - c7 - 1)));
-            level = static_cast<uint8_t>(std::stoi(event.substr(c8 + 1)));
+            otherPlayers.erase(pd->getId());
+        } else if (auto* ar = dynamic_cast<AttackResultEvent*>(ev.get())) {
+            // TODO(team-ui): mostrar feedback visual.
+            std::cout << "ATTACK: " << ar->getAttackerId() << " -> " << ar->getTargetId()
+                      << (ar->getHit() ? " hit for " : " MISS (") << ar->getDamage()
+                      << (ar->getHit() ? " dmg" : ")") << std::endl;
+        } else if (auto* eq = dynamic_cast<PlayerEquippedEvent*>(ev.get())) {
+            // TODO(team-ui): aplicar al sprite del otro jugador.
+            std::cout << "PLAYER_EQUIPPED pid=" << eq->getPlayerId()
+                      << " slot=" << (int)eq->getSlot() << " itemId=" << (int)eq->getItemId()
+                      << std::endl;
+        } else if (auto* inv = dynamic_cast<InventoryUpdateEvent*>(ev.get())) {
+            // TODO(team-ui): dibujar el inventario en el HUD.
+            std::cout << "INVENTORY_UPDATE count=" << inv->getItems().size()
+                      << " eqW=" << (int)inv->getEquippedWeapon() << std::endl;
+        } else if (auto* st = dynamic_cast<StatsEvent*>(ev.get())) {
+            health = st->getHp();
+            maxHealth = st->getMaxHp();
+            mana = st->getMana();
+            maxMana = st->getMaxMana();
+            gold = st->getGold();
+            experience = st->getExp();
+            nextLevelExp = st->getNextLvlExp();
+            level = st->getLevel();
             std::cout << "STATS hp=" << health << "/" << maxHealth << " mana=" << mana << "/"
                       << maxMana << " gold=" << gold << " exp=" << experience << "/" << nextLevelExp
                       << " lvl=" << (int)level << std::endl;
