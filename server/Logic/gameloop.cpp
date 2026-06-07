@@ -1,12 +1,15 @@
 #include "gameloop.h"
+#include "NPC/creature.h"
 
 Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
                    ProtocolServer& protocol):
         commands(commands),
         clientQueues(clientQueues),
         gameFinished(false),
+        map(world),
         game(world),
-        protocol(protocol) {}
+        protocol(protocol),
+        turnManager(world.getAllNPCIds(), world) {}
 
 void Gameloop::run() {
     while (!gameFinished) {
@@ -15,7 +18,41 @@ void Gameloop::run() {
             processCommand(command);
         }
 
+        NPCTurns();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    }
+}
+
+void Gameloop::NPCTurns() {
+    turnManager.updateTimers();
+
+    // Time to move NPC
+    std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
+    for (uint16_t npcId : npcsToMove) {
+        Creature* npc = map.getNPC(npcId);
+        npc->stalkPlayer(map.searchPlayer(npc->getPosition().x, npc->getPosition().y));
+    }
+
+    // Time to process NPC attacks
+    std::vector<uint16_t> npcsToAttack = turnManager.getNPCsReady(false);
+    for (uint16_t npcId : npcsToAttack) {
+        Creature* npc = map.getNPC(npcId);
+        uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true);
+        if (game.applyNPCAttack(playerId, npc->getDamage())) {
+            // Verificar mensaje para el cliente (Para Tomas)
+            /*
+            std::string msg = "ATTACK_RESULT:" + std::to_string(npcId) + ":1:0:" + std::to_string(damage) + ":1";
+            clientQueues.broadcast(msg);
+            */
+        }
+    }
+
+    // Time to revive NPCs
+    std::vector<uint16_t> npcsToRevive = turnManager.reviveNPCs();
+    for (uint16_t npcId : npcsToRevive) {
+        Creature* npc = map.getNPC(npcId);
+        npc->resurrect();
     }
 }
 

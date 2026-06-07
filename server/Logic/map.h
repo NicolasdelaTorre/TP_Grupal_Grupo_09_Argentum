@@ -11,6 +11,7 @@
 #include "../../common/position.h"
 
 #include "NPC/npc.h"
+#include "NPC/creature.h"
 
 // Tile del mapa (datos estáticos).
 struct Cell {
@@ -65,7 +66,6 @@ struct Biome {
 // Mapa estático: no cambia una vez cargado. Los jugadores los maneja el Game.
 class Map {
 private:
-    uint8_t id;
     uint16_t npcIdCounter;
     uint16_t width;
     uint16_t height;
@@ -93,6 +93,10 @@ public:
 
     Position getPlayerSpawn();
 
+    std::vector<uint16_t> getAllNPCIds() const;
+
+    Creature* getNPC(uint16_t npcId);
+
     // Devuelve true si (x, y) está dentro de los límites del mapa.
     bool isInBounds(int16_t x, int16_t y) const;
 
@@ -114,6 +118,12 @@ public:
     void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer);
 
     Position searchPlayer(int16_t x, int16_t y);
+
+    bool checkNPCAlive(uint16_t npcId);
+
+    bool checkIfNPCIsNextToAPlayer(uint16_t npcId);
+
+    bool isACreature(uint16_t npcId);
 };
 
 #endif

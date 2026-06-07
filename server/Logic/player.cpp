@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include <utility>
+#include <iostream>
 
 Player::Player(const std::string& name, Position position, const std::string& race,
                const std::string& class_):
@@ -113,6 +114,12 @@ bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
     // Cambiar proximamente
+    if (data.isGhost) {
+        std::cout << "Player " << name << " is already a ghost and can't receive more damage." << std::endl;
+        return;
+    } else {
+        std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
+    }
     if (damage >= data.health) {
         data.health = 0;
         data.isGhost = true;

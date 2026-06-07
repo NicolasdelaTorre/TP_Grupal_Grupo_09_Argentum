@@ -116,7 +116,7 @@ void Map::spawnNPC(const Biome& biome) {
             targetCell.isWalkable = false;
 
             // Save npc
-            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, id, pos.x, pos.y);
+            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y);
         }
     }
 }
@@ -136,6 +136,22 @@ Cell Map::getCell(size_t index) const {
 
 Position Map::getPlayerSpawn() {
     return spawn;
+}
+
+std::vector<uint16_t> Map::getAllNPCIds() const {
+    std::vector<uint16_t> npcIds;
+    for (const auto& pair : npcs) {
+        npcIds.push_back(pair.first);
+    }
+    return npcIds;
+}
+
+Creature* Map::getNPC(uint16_t npcId) {
+    auto it = npcs.find(npcId);
+    if (it != npcs.end()) {
+        return dynamic_cast<Creature*>(it->second.get());
+    }
+    return nullptr;  // NPC not found or not a Creature
 }
 
 bool Map::isInBounds(int16_t x, int16_t y) const {
@@ -273,4 +289,41 @@ void Map::removePlayer(int16_t x, int16_t y) {
     if (isInBounds(x, y)) {
         cells[static_cast<size_t>(y) * width + x].playerId = 0;
     }
+}
+
+bool Map::checkNPCAlive(uint16_t npcId) {
+    auto it = npcs.find(npcId);
+     
+    if (it == npcs.end()) {
+        throw std::runtime_error("Map Error: NPC with id " + std::to_string(npcId) + " not found"); 
+    }
+
+    // Verify if the NPC is a creature
+    Creature* creature = dynamic_cast<Creature*>(it->second.get());
+    
+    if (creature) {
+        return !creature->isDead();
+    }
+
+    throw std::runtime_error("Map Error: NPC with id " + std::to_string(npcId) + " is not a creature");
+}
+
+bool Map::checkIfNPCIsNextToAPlayer(uint16_t npcId) {
+    auto it = npcs.find(npcId);
+    if (it != npcs.end()) {
+        Creature* creature = dynamic_cast<Creature*>(it->second.get());
+        if (creature) {
+            Position pos = creature->getPosition();
+            return nextEntity(pos.x, pos.y, true) != 0;  // Check if there's a player next to the NPC
+        }
+    }
+    return false;  // NPC not found or not a creature
+}
+
+bool Map::isACreature(uint16_t npcId) {
+    auto it = npcs.find(npcId);
+    if (it != npcs.end()) {
+        return dynamic_cast<Creature*>(it->second.get()) != nullptr;
+    }
+    throw std::runtime_error("Map Error: NPC with id " + std::to_string(npcId) + " not found");
 }

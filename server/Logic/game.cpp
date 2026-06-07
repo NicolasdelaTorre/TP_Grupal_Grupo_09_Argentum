@@ -1,4 +1,5 @@
 #include "game.h"
+#include "NPC/creature.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -365,18 +366,28 @@ AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targ
             return result;
         }
         result.performed = true;
+        result.attackerId = playerId;
+        result.targetType = targetType;
+        result.targetId = targetId;
         if (tryEvade(playerId, static_cast<int>(targetId))) {
             return result;  // hit = false, damage = 0
         }
+
         uint16_t damage = itPlayer->second.dealDamage();
         itTarget->second.receiveDamage(damage);
         result.hit = true;
         result.damage = damage;
     } else if (targetType == 1) {
-        // target = npc. TODO(team-gameplay): damageNpc(targetId, damage).
+        uint16_t damage = itPlayer->second.dealDamage();
+        Creature* npc = map.getNPC(targetId);
+        npc->receiveDamage(damage);
+
         result.performed = true;
-        result.hit = false;
-        result.damage = 0;
+        result.attackerId = playerId;
+        result.targetType = targetType;
+        result.targetId = targetId;
+        result.damage = damage;
+        result.hit = true;
     }
 
     return result;
@@ -524,6 +535,15 @@ Game::InventorySnapshot Game::getInventorySnapshot(int playerId) const {
     snap.equippedHelmet = d.equippedHelmet;
     snap.equippedShield = d.equippedShield;
     return snap;
+}
+
+bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return false;
+    }
+    it->second.receiveDamage(damage);
+    return true;
 }
 
 Game::~Game() {

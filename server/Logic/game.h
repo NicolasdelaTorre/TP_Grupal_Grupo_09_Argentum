@@ -128,7 +128,10 @@ public:
         uint8_t equippedHelmet = 0;
         uint8_t equippedShield = 0;
     };
+
     InventorySnapshot getInventorySnapshot(int playerId) const;
+
+    bool applyNPCAttack(uint8_t playerId, uint16_t damage);
 
     void removePlayer(int playerId);
 
