@@ -16,6 +16,7 @@ target_sources(taller_server
         Logic/attribute_manager.cpp
         Logic/binary_parser.cpp
         Logic/items.cpp
+        Logic/turn_manager.cpp
         Logic/NPC/creature.cpp
         Logic/NPC/merchant.cpp
         Logic/NPC/banker.cpp
@@ -39,6 +40,7 @@ target_sources(taller_server
         Logic/class_.h
         Logic/binary_parser.h
         Logic/items.h
+        Logic/turn_manager.h
         Logic/NPC/creature.h
         Logic/NPC/merchant.h
         Logic/NPC/banker.h

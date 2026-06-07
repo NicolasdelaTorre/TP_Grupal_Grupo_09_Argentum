@@ -1,6 +1,6 @@
 #include "npc.h"
 
-NPC::NPC(uint16_t id, const std::string& name, uint16_t x, uint16_t y) : id(id), name(name) {
+NPC::NPC(uint16_t id, const std::string& name, uint16_t x, uint16_t y, uint8_t mapId) : id(id), name(name), mapId(mapId) {
     position.x = x;
     position.y = y;
 }

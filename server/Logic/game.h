@@ -49,6 +49,8 @@ private:
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
     bool tryEvade(int attackerId, int targetId) const;
 
+    void checkEntry(int playerId);
+
 public:
     explicit Game(Map& world);
 
@@ -128,7 +130,10 @@ public:
         uint8_t equippedHelmet = 0;
         uint8_t equippedShield = 0;
     };
+
     InventorySnapshot getInventorySnapshot(int playerId) const;
+
+    bool applyNPCAttack(uint8_t playerId, uint16_t damage);
 
     void removePlayer(int playerId);
 

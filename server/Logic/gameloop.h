@@ -10,14 +10,17 @@
 #include "../Protocol/protocol_server.h"
 
 #include "game.h"
+#include "turn_manager.h"
 
 class Gameloop: public Thread {
 private:
     Queue<std::string>& commands;
     ClientMonitor& clientQueues;
     bool gameFinished;
+    Map& map;
     Game game;
     ProtocolServer& protocol;
+    TurnManager turnManager;
 
     void processCommand(const std::string& command);
 
@@ -32,6 +35,8 @@ private:
     // Manda PLAYER_EQUIPPED por cada slot equipado del jugador.
     // recipientId == -1 → broadcast a todos menos a él. Sino, sólo a ese cliente.
     void sendEquipmentSnapshot(int idPlayer, int recipientId);
+
+    void NPCTurns();
 
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
