@@ -49,6 +49,8 @@ private:
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
     bool tryEvade(int attackerId, int targetId) const;
 
+    void checkEntry(int playerId);
+
 public:
     explicit Game(Map& world);
 

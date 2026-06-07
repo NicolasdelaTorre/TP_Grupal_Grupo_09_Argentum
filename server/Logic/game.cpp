@@ -8,7 +8,7 @@
 
 Game::Game(Map& world):
     map(world),
-    playerSpawn(map.getPlayerSpawn()),
+    playerSpawn(map.getPlayerSpawn(0)),
     parser(BinaryParser()) {}
 
 bool Game::processCommand(int playerId, const std::string& command) {
@@ -63,7 +63,7 @@ bool Game::processUser(int playerId, const std::string& user) {
         spawn = players.at(playerId).getPosition();
     }
 
-    map.placeEntity(playerId, spawn.x, spawn.y, true);
+    map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
 
     /* Codigo de testeo
     if (players.size() > 1) {
@@ -119,7 +119,7 @@ bool Game::turnPlayer(int playerId, const std::string& direction) {
 Position Game::findSpawnPosition() const {
     // Búsqueda en espiral cuadrada desde el spawn del YAML.
     // radius=0 es el spawn, radius=1 sus 8 vecinos, radius=2 los 16 de la siguiente capa, etc.
-    int maxRadius = std::max(map.getWidth(), map.getHeight());
+    int maxRadius = std::max(map.getWidth(0), map.getHeight(0));
     for (int radius = 0; radius < maxRadius; radius++) {
         for (int offsetY = -radius; offsetY <= radius; offsetY++) {
             for (int offsetX = -radius; offsetX <= radius; offsetX++) {
@@ -129,7 +129,7 @@ Position Game::findSpawnPosition() const {
                     continue;
                 Position candidate{static_cast<int16_t>(playerSpawn.x + offsetX),
                                    static_cast<int16_t>(playerSpawn.y + offsetY)};
-                if (map.isWalkable(candidate.x, candidate.y) && isPositionFree(candidate)) {
+                if (map.isWalkable(candidate.x, candidate.y, 0) && isPositionFree(candidate)) {
                     return candidate;
                 }
             }
@@ -270,7 +270,7 @@ void Game::removePlayer(int playerId) {
     auto it = players.find(playerId);
     if (it != players.end()) {
         Position p = it->second.getPosition();
-        map.removePlayer(p.x, p.y);
+        map.removePlayer(p.x, p.y, it->second.getMapId());
     }
     updatePlayerData(playerId);
     players.erase(playerId);
@@ -302,7 +302,7 @@ bool Game::processMovement(int playerId, const std::string& direction) {
         return false;
     }
 
-    if (!map.isWalkable(next.x, next.y)) {
+    if (!map.isWalkable(next.x, next.y, itPlayer->second.getMapId())) {
         std::cout << "Player can't move in that direction (blocked)" << std::endl;
         return false;
     }
@@ -316,8 +316,43 @@ bool Game::processMovement(int playerId, const std::string& direction) {
     Position old = player.getPosition();
     player.move(next);
     player.setDirection(newDir);
-    map.movePlayer(playerId, old.x, old.y, next.x, next.y);
+    map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, itPlayer->second.getMapId());
+    checkEntry(playerId);
+
     return true;
+}
+
+void Game::checkEntry(int playerId) {
+    // Search Player
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    // Current Player Position
+    Position pos = itPlayer->second.getPosition();
+
+    if (map.checkIfThePositionHasAnEntry(pos.x, pos.y, itPlayer->second.getMapId())) {
+        // The Position is a Entry to a Dungeon
+        // The Player is no more in the Overworld
+        map.removePlayer(pos.x, pos.y, itPlayer->second.getMapId());
+
+        // New Map Id
+        std::string mapId = map.getMapId(pos.x, pos.y);
+
+        if (!mapId.empty()) {
+            // It's a real Dungeon
+            // Place the Player in the Dungeon
+            map.placePlayerIntoTheDungeon(playerId, mapId);
+
+            // Save Map Id
+            itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
+
+            // Set new Position for the Player
+            Position newPosition = map.getEntrySpawnPosition(mapId);
+            itPlayer->second.move(newPosition);
+        }
+    }
 }
 
 AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targetId) {
@@ -338,15 +373,15 @@ AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targ
     uint8_t entityId = 0;
     if (targetType == 0) {
         if (itPlayer->second.hasLongDistanceWeapon())
-            entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), true);
+            entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), true, itPlayer->second.getMapId());
         else
-            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true);
+            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true, itPlayer->second.getMapId());
     } else if (targetType == 1) {
         if (itPlayer->second.hasLongDistanceWeapon())
             entityId =
-                    map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), false);
+                    map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), false, itPlayer->second.getMapId());
         else
-            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false);
+            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false, itPlayer->second.getMapId());
     } else {
         throw std::runtime_error(
                 "Game Error: malformed attack command (expected player.id or npc.id)");

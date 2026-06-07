@@ -24,7 +24,7 @@ void TurnManager::updateTimers() {
         NPCTimer& timer = pair.second;
 
         if (map.checkNPCAlive(npcId)) {
-            if (map.checkIfNPCIsNextToAPlayer(npcId)) {
+            if (map.checkIfNPCIsNextToAPlayer(npcId, map.getNPC(npcId)->getMapId())) {
                 timer.timeToAttack += TIME;
                 timer.timeToMove = 0; // reset move timer if next to player
             } else {

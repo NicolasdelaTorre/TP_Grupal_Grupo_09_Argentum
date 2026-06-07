@@ -31,14 +31,15 @@ void Gameloop::NPCTurns() {
     std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
     for (uint16_t npcId : npcsToMove) {
         Creature* npc = map.getNPC(npcId);
-        npc->stalkPlayer(map.searchPlayer(npc->getPosition().x, npc->getPosition().y));
+        Position newPosition = npc->stalkPlayer(map.searchPlayer(npc->getPosition().x, npc->getPosition().y, npc->getMapId()));
+        if (newPosition.x != -1) map.moveEntity(npcId, npc->getPosition().x, npc->getPosition().y, newPosition.x, newPosition.y, false, npc->getMapId());
     }
 
     // Time to process NPC attacks
     std::vector<uint16_t> npcsToAttack = turnManager.getNPCsReady(false);
     for (uint16_t npcId : npcsToAttack) {
         Creature* npc = map.getNPC(npcId);
-        uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true);
+        uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true, npc->getMapId());
         if (game.applyNPCAttack(playerId, npc->getDamage())) {
             // Verificar mensaje para el cliente (Para Tomas)
             /*

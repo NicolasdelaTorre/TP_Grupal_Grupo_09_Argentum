@@ -11,9 +11,10 @@ class NPC {
         uint16_t id;
         const std::string& name;
         Position position;
+        uint8_t mapId;
 
     public:
-        NPC(uint16_t id, const std::string& name, uint16_t x, uint16_t y);
+        NPC(uint16_t id, const std::string& name, uint16_t x, uint16_t y, uint8_t mapId);
 
         virtual ~NPC() = default;
 };

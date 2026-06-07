@@ -5,7 +5,7 @@
 #include "../toml.hpp"
 #include <iostream>
 
-Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y), isAlive(true) {
+Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y, mapId), isAlive(true) {
     // Set level
     srand(time(nullptr));
     if (mapId == 0) {
@@ -33,16 +33,19 @@ Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t
               << " and damage " << damage << "in position (" << position.x << ", " << position.y << ")" << std::endl;
 }
 
-void Creature::stalkPlayer(Position playerPosition) {
+Position Creature::stalkPlayer(Position playerPosition) {
     // No player in sight
-    if (playerPosition.x == -1)
-        return;
+    if (playerPosition.x == -1) {
+        return {-1, -1};
+    }
 
     int16_t dx = playerPosition.x - position.x;
     int16_t dy = playerPosition.y - position.y;
 
     position.x += (dx > 0) - (dx < 0);
     position.y += (dy > 0) - (dy < 0);
+
+    return position;
 }
 
 void Creature::receiveDamage(uint16_t damage) {
@@ -70,4 +73,8 @@ Position Creature::getPosition() const {
 uint16_t Creature::getDamage() const {
     std::cout << "Creature " << name << " attacks with " << damage << " damage!" << std::endl;
     return damage;
+}
+
+uint8_t Creature::getMapId() const {
+    return mapId;
 }

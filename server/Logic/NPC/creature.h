@@ -18,7 +18,7 @@ private:
 public:
     Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y);
 
-    void stalkPlayer(Position playerPosition);
+    Position stalkPlayer(Position playerPosition);
 
     void receiveDamage(uint16_t damage);
 
@@ -29,6 +29,8 @@ public:
     Position getPosition() const;
 
     uint16_t getDamage() const;
+
+    uint8_t getMapId() const;
 };
 
 #endif

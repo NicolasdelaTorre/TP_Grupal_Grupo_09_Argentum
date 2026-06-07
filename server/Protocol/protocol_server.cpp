@@ -522,12 +522,12 @@ void ProtocolServer::sendMap(common_protocol& client) {
     const Map& map = *mapRef;
 
     client.sendByte(static_cast<uint8_t>(ServerMsg::MAP));
-    client.send_two_bytes_number(map.getWidth());
-    client.send_two_bytes_number(map.getHeight());
-    client.send_two_bytes_number(map.getCellCount());
+    client.send_two_bytes_number(map.getWidth(0));
+    client.send_two_bytes_number(map.getHeight(0));
+    client.send_two_bytes_number(map.getCellCount(0));
 
-    for (size_t i = 0; i < map.getCellCount(); i++) {
-        Cell cell = map.getCell(i);
+    for (size_t i = 0; i < map.getCellCount(0); i++) {
+        Cell cell = map.getCell(i, 0);
         client.send_two_bytes_number(cell.textureId);
         client.send_two_bytes_number(cell.obstacleId);
         client.sendByte(cell.safeZone ? 1 : 0);

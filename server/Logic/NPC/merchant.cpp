@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-Merchant::Merchant(uint16_t id, const std::string& merchant, uint16_t x, uint16_t y) : NPC(id, merchant, x, y) {
+Merchant::Merchant(uint16_t id, const std::string& merchant, uint16_t x, uint16_t y) : NPC(id, merchant, x, y, 0) {
     if (merchant == "priest") {
         canRevive = true;
         canHeal = true;

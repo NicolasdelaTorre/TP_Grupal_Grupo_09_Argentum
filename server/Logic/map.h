@@ -77,53 +77,61 @@ private:
 
     void setNPC();
 
-    void spawnNPC(const Biome& biome, std::vector<Cell>& cells);
+    void spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId);
 
 public:
     // Constructor con celdas ya armadas (lo usa el YAML loader).
     Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes);
 
-    uint16_t getWidth() const;
+    uint16_t getWidth(uint8_t mapId) const;
 
-    uint16_t getHeight() const;
+    uint16_t getHeight(uint8_t mapId) const;
 
-    uint16_t getCellCount() const;
+    uint16_t getCellCount(uint8_t mapId) const;
 
-    Cell getCell(size_t index) const;
+    Cell getCell(size_t index, uint8_t mapId) const;
 
-    Position getPlayerSpawn();
+    Position getPlayerSpawn(uint8_t mapId);
 
     std::vector<uint16_t> getAllNPCIds() const;
 
     Creature* getNPC(uint16_t npcId);
 
+    std::string getMapId(uint16_t x, uint16_t y);
+
+    Position getEntrySpawnPosition(const std::string& mapId);
+
     // Devuelve true si (x, y) está dentro de los límites del mapa.
-    bool isInBounds(int16_t x, int16_t y) const;
+    bool isInBounds(int16_t x, int16_t y, uint8_t mapId) const;
 
     // Devuelve true si (x, y) está en bounds y es transitable.
-    bool isWalkable(int16_t x, int16_t y) const;
+    bool isWalkable(int16_t x, int16_t y, uint8_t mapId) const;
 
-    bool occupiedByEntity(int16_t x, int16_t y) const;
+    bool occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const;
 
-    uint8_t nextEntity(int16_t x, int16_t y, bool isPlayer);
+    uint8_t nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
-    // Mueve el playerId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
-    void movePlayer(int playerId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY);
+    // Mueve el entityId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
+    void moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId);
 
     // Limpia el playerId de la celda. Se llama al desconectar / morir.
-    void removePlayer(int16_t x, int16_t y);
+    void removePlayer(int16_t x, int16_t y, uint8_t mapId);
 
-    uint8_t entityInDistance(int16_t x, int16_t y, bool isPlayer);
+    uint8_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
-    void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer);
+    void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
-    Position searchPlayer(int16_t x, int16_t y);
+    Position searchPlayer(int16_t x, int16_t y, uint8_t mapId);
 
     bool checkNPCAlive(uint16_t npcId);
 
-    bool checkIfNPCIsNextToAPlayer(uint16_t npcId);
+    bool checkIfNPCIsNextToAPlayer(uint16_t npcId, uint8_t mapId);
 
     bool isACreature(uint16_t npcId);
+
+    bool checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId);
+
+    void placePlayerIntoTheDungeon(int playerId, const std::string& mapId);
 };
 
 #endif
