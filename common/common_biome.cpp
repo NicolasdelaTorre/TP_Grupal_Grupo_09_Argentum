@@ -48,3 +48,26 @@ const char* biome_template_id(BiomeType biome) {
     }
     return "";
 }
+
+char grid_value_to_char(uint8_t value) {
+    if (value < 10) {
+        return static_cast<char>('0' + value);
+    }
+    if (value < 36) {
+        return static_cast<char>('a' + (value - 10));
+    }
+    return '0';
+}
+
+uint8_t grid_char_to_value(char c) {
+    if (c >= '0' && c <= '9') {
+        return static_cast<uint8_t>(c - '0');
+    }
+    if (c >= 'a' && c <= 'z') {
+        return static_cast<uint8_t>(10 + (c - 'a'));
+    }
+    if (c >= 'A' && c <= 'Z') {
+        return static_cast<uint8_t>(10 + (c - 'A'));
+    }
+    return 0;
+}

@@ -1,0 +1,8 @@
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/CMakeFiles/taller_common.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/CMakeFiles/taller_server.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/CMakeFiles/edit_cache.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/CMakeFiles/rebuild_cache.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/common/CMakeFiles/edit_cache.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/common/CMakeFiles/rebuild_cache.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/server/CMakeFiles/edit_cache.dir
+/home/joaco/Documents/Taller/tp-grupal/Argentum/build-server/server/CMakeFiles/rebuild_cache.dir

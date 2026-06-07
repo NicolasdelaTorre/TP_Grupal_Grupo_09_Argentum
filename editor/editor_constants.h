@@ -38,6 +38,10 @@
 #define EDITOR_TEMPLATES_WALLS_PATH EDITOR_TEMPLATES_PATH "/walls"
 #endif
 
+#ifndef EDITOR_TEMPLATES_FLOORS_PATH
+#define EDITOR_TEMPLATES_FLOORS_PATH EDITOR_TEMPLATES_PATH "/tiles"
+#endif
+
 #ifndef EDITOR_ASSETS_IMAGES_PATH
 #define EDITOR_ASSETS_IMAGES_PATH "assets/images"
 #endif
@@ -49,6 +53,7 @@
 #define TEMPLATES_OBSTACLES_PATH EDITOR_TEMPLATES_OBSTACLES_PATH
 #define TEMPLATES_ENTRIES_PATH EDITOR_TEMPLATES_ENTRIES_PATH
 #define TEMPLATES_WALLS_PATH EDITOR_TEMPLATES_WALLS_PATH
+#define TEMPLATES_FLOORS_PATH EDITOR_TEMPLATES_FLOORS_PATH
 #define ASSETS_IMAGES_PATH EDITOR_ASSETS_IMAGES_PATH
 
 #define DATA_TYPE (Qt::UserRole + 1)
@@ -63,6 +68,7 @@
 #define BIOME_ZONE_TYPE "biome_zone"
 #define ENTRY_TYPE "entry"
 #define WALL_TYPE "wall"
+#define FLOOR_TYPE "floor"
 
 #define ZONE_TYPE_CITY "city"
 #define ZONE_TYPE_BIOME "biome"
@@ -80,7 +86,10 @@
 #define CREATURE_VALUE_LABEL_WIDTH 28
 
 // Z order de los elementos del mapa (de abajo hacia arriba):
-// biomas -> ciudades -> obstáculos / entries / spawn (y paredes en entornos).
+// texturas de bioma (-1.7) / tinte de bioma (-1.5) -> modificadores de piso
+// (-1.4, por encima del bioma y por debajo de la grilla en -1) -> biomas ->
+// ciudades -> obstáculos / entries / spawn (y paredes en entornos).
+#define Z_FLOOR_MODIFIER -1.4
 #define Z_BIOME_ZONE 1.0
 #define Z_CITY_ZONE 2.0
 #define Z_OBSTACLE 3.0

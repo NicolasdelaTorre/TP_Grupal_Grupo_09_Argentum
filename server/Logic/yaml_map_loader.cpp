@@ -116,9 +116,11 @@ void applyBiomeMap(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
     while (y < mapHeight && std::getline(stream, line)) {
         for (uint16_t x = 0; x < mapWidth && x < line.size(); x++) {
             const char c = line[x];
-            if (c >= '0' && c <= '9') {
+            // Codificación base 36 (0-9 y a-z): biomas 0-8, modificadores de piso
+            // con valores superiores. Cada carácter es el textureId de la celda.
+            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                 cells[static_cast<size_t>(y) * mapWidth + x].textureId =
-                        static_cast<uint16_t>(c - '0');
+                        static_cast<uint16_t>(grid_char_to_value(c));
             }
         }
         y++;

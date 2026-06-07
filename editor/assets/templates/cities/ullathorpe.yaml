@@ -5,15 +5,53 @@ default_size:
   height: 30
 color: "#3A6FB0"
 fixed_npcs:
-  - { type: priest, name: "Sacerdote", position: [8, 8] }
-  - { type: merchant, name: "Comerciante", position: [14, 8] }
-  - { type: merchant, name: "Comerciante", position: [20, 8] }
-  - { type: merchant, name: "Comerciante", position: [26, 8] }
-  - { type: banker, name: "Banquero", position: [32, 8] }
+  - { type: priest, name: "Sacerdote", position: [20, 11] }
+  - { type: merchant, name: "Comerciante", position: [9, 24] }
+  - { type: banker, name: "Banquero", position: [7, 11] }
 fixed_obstacles:
-  - { type: lampara_ciudad, position: [2, 2] }
-  - { type: lampara_ciudad, position: [37, 2] }
-  - { type: lampara_ciudad, position: [2, 27] }
-  - { type: carretilla_de_madera, position: [5, 20] }
-  - { type: molino, position: [30, 20] }
+  - { type: lampara_ciudad, position: [3, 11] } 
+  - { type: lampara_ciudad, position: [12, 11] } 
+  - { type: lampara_ciudad, position: [17, 11] } 
+  - { type: lampara_ciudad, position: [23, 11] } 
+  - { type: lampara_ciudad, position: [28, 12] } 
+  - { type: lampara_ciudad, position: [28, 15] } 
+  - { type: lampara_ciudad, position: [38, 15] } 
+  - { type: lampara_ciudad, position: [4, 18] } 
+  - { type: lampara_ciudad, position: [9, 18] } 
+  - { type: lampara_ciudad, position: [17, 22] }
+  - { type: lampara_ciudad, position: [23, 22] }
+  - { type: lampara_ciudad, position: [34, 22] }
+  - { type: banco, position: [3, 7] }
+  - { type: iglesia, position: [16, 1] }
+  - { type: hotel, position: [29, 9] }
+  - { type: fuente, position: [19, 14] }
+  - { type: casa_madera_azul, position: [0, 15] }
+  - { type: casa_madera_azul, position: [5, 15] }
+  - { type: casa_madera_roja, position: [10, 15] }
+  - { type: casa_madera_azul, position: [30, 19] }
+  - { type: casa_madera_roja, position: [35, 19] }
+  - { type: cerca_madera, position: [1, 22] }
+  - { type: cerca_madera, position: [3, 22] }
+  - { type: cerca_madera, position: [5, 22] }
+  - { type: cerca_madera, position: [7, 22] }
+  - { type: cerca_madera, position: [9, 22] }
+  - { type: cerca_madera, position: [11, 22] }
+  - { type: diana, position: [2, 23] }
+  - { type: diana, position: [3, 23] }
+  - { type: diana, position: [4, 23] }
+  - { type: munieco_entrenamiento, position: [6, 24] }
+  - { type: herrero, position: [8, 23] }
+  - { type: fardo_heno, position: [14, 28] }
+fixed_floors:
+  # `type` referencia un template_id de assets/templates/tiles; la posición es
+  # relativa a la esquina de la ciudad. No bloquean el paso, solo cambian el piso.
+  - { type: adoquin, position: [18, 17] }
+  - { type: adoquin, position: [19, 17] }
+  - { type: adoquin, position: [20, 17] }
+  - { type: adoquin, position: [19, 18] }
+  - { type: adoquin, position: [19, 19] }
+  - { type: adoquin_oscuro, position: [18, 18] }
+  - { type: adoquin_oscuro, position: [20, 18] }
+  - { type: madera, position: [29, 9] }
+  - { type: madera, position: [30, 9] }
 

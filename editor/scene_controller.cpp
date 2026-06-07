@@ -28,6 +28,7 @@ void SceneController::reset() {
     next_obstacle_id_ = 1;
     next_zone_id_ = 1;
     next_wall_id_ = 1;
+    next_floor_id_ = 1;
 }
 
 QString SceneController::nextObstacleId() {
@@ -37,6 +38,8 @@ QString SceneController::nextObstacleId() {
 QString SceneController::nextZoneId() { return QStringLiteral("zone_%1").arg(next_zone_id_++); }
 
 QString SceneController::nextWallId() { return QStringLiteral("wall_%1").arg(next_wall_id_++); }
+
+QString SceneController::nextFloorId() { return QStringLiteral("floor_%1").arg(next_floor_id_++); }
 
 void SceneController::bumpCounter(int& counter, const QString& id, const QString& prefix) {
     if (!id.startsWith(prefix)) {
@@ -186,6 +189,55 @@ bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QS
                                          wall_tpl->height, fill);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_WALL);
+    scene_->addItem(item);
+    return true;
+}
+
+bool SceneController::placeFloor(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
+                                 const QString& floor_id) {
+    if (tool.floor_template_id.isEmpty()) {
+        error = QStringLiteral("Seleccioná un modificador de piso.");
+        return false;
+    }
+
+    const auto* floor = templates_.find_floor(tool.floor_template_id.toStdString());
+    if (!floor) {
+        error = QStringLiteral("Modificador de piso inválido.");
+        return false;
+    }
+
+    // Evitar apilar varios pisos en la misma celda: si ya hay uno, se reemplaza.
+    const QRectF area(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE,
+                      CELL_DISPLAY_SIZE);
+    for (auto* existing: scene_->items(area)) {
+        QGraphicsItem* current = existing;
+        while (current->parentItem()) {
+            current = current->parentItem();
+        }
+        if (current->data(DATA_TYPE).toString() == FLOOR_TYPE) {
+            const int ex = static_cast<int>(current->pos().x()) / CELL_DISPLAY_SIZE;
+            const int ey = static_cast<int>(current->pos().y()) / CELL_DISPLAY_SIZE;
+            if (ex == cell_x && ey == cell_y) {
+                scene_->removeItem(current);
+                delete current;
+            }
+        }
+    }
+
+    QColor fill(150, 150, 150);
+    if (!floor->color.empty()) {
+        QColor parsed(QString::fromStdString(floor->color));
+        if (parsed.isValid()) {
+            fill = parsed;
+        }
+    }
+
+    const QString id = floor_id.isEmpty() ? nextFloorId() : floor_id;
+    bumpCounter(next_floor_id_, id, QStringLiteral("floor_"));
+    auto* item = item_builder_.buildFloor(id, QString::fromStdString(floor->id), fill,
+                                          QString::fromStdString(floor->texture));
+    item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
+    item->setZValue(Z_FLOOR_MODIFIER);
     scene_->addItem(item);
     return true;
 }
@@ -422,6 +474,26 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
                 document.biome_grid[i] = biome_values[static_cast<size_t>(o)];
             }
         }
+    }
+
+    // Los modificadores de piso se superponen al grid de biomas: cada celda con
+    // un piso sobreescribe su número por el `grid_value` del template. Se aplican
+    // al final para que ganen sobre el valor de bioma subyacente.
+    for (auto* item: scene_->items()) {
+        if (item->data(DATA_TYPE).toString() != FLOOR_TYPE) {
+            continue;
+        }
+        const int cell_x = static_cast<int>(item->pos().x()) / CELL_DISPLAY_SIZE;
+        const int cell_y = static_cast<int>(item->pos().y()) / CELL_DISPLAY_SIZE;
+        if (cell_x < 0 || cell_y < 0 || cell_x >= width || cell_y >= height) {
+            continue;
+        }
+        const auto* floor = templates_.find_floor(item->data(DATA_SUBTYPE).toString().toStdString());
+        if (!floor) {
+            continue;
+        }
+        const size_t idx = static_cast<size_t>(cell_y) * width + cell_x;
+        document.biome_grid[idx] = static_cast<uint8_t>(floor->grid_value);
     }
 
     return document;

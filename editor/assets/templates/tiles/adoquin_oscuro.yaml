@@ -1,0 +1,5 @@
+template_id: adoquin_oscuro
+name: "Adoquín oscuro"
+color: "#5C5C5C"
+texture: "tiles/adoquin_oscuro.png"
+grid_value: 10

@@ -26,4 +26,13 @@ BiomeType biome_from_template_id(const std::string& template_id);
 // tipo -> template_id.
 const char* biome_template_id(BiomeType biome);
 
+// Codificación de un valor de celda del grid a un único carácter. Los biomas
+// usan los dígitos 0-8; los modificadores de piso usan valores superiores.
+// Para mantener un carácter por celda se usa base 36: 0-9 y luego a-z
+// (valores 10-35). Valores fuera de rango devuelven '0'.
+char grid_value_to_char(uint8_t value);
+
+// Inversa de grid_value_to_char. Caracteres inválidos devuelven 0.
+uint8_t grid_char_to_value(char c);
+
 #endif

@@ -63,6 +63,7 @@ private:
     void selectObstacleMode();
     void selectBiomeMode();
     void selectCityMode();
+    void selectFloorMode();
     void selectEnvironmentMode();
     void selectDimensionsMode();
     void selectDefaultMode();
