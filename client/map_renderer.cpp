@@ -170,7 +170,7 @@ void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
     }
 }
 
-void MapRenderer::renderPlayer(const Player& player, float camX, float camY) {
+void MapRenderer::renderPlayer(const Player_& player, float camX, float camY) {
     int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
     int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
 
@@ -241,7 +241,7 @@ void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
     }
 }
 
-void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
+void MapRenderer::renderWeapon(const Player_& player, float camX, float camY) {
     if (player.killed || player.weaponId < 0)
         return;
 
@@ -263,7 +263,7 @@ void MapRenderer::renderWeapon(const Player& player, float camX, float camY) {
     renderer.Copy(cache.get(weaponFiles[player.weaponId]), src, dst);
 }
 
-void MapRenderer::renderShield(const Player& player, float camX, float camY) {
+void MapRenderer::renderShield(const Player_& player, float camX, float camY) {
     if (player.killed || player.shieldId < 0 || player.dir == Direction::UP)
         return;
 
@@ -283,7 +283,7 @@ void MapRenderer::renderShield(const Player& player, float camX, float camY) {
     renderer.Copy(cache.get(shieldFiles[player.shieldId]), src, dst);
 }
 
-void MapRenderer::renderHead(const Player& player, float camX, float camY) {
+void MapRenderer::renderHead(const Player_& player, float camX, float camY) {
     if (player.killed)
         return;
     // Misma posición base que el cuerpo
@@ -309,7 +309,7 @@ void MapRenderer::renderHead(const Player& player, float camX, float camY) {
     renderer.Copy(cache.get("/Skins/Cabezas.png"), src, dst);
 }
 
-void MapRenderer::renderHelmet(const Player& player, float camX, float camY) {
+void MapRenderer::renderHelmet(const Player_& player, float camX, float camY) {
     if (player.killed || player.helmetId < 0)
         return;
 

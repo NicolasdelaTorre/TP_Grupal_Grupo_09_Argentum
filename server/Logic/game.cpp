@@ -5,8 +5,10 @@
 #include <iostream>
 #include <stdexcept>
 
-Game::Game(Map& map, Position playerSpawn):
-        map(map), playerSpawn(playerSpawn), parser(BinaryParser()) {}
+Game::Game(Map& world):
+    map(world),
+    playerSpawn(map.getPlayerSpawn()),
+    parser(BinaryParser()) {}
 
 bool Game::processCommand(int playerId, const std::string& command) {
     size_t commandPosition = command.find('.');

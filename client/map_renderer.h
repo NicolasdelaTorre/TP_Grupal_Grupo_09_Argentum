@@ -50,11 +50,11 @@ public:
     void renderObstacles(const GameMap& map, float camX, float camY);
 
 
-    void renderPlayer(const Player& player, float camX, float camY);
-    void renderWeapon(const Player& player, float camX, float camY);
-    void renderShield(const Player& player, float camX, float camY);
-    void renderHead(const Player& player, float camX, float camY);
-    void renderHelmet(const Player& player, float camX, float camY);
+    void renderPlayer(const Player_& player, float camX, float camY);
+    void renderWeapon(const Player_& player, float camX, float camY);
+    void renderShield(const Player_& player, float camX, float camY);
+    void renderHead(const Player_& player, float camX, float camY);
+    void renderHelmet(const Player_& player, float camX, float camY);
 
     // Renderiza los NPCs estáticos de ciudad (tiles con ObstacleType::NPC_*)
     void renderCityNpcs(const GameMap& map, float camX, float camY);

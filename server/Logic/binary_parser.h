@@ -5,6 +5,8 @@
 
 #include "player.h"
 
+struct BankAccount;
+
 class BinaryParser {
 private:
     uint32_t lastOffset;
@@ -19,6 +21,12 @@ public:
     PlayerData loadPlayerData(const std::string& name);
 
     void updatePlayerData(const std::string& name, PlayerData data);
+
+    BankAccount loadBankAccount(const std::string& name);
+
+    bool checkBankAccountExists(const std::string& name);
+
+    void updateBankAccount(BankAccount account);
 };
 
 #endif

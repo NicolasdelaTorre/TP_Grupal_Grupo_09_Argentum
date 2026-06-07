@@ -10,6 +10,7 @@
 #include "binary_parser.h"
 #include "map.h"
 #include "player.h"
+#include "yaml_map_loader.h"
 
 // Resultado de un ataque, lo arma processAttack y lo consume el gameloop
 // para mandar ATTACK_RESULT por broadcast.
@@ -30,7 +31,6 @@ private:
     Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
     BinaryParser parser;
-
     // Encuentra una posición libre para spawnear. Tira excepción si no hay ninguna.
     Position findSpawnPosition() const;
 
@@ -50,7 +50,7 @@ private:
     bool tryEvade(int attackerId, int targetId) const;
 
 public:
-    Game(Map& map, Position playerSpawn);
+    explicit Game(Map& world);
 
     bool processCommand(int playerId, const std::string& command);
 

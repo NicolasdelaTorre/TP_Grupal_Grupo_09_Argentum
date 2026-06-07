@@ -44,7 +44,7 @@ void client::run() {
         return;
     }
 
-    Player player;
+    Player_ player;
 
     // Usuario nuevo: elige cabeza, luego skin, luego manda la skin al server.
     // default para jugadores que ya existían

@@ -27,7 +27,7 @@ struct BloodEffect {
 // target* es el tile destino que mandó el server; visual.x/y avanzan hacia ahí
 // a PLAYER_MOVE_SPEED para que el movimiento se vea fluido en vez de teletransporte.
 struct OtherPlayer {
-    Player visual;
+    Player_ visual;
     float targetX = 0.0f;
     float targetY = 0.0f;
     std::string name;
@@ -37,7 +37,7 @@ class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-               const ReceivedMap& mapData, Position spawn, Player player);
+               const ReceivedMap& mapData, Position spawn, Player_ player);
 
     // Retorna false cuando el jugador quiere salir
     bool run();
@@ -60,7 +60,7 @@ private:
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
     // pushea.
     Queue<std::string>& server_queue;
-    Player player;
+    Player_ player;
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::vector<DroppedItem> droppedItems;
     std::vector<BloodEffect> bloodEffects;

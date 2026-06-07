@@ -17,7 +17,7 @@ private:
     Queue<std::string> clientCommands;
     ClientMonitor clientQueues;
     // Declarado antes que Gameloop porque éste lo referencia.
-    LoadedMap loadedMap;
+    Map map;
     Gameloop gameloop;
     Acceptor acceptor;
 

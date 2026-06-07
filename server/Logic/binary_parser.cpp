@@ -1,5 +1,7 @@
 #include "binary_parser.h"
 
+#include "NPC/banker.h"
+
 #include <cstdint>
 #include <fstream>
 #include <string>
@@ -139,6 +141,129 @@ void BinaryParser::updatePlayerData(const std::string& name, PlayerData data) {
             }
             dataFile.seekp(dataOffset);
             dataFile.write(reinterpret_cast<const char*>(&data), sizeof(data));
+            return;
+        }
+    }
+}
+
+BankAccount BinaryParser::loadBankAccount(const std::string& name) {
+    std::ifstream bankFile("server/Logic/NPC/bank_accounts.bin", std::ios::binary);
+    if (!bankFile.is_open()) {
+        throw std::runtime_error("BinaryParser Error: could not open bank accounts file");
+    }
+
+    while (true) {
+        uint16_t nameLength = 0;
+
+        if (!bankFile.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength))) {
+            break;
+        }
+
+        if (nameLength == 0) {
+            break;
+        }
+
+        std::string storedName(nameLength, '\0');
+        if (!bankFile.read(&storedName[0], nameLength)) {
+            break;
+        }
+
+        BankAccount account{storedName, 0, {}};
+
+        if (!bankFile.read(reinterpret_cast<char*>(&account.gold), sizeof(account.gold))) {
+            break;
+        }
+
+        if (!bankFile.read(reinterpret_cast<char*>(account.items), sizeof(account.items))) {
+            break;
+        }
+
+        if (storedName == name) {
+            return account;
+        }
+    }
+
+    throw std::runtime_error("BinaryParser Error: bank account not found");
+}
+
+bool BinaryParser::checkBankAccountExists(const std::string& name) {
+    std::ifstream bankFile("server/Logic/NPC/bank_accounts.bin", std::ios::binary);
+    if (!bankFile.is_open()) {
+        return false;
+    }
+
+    while (true) {
+        uint16_t nameLength = 0;
+
+        if (!bankFile.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength))) {
+            break;
+        }
+
+        if (nameLength == 0) {
+            break;
+        }
+
+        std::string storedName(nameLength, '\0');
+        if (!bankFile.read(&storedName[0], nameLength)) {
+            break;
+        }
+
+        uint32_t dataOffset = 0;
+        if (!bankFile.read(reinterpret_cast<char*>(&dataOffset), sizeof(dataOffset))) {
+            break;
+        }
+
+        if (storedName == name) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void BinaryParser::updateBankAccount(BankAccount account) {
+    std::ifstream bankFile("server/Logic/NPC/bank_accounts.bin", std::ios::binary);
+    if (!bankFile.is_open()) {
+        throw std::runtime_error("BinaryParser Error: could not open bank accounts file");
+    }
+
+    while (true) {
+        uint16_t nameLength = 0;
+
+        if (!bankFile.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength))) {
+            break;
+        }
+
+        if (nameLength == 0) {
+            break;
+        }
+
+        std::string storedName(nameLength, '\0');
+        if (!bankFile.read(&storedName[0], nameLength)) {
+            break;
+        }
+
+        std::streampos accountOffset = bankFile.tellg();
+
+        uint32_t dataGold = 0;
+        if (!bankFile.read(reinterpret_cast<char*>(&dataGold), sizeof(dataGold))) {
+            break;
+        }
+
+        uint8_t items[N];
+        if (!bankFile.read(reinterpret_cast<char*>(items), sizeof(items))) {
+            break;
+        }
+
+        if (storedName == account.name) {
+            std::fstream dataFile("server/Logic/NPC/bank_accounts.bin",
+                                  std::ios::binary | std::ios::in | std::ios::out);
+            if (!dataFile.is_open()) {
+                throw std::runtime_error("BinaryParser Error: could not open bank accounts file");
+            }
+            dataFile.seekp(accountOffset);
+            dataFile.write(reinterpret_cast<const char*>(&account.gold), sizeof(account.gold));
+            dataFile.write(reinterpret_cast<const char*>(account.items), sizeof(account.items));
             return;
         }
     }
