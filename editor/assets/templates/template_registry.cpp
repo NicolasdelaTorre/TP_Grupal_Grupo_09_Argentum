@@ -13,6 +13,7 @@ bool TemplateRegistry::load() {
     obstacles_.clear();
     entries_.clear();
     walls_.clear();
+    exits_.clear();
     floors_.clear();
 
     if (!std::filesystem::exists(TEMPLATES_CITIES_PATH) ||
@@ -20,6 +21,7 @@ bool TemplateRegistry::load() {
         !std::filesystem::exists(TEMPLATES_OBSTACLES_PATH) ||
         !std::filesystem::exists(TEMPLATES_ENTRIES_PATH) ||
         !std::filesystem::exists(TEMPLATES_WALLS_PATH) ||
+        !std::filesystem::exists(TEMPLATES_EXITS_PATH) ||
         !std::filesystem::exists(TEMPLATES_FLOORS_PATH)) {
         return false;
     }
@@ -64,6 +66,14 @@ bool TemplateRegistry::load() {
         }
     }
 
+    for (const auto& entry: std::filesystem::directory_iterator(TEMPLATES_EXITS_PATH)) {
+        if (entry.path().extension() == ".yaml") {
+            if (!load_exit_file(entry.path().string())) {
+                return false;
+            }
+        }
+    }
+
     for (const auto& entry: std::filesystem::directory_iterator(TEMPLATES_FLOORS_PATH)) {
         if (entry.path().extension() == ".yaml") {
             if (!load_floor_file(entry.path().string())) {
@@ -73,7 +83,7 @@ bool TemplateRegistry::load() {
     }
 
     return !cities_.empty() && !biomes_.empty() && !obstacles_.empty() && !entries_.empty() &&
-           !walls_.empty() && !floors_.empty();
+           !walls_.empty() && !exits_.empty() && !floors_.empty();
 }
 
 const std::vector<CityTemplate>& TemplateRegistry::cities() const { return cities_; }
@@ -85,6 +95,8 @@ const std::vector<ObstacleTemplate>& TemplateRegistry::obstacles() const { retur
 const std::vector<EntryTemplate>& TemplateRegistry::entries() const { return entries_; }
 
 const std::vector<WallTemplate>& TemplateRegistry::walls() const { return walls_; }
+
+const std::vector<ExitTemplate>& TemplateRegistry::exits() const { return exits_; }
 
 const std::vector<FloorTemplate>& TemplateRegistry::floors() const { return floors_; }
 
@@ -130,6 +142,12 @@ const WallTemplate* TemplateRegistry::find_wall(const std::string& id) const {
     const auto it = std::find_if(walls_.begin(), walls_.end(),
                                  [&id](const WallTemplate& wall) { return wall.id == id; });
     return it != walls_.end() ? &(*it) : nullptr;
+}
+
+const ExitTemplate* TemplateRegistry::find_exit(const std::string& id) const {
+    const auto it = std::find_if(exits_.begin(), exits_.end(),
+                                 [&id](const ExitTemplate& exit) { return exit.id == id; });
+    return it != exits_.end() ? &(*it) : nullptr;
 }
 
 const FloorTemplate* TemplateRegistry::find_floor(const std::string& id) const {
@@ -225,10 +243,6 @@ bool TemplateRegistry::load_biome_file(const std::string& path) {
             biome.default_height = sizeNode["height"].as<int>();
         }
 
-        if (const auto colorNode = root["color"]) {
-            biome.color = colorNode.as<std::string>();
-        }
-
         if (const auto textureNode = root["texture"]) {
             const auto filename = textureNode.as<std::string>();
             if (!filename.empty()) {
@@ -316,6 +330,13 @@ bool TemplateRegistry::load_entry_file(const std::string& path) {
             entry.floor_color = floorNode.as<std::string>();
         }
 
+        // La textura de piso se guarda sin resolver (ruta relativa al directorio
+        // de imágenes de common). El renderer del editor la resuelve al pintarla,
+        // y se escribe tal cual en el YAML del mapa para que sea portable.
+        if (const auto floorTextureNode = root["floor_texture"]) {
+            entry.floor_texture = floorTextureNode.as<std::string>();
+        }
+
         entries_.push_back(entry);
         return true;
     } catch (const YAML::Exception&) {
@@ -336,11 +357,45 @@ bool TemplateRegistry::load_wall_file(const std::string& path) {
             wall.height = sizeNode["height"].as<int>();
         }
 
-        if (const auto colorNode = root["color"]) {
-            wall.color = colorNode.as<std::string>();
+        if (const auto textureNode = root["texture"]) {
+            const auto filename = textureNode.as<std::string>();
+            if (!filename.empty()) {
+                const std::filesystem::path resolved =
+                        std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
+                wall.texture = resolved.string();
+            }
         }
 
         walls_.push_back(wall);
+        return true;
+    } catch (const YAML::Exception&) {
+        return false;
+    }
+}
+
+bool TemplateRegistry::load_exit_file(const std::string& path) {
+    try {
+        YAML::Node root = YAML::LoadFile(path);
+        ExitTemplate exit;
+        exit.id = root["template_id"].as<std::string>();
+        exit.name = root["name"].as<std::string>();
+
+        const auto sizeNode = root["size"];
+        if (sizeNode) {
+            exit.width = sizeNode["width"].as<int>();
+            exit.height = sizeNode["height"].as<int>();
+        }
+
+        if (const auto textureNode = root["texture"]) {
+            const auto filename = textureNode.as<std::string>();
+            if (!filename.empty()) {
+                const std::filesystem::path resolved =
+                        std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
+                exit.texture = resolved.string();
+            }
+        }
+
+        exits_.push_back(exit);
         return true;
     } catch (const YAML::Exception&) {
         return false;

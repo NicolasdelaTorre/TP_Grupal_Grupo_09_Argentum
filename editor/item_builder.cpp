@@ -75,11 +75,47 @@ QGraphicsRectItem* ItemBuilder::buildEntry(const QString& id, const QString& typ
 }
 
 QGraphicsRectItem* ItemBuilder::buildWall(const QString& id, const QString& templateId, int width,
-                                          int height, const QColor& fill) {
-    auto* rect = new QGraphicsRectItem(0, 0, width * CELL_DISPLAY_SIZE, height * CELL_DISPLAY_SIZE);
-    rect->setBrush(QBrush(fill));
-    rect->setPen(QPen(fill.darker(180), 1));
+                                          int height, const QString& texturePath) {
+    const int pixel_w = width * CELL_DISPLAY_SIZE;
+    const int pixel_h = height * CELL_DISPLAY_SIZE;
+    auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
+
+    // dibuja a tamaño nativo, ancla esquina inferior izquierda a esquina inferior izquierda del rect
+    QPixmap pixmap;
+    const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
+    rect->setBrush(Qt::NoBrush);
+    rect->setPen(Qt::NoPen);
+    if (has_texture) {
+        auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
+        texture_item->setTransformationMode(Qt::SmoothTransformation);
+        texture_item->setPos(0, pixel_h - pixmap.height());
+    }
+
     rect->setData(DATA_TYPE, WALL_TYPE);
+    rect->setData(DATA_ID, id);
+    rect->setData(DATA_SUBTYPE, templateId);
+    rect->setData(DATA_WIDTH, width);
+    rect->setData(DATA_HEIGHT, height);
+    return rect;
+}
+
+QGraphicsRectItem* ItemBuilder::buildExit(const QString& id, const QString& templateId, int width,
+                                          int height, const QString& texturePath) {
+    const int pixel_w = width * CELL_DISPLAY_SIZE;
+    const int pixel_h = height * CELL_DISPLAY_SIZE;
+    auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
+
+    QPixmap pixmap;
+    const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
+    rect->setBrush(Qt::NoBrush);
+    rect->setPen(Qt::NoPen);
+    if (has_texture) {
+        auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
+        texture_item->setTransformationMode(Qt::SmoothTransformation);
+        texture_item->setPos(0, pixel_h - pixmap.height());
+    }
+
+    rect->setData(DATA_TYPE, EXIT_TYPE);
     rect->setData(DATA_ID, id);
     rect->setData(DATA_SUBTYPE, templateId);
     rect->setData(DATA_WIDTH, width);

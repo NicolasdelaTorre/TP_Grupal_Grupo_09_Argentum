@@ -72,6 +72,7 @@ enum class ObstacleType : uint8_t {
     HOTEL = 26,           // hotel                 → hotel.png
     CHURCH = 27,          // iglesia               → iglesia.png
     TRAINING_DUMMY = 28,  // munieco_entrenamiento → munieco.png
+    EXIT = 29,            // salida (environment → mapa principal); no transitable
 };
 
 // ── Dirección del personaje ───────────────────────────────────

@@ -70,6 +70,17 @@ struct Wall {
     int y = 0;
     int width = 1;
     int height = 1;
+    std::string texture;
+};
+
+struct Exit {
+    std::string id;
+    std::string template_id;
+    int x = 0;
+    int y = 0;
+    int width = 1;
+    int height = 1;
+    std::string texture;
 };
 
 struct Environment {
@@ -81,8 +92,11 @@ struct Environment {
     PlayerSpawn player_spawn;
     std::vector<Obstacle> obstacles;
     std::vector<Wall> walls;
+    std::vector<Exit> exits;
     std::vector<CreatureSpawn> spawns;
     std::string floor_color;
+    // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
+    std::string floor_texture;
 };
 
 struct MapDocument {
@@ -94,7 +108,10 @@ struct MapDocument {
     std::vector<Entry> entries;
     std::vector<Environment> environments;
     std::vector<Wall> walls;
+    std::vector<Exit> exits;
     std::string floor_color;
+    // Textura de piso para entornos (ruta relativa a common/assets/images).
+    std::string floor_texture;
     std::vector<uint8_t> biome_grid;
 };
 

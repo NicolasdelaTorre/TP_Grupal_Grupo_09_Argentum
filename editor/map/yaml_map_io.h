@@ -24,6 +24,7 @@ private:
     static Zone read_zone(const YAML::Node& node);
     static Entry read_entry(const YAML::Node& node);
     static Wall read_wall(const YAML::Node& node);
+    static Exit read_exit(const YAML::Node& node);
     static Environment read_environment(const YAML::Node& node);
 };
 

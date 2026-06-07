@@ -43,7 +43,6 @@ struct BiomeTemplate {
     std::string name;
     int default_width = 0;
     int default_height = 0;
-    std::string color;
     std::string texture;
     std::vector<std::string> allowed_creatures;
 };
@@ -70,6 +69,9 @@ struct EntryTemplate {
     std::string color;
     std::vector<EnvironmentSizeOption> environment_sizes;
     std::string floor_color;
+    // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
+    // Se guarda sin resolver para que sea portable en el YAML del mapa.
+    std::string floor_texture;
 };
 
 struct WallTemplate {
@@ -77,7 +79,15 @@ struct WallTemplate {
     std::string name;
     int width = 1;
     int height = 1;
-    std::string color;
+    std::string texture;
+};
+
+struct ExitTemplate {
+    std::string id;
+    std::string name;
+    int width = 1;
+    int height = 1;
+    std::string texture;
 };
 
 // Modificador de piso: una textura de 64x64 que no bloquea el paso y solo cambia
@@ -100,6 +110,7 @@ public:
     const std::vector<ObstacleTemplate>& obstacles() const;
     const std::vector<EntryTemplate>& entries() const;
     const std::vector<WallTemplate>& walls() const;
+    const std::vector<ExitTemplate>& exits() const;
     const std::vector<FloorTemplate>& floors() const;
 
     // Lista de todas las criaturas disponibles, agregando (sin repetir) las
@@ -112,6 +123,7 @@ public:
     const ObstacleTemplate* find_obstacle(const std::string& id) const;
     const EntryTemplate* find_entry(const std::string& id) const;
     const WallTemplate* find_wall(const std::string& id) const;
+    const ExitTemplate* find_exit(const std::string& id) const;
     const FloorTemplate* find_floor(const std::string& id) const;
     // Modificador de piso cuyo `grid_value` coincide con el dado (para
     // reconstruir los pisos al cargar un mapa desde el grid del biome_map).
@@ -123,6 +135,7 @@ private:
     std::vector<ObstacleTemplate> obstacles_;
     std::vector<EntryTemplate> entries_;
     std::vector<WallTemplate> walls_;
+    std::vector<ExitTemplate> exits_;
     std::vector<FloorTemplate> floors_;
 
     bool load_city_file(const std::string& path);
@@ -130,6 +143,7 @@ private:
     bool load_obstacle_file(const std::string& path);
     bool load_entry_file(const std::string& path);
     bool load_wall_file(const std::string& path);
+    bool load_exit_file(const std::string& path);
     bool load_floor_file(const std::string& path);
 };
 

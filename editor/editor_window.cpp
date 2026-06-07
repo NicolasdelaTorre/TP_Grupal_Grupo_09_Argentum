@@ -73,6 +73,12 @@ bool EditorWindow::canShrinkDocument(const MapDocument& doc, const ResizeDelta& 
             return false;
         }
     }
+    for (const auto& ex: doc.exits) {
+        if (!fitsInside(ex.x + delta.offset_x, ex.y + delta.offset_y, ex.width, ex.height, new_w,
+                        new_h)) {
+            return false;
+        }
+    }
     for (const auto& e: doc.entries) {
         if (!fitsInside(e.x + delta.offset_x, e.y + delta.offset_y, e.width, e.height, new_w,
                         new_h)) {
@@ -113,6 +119,10 @@ void EditorWindow::applyResizeToDocument(MapDocument& doc, const ResizeDelta& de
     for (auto& w: doc.walls) {
         w.x += delta.offset_x;
         w.y += delta.offset_y;
+    }
+    for (auto& ex: doc.exits) {
+        ex.x += delta.offset_x;
+        ex.y += delta.offset_y;
     }
     for (auto& e: doc.entries) {
         e.x += delta.offset_x;
@@ -272,6 +282,13 @@ void EditorWindow::setupTemplates() {
                                       .arg(wall.height);
         ui_->comboWallTemplate->addItem(label, QString::fromStdString(wall.id));
     }
+    for (const auto& exit: templates_.exits()) {
+        const QString label = QStringLiteral("%1 (%2x%3)")
+                                      .arg(QString::fromStdString(exit.name))
+                                      .arg(exit.width)
+                                      .arg(exit.height);
+        ui_->comboExitTemplate->addItem(label, QString::fromStdString(exit.id));
+    }
 }
 
 void EditorWindow::setupTools() {
@@ -282,6 +299,7 @@ void EditorWindow::setupTools() {
     tool_group_->addButton(ui_->btnModeCities);
     tool_group_->addButton(ui_->btnModeFloors);
     tool_group_->addButton(ui_->btnModeEnvironments);
+    tool_group_->addButton(ui_->btnModeExits);
     tool_group_->addButton(ui_->btnModeDimensions);
 
     connect(ui_->btnModeSpawn, &QPushButton::clicked, this, &EditorWindow::selectSpawnMode);
@@ -291,6 +309,7 @@ void EditorWindow::setupTools() {
     connect(ui_->btnModeFloors, &QPushButton::clicked, this, &EditorWindow::selectFloorMode);
     connect(ui_->btnModeEnvironments, &QPushButton::clicked, this,
             &EditorWindow::selectEnvironmentMode);
+    connect(ui_->btnModeExits, &QPushButton::clicked, this, &EditorWindow::selectExitsMode);
     connect(ui_->btnModeDimensions, &QPushButton::clicked, this,
             &EditorWindow::selectDimensionsMode);
 
@@ -305,6 +324,8 @@ void EditorWindow::setupTools() {
     connect(ui_->comboEntryTemplate, &QComboBox::currentIndexChanged, this,
             [this](int) { applyActiveTool(); });
     connect(ui_->comboWallTemplate, &QComboBox::currentIndexChanged, this,
+            [this](int) { applyActiveTool(); });
+    connect(ui_->comboExitTemplate, &QComboBox::currentIndexChanged, this,
             [this](int) { applyActiveTool(); });
 
     selectDefaultMode();
@@ -338,6 +359,7 @@ void EditorWindow::applyActiveTool() {
     }
     active_tool_.entry_template_id = ui_->comboEntryTemplate->currentData().toString();
     active_tool_.wall_template_id = ui_->comboWallTemplate->currentData().toString();
+    active_tool_.exit_template_id = ui_->comboExitTemplate->currentData().toString();
     map_canvas_->setActiveTool(active_tool_);
 }
 
@@ -376,6 +398,14 @@ void EditorWindow::selectEnvironmentMode() {
 
     ui_->toolsStack->setCurrentWidget(ui_->pageToolWalls);
     selectTool(EditorTool::Wall);
+}
+
+void EditorWindow::selectExitsMode() {
+    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+        return;
+    }
+    ui_->toolsStack->setCurrentWidget(ui_->pageToolExits);
+    selectTool(EditorTool::Exit);
 }
 
 void EditorWindow::selectDimensionsMode() {
@@ -478,7 +508,9 @@ void EditorWindow::onApplyMapResize() {
         env_doc.player_spawn = env->player_spawn;
         env_doc.obstacles = env->obstacles;
         env_doc.walls = env->walls;
+        env_doc.exits = env->exits;
         env_doc.floor_color = env->floor_color;
+        env_doc.floor_texture = env->floor_texture;
 
         if (!applyTo(env_doc, QStringLiteral("the environment"))) {
             return;
@@ -489,6 +521,7 @@ void EditorWindow::onApplyMapResize() {
         env->player_spawn = env_doc.player_spawn;
         env->obstacles = env_doc.obstacles;
         env->walls = env_doc.walls;
+        env->exits = env_doc.exits;
 
         map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);
     }
@@ -634,6 +667,7 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
     env.width = dialog.environment_width();
     env.height = dialog.environment_height();
     env.floor_color = entry_template->floor_color;
+    env.floor_texture = entry_template->floor_texture;
     env.spawns = spawns;
     main_doc_.environments.push_back(env);
 
@@ -723,6 +757,7 @@ void EditorWindow::saveCurrentToDocument() {
     env->obstacles = current.obstacles;
     env->player_spawn = current.player_spawn;
     env->walls = current.walls;
+    env->exits = current.exits;
 }
 
 void EditorWindow::enterEnvironment(const QString& environment_id) {
@@ -742,10 +777,15 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
     env_doc.player_spawn = env->player_spawn;
     env_doc.obstacles = env->obstacles;
     env_doc.walls = env->walls;
+    env_doc.exits = env->exits;
     env_doc.floor_color = env->floor_color;
-    if (env_doc.floor_color.empty()) {
-        if (const auto* entry_tpl = templates_.find_entry(env->type)) {
+    env_doc.floor_texture = env->floor_texture;
+    if (const auto* entry_tpl = templates_.find_entry(env->type)) {
+        if (env_doc.floor_color.empty()) {
             env_doc.floor_color = entry_tpl->floor_color;
+        }
+        if (env_doc.floor_texture.empty()) {
+            env_doc.floor_texture = entry_tpl->floor_texture;
         }
     }
 
@@ -765,6 +805,7 @@ void EditorWindow::setMainOnlySectionsVisible(bool visible) {
     ui_->btnModeDimensions->setVisible(true);
     ui_->btnModeEnvironments->setText(visible ? QStringLiteral("Environments") :
                                                 QStringLiteral("Walls"));
+    ui_->btnModeExits->setVisible(!visible);
     ui_->btnEnvironmentCreatures->setVisible(!visible);
 }
 

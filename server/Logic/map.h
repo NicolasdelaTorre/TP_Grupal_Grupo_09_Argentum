@@ -37,9 +37,9 @@ struct LoadedEnvironment {
     int16_t width = 0;
     int16_t height = 0;
     Position playerSpawn;
-    std::vector<Cell> cells;  // obstáculos y paredes acá
+    std::vector<Cell> cells;  // obstáculos, paredes y salidas acá
     std::vector<CreatureSpawn> spawns;
-    std::string floorColor;
+    std::vector<Position> exits;
 };
 
 // Entrada con el environment al que lleva.

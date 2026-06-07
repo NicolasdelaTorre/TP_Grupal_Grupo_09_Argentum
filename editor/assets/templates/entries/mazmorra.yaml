@@ -8,3 +8,4 @@ available_environment_sizes:
   - { width: 60, height: 60 }
   - { width: 85, height: 85 }
 floor_color: "#2A2A2A"
+floor_texture: "tiles/mazmorra.png"

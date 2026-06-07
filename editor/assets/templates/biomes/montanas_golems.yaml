@@ -3,6 +3,6 @@ name: "Rocosa"
 default_size:
   width: 40
   height: 30
-color: "#888B8D"
+texture: "tiles/rocosa.png"
 allowed_creatures:
   - golem
