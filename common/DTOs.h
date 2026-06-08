@@ -97,10 +97,19 @@ struct Weapon: public Obj {
     uint8_t damage;
 };
 
-// Tipo de criatura NPC dinámica
-enum class NpcType : uint8_t { SPIDER = 0, SKELETON, ZOMBIE, GOBLIN, ORC, GOLEM };
-
-enum class CheatCode : uint8_t { SUICIDE = 0, GOLD, EXPERIENCE };
+// Tipo de criatura NPC dinámica. SPIDER..GOLEM son hostiles, el resto son
+// amigos de las ciudades (interactuables por click + comando).
+enum class NpcType : uint8_t {
+    SPIDER = 0,
+    SKELETON,
+    ZOMBIE,
+    GOBLIN,
+    ORC,
+    GOLEM,
+    MERCHANT,
+    BANKER,
+    PRIEST
+};
 
 struct NpcEntity {
     uint16_t id = 0;
@@ -114,7 +123,9 @@ struct NpcEntity {
 
 // Item dropped on the floor. x/y are tile coordinates.
 // sheetId 0 → Items_recolectables.png, 1 → Items_recolectables_2.png, 2 → Items_recolectables_3.png
+// dropId es la clave que asigna el server para identificar el drop al levantarlo.
 struct DroppedItem {
+    uint16_t dropId = 0;
     int16_t x = 0, y = 0;
     uint8_t sheetId = 0;
     uint16_t itemId = 0;  // row * cols_per_row + col

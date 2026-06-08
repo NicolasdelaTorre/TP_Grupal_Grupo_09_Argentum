@@ -1,60 +1,17 @@
 #include "game.h"
-#include "NPC/creature.h"
 
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 
+#include "NPC/creature.h"
+
 Game::Game(Map& world):
-    map(world),
-    playerSpawn(map.getPlayerSpawn(0)),
-    parser(BinaryParser()) {}
+        map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()) {}
 
-bool Game::processCommand(int playerId, const std::string& command) {
-    size_t commandPosition = command.find('.');
-    if (commandPosition == std::string::npos) {
-        throw std::runtime_error("Game Error: command from client malformed");
-    }
-
-    std::string dataType = command.substr(0, commandPosition);
-
-    if (dataType == "user") {
-        std::string user = command.substr(commandPosition + 1);
-        return processUser(playerId, user);
-    } else if (dataType == "movement") {
-        std::string direction = command.substr(commandPosition + 1);
-        return processMovement(playerId, direction);
-    } else if (dataType == "turn") {
-        std::string direction = command.substr(commandPosition + 1);
-        return turnPlayer(playerId, direction);
-    } else if (dataType == "attack") {
-        // Format: "attack.player.id // attack.npc.id"
-        // return processAttack(playerId, command.substr(commandPosition + 1));
-        return false;
-    } else if (dataType == "heal") {
-        // Format: "heal"
-        return processHeal(playerId);
-    } else if (dataType == "chat") {
-        // Format: "chat.command"
-        return processChatCommand(playerId, command.substr(commandPosition + 1));
-    }
-
-    return false;
-}
-
-bool Game::processUser(int playerId, const std::string& user) {
-    // Formato: "NAME:RACE:CLASS"
-    size_t firstColon = user.find(':');
-    size_t secondColon = user.find(':', firstColon + 1);
-    if (firstColon == std::string::npos || secondColon == std::string::npos) {
-        throw std::runtime_error("Game Error: malformed user command (expected NAME:RACE:CLASS)");
-    }
-
-    std::string name = user.substr(0, firstColon);
-    std::string race = user.substr(firstColon + 1, secondColon - firstColon - 1);
-    std::string class_ = user.substr(secondColon + 1);
-
+bool Game::addPlayer(int playerId, const std::string& name, const std::string& race,
+                     const std::string& class_) {
     Position spawn;
 
     if (!parser.checkPlayerExists(name)) {
@@ -68,66 +25,26 @@ bool Game::processUser(int playerId, const std::string& user) {
 
     map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
 
-    /* Codigo de testeo
-    if (players.size() > 1) {
-        // players.at(playerId).addItem("Elven Flute");
-        // players.at(playerId).addItem("Sword");
-        // players.at(playerId).equipItem(0);
-        std::cout << "Inventory: ";
-        for (const auto& item: players.at(playerId).getInventory()) {
-            std::cout << item.getName() << " ";
-        }
-        std::cout << std::endl;
-        // players.at(playerId).equipItem(1);
-        std::cout << "Inventory: ";
-        for (const auto& item: players.at(playerId).getInventory()) {
-            std::cout << item.getName() << " ";
-        }
-        std::cout << std::endl;
-        // processAttack ahora toma (playerId, targetType, targetId) tras unificar
-        // con TARGETED_ATTACK. Si Oli necesita este testeo, hay que pasarle un
-        // target_id válido. Comentado para que compile.
-        // processAttack(playerId, "bottom");
-        // processHeal(playerId);
-    }
-    */
-
     std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
               << ", " << spawn.y << ")" << std::endl;
 
     return true;
 }
 
-bool Game::turnPlayer(int playerId, const std::string& direction) {
+bool Game::turnPlayer(int playerId, MoveDirection direction) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         return false;
     }
-    uint8_t newDir;
-    if (direction == "top")
-        newDir = 3;
-    else if (direction == "bottom")
-        newDir = 4;
-    else if (direction == "left")
-        newDir = 5;
-    else if (direction == "right")
-        newDir = 6;
-    else
-        return false;
-
-    itPlayer->second.setDirection(newDir);
+    itPlayer->second.setDirection(static_cast<uint8_t>(direction));
     return true;
 }
 
 Position Game::findSpawnPosition() const {
-    // Búsqueda en espiral cuadrada desde el spawn del YAML.
-    // radius=0 es el spawn, radius=1 sus 8 vecinos, radius=2 los 16 de la siguiente capa, etc.
     int maxRadius = std::max(map.getWidth(0), map.getHeight(0));
     for (int radius = 0; radius < maxRadius; radius++) {
         for (int offsetY = -radius; offsetY <= radius; offsetY++) {
             for (int offsetX = -radius; offsetX <= radius; offsetX++) {
-                // Solo la frontera del cuadrado (las interiores ya las chequeamos en radios
-                // anteriores).
                 if (radius > 0 && std::abs(offsetX) != radius && std::abs(offsetY) != radius)
                     continue;
                 Position candidate{static_cast<int16_t>(playerSpawn.x + offsetX),
@@ -251,6 +168,12 @@ uint32_t Game::getPlayerNextLevelExp(int playerId) const {
 
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
+bool Game::isPlayerGhost(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    return it->second.getData().isGhost;
+}
+
 std::vector<int> Game::getPlayerIds() const {
     std::vector<int> ids;
     ids.reserve(players.size());
@@ -279,7 +202,7 @@ void Game::removePlayer(int playerId) {
     players.erase(playerId);
 }
 
-bool Game::processMovement(int playerId, const std::string& direction) {
+bool Game::movePlayer(int playerId, MoveDirection direction) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
@@ -287,25 +210,17 @@ bool Game::processMovement(int playerId, const std::string& direction) {
 
     Player& player = itPlayer->second;
     Position next = player.getPosition();
-    uint8_t newDir = 4;
 
-    if (direction == "top") {
-        next.y -= 1;
-        newDir = 3;
-    } else if (direction == "bottom") {
-        next.y += 1;
-        newDir = 4;
-    } else if (direction == "left") {
-        next.x -= 1;
-        newDir = 5;
-    } else if (direction == "right") {
-        next.x += 1;
-        newDir = 6;
-    } else {
-        return false;
+    switch (direction) {
+        case MoveDirection::TOP: next.y -= 1; break;
+        case MoveDirection::BOTTOM: next.y += 1; break;
+        case MoveDirection::LEFT: next.x -= 1; break;
+        case MoveDirection::RIGHT: next.x += 1; break;
+        default: return false;
     }
 
-    if (!map.isWalkable(next.x, next.y, itPlayer->second.getMapId())) {
+    uint8_t mapId = player.getMapId();
+    if (!map.isWalkable(next.x, next.y, mapId)) {
         std::cout << "Player can't move in that direction (blocked)" << std::endl;
         return false;
     }
@@ -318,200 +233,355 @@ bool Game::processMovement(int playerId, const std::string& direction) {
 
     Position old = player.getPosition();
     player.move(next);
-    player.setDirection(newDir);
-    map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, itPlayer->second.getMapId());
+    player.setDirection(static_cast<uint8_t>(direction));
+    map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId);
     checkEntry(playerId);
-
     return true;
 }
 
 void Game::checkEntry(int playerId) {
-    // Search Player
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
 
-    // Current Player Position
     Position pos = itPlayer->second.getPosition();
 
     if (map.checkIfThePositionHasAnEntry(pos.x, pos.y, itPlayer->second.getMapId())) {
-        // The Position is a Entry to a Dungeon or a Dungeon Exit (if the player is in a dungeon)
-        // The Player is no more in the Overworld/Dungeon
+        // El jugador pisó una entrada a dungeon o una salida (si ya está en
+        // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
         uint8_t currentMapId = itPlayer->second.getMapId();
         map.removePlayer(pos.x, pos.y, currentMapId);
 
-        // New Map Id
         std::string mapId = map.getMapId(pos.x, pos.y);
 
         if (!mapId.empty()) {
-            // It's a real Dungeon Entrance/Exit
-            // Place the Player in the Dungeon
+            // Si veníamos del overworld vamos a la dungeon; si veníamos de
+            // una dungeon, salimos al overworld.
             if (currentMapId == 0)
                 map.placePlayerIntoTheDungeon(playerId, mapId);
-            else map.placePlayerIntoTheOverworld(playerId, currentMapId);
-
-            // Save Map Id
+            else
+                map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
-
-            // Set new Position for the Player
             Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
         }
     }
 }
 
-AttackResult Game::processAttack(int playerId, uint8_t targetType, uint16_t targetId) {
-    AttackResult result;
-    result.attackerId = static_cast<uint16_t>(playerId);
-    result.targetType = targetType;
-    result.targetId = targetId;
-
+std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t targetType,
+                                                      uint16_t targetId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
 
     if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return result;  // performed = false
+        return nullptr;
     }
 
-    uint8_t entityId = 0;
-    if (targetType == 0) {
-        if (itPlayer->second.hasLongDistanceWeapon())
-            entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), true, itPlayer->second.getMapId());
-        else
-            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), true, itPlayer->second.getMapId());
-    } else if (targetType == 1) {
-        if (itPlayer->second.hasLongDistanceWeapon())
-            entityId =
-                    map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(), false, itPlayer->second.getMapId());
-        else
-            entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), false, itPlayer->second.getMapId());
-    } else {
+    if (targetType != 0 && targetType != 1) {
         throw std::runtime_error(
                 "Game Error: malformed attack command (expected player.id or npc.id)");
     }
 
-    if (entityId != targetId)
-        return result;
+    bool targetPlayer = (targetType == 0);
+    uint8_t mapId = itPlayer->second.getMapId();
+    uint8_t entityId;
+    if (itPlayer->second.hasLongDistanceWeapon())
+        entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(),
+                                        targetPlayer, mapId);
+    else
+        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer,
+                                  mapId);
 
-    auto itTarget = players.find(entityId);
-    if (itTarget == players.end()) {
-        throw std::runtime_error("Game Error: player in sight not found");
-    }
+    if (entityId != targetId)
+        return nullptr;
+
+    uint16_t attackerId = static_cast<uint16_t>(playerId);
 
     if (targetType == 0) {
         // target = player
+        auto itTarget = players.find(entityId);
+        if (itTarget == players.end()) {
+            throw std::runtime_error("Game Error: player in sight not found");
+        }
         if (!itTarget->second.isAlive()) {
-            return result;
+            return nullptr;
         }
-        result.performed = true;
-        result.attackerId = playerId;
-        result.targetType = targetType;
-        result.targetId = targetId;
         if (tryEvade(playerId, static_cast<int>(targetId))) {
-            return result;  // hit = false, damage = 0
+            return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, 0, false);
         }
-
         uint16_t damage = itPlayer->second.dealDamage();
         itTarget->second.receiveDamage(damage);
-        result.hit = true;
-        result.damage = damage;
-    } else if (targetType == 1) {
-        uint16_t damage = itPlayer->second.dealDamage();
-        Creature* npc = map.getNPC(targetId);
-        npc->receiveDamage(damage);
-
-        result.performed = true;
-        result.attackerId = playerId;
-        result.targetType = targetType;
-        result.targetId = targetId;
-        result.damage = damage;
-        result.hit = true;
+        return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
     }
 
-    return result;
+    // target = npc
+    uint16_t damage = itPlayer->second.dealDamage();
+    Creature* npc = map.getNPC(targetId);
+    npc->receiveDamage(damage);
+    return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
 }
 
 bool Game::tryEvade(int /*attackerId*/, int /*targetId*/) const {
     // TODO(team-gameplay): implementar fórmula real.
-    // Idea: comparar dexterity del defensor vs del atacante.
-    //   chance_evade = clamp((def_dex - atk_dex) * factor, min%, max%)
-    // Por ahora nadie evade.
     return false;
 }
 
-bool Game::processHeal(int playerId) {
+void Game::setSkin(int playerId, uint8_t skinId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
+    // TODO(team-gameplay): el segundo parámetro es headId, queda en 0 hasta
+    // que se implemente la selección de cabeza.
+    itPlayer->second.setSkin(static_cast<int>(skinId), 0);
+}
 
-    if (!itPlayer->second.isAlive()) {
-        return false;
-    }
+// ── Cheats invocables desde el chat ──────────────────────────────────────
 
-    uint16_t healedAmount = itPlayer->second.heal();
-
-    if (healedAmount == 0) {
-        return false;
-    }
-
-    std::cout << "Player " << itPlayer->second.getName() << " heals for " << healedAmount
-              << " health!" << std::endl;
-
+bool Game::cheatToggleInfiniteHealth(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): flag en PlayerData + check en receiveDamage.
+    std::cout << "CHEAT vidainf toggled para player=" << playerId << " (stub)" << std::endl;
     return true;
 }
 
-void Game::setSkin(int playerId, const std::string& skinId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-
-    // Cambiar el cero proximamente
-    itPlayer->second.setSkin(std::stoi(skinId), 0);
-}
-
-void Game::processCheat(int playerId, uint8_t code) {
+bool Game::cheatToggleInfiniteMana(int playerId) {
     auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    // TODO(team-gameplay): implementar la lógica de cada cheat.
-    //   0 = SUICIDE     → player.receiveDamage(player.getHealth())
-    //   1 = GOLD        → sumar 1000 al gold persistido
-    //   2 = EXPERIENCE  → sumar 1000 a la experiencia, levelup si corresponde
-    // Hoy solo loggeamos para confirmar que el mensaje llegó end-to-end.
-    std::cout << "Cheat recibido: player=" << playerId << " code=" << static_cast<int>(code)
-              << " (stub, sin efecto)" << std::endl;
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): flag en PlayerData + check en consumeMana.
+    std::cout << "CHEAT manainf toggled para player=" << playerId << " (stub)" << std::endl;
+    return true;
 }
 
-bool Game::pickUpItemAt(int /*playerId*/) {
-    // TODO(team-gameplay): buscar item en droppedItems en la celda del
-    // jugador, llamarlo a player.addItem y removerlo del piso. Stub vacío.
-    return false;
-}
-
-bool Game::dropItem(int playerId, uint8_t invSlot) {
+bool Game::cheatSuicide(int playerId) {
     auto it = players.find(playerId);
-    if (it == players.end()) {
+    if (it == players.end()) return false;
+    it->second.receiveDamage(it->second.getMaxHealth());
+    std::cout << "CHEAT suicidio aplicado a player=" << playerId << std::endl;
+    return true;
+}
+
+bool Game::cheatLevelUp(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): incrementar PlayerData.level + recalcular maxHP/maxMana
+    // según raza/clase y resetear exp. Hoy solo refrescamos stats con resetStats.
+    it->second.resetStats();
+    std::cout << "CHEAT levelup aplicado a player=" << playerId << " (stub, solo reset)"
+              << std::endl;
+    return true;
+}
+
+bool Game::cheatAddGold(int playerId, uint32_t amount) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): exponer setter de gold en Player; hoy solo logueo.
+    std::cout << "CHEAT gold +" << amount << " para player=" << playerId << " (stub)" << std::endl;
+    return true;
+}
+
+// Mapeo de itemId → nombre del item, según items.toml. Lo usan cheatSpawnItem
+// y otros stubs que necesitan crear un item por id.
+static const char* itemNameById(uint8_t id) {
+    switch (id) {
+        case 1: return "Sword";
+        case 2: return "Axe";
+        case 3: return "Hammer";
+        case 4: return "Ash Staff";
+        case 5: return "Elven Flute";
+        case 6: return "Root Staff";
+        case 7: return "Socketed Staff";
+        case 8: return "Simple Bow";
+        case 9: return "Composite Bow";
+        case 10: return "Lether Armor";
+        case 11: return "Plate Armor";
+        case 12: return "Blue Tunic";
+        case 13: return "Hood";
+        case 14: return "Iron Helmet";
+        case 15: return "Turtle Shield";
+        case 16: return "Iron Shield";
+        case 17: return "Wizard Hat";
+        case 18: return "Health Potion";
+        case 19: return "Mana Potion";
+        default: return nullptr;
+    }
+}
+
+bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    const char* name = itemNameById(itemId);
+    if (!name) {
+        std::cout << "CHEAT spawn item id=" << (int)itemId << " desconocido" << std::endl;
         return false;
     }
+    if (!it->second.addItem(name)) {
+        std::cout << "CHEAT spawn item id=" << (int)itemId << " inventario lleno" << std::endl;
+        return false;
+    }
+    std::cout << "CHEAT spawn item id=" << (int)itemId << " (" << name << ") para player="
+              << playerId << std::endl;
+    return true;
+}
+
+// ── Interacción con NPCs amigos ──────────────────────────────────
+// stubs solo loguean — team-gameplay rellena la lógica real usando las
+// clases Merchant/Banker/Priest existentes.
+
+std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
+    std::cout << "LIST merchant type=" << (int)npcType << " (stub)" << std::endl;
+    // TODO(team-gameplay): devolver items reales del merchant según la
+    // configuración de items.toml.
+    return {"(stub) Sin items disponibles. Implementar listMerchantInventory."};
+}
+
+std::vector<std::string> Game::listBankAccount(int playerId, uint8_t npcType) {
+    std::cout << "LIST bank player=" << playerId << " type=" << (int)npcType << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): leer Banker::accounts (server/Logic/NPC/banker.h) y devolver el oro + items guardados del jugador.
+    return {"(stub) Cuenta vacía. Implementar listBankAccount."};
+}
+
+Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
+                                         const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "BUY player=" << playerId << " npcType=" << (int)npcType << " item=" << itemName
+              << " (stub)" << std::endl;
+    // TODO(team-gameplay): validar oro, restar precio, addItem al inventario.
+    return {true, "Compraste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
+                                        const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "SELL player=" << playerId << " npcType=" << (int)npcType << " item=" << itemName
+              << " (stub)" << std::endl;
+    // TODO(team-gameplay): buscar el item en inventario, removerlo, sumar oro.
+    return {true, "Vendiste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::depositItemToBank(int playerId, const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "DEPOSIT_ITEM player=" << playerId << " item=" << itemName << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): usar Banker::depositItem.
+    return {true, "Depositaste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "DEPOSIT_GOLD player=" << playerId << " amount=" << amount << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): validar oro del jugador, restar, sumar a Banker::depositGold.
+    return {true, "Depositaste " + std::to_string(amount) + " de oro (stub)"};
+}
+
+Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "WITHDRAW_ITEM player=" << playerId << " item=" << itemName << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): usar Banker::withdrawItem.
+    return {true, "Retiraste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "WITHDRAW_GOLD player=" << playerId << " amount=" << amount << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): usar Banker::withdrawGold.
+    return {true, "Retiraste " + std::to_string(amount) + " de oro (stub)"};
+}
+
+Game::InteractionResult Game::revivePlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    if (!it->second.getData().isGhost) {
+        return {false, "Ya estás vivo"};
+    }
+    // Reaparece en el spawn de la ciudad. resetStats() limpia isGhost y
+    // restaura HP/MP. TODO(team-gameplay): tp al sacerdote más cercano según
+    // enunciado (proporcional a la distancia).
+    Position old = it->second.getPosition();
+    Position newPos = findSpawnPosition();
+    map.moveEntity(playerId, old.x, old.y, newPos.x, newPos.y, /*isPlayer=*/true,
+                   it->second.getMapId());
+    it->second.move(newPos);
+    it->second.resetStats();
+    std::cout << "REVIVE player=" << playerId << " at (" << newPos.x << "," << newPos.y << ")"
+              << std::endl;
+    return {true, "Volviste a la vida"};
+}
+
+Game::InteractionResult Game::healPlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    if (it->second.getData().isGhost) {
+        return {false, "Estás muerto, primero resucitá"};
+    }
+    // resetStats restaura HP/MP a su máximo. Sirve como cura completa.
+    it->second.resetStats();
+    return {true, "Te curaste"};
+}
+
+Game::InteractionResult Game::meditatePlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    if (it->second.getData().isGhost) {
+        return {false, "Estás muerto, no podés meditar"};
+    }
+    // Toggle. El tick de mana lo maneja TurnManager + gameloop::PlayerTurns.
+    it->second.switchMeditationState();
+    bool nowMeditating = it->second.getMeditationState();
+    std::cout << "MEDITATE player=" << playerId << " on=" << nowMeditating << std::endl;
+    return {true, nowMeditating ? "Empezaste a meditar" : "Saliste de meditación"};
+}
+
+Game::DropResult Game::pickUpItemAt(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe", {}};
+    Position pos = it->second.getPosition();
+    // Buscamos el primer drop en la celda del jugador.
+    for (size_t i = 0; i < droppedItems.size(); i++) {
+        if (droppedItems[i].x == pos.x && droppedItems[i].y == pos.y) {
+            DroppedItemRecord rec = droppedItems[i];
+            droppedItems.erase(droppedItems.begin() + i);
+            // TODO(team-gameplay): mapear itemId → itemName y llamar
+            // it->second.addItem(name). Hoy solo sacamos el drop del piso.
+            std::cout << "PICKUP player=" << playerId << " dropId=" << rec.dropId
+                      << " itemId=" << (int)rec.itemId << " at (" << rec.x << "," << rec.y << ")"
+                      << std::endl;
+            return {true, "Levantaste el item (stub)", rec};
+        }
+    }
+    return {false, "No hay nada para levantar acá", {}};
+}
+
+Game::DropResult Game::dropItem(int playerId, uint8_t invSlot) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe", {}};
     auto inv = it->second.getInventory();
-    if (invSlot >= inv.size()) {
-        return false;
-    }
-    // TODO(team-gameplay): agregar el item a droppedItems en la celda
-    // actual del jugador. Hoy lo único que hacemos es loggear (el item
-    // se "pierde" desde el punto de vista del piso). Para que el flujo
-    // protocolo se vea, igual reflejamos el cambio: removemos del inv
-    // manualmente recreando el inventario. (Player::removeItem no existe).
-    // Esto es feo y temporal — se rehace cuando Oli implemente el piso.
+    if (invSlot >= inv.size()) return {false, "Slot inválido", {}};
+    Position pos = it->second.getPosition();
+    uint8_t itemId = inv[invSlot].getId();
+    std::string itemName = inv[invSlot].getName();
+    // TODO(team-gameplay): remover el item del inventario del jugador
+    // (player.removeFromSlot(slot)). Hoy el item se queda duplicado.
+    DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y};
+    droppedItems.push_back(rec);
     std::cout << "DROP player=" << playerId << " slot=" << (int)invSlot
-              << " name=" << inv[invSlot].getName() << " (stub: item se pierde)" << std::endl;
-    return true;
+              << " name=" << itemName << " dropId=" << rec.dropId << " at (" << rec.x
+              << "," << rec.y << ")" << std::endl;
+    return {true, "Tiraste " + itemName, rec};
 }
 
 bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
@@ -519,12 +589,6 @@ bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
     if (it == players.end()) {
         return false;
     }
-    // Player::equipItem ya bifurca por tipo internamente.
-    // Para pociones (HEALTH_POTION / MANA_POTION) eso no alcanza — falta
-    // que Oli implemente "usar = consumir" para ese tipo. Por ahora
-    // forwardeamos directo (las armas/armor/casco/escudo funcionan ya).
-    // TODO(team-gameplay): manejar HEALTH_POTION/MANA_POTION en equipItem
-    // o agregar un branch acá que llame a player.heal()/consumeMana().
     bool ok = it->second.equipItem(static_cast<int>(invSlot));
     std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot << " ok=" << ok
               << std::endl;
@@ -538,20 +602,11 @@ bool Game::unequipSlot(int playerId, uint8_t slotType) {
     }
     ItemType type;
     switch (slotType) {
-        case 0:
-            type = ItemType::WEAPON;
-            break;
-        case 1:
-            type = ItemType::ARMOR;
-            break;
-        case 2:
-            type = ItemType::HELMET;
-            break;
-        case 3:
-            type = ItemType::SHIELD;
-            break;
-        default:
-            return false;
+        case 0: type = ItemType::WEAPON; break;
+        case 1: type = ItemType::ARMOR; break;
+        case 2: type = ItemType::HELMET; break;
+        case 3: type = ItemType::SHIELD; break;
+        default: return false;
     }
     bool ok = it->second.unequipItem(type);
     std::cout << "UNEQUIP player=" << playerId << " slotType=" << (int)slotType << " ok=" << ok
@@ -584,20 +639,6 @@ bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
         return false;
     }
     it->second.receiveDamage(damage);
-    return true;
-}
-
-bool Game::processChatCommand(int playerId, const std::string& chatCommand) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-
-    if (chatCommand == "meditar") {
-        // Command: /meditar
-        itPlayer->second.switchMeditationState();
-    }
-
     return true;
 }
 

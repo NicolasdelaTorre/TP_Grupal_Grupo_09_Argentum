@@ -1,278 +1,468 @@
 #include "gameloop.h"
+
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+
+#include "../../common/Communication/events/client_events.h"
+#include "../../common/Communication/events/server_events.h"
+#include "../../common/Communication/message_types.h"
+
 #include "NPC/creature.h"
 
-Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
-                   ProtocolServer& protocol):
-        commands(commands),
-        clientQueues(clientQueues),
+// Mapea el nombre del NPC (del toml) al byte de NpcType que espera el cliente
+// (enum NpcType en common/DTOs.h). Si no matchea, devuelve 0 (SPIDER) como fallback.
+static uint8_t npcTypeFromName(const std::string& name) {
+    if (name == "spider") return 0;
+    if (name == "skeleton") return 1;
+    if (name == "zombie") return 2;
+    if (name == "goblin") return 3;
+    if (name == "orc") return 4;
+    if (name == "golem") return 5;
+    return 0;
+}
+
+// dx/dy → byte de dirección en formato wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT).
+static uint8_t wireDirFromDelta(int16_t dx, int16_t dy) {
+    if (std::abs(dx) >= std::abs(dy)) {
+        if (dx > 0) return static_cast<uint8_t>(MoveDirection::RIGHT);
+        if (dx < 0) return static_cast<uint8_t>(MoveDirection::LEFT);
+    }
+    if (dy > 0) return static_cast<uint8_t>(MoveDirection::BOTTOM);
+    if (dy < 0) return static_cast<uint8_t>(MoveDirection::TOP);
+    return static_cast<uint8_t>(MoveDirection::BOTTOM);
+}
+
+Gameloop::Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
+                   ServerProtocol& protocol):
+        clientEvents(clientEvents),
+        clientMonitor(clientMonitor),
         gameFinished(false),
-        map(world),
-        game(world),
+        map(map),
+        game(map),
         protocol(protocol),
-        turnManager(game.getPlayerIds(), world.getAllNPCIds(), world, game) {}
+        turnManager(game.getPlayerIds(), map.getAllNPCIds(), map, game) {}
 
 void Gameloop::run() {
     while (!gameFinished) {
-        std::string command;
-        while (commands.try_pop(command)) {
-            processCommand(command);
+        std::shared_ptr<ClientEvent> ev;
+        while (clientEvents.try_pop(ev)) {
+            dispatch(*ev);
         }
-
-        turnManager.updateTimers();
         PlayerTurns();
         NPCTurns();
-
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
 
+// dispatch del ClientEvent al handler correspondiente.
+void Gameloop::dispatch(const ClientEvent& ev) {
+    int pid = ev.getPlayerId();
+    if (auto* p = dynamic_cast<const UserArrivalEvent*>(&ev)) {
+        handleUserArrival(pid, p->getName(), p->getRace(), p->getClass());
+    } else if (auto* p = dynamic_cast<const MovementEvent*>(&ev)) {
+        handleMovement(pid, p->getDirection());
+    } else if (auto* p = dynamic_cast<const TurnEvent*>(&ev)) {
+        handleTurn(pid, p->getDirection());
+    } else if (auto* p = dynamic_cast<const SkinSelectedEvent*>(&ev)) {
+        handleSkinSelected(pid, p->getSkinId());
+    } else if (auto* p = dynamic_cast<const HeadSelectedEvent*>(&ev)) {
+        handleHeadSelected(pid, p->getHeadId());
+    } else if (auto* p = dynamic_cast<const AttackEvent*>(&ev)) {
+        handleAttack(pid, p->getTargetType(), p->getTargetId());
+    } else if (dynamic_cast<const PickUpItemEvent*>(&ev)) {
+        handlePickUp(pid);
+    } else if (auto* p = dynamic_cast<const DropItemEvent*>(&ev)) {
+        handleDrop(pid, p->getInvSlot());
+    } else if (auto* p = dynamic_cast<const EquipItemEvent*>(&ev)) {
+        handleEquip(pid, p->getInvSlot());
+    } else if (auto* p = dynamic_cast<const UnequipItemEvent*>(&ev)) {
+        handleUnequip(pid, p->getSlotType());
+    } else if (auto* p = dynamic_cast<const ChatMessageEvent*>(&ev)) {
+        handleChat(pid, p->getText());
+    } else if (auto* p = dynamic_cast<const SelectNpcEvent*>(&ev)) {
+        handleSelectNpc(pid, p->getNpcId());
+    } else if (dynamic_cast<const DisconnectEvent*>(&ev)) {
+        handleDisconnect(pid);
+    }
+}
+
+// Tick por player (corre cada frame del loop). Hoy solo restaura mana a
+// jugadores meditando. Cuando agreguemos más estados con timers (regeneración
+// de vida, debuffs, etc.) viven acá.
 void Gameloop::PlayerTurns() {
     std::vector<int> playerIds = game.getPlayerIds();
-
-    // Verify if a new playes has arrived
     turnManager.addPlayers(playerIds);
-
-    // Verify if a player has disconnected
     turnManager.removePlayers(playerIds);
 
     std::vector<int> playersToRestoreMana = turnManager.getPlayersReadyToRestoreMana();
-    for (int playerId : playersToRestoreMana) {
+    for (int playerId: playersToRestoreMana) {
         game.restorePlayerManaForMeditation(playerId);
-        // Enviar al cliente sobre el mana (Tomas)
+        // Cada vez que recuperamos mana mandamos stats actualizados.
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
     }
 }
 
 void Gameloop::NPCTurns() {
-    // Time to move NPC
+    turnManager.updateTimers();
+
+    // NPCs que toca mover: persiguen al jugador más cercano. Si se movieron,
+    // broadcast NpcMovedEvent con dirección calculada desde el delta.
     std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
-    for (uint16_t npcId : npcsToMove) {
+    for (uint16_t npcId: npcsToMove) {
         Creature* npc = map.getNPC(npcId);
-        Position newPosition = npc->stalkPlayer(map.searchPlayer(npc->getPosition().x, npc->getPosition().y, npc->getMapId()));
-        if (newPosition.x != -1) map.moveEntity(npcId, npc->getPosition().x, npc->getPosition().y, newPosition.x, newPosition.y, false, npc->getMapId());
+        Position oldPos = npc->getPosition();
+        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
+        if (newPos.x == -1)
+            continue;
+        if (newPos.x == oldPos.x && newPos.y == oldPos.y)
+            continue;
+        map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId());
+        // Solo el overworld viaja al cliente (mapId=0).
+        if (npc->getMapId() != 0)
+            continue;
+        uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
+                                       static_cast<int16_t>(newPos.y - oldPos.y));
+        clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
     }
 
-    // Time to process NPC attacks
+    // NPCs que toca atacar: si tienen un jugador adyacente, le aplican daño y
+    // notifican al cliente afectado con sus stats actualizados.
     std::vector<uint16_t> npcsToAttack = turnManager.getNPCsReady(false);
-    for (uint16_t npcId : npcsToAttack) {
+    for (uint16_t npcId: npcsToAttack) {
         Creature* npc = map.getNPC(npcId);
-        uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true, npc->getMapId());
+        uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true,
+                                          npc->getMapId());
+        if (playerId == 0)
+            continue;
         if (game.applyNPCAttack(playerId, npc->getDamage())) {
-            // Verificar mensaje para el cliente (Para Tomas)
-            /*
-            std::string msg = "ATTACK_RESULT:" + std::to_string(npcId) + ":1:0:" + std::to_string(damage) + ":1";
-            clientQueues.broadcast(msg);
-            */
+            auto atkEv = std::make_shared<AttackResultEvent>(npcId, /*targetType=*/0, playerId,
+                                                            npc->getDamage(), /*hit=*/true);
+            clientMonitor.broadcast(atkEv);
+            clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+            // Si el NPC mató al jugador, broadcast PlayerDiedEvent.
+            if (game.isPlayerGhost(playerId)) {
+                clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
+            }
         }
     }
 
-    // Time to revive NPCs
+    // NPCs que revivan tras el cooldown: broadcast NpcRespawnedEvent para que
+    // el cliente vuelva a mostrarlos.
     std::vector<uint16_t> npcsToRevive = turnManager.reviveNPCs();
-    for (uint16_t npcId : npcsToRevive) {
+    for (uint16_t npcId: npcsToRevive) {
         Creature* npc = map.getNPC(npcId);
         npc->resurrect();
+        if (npc->getMapId() != 0)
+            continue;
+        Position p = npc->getPosition();
+        clientMonitor.broadcast(std::make_shared<NpcRespawnedEvent>(npcId, p.x, p.y));
     }
 }
 
-void Gameloop::processCommand(const std::string& command) {
-    size_t posId = command.find(':');
-    int idPlayer = std::stoi(command.substr(0, posId));
+void Gameloop::stop() { gameFinished = true; }
 
-    size_t posCommand = command.find('.', posId);
-    std::string cmd = command.substr(posId + 1, posCommand - posId - 1);
+// ── Handlers ─────────────────────────────────────────────────────────────
 
-    // El Receiver lo arma cuando se cierra el socket
-    if (cmd == "disconnect") {
-        if (game.hasPlayer(idPlayer)) {
-            game.removePlayer(idPlayer);
-            std::string msg = "PLAYER_DISCONNECTED:" + std::to_string(idPlayer);
-            clientQueues.broadcastExcept(idPlayer, msg);
-        }
+void Gameloop::handleDisconnect(int playerId) {
+    if (!game.hasPlayer(playerId))
         return;
-    }
-
-    // "skin" llega después del char creation. No la procesa el Game (no cambia
-    // estado del mundo, por ahora), solo gatilla la finalización del login.
-    if (cmd == "skin") {
-        std::string skinId = command.substr(posCommand + 1);
-        if (game.hasPlayer(idPlayer)) {
-            finalizePlayerLogin(idPlayer, skinId);
-        }
-        return;
-    }
-
-    // "attack.<type>.<id>" — ataque a un target específico. El server valida
-    // arma equipada y alcance (rango/adyacencia). Broadcast del resultado a todos.
-    if (cmd == "attack") {
-        if (game.hasPlayer(idPlayer)) {
-            std::string payload = command.substr(posCommand + 1);
-            size_t dot = payload.find('.');
-            if (dot != std::string::npos) {
-                uint8_t targetType = static_cast<uint8_t>(std::stoi(payload.substr(0, dot)));
-                uint16_t targetId = static_cast<uint16_t>(std::stoi(payload.substr(dot + 1)));
-                AttackResult r = game.processAttack(idPlayer, targetType, targetId);
-                std::cout << "ATTACK from player=" << idPlayer << " ttype=" << (int)targetType
-                          << " tid=" << targetId << " performed=" << r.performed << " hit=" << r.hit
-                          << " dmg=" << r.damage << std::endl;
-                if (r.performed) {
-                    std::string msg = "ATTACK_RESULT:" + std::to_string(r.attackerId) + ":" +
-                                      std::to_string(static_cast<int>(r.targetType)) + ":" +
-                                      std::to_string(r.targetId) + ":" + std::to_string(r.damage) +
-                                      ":" + std::to_string(r.hit ? 1 : 0);
-                    clientQueues.broadcast(msg);
-                    if (r.hit && r.targetType == 0 && game.hasPlayer(r.targetId)) {
-                        clientQueues.sendToClient(r.targetId, buildStatsMessage(r.targetId));
-                    }
-                }
-            }
-        }
-        return;
-    }
-
-    // "head.<id>" — cabeza elegida en char creation. TODO(team-gameplay):
-    // guardar headSkinId en el Player y reenviarlo en NEW_PLAYER cuando se
-    // implemente la renderización de cabeza separada del cuerpo. Por ahora
-    // solo lo aceptamos para que el cliente no rompa el flujo de login.
-    if (cmd == "head") {
-        return;
-    }
-
-    // "cheat.<code>" — aplica un cheat y reenvía los stats actualizados.
-    if (cmd == "cheat") {
-        if (game.hasPlayer(idPlayer)) {
-            uint8_t code = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
-            game.processCheat(idPlayer, code);
-            // Los stats pueden haber cambiado (vida=0 en suicide, gold/exp etc).
-            // Reenviamos para que el HUD del cliente se actualice.
-            clientQueues.sendToClient(idPlayer, buildStatsMessage(idPlayer));
-        }
-        return;
-    }
-
-    // Comandos de inventario: pickup / drop / equip / unequip.
-    // Todos mandan INVENTORY_UPDATE al dueño; si cambió algún slot equipado,
-    // además broadcast PLAYER_EQUIPPED para que los demás vean la vestimenta.
-    // Format: cmd:
-    if (cmd == "pickup" || cmd == "drop" || cmd == "equip" || cmd == "unequip") {
-        if (!game.hasPlayer(idPlayer)) {
-            return;
-        }
-        auto before = game.getInventorySnapshot(idPlayer);
-        bool ok = false;
-        if (cmd == "pickup") {
-            ok = game.pickUpItemAt(idPlayer);
-        } else if (cmd == "drop") {
-            uint8_t slot = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
-            ok = game.dropItem(idPlayer, slot);
-        } else if (cmd == "equip") {
-            uint8_t slot = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
-            ok = game.equipOrUseItem(idPlayer, slot);
-        } else {  // unequip
-            uint8_t slotType = static_cast<uint8_t>(std::stoi(command.substr(posCommand + 1)));
-            ok = game.unequipSlot(idPlayer, slotType);
-        }
-        if (!ok) {
-            return;
-        }
-        auto after = game.getInventorySnapshot(idPlayer);
-
-        // INVENTORY_UPDATE al dueño (snapshot completo).
-        std::string msg = "INVENTORY:" + std::to_string(after.items.size());
-        for (uint8_t id: after.items) {
-            msg += ":" + std::to_string(static_cast<int>(id));
-        }
-        msg += ":" + std::to_string(static_cast<int>(after.equippedWeapon));
-        msg += ":" + std::to_string(static_cast<int>(after.equippedArmor));
-        msg += ":" + std::to_string(static_cast<int>(after.equippedHelmet));
-        msg += ":" + std::to_string(static_cast<int>(after.equippedShield));
-        clientQueues.sendToClient(idPlayer, msg);
-
-        // PLAYER_EQUIPPED broadcast por cada slot equipado que cambió.
-        const uint8_t beforeSlots[4] = {before.equippedWeapon, before.equippedArmor,
-                                        before.equippedHelmet, before.equippedShield};
-        const uint8_t afterSlots[4] = {after.equippedWeapon, after.equippedArmor,
-                                       after.equippedHelmet, after.equippedShield};
-        // Al dueño NO le mandamos PLAYER_EQUIPPED: ya recibió INVENTORY_UPDATE
-        // con todos sus slots equipados. Solo notificamos a los demás.
-        for (uint8_t s = 0; s < 4; s++) {
-            if (beforeSlots[s] != afterSlots[s]) {
-                std::string eqMsg = "PLAYER_EQUIPPED:" + std::to_string(idPlayer) + ":" +
-                                    std::to_string(static_cast<int>(s)) + ":" +
-                                    std::to_string(static_cast<int>(afterSlots[s]));
-                clientQueues.broadcastExcept(idPlayer, eqMsg);
-            }
-        }
-        return;
-    }
-
-    bool success = game.processCommand(idPlayer, command.substr(posId + 1));
-
-    if (cmd == "user") {
-        // El usuario se acaba de loguear. Le mandamos FIRST_LOGIN para que
-        // muestre la pantalla de selección de personaje; los NEW_PLAYER y el
-        // MAP se mandan cuando llegue el "skin".
-        clientQueues.sendToClient(idPlayer, success ? "FIRST_LOGIN" : "LOGIN_FAIL");
-    } else if (cmd == "movement") {
-        if (success) {
-            clientQueues.sendToClient(idPlayer, "MOVE_OK");
-            // Avisar a los demás del movimiento.
-            Position p = game.getPlayerPosition(idPlayer);
-            uint8_t dir = game.getPlayerDirection(idPlayer);
-            std::string moveMsg = "PLAYER_MOVED:" + std::to_string(idPlayer) + ":" +
-                                  std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
-                                  std::to_string(dir);
-            clientQueues.broadcastExcept(idPlayer, moveMsg);
-        } else {
-            clientQueues.sendToClient(idPlayer, "MOVE_FAIL");
-        }
-    } else if (cmd == "turn") {
-        // Gira sin moverse: misma posición, nueva dirección.
-        if (success) {
-            Position p = game.getPlayerPosition(idPlayer);
-            uint8_t dir = game.getPlayerDirection(idPlayer);
-            std::string turnMsg = "PLAYER_MOVED:" + std::to_string(idPlayer) + ":" +
-                                  std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
-                                  std::to_string(dir);
-            clientQueues.broadcastExcept(idPlayer, turnMsg);
-        }
-    } else {
-        std::cout << "Unknown command in gameloop: " << cmd << std::endl;
-    }
+    std::cout << "Player " << game.getPlayerName(playerId) << " (id=" << playerId
+              << ") disconnected" << std::endl;
+    selectedNpc.erase(playerId);
+    game.removePlayer(playerId);
+    clientMonitor.broadcastExcept(
+            playerId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)));
 }
 
-void Gameloop::finalizePlayerLogin(int idPlayer, const std::string& skinId) {
-    Position p = game.getPlayerPosition(idPlayer);
-    game.setSkin(idPlayer, skinId);
-    std::string loginMsg = "LOGIN_OK:" + std::to_string(p.x) + ":" + std::to_string(p.y);
-    clientQueues.sendToClient(idPlayer, loginMsg);
-    clientQueues.sendToClient(idPlayer, "MAP");
+void Gameloop::handleUserArrival(int playerId, const std::string& name, const std::string& race,
+                                 const std::string& class_) {
+    bool success = game.addPlayer(playerId, name, race, class_);
+    uint8_t opcode = success ? static_cast<uint8_t>(ServerMsg::FIRST_LOGIN)
+                             : static_cast<uint8_t>(ServerMsg::LOGIN_FAIL);
+    clientMonitor.sendToClient(playerId, std::make_shared<OpcodeOnlyEvent>(opcode));
+}
 
-    // Stats iniciales (hp/mana/gold/exp/level — snapshot completo).
-    clientQueues.sendToClient(idPlayer, buildStatsMessage(idPlayer));
+void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
+    if (!game.hasPlayer(playerId))
+        return;
+
+    Position p = game.getPlayerPosition(playerId);
+    game.setSkin(playerId, skinId);
+    clientMonitor.sendToClient(playerId, std::make_shared<LoginOkEvent>(p.x, p.y));
+
+    // MAP del overworld (mapId=0): copiamos las celdas que viajan por el wire.
+    std::vector<MapCellData> cells;
+    cells.reserve(map.getCellCount(0));
+    for (size_t i = 0; i < map.getCellCount(0); i++) {
+        Cell c = map.getCell(i, 0);
+        cells.push_back({c.textureId, c.obstacleId, c.safeZone});
+    }
+    clientMonitor.sendToClient(playerId,
+                               std::make_shared<MapEvent>(map.getWidth(0), map.getHeight(0),
+                                                          std::move(cells)));
+
+    // Stats iniciales.
+    clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
 
     // Mandarle un NEW_PLAYER por cada jugador que ya estaba + sus PLAYER_EQUIPPED.
+    // Si alguno está como fantasma, también su PlayerDiedEvent para que el
+    // cliente lo dibuje como fantasma desde el arranque.
     for (int otherId: game.getPlayerIds()) {
-        if (otherId == idPlayer)
+        if (otherId == playerId)
             continue;
         Position op = game.getPlayerPosition(otherId);
         const std::string& oname = game.getPlayerName(otherId);
         uint8_t odir = game.getPlayerDirection(otherId);
         uint8_t oskin = game.getPlayerSkin(otherId);
-        std::string np = "NEW_PLAYER:" + std::to_string(otherId) + ":" + std::to_string(op.x) +
-                         ":" + std::to_string(op.y) + ":" + std::to_string(odir) + ":" +
-                         std::to_string(oskin) + ":" + oname;
-        clientQueues.sendToClient(idPlayer, np);
-        sendEquipmentSnapshot(otherId, idPlayer);
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(otherId), op.x,
+                                                          op.y, odir, oskin, oname));
+        sendEquipmentSnapshot(otherId, playerId);
+        if (game.isPlayerGhost(otherId)) {
+            clientMonitor.sendToClient(
+                    playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(otherId)));
+        }
     }
 
     // Avisarles a los demás del recién llegado + su vestimenta.
-    const std::string& myName = game.getPlayerName(idPlayer);
-    uint8_t myDir = game.getPlayerDirection(idPlayer);
-    uint8_t mySkin = game.getPlayerSkin(idPlayer);
-    std::string broadcastMsg = "NEW_PLAYER:" + std::to_string(idPlayer) + ":" +
-                               std::to_string(p.x) + ":" + std::to_string(p.y) + ":" +
-                               std::to_string(myDir) + ":" + std::to_string(mySkin) + ":" + myName;
-    clientQueues.broadcastExcept(idPlayer, broadcastMsg);
-    sendEquipmentSnapshot(idPlayer, -1);  // -1 = broadcast a todos menos a él mismo
+    const std::string& myName = game.getPlayerName(playerId);
+    uint8_t myDir = game.getPlayerDirection(playerId);
+    uint8_t mySkin = game.getPlayerSkin(playerId);
+    clientMonitor.broadcastExcept(playerId,
+                                  std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId),
+                                                                   p.x, p.y, myDir, mySkin, myName));
+    sendEquipmentSnapshot(playerId, -1);
+    if (game.isPlayerGhost(playerId)) {
+        // Estado persistido en .bin: vuelve fantasma al loguearse.
+        clientMonitor.broadcastExcept(
+                playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(playerId)));
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(playerId)));
+    }
+
+    // Snapshot de NPCs del overworld (mapId=0): el cliente los renderiza. Le
+    // mandamos también los muertos (alive=false) para que cuando reciba un
+    // NpcRespawnedEvent ya tenga el id registrado.
+    for (uint16_t npcId: map.getAllNPCIds()) {
+        Creature* npc = map.getNPC(npcId);
+        if (!npc || npc->getMapId() != 0)
+            continue;
+        Position np = npc->getPosition();
+        uint8_t type = npcTypeFromName(npc->getName());
+        bool alive = !npc->isDead();
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<NewNpcEvent>(npcId, np.x, np.y, type, alive));
+    }
+
+    // Snapshot de NPCs amigos (merchant/banker/priest): ids ≥ 10000, no se mueven ni mueren. Vienen del YAML como fixed_npcs de las zonas city.
+    for (const auto& f : map.getFriendlyNpcs()) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<NewNpcEvent>(f.id, f.x, f.y, f.type, /*alive=*/true));
+    }
+
+    // Snapshot de items en el piso. Mandamos un ItemDroppedEvent por cada uno;
+    // así el cliente unifica el code path con los drops que llegan en vivo.
+    for (const auto& d : game.getDroppedItems()) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ItemDroppedEvent>(d.dropId, d.itemId, d.x, d.y));
+    }
+}
+
+void Gameloop::handleHeadSelected(int /*playerId*/, uint8_t /*headId*/) {
+    // TODO(team-gameplay): guardar headSkinId y reenviarlo en NEW_PLAYER cuando
+    // se implemente la renderización de cabeza separada del cuerpo.
+}
+
+void Gameloop::handleMovement(int playerId, MoveDirection direction) {
+    bool success = game.movePlayer(playerId, direction);
+    if (success) {
+        clientMonitor.sendToClient(
+                playerId,
+                std::make_shared<OpcodeOnlyEvent>(static_cast<uint8_t>(ServerMsg::MOVE_OK)));
+        Position p = game.getPlayerPosition(playerId);
+        uint8_t pdir = game.getPlayerDirection(playerId);
+        clientMonitor.broadcastExcept(playerId,
+                                      std::make_shared<PlayerMovedEvent>(
+                                              static_cast<uint16_t>(playerId), p.x, p.y, pdir));
+    } else {
+        clientMonitor.sendToClient(
+                playerId,
+                std::make_shared<OpcodeOnlyEvent>(static_cast<uint8_t>(ServerMsg::MOVE_FAIL)));
+    }
+}
+
+void Gameloop::handleTurn(int playerId, MoveDirection direction) {
+    bool success = game.turnPlayer(playerId, direction);
+    if (success) {
+        Position p = game.getPlayerPosition(playerId);
+        uint8_t pdir = game.getPlayerDirection(playerId);
+        clientMonitor.broadcastExcept(playerId,
+                                      std::make_shared<PlayerMovedEvent>(
+                                              static_cast<uint16_t>(playerId), p.x, p.y, pdir));
+    }
+}
+
+void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId) {
+    if (!game.hasPlayer(playerId))
+        return;
+    // Un fantasma no puede atacar a nadie.
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés atacar"));
+        return;
+    }
+    auto ev = game.processAttack(playerId, targetType, targetId);
+    if (!ev) {
+        std::cout << "ATTACK from player=" << playerId << " ttype=" << (int)targetType
+                  << " tid=" << targetId << " not performed" << std::endl;
+        return;
+    }
+    std::cout << "ATTACK from player=" << playerId << " ttype=" << (int)targetType
+              << " tid=" << targetId << " hit=" << ev->getHit() << " dmg=" << ev->getDamage()
+              << std::endl;
+    clientMonitor.broadcast(ev);
+    if (ev->getHit() && ev->getTargetType() == 0 && game.hasPlayer(ev->getTargetId())) {
+        clientMonitor.sendToClient(ev->getTargetId(), buildStatsEvent(ev->getTargetId()));
+        // Si el ataque mató al target, broadcast PlayerDiedEvent.
+        if (game.isPlayerGhost(ev->getTargetId())) {
+            clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(ev->getTargetId()));
+        }
+    }
+    // Si pegamos a un NPC y lo matamos, broadcast NpcDiedEvent para que el
+    // cliente lo saque del mapa.
+    if (ev->getHit() && ev->getTargetType() == 1) {
+        Creature* npc = map.getNPC(ev->getTargetId());
+        if (npc && npc->isDead()) {
+            clientMonitor.broadcast(std::make_shared<NpcDiedEvent>(ev->getTargetId()));
+        }
+    }
+}
+
+// ── Comandos de inventario ───────────────────────────────────────────────
+//
+// Cada uno (pickup/drop/equip/unequip) puede cambiar el inventario y/o lo
+// equipado. Después del cambio: INVENTORY_UPDATE al dueño y, si cambió un
+// slot equipado, PLAYER_EQUIPPED a los demás.
+
+static void broadcastInventoryChanges(int playerId, const Game::InventorySnapshot& before,
+                                      const Game::InventorySnapshot& after, Game& /*game*/,
+                                      ClientMonitor& clientMonitor) {
+    // INVENTORY_UPDATE al dueño.
+    clientMonitor.sendToClient(playerId,
+                               std::make_shared<InventoryUpdateEvent>(
+                                       after.items, after.equippedWeapon, after.equippedArmor,
+                                       after.equippedHelmet, after.equippedShield));
+
+    // PLAYER_EQUIPPED broadcast por cada slot equipado que cambió.
+    const uint8_t beforeSlots[4] = {before.equippedWeapon, before.equippedArmor,
+                                    before.equippedHelmet, before.equippedShield};
+    const uint8_t afterSlots[4] = {after.equippedWeapon, after.equippedArmor,
+                                   after.equippedHelmet, after.equippedShield};
+    for (uint8_t s = 0; s < 4; s++) {
+        if (beforeSlots[s] != afterSlots[s]) {
+            clientMonitor.broadcastExcept(
+                    playerId, std::make_shared<PlayerEquippedEvent>(
+                                      static_cast<uint16_t>(playerId), s, afterSlots[s]));
+        }
+    }
+}
+
+void Gameloop::handlePickUp(int playerId) {
+    if (!game.hasPlayer(playerId))
+        return;
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés levantar items"));
+        return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    auto r = game.pickUpItemAt(playerId);
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), r.message));
+    if (!r.ok) return;
+    // Broadcast a todos que ese drop ya no está en el piso + actualizamos
+    // inventario del dueño.
+    clientMonitor.broadcast(std::make_shared<ItemPickedUpEvent>(r.record.dropId));
+    auto after = game.getInventorySnapshot(playerId);
+    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+}
+
+void Gameloop::handleDrop(int playerId, uint8_t invSlot) {
+    if (!game.hasPlayer(playerId))
+        return;
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés tirar items"));
+        return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    auto r = game.dropItem(playerId, invSlot);
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), r.message));
+    if (!r.ok) return;
+    // Broadcast a todos que apareció un item nuevo en el piso.
+    clientMonitor.broadcast(std::make_shared<ItemDroppedEvent>(
+            r.record.dropId, r.record.itemId, r.record.x, r.record.y));
+    auto after = game.getInventorySnapshot(playerId);
+    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+}
+
+void Gameloop::handleEquip(int playerId, uint8_t invSlot) {
+    if (!game.hasPlayer(playerId))
+        return;
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés equiparte"));
+        return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    if (!game.equipOrUseItem(playerId, invSlot)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(),
+                                                              "No se pudo equipar ese slot"));
+        return;
+    }
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), "Item equipado"));
+    auto after = game.getInventorySnapshot(playerId);
+    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+}
+
+void Gameloop::handleUnequip(int playerId, uint8_t slotType) {
+    if (!game.hasPlayer(playerId))
+        return;
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés desequiparte"));
+        return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    if (!game.unequipSlot(playerId, slotType)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "No tenías ese slot equipado"));
+        return;
+    }
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), "Item desequipado"));
+    auto after = game.getInventorySnapshot(playerId);
+    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+}
+
+// ── Helpers privados ─────────────────────────────────────────────────────
+
+std::shared_ptr<ServerEvent> Gameloop::buildStatsEvent(int idPlayer) {
+    return std::make_shared<StatsEvent>(
+            game.getPlayerHealth(idPlayer), game.getPlayerMaxHealth(idPlayer),
+            game.getPlayerMana(idPlayer), game.getPlayerMaxMana(idPlayer),
+            game.getPlayerGold(idPlayer), game.getPlayerExperience(idPlayer),
+            game.getPlayerNextLevelExp(idPlayer), game.getPlayerLevel(idPlayer));
 }
 
 void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
@@ -281,31 +471,313 @@ void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
                               snap.equippedShield};
     for (uint8_t s = 0; s < 4; s++) {
         if (slots[s] == 0)
-            continue;  // nada equipado, no mando
-        std::string eqMsg = "PLAYER_EQUIPPED:" + std::to_string(idPlayer) + ":" +
-                            std::to_string(static_cast<int>(s)) + ":" +
-                            std::to_string(static_cast<int>(slots[s]));
+            continue;
+        auto ev = std::make_shared<PlayerEquippedEvent>(static_cast<uint16_t>(idPlayer), s,
+                                                        slots[s]);
         if (recipientId < 0) {
-            clientQueues.broadcastExcept(idPlayer, eqMsg);
+            clientMonitor.broadcastExcept(idPlayer, ev);
         } else {
-            clientQueues.sendToClient(recipientId, eqMsg);
+            clientMonitor.sendToClient(recipientId, ev);
         }
     }
 }
 
-std::string Gameloop::buildStatsMessage(int idPlayer) {
-    uint16_t hp = game.getPlayerHealth(idPlayer);
-    uint16_t maxHp = game.getPlayerMaxHealth(idPlayer);
-    uint16_t mana = game.getPlayerMana(idPlayer);
-    uint16_t maxMana = game.getPlayerMaxMana(idPlayer);
-    uint32_t gold = game.getPlayerGold(idPlayer);
-    uint32_t exp = game.getPlayerExperience(idPlayer);
-    uint32_t nextLvlExp = game.getPlayerNextLevelExp(idPlayer);
-    uint8_t level = game.getPlayerLevel(idPlayer);
-    return "STATS:" + std::to_string(hp) + ":" + std::to_string(maxHp) + ":" +
-           std::to_string(mana) + ":" + std::to_string(maxMana) + ":" + std::to_string(gold) + ":" +
-           std::to_string(exp) + ":" + std::to_string(nextLvlExp) + ":" +
-           std::to_string(static_cast<int>(level));
+// ── Selección de NPC amigo ───────────────────────────────────────────────
+
+// Distancia máxima en la que un jugador puede interactuar con un NPC amigo. 2 = cualquier tile dentro de un cuadrado de 5x5 centrado en él.
+static constexpr int MAX_INTERACTION_DISTANCE = 2;
+
+static const char* friendlyKindName(uint8_t type) {
+    if (type == static_cast<uint8_t>(NpcType::MERCHANT)) return "Comerciante";
+    if (type == static_cast<uint8_t>(NpcType::BANKER)) return "Banquero";
+    if (type == static_cast<uint8_t>(NpcType::PRIEST)) return "Sacerdote";
+    return "NPC";
 }
 
-void Gameloop::stop() { gameFinished = true; }
+void Gameloop::handleSelectNpc(int playerId, uint16_t npcId) {
+    if (!game.hasPlayer(playerId))
+        return;
+    const FriendlyNpc* f = map.getFriendlyNpc(npcId);
+    if (!f) {
+        // No es un amigo. Click sobre hostil → ignoramos (el click sobre
+        // hostiles ya se manda como AttackEvent desde el cliente).
+        return;
+    }
+    Position p = game.getPlayerPosition(playerId);
+    int dist = map.friendlyNpcDistance(p.x, p.y, npcId);
+    if (dist < 0 || dist > MAX_INTERACTION_DISTANCE) {
+        clientMonitor.sendToClient(
+                playerId,
+                std::make_shared<ChatBroadcastEvent>(0, std::string(),
+                                                    "Estás demasiado lejos de " + f->name));
+        return;
+    }
+    selectedNpc[playerId] = npcId;
+    std::string msg = "Hablás con " + f->name + " (" + friendlyKindName(f->type) + ")";
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), std::move(msg)));
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────
+
+void Gameloop::handleChat(int playerId, const std::string& text) {
+    if (text.empty())
+        return;
+    if (text[0] == '/') {
+        handleChatCommand(playerId, text);
+        return;
+    }
+    const std::string& name = game.getPlayerName(playerId);
+    std::cout << "CHAT " << name << "(" << playerId << "): " << text << std::endl;
+    clientMonitor.broadcast(
+            std::make_shared<ChatBroadcastEvent>(static_cast<uint16_t>(playerId), name, text));
+}
+
+// Helper: parte "cmd arg1 arg2 ..." en palabras (ignora espacios consecutivos).
+static std::vector<std::string> splitWords(const std::string& s) {
+    std::vector<std::string> out;
+    size_t i = 0, n = s.size();
+    while (i < n) {
+        while (i < n && s[i] == ' ') i++;
+        size_t j = i;
+        while (j < n && s[j] != ' ') j++;
+        if (j > i) out.push_back(s.substr(i, j - i));
+        i = j;
+    }
+    return out;
+}
+
+void Gameloop::handleChatCommand(int playerId, const std::string& text) {
+    auto parts = splitWords(text);
+    if (parts.empty()) return;
+    const std::string& cmd = parts[0];
+    std::cout << "CHAT_CMD player=" << playerId << " cmd='" << cmd << "' args=" << (parts.size() - 1)
+              << std::endl;
+
+    bool refreshStats = false;
+    bool refreshInventory = false;
+    std::string reply;
+
+    if (cmd == "/vidainf") {
+        reply = game.cheatToggleInfiniteHealth(playerId) ? "Vida infinita toggled" : "Error";
+    } else if (cmd == "/manainf") {
+        reply = game.cheatToggleInfiniteMana(playerId) ? "Mana infinito toggled" : "Error";
+    } else if (cmd == "/suicidio") {
+        if (game.cheatSuicide(playerId)) {
+            reply = "Te suicidaste";
+            refreshStats = true;
+            if (game.isPlayerGhost(playerId)) {
+                clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
+            }
+        } else reply = "Error";
+    } else if (cmd == "/levelup") {
+        if (game.cheatLevelUp(playerId)) { reply = "Subiste de nivel"; refreshStats = true; }
+        else reply = "Error";
+    } else if (cmd == "/gold") {
+        if (parts.size() < 2) { reply = "Uso: /gold <cantidad>"; }
+        else {
+            try {
+                uint32_t n = static_cast<uint32_t>(std::stoul(parts[1]));
+                if (game.cheatAddGold(playerId, n)) {
+                    reply = "Recibiste " + std::to_string(n) + " de oro";
+                    refreshStats = true;
+                } else reply = "Error";
+            } catch (...) { reply = "Uso: /gold <cantidad>"; }
+        }
+    } else if (cmd == "/item") {
+        if (parts.size() < 2) { reply = "Uso: /item <itemId>"; }
+        else {
+            try {
+                uint8_t id = static_cast<uint8_t>(std::stoul(parts[1]));
+                if (game.cheatSpawnItem(playerId, id)) {
+                    reply = "Item " + std::to_string(id) + " agregado";
+                    refreshInventory = true;
+                } else reply = "Error";
+            } catch (...) { reply = "Uso: /item <itemId>"; }
+        }
+    } else if (cmd == "/meditar") {
+        auto r = game.meditatePlayer(playerId);
+        reply = r.message;
+    } else if (cmd == "/tomar") {
+        // /tomar levanta lo que haya en la celda del jugador. El reply lo
+        // arma handlePickUp (incluye ChatBroadcastEvent + ItemPickedUpEvent).
+        handlePickUp(playerId);
+        return;
+    } else if (cmd == "/tirar") {
+        // /tirar <slot>. TODO(team-ui-nico): cuando haya UI de selección de
+        // inventario, llamar sin args y usar selectedSlot local del cliente.
+        if (parts.size() < 2) {
+            reply = "Uso: /tirar <slot>";
+        } else {
+            try {
+                uint8_t slot = static_cast<uint8_t>(std::stoul(parts[1]));
+                handleDrop(playerId, slot);
+                return;
+            } catch (...) { reply = "Uso: /tirar <slot>"; }
+        }
+    } else if (cmd == "/equipar") {
+        if (parts.size() < 2) {
+            reply = "Uso: /equipar <slot>";
+        } else {
+            try {
+                uint8_t slot = static_cast<uint8_t>(std::stoul(parts[1]));
+                handleEquip(playerId, slot);
+                return;
+            } catch (...) { reply = "Uso: /equipar <slot>"; }
+        }
+    } else if (cmd == "/desequipar") {
+        if (parts.size() < 2) {
+            reply = "Uso: /desequipar <arma|armor|casco|escudo>";
+        } else {
+            const std::string& which = parts[1];
+            uint8_t slotType = 255;
+            if (which == "arma") slotType = 0;
+            else if (which == "armor" || which == "armadura") slotType = 1;
+            else if (which == "casco") slotType = 2;
+            else if (which == "escudo") slotType = 3;
+            if (slotType == 255) {
+                reply = "Uso: /desequipar <arma|armor|casco|escudo>";
+            } else {
+                handleUnequip(playerId, slotType);
+                return;
+            }
+        }
+    } else {
+        // Comandos que requieren un NPC amigo seleccionado.
+        auto itSel = selectedNpc.find(playerId);
+        const FriendlyNpc* sel =
+                itSel != selectedNpc.end() ? map.getFriendlyNpc(itSel->second) : nullptr;
+        const uint8_t MERCHANT = static_cast<uint8_t>(NpcType::MERCHANT);
+        const uint8_t BANKER = static_cast<uint8_t>(NpcType::BANKER);
+        const uint8_t PRIEST = static_cast<uint8_t>(NpcType::PRIEST);
+
+        // Helper local: revalida la distancia al NPC seleccionado.
+        auto stillNear = [&]() -> bool {
+            if (!sel) return false;
+            Position p = game.getPlayerPosition(playerId);
+            int d = map.friendlyNpcDistance(p.x, p.y, sel->id);
+            return d >= 0 && d <= MAX_INTERACTION_DISTANCE;
+        };
+        auto joinFrom = [&](size_t from) -> std::string {
+            std::string out;
+            for (size_t i = from; i < parts.size(); i++) {
+                if (i > from) out += ' ';
+                out += parts[i];
+            }
+            return out;
+        };
+
+        if (cmd == "/listar") {
+            if (!sel || !stillNear()) {
+                reply = "Necesitás estar cerca de un comerciante o banquero (click)";
+            } else if (sel->type == MERCHANT) {
+                auto lines = game.listMerchantInventory(sel->type);
+                for (const auto& l : lines) {
+                    clientMonitor.sendToClient(
+                            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), l));
+                }
+                reply = "Fin de la lista";
+            } else if (sel->type == BANKER) {
+                auto lines = game.listBankAccount(playerId, sel->type);
+                for (const auto& l : lines) {
+                    clientMonitor.sendToClient(
+                            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), l));
+                }
+                reply = "Fin de la lista";
+            } else {
+                reply = "Este NPC no tiene nada para listar";
+            }
+        } else if (cmd == "/comprar") {
+            if (parts.size() < 2) { reply = "Uso: /comprar <objeto>"; }
+            else if (!sel || !stillNear()) { reply = "No hay comerciante seleccionado cerca"; }
+            else if (sel->type != MERCHANT && sel->type != PRIEST) {
+                reply = "Sólo podés comprarle a un comerciante o sacerdote";
+            } else {
+                auto r = game.buyFromNpc(playerId, sel->type, joinFrom(1));
+                reply = r.message;
+                if (r.ok) { refreshStats = true; refreshInventory = true; }
+            }
+        } else if (cmd == "/vender") {
+            if (parts.size() < 2) { reply = "Uso: /vender <objeto>"; }
+            else if (!sel || !stillNear() || sel->type != MERCHANT) {
+                reply = "No hay comerciante seleccionado cerca";
+            } else {
+                auto r = game.sellToNpc(playerId, sel->type, joinFrom(1));
+                reply = r.message;
+                if (r.ok) { refreshStats = true; refreshInventory = true; }
+            }
+        } else if (cmd == "/depositar") {
+            if (parts.size() < 2) { reply = "Uso: /depositar <objeto> | /depositar oro <cant>"; }
+            else if (!sel || !stillNear() || sel->type != BANKER) {
+                reply = "No hay banquero seleccionado cerca";
+            } else if (parts[1] == "oro") {
+                if (parts.size() < 3) { reply = "Uso: /depositar oro <cant>"; }
+                else {
+                    try {
+                        uint32_t n = static_cast<uint32_t>(std::stoul(parts[2]));
+                        auto r = game.depositGoldToBank(playerId, n);
+                        reply = r.message;
+                        if (r.ok) refreshStats = true;
+                    } catch (...) { reply = "Uso: /depositar oro <cant>"; }
+                }
+            } else {
+                auto r = game.depositItemToBank(playerId, joinFrom(1));
+                reply = r.message;
+                if (r.ok) refreshInventory = true;
+            }
+        } else if (cmd == "/retirar") {
+            if (parts.size() < 2) { reply = "Uso: /retirar <objeto> | /retirar oro <cant>"; }
+            else if (!sel || !stillNear() || sel->type != BANKER) {
+                reply = "No hay banquero seleccionado cerca";
+            } else if (parts[1] == "oro") {
+                if (parts.size() < 3) { reply = "Uso: /retirar oro <cant>"; }
+                else {
+                    try {
+                        uint32_t n = static_cast<uint32_t>(std::stoul(parts[2]));
+                        auto r = game.withdrawGoldFromBank(playerId, n);
+                        reply = r.message;
+                        if (r.ok) refreshStats = true;
+                    } catch (...) { reply = "Uso: /retirar oro <cant>"; }
+                }
+            } else {
+                auto r = game.withdrawItemFromBank(playerId, joinFrom(1));
+                reply = r.message;
+                if (r.ok) refreshInventory = true;
+            }
+        } else if (cmd == "/resucitar") {
+            // El enunciado permite tipear /resucitar sin estar cerca (te
+            // teletransporta al sacerdote más cercano). No requerimos selección.
+            auto r = game.revivePlayer(playerId);
+            reply = r.message;
+            if (r.ok) {
+                refreshStats = true;
+                Position p = game.getPlayerPosition(playerId);
+                clientMonitor.broadcast(std::make_shared<PlayerRevivedEvent>(
+                        static_cast<uint16_t>(playerId), p.x, p.y));
+            }
+        } else if (cmd == "/curar") {
+            if (!sel || !stillNear() || sel->type != PRIEST) {
+                reply = "No hay sacerdote seleccionado cerca";
+            } else {
+                auto r = game.healPlayer(playerId);
+                reply = r.message;
+                if (r.ok) refreshStats = true;
+            }
+        } else {
+            reply = "Comando desconocido: " + cmd;
+        }
+    }
+
+    clientMonitor.sendToClient(playerId,
+                               std::make_shared<ChatBroadcastEvent>(0, std::string(), reply));
+    if (refreshStats) {
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
+    if (refreshInventory) {
+        auto snap = game.getInventorySnapshot(playerId);
+        clientMonitor.sendToClient(playerId,
+                                   std::make_shared<InventoryUpdateEvent>(
+                                           snap.items, snap.equippedWeapon, snap.equippedArmor,
+                                           snap.equippedHelmet, snap.equippedShield));
+    }
+}

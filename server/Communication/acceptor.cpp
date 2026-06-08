@@ -1,13 +1,13 @@
 #include "acceptor.h"
 
-Acceptor::Acceptor(ProtocolServer& protocol, Queue<std::string>& commands,
+Acceptor::Acceptor(ServerProtocol& protocol, IncomingQueue& clientEvents,
                    ClientMonitor& clientMonitor):
-        protocol(protocol), clients(), commands(commands), clientMonitor(clientMonitor) {}
+        protocol(protocol), clients(), clientEvents(clientEvents), clientMonitor(clientMonitor) {}
 
 void Acceptor::run() {
     int clientId;
     while ((clientId = protocol.waitClient())) {
-        auto* client = new ClientHandler(protocol, commands, clientMonitor, clientId);
+        auto* client = new ClientHandler(protocol, clientEvents, clientMonitor, clientId);
         reap();
         clients.push_back(client);
         client->startThreads();

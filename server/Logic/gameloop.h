@@ -1,52 +1,81 @@
 #ifndef GAMELOOP_H
 #define GAMELOOP_H
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 
+#include "../../common/Communication/events/server_event.h"
+#include "../../common/Communication/move_direction.h"
 #include "../../common/position.h"
-#include "../../common/queue.h"
 #include "../../common/thread.h"
-#include "../Comunication/client_monitor.h"
-#include "../Protocol/protocol_server.h"
+#include "../Communication/client_monitor.h"
+#include "../Communication/server_receiver.h"  // IncomingQueue alias
+#include "../Communication/server_protocol.h"
 
 #include "game.h"
 #include "turn_manager.h"
 
 class Gameloop: public Thread {
 private:
-    Queue<std::string>& commands;
-    ClientMonitor& clientQueues;
+    IncomingQueue& clientEvents;
+    ClientMonitor& clientMonitor;
     bool gameFinished;
     Map& map;
     Game game;
-    ProtocolServer& protocol;
+    ServerProtocol& protocol;
     TurnManager turnManager;
 
-    void processCommand(const std::string& command);
+    // NPC amigo actualmente seleccionado por cada jugador (click). Los comandos
+    // dirigidos a NPCs (/comprar, /vender, /depositar, etc.) actúan sobre éste.
+    // Si no hay entrada, el jugador no tiene selección activa.
+    std::unordered_map<int, uint16_t> selectedNpc;
 
-    // Manda LOGIN_OK + MAP al jugador y avisa a todos del nuevo. Se llama
-    // al final del char creation (cuando llega "skin").
-    void finalizePlayerLogin(int idPlayer, const std::string& skinId);
-
-    // Arma el string interno "STATS:hp:maxHp:mana:maxMana:gold:exp:nextLvlExp:level"
-    // a partir del estado actual del jugador. Se reusa donde haga falta.
-    std::string buildStatsMessage(int idPlayer);
+    // Construye un StatsEvent con el snapshot actual del jugador.
+    std::shared_ptr<ServerEvent> buildStatsEvent(int idPlayer);
 
     // Manda PLAYER_EQUIPPED por cada slot equipado del jugador.
     // recipientId == -1 → broadcast a todos menos a él. Sino, sólo a ese cliente.
     void sendEquipmentSnapshot(int idPlayer, int recipientId);
 
+    // Avanza el turno de cada NPC vivo; si alguno ataca, dispara los eventos al cliente.
     void NPCTurns();
 
     void PlayerTurns();
 
 public:
-    Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
-             ProtocolServer& protocol);
+    Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
+             ServerProtocol& protocol);
 
     virtual void run() override;
 
     virtual void stop() override;
+
+    // Despacha el ClientEvent al handle correspondiente (un único switch
+    // por tipo, con dynamic_cast). Cada caso vive en su propio handler.
+    void dispatch(const ClientEvent& ev);
+
+    void handleDisconnect(int playerId);
+    void handleUserArrival(int playerId, const std::string& name, const std::string& race,
+                           const std::string& class_);
+    void handleSkinSelected(int playerId, uint8_t skinId);
+    void handleHeadSelected(int playerId, uint8_t headId);
+    void handleMovement(int playerId, MoveDirection direction);
+    void handleTurn(int playerId, MoveDirection direction);
+    void handleAttack(int playerId, uint8_t targetType, uint16_t targetId);
+    void handlePickUp(int playerId);
+    void handleDrop(int playerId, uint8_t invSlot);
+    void handleEquip(int playerId, uint8_t invSlot);
+    void handleUnequip(int playerId, uint8_t slotType);
+    // Si text empieza con '/', va al parser de comandos. Sino se broadcastea
+    // tal cual con [authorId][authorName][text].
+    void handleChat(int playerId, const std::string& text);
+    // Parsea "/cmd arg1 arg2 ..." y dispara la acción. Si el comando no
+    // existe, le manda al jugador un ChatBroadcastEvent del sistema.
+    void handleChatCommand(int playerId, const std::string& text);
+    // Click sobre un NPC amigo: valida adyacencia (≤2 tiles) y guarda la
+    // selección. Responde con mensaje del sistema.
+    void handleSelectNpc(int playerId, uint16_t npcId);
 };
 
 #endif

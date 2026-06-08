@@ -1,13 +1,13 @@
 #include "client_handler.h"
 
-ClientHandler::ClientHandler(ProtocolServer& protocol, Queue<std::string>& commands,
+ClientHandler::ClientHandler(ServerProtocol& protocol, IncomingQueue& clientEvents,
                              ClientMonitor& clientMonitor, const int clientId):
-        clientQueue(),
-        sender(protocol, clientQueue, clientId),
-        receiver(protocol, commands, clientId),
+        serverEvents(),
+        sender(protocol, serverEvents, clientId),
+        receiver(protocol, clientEvents, clientId),
         clientConnected(true),
         clientId(clientId) {
-    clientMonitor.addQueues(clientId, clientQueue);
+    clientMonitor.addQueues(clientId, serverEvents);
 }
 
 bool ClientHandler::clientDisconnected() { return !clientConnected; }

@@ -6,10 +6,12 @@
 
 #include <SDL2pp/SDL2pp.hh>
 
+#include "../common/Communication/events/server_events.h"
 #include "../common/position.h"
 #include "../common/queue.h"
 
-#include "client_protocol.h"  // ReceivedMap
+#include "Communication/client_receiver.h"  // IncomingQueue alias
+#include "Communication/client_sender.h"    // OutgoingQueue alias
 #include "map_renderer.h"
 
 static constexpr float FEET_OFFSET = 0.8f;
@@ -31,13 +33,23 @@ struct OtherPlayer {
     float targetX = 0.0f;
     float targetY = 0.0f;
     std::string name;
+    bool ghost = false;  // PlayerDiedEvent/PlayerRevivedEvent alternan este flag
+};
+
+// NPC remoto. Mismo patrón que OtherPlayer: visual es el sprite, target* el tile
+// destino al que está caminando, alive controla si se renderiza o no.
+struct RemoteNpc {
+    NpcEntity visual;
+    float targetX = 0.0f;
+    float targetY = 0.0f;
+    bool alive = true;
 };
 
 class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
-               Queue<std::string>& events_queue, Queue<std::string>& server_queue,
-               const ReceivedMap& mapData, Position spawn, Player_ player);
+               OutgoingQueue& clientEvents, IncomingQueue& serverEvents, const MapEvent& mapData,
+               Position spawn, Player_ player);
 
     // Retorna false cuando el jugador quiere salir
     bool run();
@@ -51,20 +63,27 @@ private:
 
     uint16_t a = 0;
 
-    // Queue al sender: pusheamos "TOP"/"BOTTOM"/"LEFT"/"RIGHT" cuando el jugador cruza un tile.
-    Queue<std::string>& events_queue;
+    // Queue al sender: empujamos ClientEvents ya construidos (MovementEvent, etc.).
+    OutgoingQueue& clientEvents;
     int lastTileX;
     int lastTileY;
     Direction lastSentDir;  // última dirección que mandamos al server (para detectar giros)
 
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
-    // pushea.
-    Queue<std::string>& server_queue;
+    // pushea tipados.
+    IncomingQueue& serverEvents;
     Player_ player;
     std::unordered_map<int, OtherPlayer> otherPlayers;
+    std::unordered_map<int, RemoteNpc> npcs;
     std::vector<DroppedItem> droppedItems;
     std::vector<BloodEffect> bloodEffects;
     std::vector<ArrowProjectile> arrows;
+    bool chatActive = false;
+    std::string chatBuffer;
+
+    // True si el jugador local está muerto (fantasma). Lo activa
+    // PlayerDiedEvent dirigido a nuestro id (no está en otherPlayers).
+    bool localGhost = false;
 
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;

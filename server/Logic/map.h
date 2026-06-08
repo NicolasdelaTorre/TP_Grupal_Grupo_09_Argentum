@@ -53,6 +53,16 @@ struct LoadedEntry {
     int16_t height = 1;
 };
 
+// NPC amigo (merchant/banker/priest) cargado de las ciudades del YAML.
+// Tiene id propio para que el cliente pueda seleccionarlo con click.
+struct FriendlyNpc {
+    uint16_t id;
+    int16_t x;
+    int16_t y;
+    uint8_t type;  // wire byte de NpcType: MERCHANT=6, BANKER=7, PRIEST=8
+    std::string name;
+};
+
 // Bioma cargado desde el editor (zona de tipo "biome"): tipo (el `template` de
 // la zona en el YAML), posición/tamaño del área que ocupa y sus spawns.
 struct Biome {
@@ -67,12 +77,14 @@ struct Biome {
 class Map {
 private:
     uint16_t npcIdCounter;
+    uint16_t friendlyIdCounter = 10000;  // ids de amigos ≥ 10000 para no chocar con hostiles
     uint16_t width;
     uint16_t height;
     std::vector<Cell> cells;
     Position spawn;
     std::vector<LoadedEntry> entries;
     std::vector<Biome> biomes;
+    std::vector<FriendlyNpc> friendlyNpcs;
     std::unordered_map<uint16_t, std::unique_ptr<NPC>> npcs;
 
     void setNPC();
@@ -134,6 +146,20 @@ public:
     void placePlayerIntoTheDungeon(int playerId, const std::string& mapId);
 
     void placePlayerIntoTheOverworld(int playerId, uint8_t mapId);
+
+    // ── NPCs amigos (merchant/banker/priest) ────────────────────────────
+    // Registra un amigo en el mapa con id auto-incremental ≥ 10000.
+    // Devuelve el id asignado.
+    uint16_t addFriendlyNpc(int16_t x, int16_t y, uint8_t type, std::string name);
+
+    // Snapshot de los amigos cargados (para mandar NewNpcEvent al loguearse).
+    const std::vector<FriendlyNpc>& getFriendlyNpcs() const;
+
+    // Devuelve nullptr si no existe ese id.
+    const FriendlyNpc* getFriendlyNpc(uint16_t id) const;
+
+    // Distancia del jugador al amigo. -1 si no existe el amigo.
+    int friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendlyId) const;
 };
 
 #endif

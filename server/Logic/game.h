@@ -1,10 +1,13 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "../../common/Communication/events/server_events.h"
+#include "../../common/Communication/move_direction.h"
 #include "../../common/position.h"
 
 #include "binary_parser.h"
@@ -12,38 +15,32 @@
 #include "player.h"
 #include "yaml_map_loader.h"
 
-// Resultado de un ataque, lo arma processAttack y lo consume el gameloop
-// para mandar ATTACK_RESULT por broadcast.
-//   performed=false  → no hubo víctima en línea de vista, no se notifica nada.
-//   performed=true   → hubo víctima; hit indica si pegó o si evadió.
-struct AttackResult {
-    bool performed = false;
-    uint16_t attackerId = 0;
-    uint8_t targetType = 0;  // 0=player, 1=npc
-    uint16_t targetId = 0;
-    uint16_t damage = 0;
-    bool hit = false;
-};
-
 class Game {
+public:
+    // Definido acá arriba porque lo usan tanto miembros privados como métodos
+    // públicos (pickUp/drop devuelven DropResult que lo contiene).
+    struct DroppedItemRecord {
+        uint16_t dropId;
+        uint8_t itemId;
+        int16_t x;
+        int16_t y;
+    };
+
 private:
     Map& map;
     Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
     BinaryParser parser;
+    // Items tirados al piso (de /tirar o drops de NPC muerto). El id es
+    // auto-incremental y nunca se reusa para que el cliente pueda referirse
+    // a un drop específico al levantarlo.
+    uint16_t nextDropId = 1;
+    std::vector<DroppedItemRecord> droppedItems;
     // Encuentra una posición libre para spawnear. Tira excepción si no hay ninguna.
     Position findSpawnPosition() const;
 
     // True si ningún jugador está parado en pos.
     bool isPositionFree(Position pos) const;
-
-    bool processUser(int playerId, const std::string& user);
-
-    bool processMovement(int playerId, const std::string& direction);
-
-    bool turnPlayer(int playerId, const std::string& direction);
-
-    bool processHeal(int playerId);
 
     // Stub de evasión. TODO(team-gameplay): implementar fórmula real con
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
@@ -51,12 +48,18 @@ private:
 
     void checkEntry(int playerId);
 
-    bool processChatCommand(int playerId, const std::string& chatCommand);
-
 public:
     explicit Game(Map& world);
 
-    bool processCommand(int playerId, const std::string& command);
+    // Da de alta un jugador (nuevo o cargado del binario).
+    bool addPlayer(int playerId, const std::string& name, const std::string& race,
+                   const std::string& class_);
+
+    // Mueve un casillero en la dirección indicada. False si está bloqueado.
+    bool movePlayer(int playerId, MoveDirection direction);
+
+    // Gira sin moverse.
+    bool turnPlayer(int playerId, MoveDirection direction);
 
     Position getPlayerPosition(int playerId) const;
 
@@ -85,33 +88,84 @@ public:
 
     bool hasPlayer(int playerId) const;
 
+    // True si el jugador está muerto (fantasma).
+    bool isPlayerGhost(int playerId) const;
+
     std::vector<int> getPlayerIds() const;
 
     void updatePlayerData(int playerId);
 
-    void setSkin(int playerId, const std::string& skinId);
+    void setSkin(int playerId, uint8_t skinId);
 
-    // Resuelve un ataque del playerId contra un target. El gameloop solo
-    // arma el broadcast a partir del AttackResult. La lógica de validar
-    // arma equipada, alcance (ranged vs adyacencia melee) y daño vive adentro.
+    // Resuelve un ataque del playerId contra un target.
+    // Devuelve directamente el AttackResultEvent listo para broadcast, o
+    // nullptr si el ataque no se ejecutó (sin arma, no hay target en línea
+    // de vista, atacante muerto, etc.). La lógica de validar arma equipada,
+    // alcance (ranged vs adyacencia melee) y daño vive adentro.
     // targetType: 0 = player, 1 = npc.
-    AttackResult processAttack(int playerId, uint8_t targetType, uint16_t targetId);
+    std::shared_ptr<AttackResultEvent> processAttack(int playerId, uint8_t targetType,
+                                                    uint16_t targetId);
 
-    // Aplica un cheat al jugador. code mapea al enum CheatCode (common/DTOs.h):
-    // 0 = SUICIDE, 1 = GOLD, 2 = EXPERIENCE.
-    // TODO(team-gameplay): implementar la lógica concreta (matar al jugador,
-    // sumar oro, sumar experiencia). Hoy es un stub que solo loggea.
-    void processCheat(int playerId, uint8_t code);
+    // ── Cheats invocables desde el chat (/vidainf, /gold, etc.)
+    bool cheatToggleInfiniteHealth(int playerId);
+    bool cheatToggleInfiniteMana(int playerId);
+    bool cheatSuicide(int playerId);
+    bool cheatLevelUp(int playerId);
+    bool cheatAddGold(int playerId, uint32_t amount);
+    bool cheatSpawnItem(int playerId, uint8_t itemId);
 
-    // Recoge lo que haya en la celda del jugador (`/tomar`).
-    // TODO(team-gameplay): buscar item en droppedItems en la posición del
-    // jugador, llamarlo a player.addItem y removerlo del piso. Hoy stub.
-    bool pickUpItemAt(int playerId);
+    // ── Interacción con NPCs amigos ─────────────────────────────────────
+    // Resultado simple: ok + mensaje legible para mostrarle al jugador en el chat del sistema. Los stubs solo loguean hay que meter la lógica real usando las clases Merchant/Banker/Priest que ya existen.
+    struct InteractionResult {
+        bool ok = false;
+        std::string message;
+    };
 
-    // Tira el item del slot al piso (`/tirar`).
-    // TODO(team-gameplay): sacar de player.inventory[invSlot] y agregar a
-    // droppedItems en la posición del jugador. Hoy stub.
-    bool dropItem(int playerId, uint8_t invSlot);
+    // /listar dirigido a un merchant: items que vende [{id, name, price}].
+    // Dirigido a un banker: items y oro guardados en la cuenta del jugador.
+    // Devuelve líneas de texto listas para mostrar (1 por item).
+    std::vector<std::string> listMerchantInventory(uint8_t npcType);
+    std::vector<std::string> listBankAccount(int playerId, uint8_t npcType);
+
+    // /comprar <item>: merchant o priest (priest vende hechizos/pociones).
+    InteractionResult buyFromNpc(int playerId, uint8_t npcType, const std::string& itemName);
+
+    // /vender <item>: solo merchant.
+    InteractionResult sellToNpc(int playerId, uint8_t npcType, const std::string& itemName);
+
+    // /depositar <item> o /depositar oro <N>: solo banker.
+    InteractionResult depositItemToBank(int playerId, const std::string& itemName);
+    InteractionResult depositGoldToBank(int playerId, uint32_t amount);
+
+    // /retirar <item> o /retirar oro <N>: solo banker.
+    InteractionResult withdrawItemFromBank(int playerId, const std::string& itemName);
+    InteractionResult withdrawGoldFromBank(int playerId, uint32_t amount);
+
+    // /resucitar (priest): solo si el jugador es fantasma.
+    InteractionResult revivePlayer(int playerId);
+
+    // /curar (priest): recupera vida y maná.
+    InteractionResult healPlayer(int playerId);
+
+    // /meditar: arranca meditación (recupera mana con el tiempo). Sin NPC.
+    InteractionResult meditatePlayer(int playerId);
+
+    // ── Items en el suelo ───────────────────────────────────────────────
+    const std::vector<DroppedItemRecord>& getDroppedItems() const { return droppedItems; }
+
+    // Resultado de pickUp/drop con el record afectado para que gameloop
+    // pueda armar el ItemDroppedEvent/ItemPickedUpEvent.
+    struct DropResult {
+        bool ok = false;
+        std::string message;
+        DroppedItemRecord record;
+    };
+
+    // /tomar: si hay un drop en la celda del jugador, lo agrega al inventario.
+    DropResult pickUpItemAt(int playerId);
+
+    // /tirar <slot>: saca el item del inventario y lo deja en la celda del jugador.
+    DropResult dropItem(int playerId, uint8_t invSlot);
 
     // Equipa o usa el item del slot según su tipo (ver ADR-002).
     // TODO(team-gameplay): si arma/armor/casco/escudo → player.equipItem(slot).

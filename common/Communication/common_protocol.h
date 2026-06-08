@@ -13,12 +13,11 @@
 
 #include "socket.h"
 
-class common_protocol {
+class CommonProtocol {
     Socket skt;
 
-
 public:
-    explicit common_protocol(Socket skt);
+    explicit CommonProtocol(Socket skt);
 
     int sendByte(const u_int8_t byte);
 

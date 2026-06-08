@@ -16,6 +16,9 @@ class NPC {
     public:
         NPC(uint16_t id, const std::string& name, uint16_t x, uint16_t y, uint8_t mapId);
 
+        uint16_t getId() const { return id; }
+        const std::string& getName() const { return name; }
+
         virtual ~NPC() = default;
 };
 
