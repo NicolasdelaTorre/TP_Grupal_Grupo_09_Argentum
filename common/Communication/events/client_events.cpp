@@ -22,8 +22,6 @@ std::unique_ptr<ClientEvent> ClientEvent::deserialize(uint8_t opcode, CommonProt
             return HeadSelectedEvent::deserialize(proto);
         case ClientMsg::ATTACK:
             return AttackEvent::deserialize(proto);
-        case ClientMsg::CHEAT:
-            return CheatEvent::deserialize(proto);
         case ClientMsg::PICK_UP_ITEM:
             return PickUpItemEvent::deserialize(proto);
         case ClientMsg::DROP_ITEM:
@@ -135,20 +133,6 @@ std::unique_ptr<AttackEvent> AttackEvent::deserialize(CommonProtocol& proto) {
     uint8_t type = proto.receive_byte();
     uint16_t id = proto.receive_two_bytes_number();
     return std::make_unique<AttackEvent>(type, id);
-}
-
-// ── CheatEvent ───────────────────────────────────────────────────────────
-
-CheatEvent::CheatEvent(uint8_t code): code(code) {}
-
-void CheatEvent::serialize(CommonProtocol& proto) const {
-    proto.sendByte(static_cast<uint8_t>(ClientMsg::CHEAT));
-    proto.sendByte(code);
-}
-
-std::unique_ptr<CheatEvent> CheatEvent::deserialize(CommonProtocol& proto) {
-    uint8_t c = proto.receive_byte();
-    return std::make_unique<CheatEvent>(c);
 }
 
 // ── PickUpItemEvent ──────────────────────────────────────────────────────

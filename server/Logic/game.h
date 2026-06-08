@@ -88,11 +88,13 @@ public:
     std::shared_ptr<AttackResultEvent> processAttack(int playerId, uint8_t targetType,
                                                     uint16_t targetId);
 
-    // Aplica un cheat al jugador. code mapea al enum CheatCode (common/DTOs.h):
-    // 0 = SUICIDE, 1 = GOLD, 2 = EXPERIENCE.
-    // TODO(team-gameplay): implementar la lógica concreta (matar al jugador,
-    // sumar oro, sumar experiencia). Hoy es un stub que solo loggea.
-    void processCheat(int playerId, uint8_t code);
+    // ── Cheats invocables desde el chat (/vidainf, /gold, etc.) 
+    bool cheatToggleInfiniteHealth(int playerId);
+    bool cheatToggleInfiniteMana(int playerId);
+    bool cheatSuicide(int playerId);
+    bool cheatLevelUp(int playerId);
+    bool cheatAddGold(int playerId, uint32_t amount);
+    bool cheatSpawnItem(int playerId, uint8_t itemId);
 
     // Recoge lo que haya en la celda del jugador (`/tomar`).
     // TODO(team-gameplay): buscar item en droppedItems en la posición del

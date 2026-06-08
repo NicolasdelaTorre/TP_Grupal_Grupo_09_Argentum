@@ -99,8 +99,6 @@ struct Weapon: public Obj {
 // Tipo de criatura NPC dinámica
 enum class NpcType : uint8_t { SPIDER = 0, SKELETON, ZOMBIE, GOBLIN, ORC, GOLEM };
 
-enum class CheatCode : uint8_t { SUICIDE = 0, GOLD, EXPERIENCE };
-
 struct NpcEntity {
     uint16_t id = 0;
     float x = 0, y = 0;

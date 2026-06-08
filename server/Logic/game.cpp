@@ -327,14 +327,58 @@ void Game::setSkin(int playerId, uint8_t skinId) {
     itPlayer->second.setSkin(static_cast<int>(skinId), 0);
 }
 
-void Game::processCheat(int playerId, uint8_t code) {
+// ── Cheats invocables desde el chat ──────────────────────────────────────
+
+bool Game::cheatToggleInfiniteHealth(int playerId) {
     auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    // TODO(team-gameplay): implementar la lógica de cada cheat.
-    std::cout << "Cheat recibido: player=" << playerId << " code=" << static_cast<int>(code)
-              << " (stub, sin efecto)" << std::endl;
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): flag en PlayerData + check en receiveDamage.
+    std::cout << "CHEAT vidainf toggled para player=" << playerId << " (stub)" << std::endl;
+    return true;
+}
+
+bool Game::cheatToggleInfiniteMana(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): flag en PlayerData + check en consumeMana.
+    std::cout << "CHEAT manainf toggled para player=" << playerId << " (stub)" << std::endl;
+    return true;
+}
+
+bool Game::cheatSuicide(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    it->second.receiveDamage(it->second.getMaxHealth());
+    std::cout << "CHEAT suicidio aplicado a player=" << playerId << std::endl;
+    return true;
+}
+
+bool Game::cheatLevelUp(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): incrementar PlayerData.level + recalcular maxHP/maxMana
+    // según raza/clase y resetear exp. Hoy solo refrescamos stats con resetStats.
+    it->second.resetStats();
+    std::cout << "CHEAT levelup aplicado a player=" << playerId << " (stub, solo reset)"
+              << std::endl;
+    return true;
+}
+
+bool Game::cheatAddGold(int playerId, uint32_t amount) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): exponer setter de gold en Player; hoy solo logueo.
+    std::cout << "CHEAT gold +" << amount << " para player=" << playerId << " (stub)" << std::endl;
+    return true;
+}
+
+bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    // TODO(team-gameplay): mapear itemId → name y llamar player.addItem(name).
+    std::cout << "CHEAT spawn item id=" << (int)itemId << " para player=" << playerId << " (stub)"
+              << std::endl;
+    return true;
 }
 
 bool Game::pickUpItemAt(int /*playerId*/) {

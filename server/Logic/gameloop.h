@@ -55,7 +55,6 @@ public:
     void handleMovement(int playerId, MoveDirection direction);
     void handleTurn(int playerId, MoveDirection direction);
     void handleAttack(int playerId, uint8_t targetType, uint16_t targetId);
-    void handleCheat(int playerId, uint8_t code);
     void handlePickUp(int playerId);
     void handleDrop(int playerId, uint8_t invSlot);
     void handleEquip(int playerId, uint8_t invSlot);

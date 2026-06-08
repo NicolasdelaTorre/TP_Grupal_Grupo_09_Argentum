@@ -69,8 +69,6 @@ void Gameloop::dispatch(const ClientEvent& ev) {
         handleHeadSelected(pid, p->getHeadId());
     } else if (auto* p = dynamic_cast<const AttackEvent*>(&ev)) {
         handleAttack(pid, p->getTargetType(), p->getTargetId());
-    } else if (auto* p = dynamic_cast<const CheatEvent*>(&ev)) {
-        handleCheat(pid, p->getCode());
     } else if (dynamic_cast<const PickUpItemEvent*>(&ev)) {
         handlePickUp(pid);
     } else if (auto* p = dynamic_cast<const DropItemEvent*>(&ev)) {
@@ -281,13 +279,6 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
     }
 }
 
-void Gameloop::handleCheat(int playerId, uint8_t code) {
-    if (!game.hasPlayer(playerId))
-        return;
-    game.processCheat(playerId, code);
-    clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
-}
-
 // ── Comandos de inventario ───────────────────────────────────────────────
 //
 // Cada uno (pickup/drop/equip/unequip) puede cambiar el inventario y/o lo
@@ -399,11 +390,77 @@ void Gameloop::handleChat(int playerId, const std::string& text) {
             std::make_shared<ChatBroadcastEvent>(static_cast<uint16_t>(playerId), name, text));
 }
 
+// Helper: parte "cmd arg1 arg2 ..." en palabras (ignora espacios consecutivos).
+static std::vector<std::string> splitWords(const std::string& s) {
+    std::vector<std::string> out;
+    size_t i = 0, n = s.size();
+    while (i < n) {
+        while (i < n && s[i] == ' ') i++;
+        size_t j = i;
+        while (j < n && s[j] != ' ') j++;
+        if (j > i) out.push_back(s.substr(i, j - i));
+        i = j;
+    }
+    return out;
+}
+
 void Gameloop::handleChatCommand(int playerId, const std::string& text) {
-    auto pos = text.find(' ');
-    std::string cmd = (pos == std::string::npos) ? text : text.substr(0, pos);
-    std::cout << "CHAT_CMD player=" << playerId << " cmd='" << cmd << "'" << std::endl;
-    std::string reply = "Comando desconocido: " + cmd;
-    clientMonitor.sendToClient(
-            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), std::move(reply)));
+    auto parts = splitWords(text);
+    if (parts.empty()) return;
+    const std::string& cmd = parts[0];
+    std::cout << "CHAT_CMD player=" << playerId << " cmd='" << cmd << "' args=" << (parts.size() - 1)
+              << std::endl;
+
+    bool refreshStats = false;
+    bool refreshInventory = false;
+    std::string reply;
+
+    if (cmd == "/vidainf") {
+        reply = game.cheatToggleInfiniteHealth(playerId) ? "Vida infinita toggled" : "Error";
+    } else if (cmd == "/manainf") {
+        reply = game.cheatToggleInfiniteMana(playerId) ? "Mana infinito toggled" : "Error";
+    } else if (cmd == "/suicidio") {
+        if (game.cheatSuicide(playerId)) { reply = "Te suicidaste"; refreshStats = true; }
+        else reply = "Error";
+    } else if (cmd == "/levelup") {
+        if (game.cheatLevelUp(playerId)) { reply = "Subiste de nivel"; refreshStats = true; }
+        else reply = "Error";
+    } else if (cmd == "/gold") {
+        if (parts.size() < 2) { reply = "Uso: /gold <cantidad>"; }
+        else {
+            try {
+                uint32_t n = static_cast<uint32_t>(std::stoul(parts[1]));
+                if (game.cheatAddGold(playerId, n)) {
+                    reply = "Recibiste " + std::to_string(n) + " de oro";
+                    refreshStats = true;
+                } else reply = "Error";
+            } catch (...) { reply = "Uso: /gold <cantidad>"; }
+        }
+    } else if (cmd == "/item") {
+        if (parts.size() < 2) { reply = "Uso: /item <itemId>"; }
+        else {
+            try {
+                uint8_t id = static_cast<uint8_t>(std::stoul(parts[1]));
+                if (game.cheatSpawnItem(playerId, id)) {
+                    reply = "Item " + std::to_string(id) + " agregado";
+                    refreshInventory = true;
+                } else reply = "Error";
+            } catch (...) { reply = "Uso: /item <itemId>"; }
+        }
+    } else {
+        reply = "Comando desconocido: " + cmd;
+    }
+
+    clientMonitor.sendToClient(playerId,
+                               std::make_shared<ChatBroadcastEvent>(0, std::string(), reply));
+    if (refreshStats) {
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
+    if (refreshInventory) {
+        auto snap = game.getInventorySnapshot(playerId);
+        clientMonitor.sendToClient(playerId,
+                                   std::make_shared<InventoryUpdateEvent>(
+                                           snap.items, snap.equippedWeapon, snap.equippedArmor,
+                                           snap.equippedHelmet, snap.equippedShield));
+    }
 }

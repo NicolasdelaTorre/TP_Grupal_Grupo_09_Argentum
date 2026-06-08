@@ -11,7 +11,6 @@ enum class ClientMsg : uint8_t {
     TURN = 0x08,            // [opcode][direccion:1] — direccion ∈ MoveDirection
     ATTACK = 0x09,          // [opcode][target_type:1][target_id:2]
     HEAD_SELECTED = 0x0A,   // [opcode][head_id:1]
-    CHEAT = 0x0B,           // [opcode][cheat_code:1]
     PICK_UP_ITEM = 0x0D,    // [opcode]
     DROP_ITEM = 0x0E,       // [opcode][inv_slot:1]
     EQUIP_ITEM = 0x0F,      // [opcode][inv_slot:1] — equipa, o usa si es poción (consume)

@@ -87,18 +87,6 @@ public:
     static std::unique_ptr<AttackEvent> deserialize(CommonProtocol& proto);
 };
 
-// CHEAT: [opcode][cheat_code:1]. 0=SUICIDE, 1=GOLD, 2=EXPERIENCE.
-class CheatEvent: public ClientEvent {
-private:
-    uint8_t code;
-
-public:
-    explicit CheatEvent(uint8_t code);
-    uint8_t getCode() const { return code; }
-    void serialize(CommonProtocol& proto) const override;
-    static std::unique_ptr<CheatEvent> deserialize(CommonProtocol& proto);
-};
-
 // PICK_UP_ITEM: [opcode]. Server resuelve por posición.
 class PickUpItemEvent: public ClientEvent {
 public:
