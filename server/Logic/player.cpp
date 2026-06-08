@@ -5,7 +5,7 @@
 
 Player::Player(const std::string& name, Position position, const std::string& race,
                const std::string& class_):
-        name(name) {
+        name(name), isMeditating(false) {
     inventory.reserve(N);
     data.level = 1;
     data.experience = 0;
@@ -33,7 +33,7 @@ Player::Player(const std::string& name, Position position, const std::string& ra
     }
 }
 
-Player::Player(PlayerData data, const std::string& name): data(std::move(data)), name(name) {
+Player::Player(PlayerData data, const std::string& name): data(std::move(data)), name(name), isMeditating(false) {
     inventory.reserve(N);
     maxHealth = StatsDefinition().maxHealth(data.level, Race::toString(data.race),
                                             Class_::ToString(data.class_));
@@ -88,7 +88,8 @@ Player::Player(PlayerData data, const std::string& name): data(std::move(data)),
     }
 }
 
-void Player::move(Position newPosition) { 
+void Player::move(Position newPosition) {
+    isMeditating = false;
     data.position = newPosition; 
 }
 
@@ -114,6 +115,8 @@ uint16_t Player::getMaxMana() const { return maxMana; }
 
 uint8_t Player::getMapId() const { return data.mapId; }
 
+bool Player::getMeditationState() const { return isMeditating; }
+
 bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
@@ -124,6 +127,7 @@ void Player::receiveDamage(uint16_t damage) {
     } else {
         std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
     }
+    isMeditating = false;
     if (damage >= data.health) {
         data.health = 0;
         data.isGhost = true;
@@ -140,6 +144,8 @@ uint16_t Player::dealDamage() {
     if (equippedWeapon.emptyItem() || !equippedWeapon.isOffensiveWeapon()) {
         return 0;
     }
+
+    isMeditating = false;
 
     return StatsDefinition().damage(Race::toString(data.race), equippedWeapon.getMinDamage(),
                                     equippedWeapon.getMaxDamage());
@@ -257,6 +263,20 @@ void Player::setSkin(uint8_t bodySkinId, uint8_t headSkinId) {
 
 void Player::changeMapId(uint8_t newMapId) {
     data.mapId = newMapId;
+}
+
+void Player::switchMeditationState() {
+    isMeditating = !isMeditating;
+}
+
+void Player::restoreManaForMeditation() {
+    if (isMeditating) {
+        uint16_t manaRestore = StatsDefinition().meditationManaRestore(Race::toString(data.race), Class_::ToString(data.class_));
+        if ((data.mana + manaRestore) > maxMana) {
+            manaRestore = maxMana - data.mana;
+        }
+        data.mana += manaRestore;
+    }
 }
 
 void Player::resetStats() {

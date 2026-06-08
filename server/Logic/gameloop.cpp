@@ -41,7 +41,7 @@ Gameloop::Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Ma
         map(map),
         game(map),
         protocol(protocol),
-        turnManager(map.getAllNPCIds(), map) {}
+        turnManager(game.getPlayerIds(), map.getAllNPCIds(), map, game) {}
 
 void Gameloop::run() {
     while (!gameFinished) {
@@ -49,6 +49,7 @@ void Gameloop::run() {
         while (clientEvents.try_pop(ev)) {
             dispatch(*ev);
         }
+        PlayerTurns();
         NPCTurns();
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
@@ -83,6 +84,22 @@ void Gameloop::dispatch(const ClientEvent& ev) {
         handleSelectNpc(pid, p->getNpcId());
     } else if (dynamic_cast<const DisconnectEvent*>(&ev)) {
         handleDisconnect(pid);
+    }
+}
+
+// Tick por player (corre cada frame del loop). Hoy solo restaura mana a
+// jugadores meditando. Cuando agreguemos más estados con timers (regeneración
+// de vida, debuffs, etc.) viven acá.
+void Gameloop::PlayerTurns() {
+    std::vector<int> playerIds = game.getPlayerIds();
+    turnManager.addPlayers(playerIds);
+    turnManager.removePlayers(playerIds);
+
+    std::vector<int> playersToRestoreMana = turnManager.getPlayersReadyToRestoreMana();
+    for (int playerId: playersToRestoreMana) {
+        game.restorePlayerManaForMeditation(playerId);
+        // Cada vez que recuperamos mana mandamos stats actualizados.
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
     }
 }
 

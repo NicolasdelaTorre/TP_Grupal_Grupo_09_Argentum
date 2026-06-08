@@ -19,7 +19,7 @@ enum class BiomeType : uint8_t {
     BOSQUE_ARANAS = 3,
     DESIERTO = 4,
     CEMENTERIO = 5,
-    CUEVAS_ORCOS = 6,
+    NIEVE = 6,
     ROCOSAS = 7,
     PANTANO_EMBRUJADO = 8,
 };

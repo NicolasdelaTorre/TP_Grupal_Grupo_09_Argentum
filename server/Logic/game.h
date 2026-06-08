@@ -191,6 +191,10 @@ public:
 
     bool applyNPCAttack(uint8_t playerId, uint16_t damage);
 
+    bool checkIfPlayerIsMeditating(int playerId) const;
+
+    void restorePlayerManaForMeditation(int playerId);
+
     void removePlayer(int playerId);
 
     ~Game();

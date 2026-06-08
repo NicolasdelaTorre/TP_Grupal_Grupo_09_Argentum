@@ -1,0 +1,6 @@
+template_id: pared_mazmorra_derecha
+name: Pared derecha
+size:
+  width: 1
+  height: 2
+texture: "walls/right_mazmorra.png"

@@ -3,7 +3,7 @@ name: "Bosque de arañas"
 default_size:
   width: 35
   height: 20
-color: "#5B8C5A"
+texture: "tiles/bosque.png"
 allowed_creatures:
   - spider
   - goblin

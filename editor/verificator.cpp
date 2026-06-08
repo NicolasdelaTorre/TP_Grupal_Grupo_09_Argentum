@@ -155,6 +155,20 @@ bool Verificator::check_environments(QString& error_title, QString& error_messag
             return false;
         }
 
+        const auto invalid_exit =
+                std::find_if(env.exits.begin(), env.exits.end(), [&env](const auto& exit) {
+                    return exit.x < 0 || exit.y < 0 || exit.x + exit.width > env.width ||
+                           exit.y + exit.height > env.height;
+                });
+        if (invalid_exit != env.exits.end()) {
+            error_title = QStringLiteral("Salida inválida");
+            error_message =
+                    QStringLiteral("La salida '%1' del entorno '%2' está fuera de los límites.")
+                            .arg(QString::fromStdString(invalid_exit->id),
+                                 QString::fromStdString(env.id));
+            return false;
+        }
+
         if (env.walls.empty()) {
             continue;
         }

@@ -8,6 +8,8 @@
 #define TIME 30
 
 #include "map.h"
+#include "player.h"
+#include "game.h"
 
 struct NPCTimer {
     int timeToMove; // 600 miliseconds to move
@@ -15,19 +17,27 @@ struct NPCTimer {
     int timeToReborn; // 30000 miliseconds to reborn
 };
 
+struct PlayerTimer {
+    int timeToRestoreManaMeditating; // 1000 miliseconds while the player is meditating
+};
+
 class TurnManager {
     private:
         std::unordered_map<uint16_t, NPCTimer> npcTimers; // NPC ID -> NPCTimer
+        std::unordered_map<uint8_t, PlayerTimer> playerTimers; // Player ID -> PlayerTimer
         Map& map;
+        Game& game;
 
     public:
-        TurnManager(std::vector<uint16_t> npcIds, Map& map);
+        TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds, Map& map, Game& game);
 
-        void addNPC(uint16_t npcId);
+        void addPlayers(std::vector<int> playerIds);
 
-        void removeNPC(uint16_t npcId);
+        void removePlayers(std::vector<int> playerIds);
 
         void updateTimers();
+
+        std::vector<int> getPlayersReadyToRestoreMana();
 
         // Return all NPCs that are ready to move or attack, and reset their timers.
         std::vector<uint16_t> getNPCsReady(bool forMove);

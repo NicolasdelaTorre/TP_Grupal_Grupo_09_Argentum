@@ -78,6 +78,8 @@ private:
     QGraphicsRectItem* env_floor_item_ = nullptr;
     QGraphicsPixmapItem* env_exterior_item_ = nullptr;
     QString env_floor_color_;
+    // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
+    QString env_floor_texture_;
     QString last_hover_zone_id_;
 
     void initializeScene(const QString& map_id, const QString& map_name, int width, int height);
@@ -91,6 +93,7 @@ private:
     void placeCityAt(int cell_x, int cell_y);
     void placeObstacleAt(int cell_x, int cell_y);
     void placeWallAt(int cell_x, int cell_y);
+    void placeExitAt(int cell_x, int cell_y);
     void placeFloorAt(int cell_x, int cell_y);
     // Reconstruye los modificadores de piso a partir del grid del biome_map
     // cargado (las celdas cuyo valor coincide con un grid_value de piso).

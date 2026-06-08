@@ -248,14 +248,20 @@ void Game::checkEntry(int playerId) {
     Position pos = itPlayer->second.getPosition();
 
     if (map.checkIfThePositionHasAnEntry(pos.x, pos.y, itPlayer->second.getMapId())) {
-        // El jugador pisó una entrada a dungeon: lo sacamos del overworld y lo
-        // metemos al mapa de la dungeon.
-        map.removePlayer(pos.x, pos.y, itPlayer->second.getMapId());
+        // El jugador pisó una entrada a dungeon o una salida (si ya está en
+        // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
+        uint8_t currentMapId = itPlayer->second.getMapId();
+        map.removePlayer(pos.x, pos.y, currentMapId);
 
         std::string mapId = map.getMapId(pos.x, pos.y);
 
         if (!mapId.empty()) {
-            map.placePlayerIntoTheDungeon(playerId, mapId);
+            // Si veníamos del overworld vamos a la dungeon; si veníamos de
+            // una dungeon, salimos al overworld.
+            if (currentMapId == 0)
+                map.placePlayerIntoTheDungeon(playerId, mapId);
+            else
+                map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
             Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
@@ -530,9 +536,14 @@ Game::InteractionResult Game::healPlayer(int playerId) {
 Game::InteractionResult Game::meditatePlayer(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    // TODO(team-gameplay): flag isMeditating, tick que recupera mana según FClaseMeditacion * Inteligencia * segundos (fórmula del enunciado).
-    std::cout << "MEDITATE player=" << playerId << " (stub)" << std::endl;
-    return {true, "Empezaste a meditar (stub)"};
+    if (it->second.getData().isGhost) {
+        return {false, "Estás muerto, no podés meditar"};
+    }
+    // Toggle. El tick de mana lo maneja TurnManager + gameloop::PlayerTurns.
+    it->second.switchMeditationState();
+    bool nowMeditating = it->second.getMeditationState();
+    std::cout << "MEDITATE player=" << playerId << " on=" << nowMeditating << std::endl;
+    return {true, nowMeditating ? "Empezaste a meditar" : "Saliste de meditación"};
 }
 
 Game::DropResult Game::pickUpItemAt(int playerId) {
@@ -629,6 +640,25 @@ bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
     }
     it->second.receiveDamage(damage);
     return true;
+}
+
+bool Game::checkIfPlayerIsMeditating(int playerId) const {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        // It's ok if the player is not found. The player has disconnected
+        return false;
+    }
+
+    return itPlayer->second.getMeditationState() ? 1 : 0;
+}
+
+void Game::restorePlayerManaForMeditation(int playerId) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    itPlayer->second.restoreManaForMeditation();
 }
 
 Game::~Game() {

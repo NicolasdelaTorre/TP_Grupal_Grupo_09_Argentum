@@ -41,6 +41,8 @@ private:
     // Avanza el turno de cada NPC vivo; si alguno ataca, dispara los eventos al cliente.
     void NPCTurns();
 
+    void PlayerTurns();
+
 public:
     Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
              ServerProtocol& protocol);

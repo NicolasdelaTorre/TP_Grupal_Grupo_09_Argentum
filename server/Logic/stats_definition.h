@@ -16,7 +16,7 @@ public:
     uint16_t maxHealth(uint8_t playerLevel, const std::string& raceName,
                        const std::string& className);
 
-    uint32_t recoveryHealth(const std::string& raceName, uint16_t secondsToRecovery);
+    uint32_t recoveryHealth(const std::string& raceName);
 
     uint32_t safeGold(uint8_t playerLevel);
 
@@ -24,6 +24,8 @@ public:
 
     uint16_t maxMana(uint8_t playerLevel, const std::string& raceName,
                      const std::string& className);
+
+    uint16_t meditationManaRestore(const std::string& raceName, const std::string& className);
 };
 
 #endif

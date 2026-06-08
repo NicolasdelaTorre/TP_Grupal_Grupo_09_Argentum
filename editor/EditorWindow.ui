@@ -380,6 +380,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="btnModeExits">
+            <property name="text">
+             <string>Exits</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="btnModeObstacles">
             <property name="text">
              <string>Obstacles</string>
@@ -802,6 +812,20 @@
                  </item>
                  <item>
                   <widget class="QComboBox" name="comboWallTemplate"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="pageToolExits">
+                <layout class="QVBoxLayout" name="exitToolsLayout">
+                 <item>
+                  <widget class="QLabel" name="labelExit">
+                   <property name="text">
+                    <string>Salida</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboExitTemplate"/>
                  </item>
                 </layout>
                </widget>

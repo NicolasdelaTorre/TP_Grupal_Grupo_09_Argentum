@@ -496,6 +496,22 @@ bool Map::checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId) {
         throw std::out_of_range("Map Error: trying to check entry out of bounds");
     }
 
+    // If the player is in a dungeon
+    if (mapId > 0) {
+        for (const auto& entry : entries) {
+            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+                for (const auto& exit : entry.environment.exits) {
+                    if (exit.x == x && exit.y == y) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;  // No exit at the position
+    }
+
+    // If the player in in the overworld
     for (const auto& entry : entries) {
         if (entry.x == x && entry.y == y) {
             return true;
@@ -516,6 +532,20 @@ void Map::placePlayerIntoTheDungeon(int playerId, const std::string& mapId) {
     throw std::runtime_error("Map Error: trying to place player into a non-existent dungeon with id " + mapId);
 }
 
+void Map::placePlayerIntoTheOverworld(int playerId, uint8_t mapId) {
+    for (const auto& entry: entries) {
+        if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+            placeEntity(playerId, entry.x, entry.y + 1, true, 0);
+            return;
+        }
+    }
+
+    throw std::runtime_error(
+            "Map Error: trying to place player into the overworld from a non-existent dungeon "
+            "with id "
+            + std::to_string(mapId));
+}
+
 uint16_t Map::addFriendlyNpc(int16_t x, int16_t y, uint8_t type, std::string name) {
     uint16_t id = friendlyIdCounter++;
     friendlyNpcs.push_back(FriendlyNpc{id, x, y, type, std::move(name)});
@@ -525,7 +555,7 @@ uint16_t Map::addFriendlyNpc(int16_t x, int16_t y, uint8_t type, std::string nam
 const std::vector<FriendlyNpc>& Map::getFriendlyNpcs() const { return friendlyNpcs; }
 
 const FriendlyNpc* Map::getFriendlyNpc(uint16_t id) const {
-    for (const auto& f : friendlyNpcs) {
+    for (const auto& f: friendlyNpcs) {
         if (f.id == id) return &f;
     }
     return nullptr;

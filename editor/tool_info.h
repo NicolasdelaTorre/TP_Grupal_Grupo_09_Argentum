@@ -11,6 +11,7 @@ enum class EditorTool {
     BiomeZone,
     Entry,
     Wall,
+    Exit,
     FloorModifier,
 };
 
@@ -21,6 +22,7 @@ struct ToolInfo {
     QString biome_template_id;
     QString entry_template_id;
     QString wall_template_id;
+    QString exit_template_id;
     QString floor_template_id;
 };
 

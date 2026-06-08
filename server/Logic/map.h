@@ -37,9 +37,9 @@ struct LoadedEnvironment {
     int16_t width = 0;
     int16_t height = 0;
     Position playerSpawn;
-    std::vector<Cell> cells;  // obstáculos y paredes acá
+    std::vector<Cell> cells;  // obstáculos, paredes y salidas acá
     std::vector<CreatureSpawn> spawns;
-    std::string floorColor;
+    std::vector<Position> exits;
 };
 
 // Entrada con el environment al que lleva.
@@ -144,6 +144,8 @@ public:
     bool checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId);
 
     void placePlayerIntoTheDungeon(int playerId, const std::string& mapId);
+
+    void placePlayerIntoTheOverworld(int playerId, uint8_t mapId);
 
     // ── NPCs amigos (merchant/banker/priest) ────────────────────────────
     // Registra un amigo en el mapa con id auto-incremental ≥ 10000.

@@ -31,6 +31,11 @@ const FloorTile* floor_tile_from_grid_value(uint8_t grid_value);
 // Busca el tile por su id. Devuelve nullptr si no existe.
 const FloorTile* floor_tile_from_id(const std::string& id);
 
+// Busca el tile cuya textura (ruta relativa) coincide. Devuelve nullptr si no
+// existe o si la textura está vacía. Lo usa el loader para resolver el piso de
+// un environment a partir de su `floor_texture`.
+const FloorTile* floor_tile_from_texture(const std::string& texture);
+
 // de un valor de celda del grid a un único carácter.
 char grid_value_to_char(uint8_t value);
 

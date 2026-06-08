@@ -3,7 +3,7 @@ name: "Bosque oscuro"
 default_size:
   width: 40
   height: 25
-color: "#2E4A2E"
+texture: "tiles/bosque_oscuro.png"
 allowed_creatures:
   - zombie
   - skeleton

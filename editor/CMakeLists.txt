@@ -48,6 +48,7 @@ target_compile_definitions(taller_editor
         EDITOR_TEMPLATES_OBSTACLES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/obstacles"
         EDITOR_TEMPLATES_ENTRIES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/entries"
         EDITOR_TEMPLATES_WALLS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/walls"
+        EDITOR_TEMPLATES_EXITS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/exits"
         EDITOR_TEMPLATES_FLOORS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/tiles"
         EDITOR_ASSETS_IMAGES_PATH="${CMAKE_SOURCE_DIR}/common/assets/images"
         EDITOR_SAVE_MAP_PATH="${CMAKE_SOURCE_DIR}/server/assets/maps"

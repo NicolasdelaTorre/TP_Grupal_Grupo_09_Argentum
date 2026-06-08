@@ -28,6 +28,7 @@ void SceneController::reset() {
     next_obstacle_id_ = 1;
     next_zone_id_ = 1;
     next_wall_id_ = 1;
+    next_exit_id_ = 1;
     next_floor_id_ = 1;
 }
 
@@ -38,6 +39,8 @@ QString SceneController::nextObstacleId() {
 QString SceneController::nextZoneId() { return QStringLiteral("zone_%1").arg(next_zone_id_++); }
 
 QString SceneController::nextWallId() { return QStringLiteral("wall_%1").arg(next_wall_id_++); }
+
+QString SceneController::nextExitId() { return QStringLiteral("exit_%1").arg(next_exit_id_++); }
 
 QString SceneController::nextFloorId() { return QStringLiteral("floor_%1").arg(next_floor_id_++); }
 
@@ -175,20 +178,37 @@ bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QS
         return false;
     }
 
-    QColor fill(120, 120, 120);
-    if (!wall_tpl->color.empty()) {
-        QColor parsed(QString::fromStdString(wall_tpl->color));
-        if (parsed.isValid()) {
-            fill = parsed;
-        }
-    }
-
     const QString id = wall_id.isEmpty() ? nextWallId() : wall_id;
     bumpCounter(next_wall_id_, id, QStringLiteral("wall_"));
     auto* item = item_builder_.buildWall(id, QString::fromStdString(wall_tpl->id), wall_tpl->width,
-                                         wall_tpl->height, fill);
+                                         wall_tpl->height,
+                                         QString::fromStdString(wall_tpl->texture));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_WALL);
+    scene_->addItem(item);
+    return true;
+}
+
+bool SceneController::placeExit(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
+                                const QString& exit_id) {
+    if (tool.exit_template_id.isEmpty()) {
+        error = QStringLiteral("Seleccioná un template de salida.");
+        return false;
+    }
+
+    const auto* exit_tpl = templates_.find_exit(tool.exit_template_id.toStdString());
+    if (!exit_tpl) {
+        error = QStringLiteral("Template de salida inválido.");
+        return false;
+    }
+
+    const QString id = exit_id.isEmpty() ? nextExitId() : exit_id;
+    bumpCounter(next_exit_id_, id, QStringLiteral("exit_"));
+    auto* item = item_builder_.buildExit(id, QString::fromStdString(exit_tpl->id), exit_tpl->width,
+                                         exit_tpl->height,
+                                         QString::fromStdString(exit_tpl->texture));
+    item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
+    item->setZValue(Z_EXIT);
     scene_->addItem(item);
     return true;
 }
@@ -254,8 +274,9 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
         return false;
     }
 
-    const auto* biome = templates_.find_biome(tool.biome_template_id.toStdString());
-    const QColor fill = resolveZoneColor(biome ? biome->color : std::string(), false);
+    // Los biomas ya no definen color: se distinguen por su textura. La zona usa
+    // el color por defecto solo como guía visual del área en el editor.
+    const QColor fill = resolveZoneColor(std::string(), false);
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
     bumpCounter(next_zone_id_, id, QStringLiteral("zone_"));
@@ -413,7 +434,29 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             wall.y = cell_y;
             wall.width = item->data(DATA_WIDTH).toInt();
             wall.height = item->data(DATA_HEIGHT).toInt();
+            if (const auto* tpl = templates_.find_wall(wall.template_id)) {
+                if (!tpl->texture.empty()) {
+                    wall.texture = std::filesystem::path(tpl->texture).filename().string();
+                }
+            }
             document.walls.push_back(wall);
+            continue;
+        }
+
+        if (type == EXIT_TYPE) {
+            Exit exit;
+            exit.id = item->data(DATA_ID).toString().toStdString();
+            exit.template_id = item->data(DATA_SUBTYPE).toString().toStdString();
+            exit.x = cell_x;
+            exit.y = cell_y;
+            exit.width = item->data(DATA_WIDTH).toInt();
+            exit.height = item->data(DATA_HEIGHT).toInt();
+            if (const auto* tpl = templates_.find_exit(exit.template_id)) {
+                if (!tpl->texture.empty()) {
+                    exit.texture = std::filesystem::path(tpl->texture).filename().string();
+                }
+            }
+            document.exits.push_back(exit);
             continue;
         }
 
