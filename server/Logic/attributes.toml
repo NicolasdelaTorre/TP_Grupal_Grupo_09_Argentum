@@ -33,15 +33,19 @@ FRaceMana = 13.0
 [class.mage]
 FClassHealth = 13.0
 FClassMana = 15.0
+FClassMeditation = 20.0
 
 [class.cleric]
 FClassHealth = 10.0
 FClassMana = 13.0
+FClassMeditation = 15.0
 
 [class.champion]
 FClassHealth = 18.0
 FClassMana = 11.0
+FClassMeditation = 10.0
 
 [class.warrior]
 FClassHealth = 20.0
 FClassMana = 0.0
+FClassMeditation = 0.0

@@ -19,6 +19,7 @@ struct RaceAttribute {
 struct ClassAttribute {
     float FClassHealth;
     float FClassMana;
+    float FClassMeditation;
 };
 
 struct GameAttributes {

@@ -35,6 +35,9 @@ bool Game::processCommand(int playerId, const std::string& command) {
     } else if (dataType == "heal") {
         // Format: "heal"
         return processHeal(playerId);
+    } else if (dataType == "chat") {
+        // Format: "chat.command"
+        return processChatCommand(playerId, command.substr(commandPosition + 1));
     }
 
     return false;
@@ -582,6 +585,39 @@ bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
     }
     it->second.receiveDamage(damage);
     return true;
+}
+
+bool Game::processChatCommand(int playerId, const std::string& chatCommand) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (chatCommand == "meditar") {
+        // Command: /meditar
+        itPlayer->second.switchMeditationState();
+    }
+
+    return true;
+}
+
+bool Game::checkIfPlayerIsMeditating(int playerId) const {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        // It's ok if the player is not found. The player has disconnected
+        return false;
+    }
+
+    return itPlayer->second.getMeditationState() ? 1 : 0;
+}
+
+void Game::restorePlayerManaForMeditation(int playerId) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    itPlayer->second.restoreManaForMeditation();
 }
 
 Game::~Game() {

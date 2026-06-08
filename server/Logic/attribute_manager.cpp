@@ -35,6 +35,7 @@ ClassAttribute AttributeManager::readClass(const toml::value& config,
 
     clase.FClassHealth = toml::find<float>(config, "class", className, "FClassHealth");
     clase.FClassMana = toml::find<float>(config, "class", className, "FClassMana");
+    clase.FClassMeditation = toml::find<float>(config, "class", className, "FClassMeditation");
 
     return clase;
 }

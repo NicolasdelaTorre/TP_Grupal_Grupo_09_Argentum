@@ -51,6 +51,8 @@ private:
 
     void checkEntry(int playerId);
 
+    bool processChatCommand(int playerId, const std::string& chatCommand);
+
 public:
     explicit Game(Map& world);
 
@@ -134,6 +136,10 @@ public:
     InventorySnapshot getInventorySnapshot(int playerId) const;
 
     bool applyNPCAttack(uint8_t playerId, uint16_t damage);
+
+    bool checkIfPlayerIsMeditating(int playerId) const;
+
+    void restorePlayerManaForMeditation(int playerId);
 
     void removePlayer(int playerId);
 

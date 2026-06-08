@@ -1,6 +1,10 @@
 #include "turn_manager.h"
 
-TurnManager::TurnManager(std::vector<uint16_t> npcIds, Map& map) : map(map) {
+TurnManager::TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds, Map& map, Game& game) : map(map), game(game) {
+    for (const auto& playerId : players) {
+        playerTimers[playerId] = {0};
+    }
+
     for (uint16_t npcId : npcIds) {
         if (map.isACreature(npcId)) {
             npcTimers[npcId] = {0, 0, 0};
@@ -8,17 +12,42 @@ TurnManager::TurnManager(std::vector<uint16_t> npcIds, Map& map) : map(map) {
     }
 }
 
-void TurnManager::addNPC(uint16_t npcId) {
-    if (map.isACreature(npcId)) {
-        npcTimers[npcId] = {0, 0, 0};
+void TurnManager::addPlayers(std::vector<int> playerIds) {
+    for (int playerId : playerIds) {
+        if (playerTimers.find(playerId) == playerTimers.end()) {
+            playerTimers[playerId] = {0};
+        }
     }
 }
 
-void TurnManager::removeNPC(uint16_t npcId) {
-    npcTimers.erase(npcId);
+void TurnManager::removePlayers(std::vector<int> playerIds) {
+    std::vector<int> toRemove;
+    for (auto& pair : playerTimers) {
+        int playerId = pair.first;
+        if (std::find(playerIds.begin(), playerIds.end(), playerId) == playerIds.end()) {
+            toRemove.push_back(playerId);
+        }
+    }
+    
+    for (int playerId : toRemove) {
+        playerTimers.erase(playerId);
+    }
 }
 
 void TurnManager::updateTimers() {
+    // For Players
+    for (auto& pair : playerTimers) {
+        uint8_t playerId = pair.first;
+        PlayerTimer& timer = pair.second;
+
+        if (game.checkIfPlayerIsMeditating(playerId)) {
+            timer.timeToRestoreManaMeditating += TIME;
+        } else {
+            timer.timeToRestoreManaMeditating = 0;
+        }
+    }
+
+    // For NPCs
     for (auto& pair : npcTimers) {
         uint16_t npcId = pair.first;
         NPCTimer& timer = pair.second;
@@ -37,6 +66,21 @@ void TurnManager::updateTimers() {
             timer.timeToAttack = 0;
         }
     }
+}
+
+std::vector<int> TurnManager::getPlayersReadyToRestoreMana() {
+    std::vector<int> readyPlayers;
+    for (const auto& pair : playerTimers) {
+        uint8_t playerId = pair.first;
+        const PlayerTimer& timer = pair.second;
+
+        if (timer.timeToRestoreManaMeditating >= 1000) {
+            readyPlayers.push_back(playerId);
+            // Reset meditation timer after restoring mana
+            playerTimers[playerId].timeToRestoreManaMeditating = 0;
+        }
+    }
+    return readyPlayers;
 }
 
 std::vector<uint16_t> TurnManager::getNPCsReady(bool forMove) {

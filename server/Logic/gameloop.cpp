@@ -9,7 +9,7 @@ Gameloop::Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Ma
         map(world),
         game(world),
         protocol(protocol),
-        turnManager(world.getAllNPCIds(), world) {}
+        turnManager(game.getPlayerIds(), world.getAllNPCIds(), world, game) {}
 
 void Gameloop::run() {
     while (!gameFinished) {
@@ -18,15 +18,31 @@ void Gameloop::run() {
             processCommand(command);
         }
 
+        turnManager.updateTimers();
+        PlayerTurns();
         NPCTurns();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
 
-void Gameloop::NPCTurns() {
-    turnManager.updateTimers();
+void Gameloop::PlayerTurns() {
+    std::vector<int> playerIds = game.getPlayerIds();
 
+    // Verify if a new playes has arrived
+    turnManager.addPlayers(playerIds);
+
+    // Verify if a player has disconnected
+    turnManager.removePlayers(playerIds);
+
+    std::vector<int> playersToRestoreMana = turnManager.getPlayersReadyToRestoreMana();
+    for (int playerId : playersToRestoreMana) {
+        game.restorePlayerManaForMeditation(playerId);
+        // Enviar al cliente sobre el mana (Tomas)
+    }
+}
+
+void Gameloop::NPCTurns() {
     // Time to move NPC
     std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
     for (uint16_t npcId : npcsToMove) {

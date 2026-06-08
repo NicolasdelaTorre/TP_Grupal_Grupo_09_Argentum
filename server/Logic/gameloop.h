@@ -38,6 +38,8 @@ private:
 
     void NPCTurns();
 
+    void PlayerTurns();
+
 public:
     Gameloop(Queue<std::string>& commands, ClientMonitor& clientQueues, Map& world,
              ProtocolServer& protocol);
