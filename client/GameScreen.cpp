@@ -125,6 +125,13 @@ void GameScreen::render() {
     mapRenderer.render(map, camX, camY);
     mapRenderer.renderDroppedItems(droppedItems, camX, camY);
 
+    // NPCs vivos (debajo de los jugadores).
+    for (const auto& npcEntry: npcs) {
+        if (!npcEntry.second.alive)
+            continue;
+        mapRenderer.renderNpcEntity(npcEntry.second.visual, camX, camY);
+    }
+
     // Otros jugadores primero, el local queda visualmente encima.
     // for (const auto& [id, op: otherPlayers]) {(void)id .....}
     for (const auto& playerEntry: otherPlayers) {
@@ -171,19 +178,35 @@ bool GameScreen::handleEvents(float dt) {
                 return false;
         }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            // Click sobre otro player → ATTACK con id del target.
+            // Click sobre otro player o NPC → ATTACK con id del target.
             // Server valida si el atacante tiene arma equipada, si es de rango
             // o si está adyacente (para melee), etc. El cliente no decide nada.
             int clickTileX = (int)((e.button.x + camX) / TILE_SIZE);
             int clickTileY = (int)((e.button.y + camY) / TILE_SIZE);
+            bool clicked = false;
             for (const auto& entry: otherPlayers) {
                 const auto& op = entry.second;
                 int opTileX = (int)(op.visual.x + HEAD_OFFSET);
                 int opTileY = (int)(op.visual.y + FEET_OFFSET);
                 if (opTileX == clickTileX && opTileY == clickTileY) {
                     clientEvents.push(std::make_shared<AttackEvent>(
-                            0, static_cast<uint16_t>(entry.first)));
+                            /*targetType=*/0, static_cast<uint16_t>(entry.first)));
+                    clicked = true;
                     break;
+                }
+            }
+            if (!clicked) {
+                for (const auto& entry: npcs) {
+                    const auto& n = entry.second;
+                    if (!n.alive)
+                        continue;
+                    int nTileX = (int)(n.visual.x + HEAD_OFFSET);
+                    int nTileY = (int)(n.visual.y + FEET_OFFSET);
+                    if (nTileX == clickTileX && nTileY == clickTileY) {
+                        clientEvents.push(std::make_shared<AttackEvent>(
+                                /*targetType=*/1, static_cast<uint16_t>(entry.first)));
+                        break;
+                    }
                 }
             }
         }
@@ -309,6 +332,33 @@ void GameScreen::update(float dt) {
         }
     }
 
+    // Mismo trato para los NPCs: interpolación visual hacia su tile destino.
+    for (auto& entry: npcs) {
+        auto& rn = entry.second;
+        if (!rn.alive)
+            continue;
+        float dx = rn.targetX - rn.visual.x;
+        float dy = rn.targetY - rn.visual.y;
+        float dist = std::sqrt(dx * dx + dy * dy);
+        float step = PLAYER_MOVE_SPEED * dt;
+        if (dist <= step || dist == 0.0f) {
+            rn.visual.x = rn.targetX;
+            rn.visual.y = rn.targetY;
+            rn.visual.moving = false;
+            rn.visual.animFrame = 0;
+            rn.visual.animTimer = 0;
+        } else {
+            rn.visual.x += (dx / dist) * step;
+            rn.visual.y += (dy / dist) * step;
+            rn.visual.moving = true;
+            rn.visual.animTimer += dt;
+            if (rn.visual.animTimer >= ANIM_SPEED) {
+                rn.visual.animTimer -= ANIM_SPEED;
+                rn.visual.animFrame = (rn.visual.animFrame + 1) % ANIM_FRAMES;
+            }
+        }
+    }
+
     if (!player.moving) {
         player.animFrame = 0;
         player.animTimer = 0;
@@ -389,6 +439,37 @@ void GameScreen::consumeServerEvents() {
             std::cout << "STATS hp=" << health << "/" << maxHealth << " mana=" << mana << "/"
                       << maxMana << " gold=" << gold << " exp=" << experience << "/" << nextLevelExp
                       << " lvl=" << (int)level << std::endl;
+        } else if (auto* nn = dynamic_cast<NewNpcEvent*>(ev.get())) {
+            RemoteNpc rn;
+            rn.visual.id = nn->getId();
+            rn.visual.x = static_cast<float>(nn->getX());
+            rn.visual.y = static_cast<float>(nn->getY());
+            rn.visual.type = static_cast<NpcType>(nn->getType());
+            rn.targetX = rn.visual.x;
+            rn.targetY = rn.visual.y;
+            rn.alive = nn->getAlive();
+            npcs[nn->getId()] = std::move(rn);
+        } else if (auto* nm = dynamic_cast<NpcMovedEvent*>(ev.get())) {
+            auto it = npcs.find(nm->getId());
+            if (it != npcs.end()) {
+                it->second.targetX = static_cast<float>(nm->getX());
+                it->second.targetY = static_cast<float>(nm->getY());
+                it->second.visual.dir = wireDirToSpriteDir(nm->getDir());
+            }
+        } else if (auto* nd = dynamic_cast<NpcDiedEvent*>(ev.get())) {
+            auto it = npcs.find(nd->getId());
+            if (it != npcs.end()) {
+                it->second.alive = false;
+            }
+        } else if (auto* nr = dynamic_cast<NpcRespawnedEvent*>(ev.get())) {
+            auto it = npcs.find(nr->getId());
+            if (it != npcs.end()) {
+                it->second.visual.x = static_cast<float>(nr->getX());
+                it->second.visual.y = static_cast<float>(nr->getY());
+                it->second.targetX = it->second.visual.x;
+                it->second.targetY = it->second.visual.y;
+                it->second.alive = true;
+            }
         }
     }
 }

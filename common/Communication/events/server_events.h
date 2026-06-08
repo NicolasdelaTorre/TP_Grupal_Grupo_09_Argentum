@@ -197,4 +197,70 @@ public:
     static std::unique_ptr<PlayerEquippedEvent> deserialize(CommonProtocol& proto);
 };
 
+// NEW_NPC: [opcode][id:2][x:2][y:2][type:1][alive:1].
+class NewNpcEvent: public ServerEvent {
+private:
+    uint16_t id;
+    int16_t x;
+    int16_t y;
+    uint8_t type;
+    bool alive;
+
+public:
+    NewNpcEvent(uint16_t id, int16_t x, int16_t y, uint8_t type, bool alive);
+    uint16_t getId() const { return id; }
+    int16_t getX() const { return x; }
+    int16_t getY() const { return y; }
+    uint8_t getType() const { return type; }
+    bool getAlive() const { return alive; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<NewNpcEvent> deserialize(CommonProtocol& proto);
+};
+
+// NPC_MOVED: [opcode][id:2][x:2][y:2][dir:1].
+class NpcMovedEvent: public ServerEvent {
+private:
+    uint16_t id;
+    int16_t x;
+    int16_t y;
+    uint8_t dir;
+
+public:
+    NpcMovedEvent(uint16_t id, int16_t x, int16_t y, uint8_t dir);
+    uint16_t getId() const { return id; }
+    int16_t getX() const { return x; }
+    int16_t getY() const { return y; }
+    uint8_t getDir() const { return dir; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<NpcMovedEvent> deserialize(CommonProtocol& proto);
+};
+
+// NPC_DIED: [opcode][id:2].
+class NpcDiedEvent: public ServerEvent {
+private:
+    uint16_t id;
+
+public:
+    explicit NpcDiedEvent(uint16_t id);
+    uint16_t getId() const { return id; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<NpcDiedEvent> deserialize(CommonProtocol& proto);
+};
+
+// NPC_RESPAWNED: [opcode][id:2][x:2][y:2].
+class NpcRespawnedEvent: public ServerEvent {
+private:
+    uint16_t id;
+    int16_t x;
+    int16_t y;
+
+public:
+    NpcRespawnedEvent(uint16_t id, int16_t x, int16_t y);
+    uint16_t getId() const { return id; }
+    int16_t getX() const { return x; }
+    int16_t getY() const { return y; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<NpcRespawnedEvent> deserialize(CommonProtocol& proto);
+};
+
 #endif

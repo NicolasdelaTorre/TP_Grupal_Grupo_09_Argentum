@@ -35,6 +35,15 @@ struct OtherPlayer {
     std::string name;
 };
 
+// NPC remoto. Mismo patrón que OtherPlayer: visual es el sprite, target* el tile
+// destino al que está caminando, alive controla si se renderiza o no.
+struct RemoteNpc {
+    NpcEntity visual;
+    float targetX = 0.0f;
+    float targetY = 0.0f;
+    bool alive = true;
+};
+
 class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
@@ -64,6 +73,7 @@ private:
     IncomingQueue& serverEvents;
     Player_ player;
     std::unordered_map<int, OtherPlayer> otherPlayers;
+    std::unordered_map<int, RemoteNpc> npcs;
     std::vector<DroppedItem> droppedItems;
     std::vector<BloodEffect> bloodEffects;
     std::vector<ArrowProjectile> arrows;

@@ -1,5 +1,6 @@
 #include "gameloop.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 
@@ -8,6 +9,29 @@
 #include "../../common/Communication/message_types.h"
 
 #include "NPC/creature.h"
+
+// Mapea el nombre del NPC (del toml) al byte de NpcType que espera el cliente
+// (enum NpcType en common/DTOs.h). Si no matchea, devuelve 0 (SPIDER) como fallback.
+static uint8_t npcTypeFromName(const std::string& name) {
+    if (name == "spider") return 0;
+    if (name == "skeleton") return 1;
+    if (name == "zombie") return 2;
+    if (name == "goblin") return 3;
+    if (name == "orc") return 4;
+    if (name == "golem") return 5;
+    return 0;
+}
+
+// dx/dy → byte de dirección en formato wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT).
+static uint8_t wireDirFromDelta(int16_t dx, int16_t dy) {
+    if (std::abs(dx) >= std::abs(dy)) {
+        if (dx > 0) return static_cast<uint8_t>(MoveDirection::RIGHT);
+        if (dx < 0) return static_cast<uint8_t>(MoveDirection::LEFT);
+    }
+    if (dy > 0) return static_cast<uint8_t>(MoveDirection::BOTTOM);
+    if (dy < 0) return static_cast<uint8_t>(MoveDirection::TOP);
+    return static_cast<uint8_t>(MoveDirection::BOTTOM);
+}
 
 Gameloop::Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
                    ServerProtocol& protocol):
@@ -63,16 +87,24 @@ void Gameloop::dispatch(const ClientEvent& ev) {
 void Gameloop::NPCTurns() {
     turnManager.updateTimers();
 
-    // NPCs que toca mover: persiguen al jugador más cercano.
+    // NPCs que toca mover: persiguen al jugador más cercano. Si se movieron,
+    // broadcast NpcMovedEvent con dirección calculada desde el delta.
     std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
     for (uint16_t npcId: npcsToMove) {
         Creature* npc = map.getNPC(npcId);
-        Position newPos = npc->stalkPlayer(
-                map.searchPlayer(npc->getPosition().x, npc->getPosition().y, npc->getMapId()));
-        if (newPos.x != -1) {
-            map.moveEntity(npcId, npc->getPosition().x, npc->getPosition().y, newPos.x, newPos.y,
-                           false, npc->getMapId());
-        }
+        Position oldPos = npc->getPosition();
+        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
+        if (newPos.x == -1)
+            continue;
+        if (newPos.x == oldPos.x && newPos.y == oldPos.y)
+            continue;
+        map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId());
+        // Solo el overworld viaja al cliente (mapId=0).
+        if (npc->getMapId() != 0)
+            continue;
+        uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
+                                       static_cast<int16_t>(newPos.y - oldPos.y));
+        clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
     }
 
     // NPCs que toca atacar: si tienen un jugador adyacente, le aplican daño y
@@ -85,20 +117,23 @@ void Gameloop::NPCTurns() {
         if (playerId == 0)
             continue;
         if (game.applyNPCAttack(playerId, npc->getDamage())) {
-            // Broadcast del resultado del ataque (attacker=npcId, target=player).
             auto atkEv = std::make_shared<AttackResultEvent>(npcId, /*targetType=*/0, playerId,
                                                             npc->getDamage(), /*hit=*/true);
             clientMonitor.broadcast(atkEv);
-            // Stats actualizados al jugador afectado.
             clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
         }
     }
 
-    // NPCs que se revivan tras el cooldown.
+    // NPCs que revivan tras el cooldown: broadcast NpcRespawnedEvent para que
+    // el cliente vuelva a mostrarlos.
     std::vector<uint16_t> npcsToRevive = turnManager.reviveNPCs();
     for (uint16_t npcId: npcsToRevive) {
         Creature* npc = map.getNPC(npcId);
         npc->resurrect();
+        if (npc->getMapId() != 0)
+            continue;
+        Position p = npc->getPosition();
+        clientMonitor.broadcast(std::make_shared<NpcRespawnedEvent>(npcId, p.x, p.y));
     }
 }
 
@@ -168,6 +203,20 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
                                   std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId),
                                                                    p.x, p.y, myDir, mySkin, myName));
     sendEquipmentSnapshot(playerId, -1);
+
+    // Snapshot de NPCs del overworld (mapId=0): el cliente los renderiza. Le
+    // mandamos también los muertos (alive=false) para que cuando reciba un
+    // NpcRespawnedEvent ya tenga el id registrado.
+    for (uint16_t npcId: map.getAllNPCIds()) {
+        Creature* npc = map.getNPC(npcId);
+        if (!npc || npc->getMapId() != 0)
+            continue;
+        Position np = npc->getPosition();
+        uint8_t type = npcTypeFromName(npc->getName());
+        bool alive = !npc->isDead();
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<NewNpcEvent>(npcId, np.x, np.y, type, alive));
+    }
 }
 
 void Gameloop::handleHeadSelected(int /*playerId*/, uint8_t /*headId*/) {
@@ -219,6 +268,14 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
     clientMonitor.broadcast(ev);
     if (ev->getHit() && ev->getTargetType() == 0 && game.hasPlayer(ev->getTargetId())) {
         clientMonitor.sendToClient(ev->getTargetId(), buildStatsEvent(ev->getTargetId()));
+    }
+    // Si pegamos a un NPC y lo matamos, broadcast NpcDiedEvent para que el
+    // cliente lo saque del mapa.
+    if (ev->getHit() && ev->getTargetType() == 1) {
+        Creature* npc = map.getNPC(ev->getTargetId());
+        if (npc && npc->isDead()) {
+            clientMonitor.broadcast(std::make_shared<NpcDiedEvent>(ev->getTargetId()));
+        }
     }
 }
 

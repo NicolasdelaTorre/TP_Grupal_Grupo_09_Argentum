@@ -32,6 +32,14 @@ std::unique_ptr<ServerEvent> ServerEvent::deserialize(uint8_t opcode, CommonProt
             return InventoryUpdateEvent::deserialize(proto);
         case ServerMsg::PLAYER_EQUIPPED:
             return PlayerEquippedEvent::deserialize(proto);
+        case ServerMsg::NEW_NPC:
+            return NewNpcEvent::deserialize(proto);
+        case ServerMsg::NPC_MOVED:
+            return NpcMovedEvent::deserialize(proto);
+        case ServerMsg::NPC_DIED:
+            return NpcDiedEvent::deserialize(proto);
+        case ServerMsg::NPC_RESPAWNED:
+            return NpcRespawnedEvent::deserialize(proto);
         default:
             throw std::runtime_error("ServerEvent: unknown opcode");
     }
@@ -275,4 +283,80 @@ std::unique_ptr<PlayerEquippedEvent> PlayerEquippedEvent::deserialize(CommonProt
     uint8_t slot = proto.receive_byte();
     uint8_t itemId = proto.receive_byte();
     return std::make_unique<PlayerEquippedEvent>(pid, slot, itemId);
+}
+
+// ── NewNpcEvent ──────────────────────────────────────────────────────────
+
+NewNpcEvent::NewNpcEvent(uint16_t id, int16_t x, int16_t y, uint8_t type, bool alive):
+        id(id), x(x), y(y), type(type), alive(alive) {}
+
+void NewNpcEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::NEW_NPC));
+    proto.send_two_bytes_number(id);
+    proto.send_two_bytes_number(static_cast<uint16_t>(x));
+    proto.send_two_bytes_number(static_cast<uint16_t>(y));
+    proto.sendByte(type);
+    proto.sendByte(alive ? 1 : 0);
+}
+
+std::unique_ptr<NewNpcEvent> NewNpcEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
+    int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
+    uint8_t type = proto.receive_byte();
+    bool alive = (proto.receive_byte() != 0);
+    return std::make_unique<NewNpcEvent>(id, x, y, type, alive);
+}
+
+// ── NpcMovedEvent ────────────────────────────────────────────────────────
+
+NpcMovedEvent::NpcMovedEvent(uint16_t id, int16_t x, int16_t y, uint8_t dir):
+        id(id), x(x), y(y), dir(dir) {}
+
+void NpcMovedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::NPC_MOVED));
+    proto.send_two_bytes_number(id);
+    proto.send_two_bytes_number(static_cast<uint16_t>(x));
+    proto.send_two_bytes_number(static_cast<uint16_t>(y));
+    proto.sendByte(dir);
+}
+
+std::unique_ptr<NpcMovedEvent> NpcMovedEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
+    int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
+    uint8_t dir = proto.receive_byte();
+    return std::make_unique<NpcMovedEvent>(id, x, y, dir);
+}
+
+// ── NpcDiedEvent ─────────────────────────────────────────────────────────
+
+NpcDiedEvent::NpcDiedEvent(uint16_t id): id(id) {}
+
+void NpcDiedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::NPC_DIED));
+    proto.send_two_bytes_number(id);
+}
+
+std::unique_ptr<NpcDiedEvent> NpcDiedEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    return std::make_unique<NpcDiedEvent>(id);
+}
+
+// ── NpcRespawnedEvent ────────────────────────────────────────────────────
+
+NpcRespawnedEvent::NpcRespawnedEvent(uint16_t id, int16_t x, int16_t y): id(id), x(x), y(y) {}
+
+void NpcRespawnedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::NPC_RESPAWNED));
+    proto.send_two_bytes_number(id);
+    proto.send_two_bytes_number(static_cast<uint16_t>(x));
+    proto.send_two_bytes_number(static_cast<uint16_t>(y));
+}
+
+std::unique_ptr<NpcRespawnedEvent> NpcRespawnedEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
+    int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
+    return std::make_unique<NpcRespawnedEvent>(id, x, y);
 }
