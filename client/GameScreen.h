@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <SDL2pp/SDL2pp.hh>
+#include <SDL2pp/SDLTTF.hh>
 
 #include "../common/Communication/events/server_events.h"
 #include "../common/position.h"
@@ -57,6 +58,8 @@ public:
 
 private:
     SDL2pp::Renderer& renderer;
+    SDL2pp::SDLTTF chatTtf;
+    SDL2pp::Font chatFont;
     TextureCache cache;
     MapRenderer mapRenderer;
     GameMap map;
@@ -76,6 +79,9 @@ private:
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::unordered_map<int, RemoteNpc> npcs;
     std::vector<DroppedItem> droppedItems;
+    // Items del inventario del jugador local (solo slots ocupadas, en orden).
+    // Se actualiza al recibir INVENTORY. Se dibujan sobre el grid del HUD.
+    std::vector<uint8_t> inventoryItems;
     std::vector<BloodEffect> bloodEffects;
     std::vector<ArrowProjectile> arrows;
     bool chatActive = false;
@@ -95,6 +101,33 @@ private:
     uint32_t nextLevelExp = 0;
     uint8_t level = 1;
 
+    // ── Chat ──────────────────────────────────────────────────
+    // Barra de comandos arriba de la pantalla. Se abre con Enter; mientras está
+    // abierta el movimiento queda congelado y las teclas escriben en chatInput.
+    // Al presionar Enter de nuevo se parsea chatInput a un evento de la queue.
+    bool chatActive = false;
+    std::string chatInput;
+    // Historial de líneas mostradas en la caja de chat (comandos tipeados + feedback
+    // local). Se conserva solo lo último; ver MAX_CHAT_LINES.
+    std::vector<std::string> chatHistory;
+    static constexpr size_t MAX_CHAT_LINES = 5;
+    // Geometría de la caja de chat. CHAT_BOX_H también lo usa la cámara para
+    // centrar al jugador en el área que queda por debajo del chat.
+    static constexpr int CHAT_LINE_H = 18;
+    static constexpr int CHAT_PAD = 4;
+    static constexpr int CHAT_BOX_H = CHAT_PAD * 2 + CHAT_LINE_H * (int)(MAX_CHAT_LINES + 1);
+
+    // Agrega una línea al historial, recortando las más viejas si hace falta.
+    void addChatLine(const std::string& line);
+
+    // Convierte el texto tipeado (ej "/oro", "/tirar 2") al evento que entiende
+    // el client_sender y lo pushea a events_queue. Comandos desconocidos se ignoran.
+    void submitChat();
+
+    // Dibuja la caja de chat (siempre visible) arriba de todo: historial + línea
+    // de input. Fondo negro semi-transparente.
+    void renderChat();
+
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);
 
@@ -103,6 +136,14 @@ private:
 
     // ── Render ────────────────────────────────────────────────
     void render();
+
+    // Resolución de diseño base (ventana 900x600, ver client.cpp). La UI fija
+    // en píxeles (HUD, inventario, chat) se escala por screenH/BASE_SCREEN_H para
+    // que mantenga su proporción tanto en ventana fija como en fullscreen.
+    static constexpr int BASE_SCREEN_H = 600;
+    float uiScale() const;       // factor de escala de la UI según el alto actual
+    int hudPanelW() const;       // ancho del panel del HUD escalado
+    int chatBoxH() const;        // alto de la caja de chat escalado
 
     // Detecta cuando el jugador cruza a un tile distinto y notifica al server
     void notifyTileChange();

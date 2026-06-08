@@ -2,6 +2,7 @@
 #define MERCHANT_H
 
 #include <string>
+#include <cstdint>
 
 #include "npc.h"
 
