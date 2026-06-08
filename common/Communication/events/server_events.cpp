@@ -42,6 +42,10 @@ std::unique_ptr<ServerEvent> ServerEvent::deserialize(uint8_t opcode, CommonProt
             return NpcRespawnedEvent::deserialize(proto);
         case ServerMsg::CHAT_MSG:
             return ChatBroadcastEvent::deserialize(proto);
+        case ServerMsg::PLAYER_DIED:
+            return PlayerDiedEvent::deserialize(proto);
+        case ServerMsg::PLAYER_REVIVED:
+            return PlayerRevivedEvent::deserialize(proto);
         default:
             throw std::runtime_error("ServerEvent: unknown opcode");
     }
@@ -384,4 +388,37 @@ std::unique_ptr<ChatBroadcastEvent> ChatBroadcastEvent::deserialize(CommonProtoc
     uint16_t msgLen = proto.receive_two_bytes_number();
     std::string text = msgLen ? proto.receive_message(msgLen) : "";
     return std::make_unique<ChatBroadcastEvent>(authorId, std::move(name), std::move(text));
+}
+
+// ── PlayerDiedEvent ──────────────────────────────────────────────────────
+
+PlayerDiedEvent::PlayerDiedEvent(uint16_t id): id(id) {}
+
+void PlayerDiedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_DIED));
+    proto.send_two_bytes_number(id);
+}
+
+std::unique_ptr<PlayerDiedEvent> PlayerDiedEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    return std::make_unique<PlayerDiedEvent>(id);
+}
+
+// ── PlayerRevivedEvent ───────────────────────────────────────────────────
+
+PlayerRevivedEvent::PlayerRevivedEvent(uint16_t id, int16_t x, int16_t y):
+        id(id), x(x), y(y) {}
+
+void PlayerRevivedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::PLAYER_REVIVED));
+    proto.send_two_bytes_number(id);
+    proto.send_two_bytes_number(static_cast<uint16_t>(x));
+    proto.send_two_bytes_number(static_cast<uint16_t>(y));
+}
+
+std::unique_ptr<PlayerRevivedEvent> PlayerRevivedEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
+    int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
+    return std::make_unique<PlayerRevivedEvent>(id, x, y);
 }

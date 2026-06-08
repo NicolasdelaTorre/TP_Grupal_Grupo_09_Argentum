@@ -263,6 +263,35 @@ public:
     static std::unique_ptr<NpcRespawnedEvent> deserialize(CommonProtocol& proto);
 };
 
+// PLAYER_DIED: [opcode][id:2]. El cliente cambia el sprite a fantasma.
+class PlayerDiedEvent: public ServerEvent {
+private:
+    uint16_t id;
+
+public:
+    explicit PlayerDiedEvent(uint16_t id);
+    uint16_t getId() const { return id; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<PlayerDiedEvent> deserialize(CommonProtocol& proto);
+};
+
+// PLAYER_REVIVED: [opcode][id:2][x:2][y:2]. La posición sirve para el caso de
+// /resucitar con teletransporte al sacerdote más cercano.
+class PlayerRevivedEvent: public ServerEvent {
+private:
+    uint16_t id;
+    int16_t x;
+    int16_t y;
+
+public:
+    PlayerRevivedEvent(uint16_t id, int16_t x, int16_t y);
+    uint16_t getId() const { return id; }
+    int16_t getX() const { return x; }
+    int16_t getY() const { return y; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<PlayerRevivedEvent> deserialize(CommonProtocol& proto);
+};
+
 // CHAT_MSG: [opcode][author_id:2][name_len:2][name][msg_len:2][msg].
 // author_id=0 indica mensaje del sistema (name vacío).
 class ChatBroadcastEvent: public ServerEvent {

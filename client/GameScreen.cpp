@@ -516,6 +516,34 @@ void GameScreen::consumeServerEvents() {
                 it->second.targetY = it->second.visual.y;
                 it->second.alive = true;
             }
+        } else if (auto* pd = dynamic_cast<PlayerDiedEvent*>(ev.get())) {
+            auto it = otherPlayers.find(pd->getId());
+            if (it != otherPlayers.end()) {
+                it->second.ghost = true;
+                std::cout << "[muerte] " << it->second.name << " murió" << std::endl;
+            } else {
+                // id no está entre los otros → soy yo.
+                localGhost = true;
+                std::cout << "[muerte] moriste — usá /resucitar" << std::endl;
+            }
+        } else if (auto* pr = dynamic_cast<PlayerRevivedEvent*>(ev.get())) {
+            auto it = otherPlayers.find(pr->getId());
+            if (it != otherPlayers.end()) {
+                it->second.ghost = false;
+                it->second.targetX = static_cast<float>(pr->getX());
+                it->second.targetY = static_cast<float>(pr->getY());
+                it->second.visual.x = it->second.targetX;
+                it->second.visual.y = it->second.targetY;
+                std::cout << "[revivió] " << it->second.name << std::endl;
+            } else {
+                localGhost = false;
+                player.x = static_cast<float>(pr->getX());
+                player.y = static_cast<float>(pr->getY());
+                lastTileX = pr->getX();
+                lastTileY = pr->getY();
+                std::cout << "[revivió] volviste a la vida en ("
+                          << pr->getX() << "," << pr->getY() << ")" << std::endl;
+            }
         } else if (auto* cb = dynamic_cast<ChatBroadcastEvent*>(ev.get())) {
             // TODO(team-ui): dibujar burbuja sobre el autor o ventana de chat.
             if (cb->getAuthorId() == 0) {

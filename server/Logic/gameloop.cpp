@@ -123,6 +123,10 @@ void Gameloop::NPCTurns() {
                                                             npc->getDamage(), /*hit=*/true);
             clientMonitor.broadcast(atkEv);
             clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+            // Si el NPC mató al jugador, broadcast PlayerDiedEvent.
+            if (game.isPlayerGhost(playerId)) {
+                clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
+            }
         }
     }
 
@@ -185,6 +189,8 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
 
     // Mandarle un NEW_PLAYER por cada jugador que ya estaba + sus PLAYER_EQUIPPED.
+    // Si alguno está como fantasma, también su PlayerDiedEvent para que el
+    // cliente lo dibuje como fantasma desde el arranque.
     for (int otherId: game.getPlayerIds()) {
         if (otherId == playerId)
             continue;
@@ -196,6 +202,10 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
                 playerId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(otherId), op.x,
                                                           op.y, odir, oskin, oname));
         sendEquipmentSnapshot(otherId, playerId);
+        if (game.isPlayerGhost(otherId)) {
+            clientMonitor.sendToClient(
+                    playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(otherId)));
+        }
     }
 
     // Avisarles a los demás del recién llegado + su vestimenta.
@@ -206,6 +216,13 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
                                   std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId),
                                                                    p.x, p.y, myDir, mySkin, myName));
     sendEquipmentSnapshot(playerId, -1);
+    if (game.isPlayerGhost(playerId)) {
+        // Estado persistido en .bin: vuelve fantasma al loguearse.
+        clientMonitor.broadcastExcept(
+                playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(playerId)));
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(playerId)));
+    }
 
     // Snapshot de NPCs del overworld (mapId=0): el cliente los renderiza. Le
     // mandamos también los muertos (alive=false) para que cuando reciba un
@@ -265,6 +282,13 @@ void Gameloop::handleTurn(int playerId, MoveDirection direction) {
 void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId) {
     if (!game.hasPlayer(playerId))
         return;
+    // Un fantasma no puede atacar a nadie.
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés atacar"));
+        return;
+    }
     auto ev = game.processAttack(playerId, targetType, targetId);
     if (!ev) {
         std::cout << "ATTACK from player=" << playerId << " ttype=" << (int)targetType
@@ -277,6 +301,10 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
     clientMonitor.broadcast(ev);
     if (ev->getHit() && ev->getTargetType() == 0 && game.hasPlayer(ev->getTargetId())) {
         clientMonitor.sendToClient(ev->getTargetId(), buildStatsEvent(ev->getTargetId()));
+        // Si el ataque mató al target, broadcast PlayerDiedEvent.
+        if (game.isPlayerGhost(ev->getTargetId())) {
+            clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(ev->getTargetId()));
+        }
     }
     // Si pegamos a un NPC y lo matamos, broadcast NpcDiedEvent para que el
     // cliente lo saque del mapa.
@@ -465,8 +493,13 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
     } else if (cmd == "/manainf") {
         reply = game.cheatToggleInfiniteMana(playerId) ? "Mana infinito toggled" : "Error";
     } else if (cmd == "/suicidio") {
-        if (game.cheatSuicide(playerId)) { reply = "Te suicidaste"; refreshStats = true; }
-        else reply = "Error";
+        if (game.cheatSuicide(playerId)) {
+            reply = "Te suicidaste";
+            refreshStats = true;
+            if (game.isPlayerGhost(playerId)) {
+                clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
+            }
+        } else reply = "Error";
     } else if (cmd == "/levelup") {
         if (game.cheatLevelUp(playerId)) { reply = "Subiste de nivel"; refreshStats = true; }
         else reply = "Error";
@@ -602,7 +635,12 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
             // teletransporta al sacerdote más cercano). No requerimos selección.
             auto r = game.revivePlayer(playerId);
             reply = r.message;
-            if (r.ok) refreshStats = true;
+            if (r.ok) {
+                refreshStats = true;
+                Position p = game.getPlayerPosition(playerId);
+                clientMonitor.broadcast(std::make_shared<PlayerRevivedEvent>(
+                        static_cast<uint16_t>(playerId), p.x, p.y));
+            }
         } else if (cmd == "/curar") {
             if (!sel || !stillNear() || sel->type != PRIEST) {
                 reply = "No hay sacerdote seleccionado cerca";

@@ -33,6 +33,7 @@ struct OtherPlayer {
     float targetX = 0.0f;
     float targetY = 0.0f;
     std::string name;
+    bool ghost = false;  // PlayerDiedEvent/PlayerRevivedEvent alternan este flag
 };
 
 // NPC remoto. Mismo patrón que OtherPlayer: visual es el sprite, target* el tile
@@ -79,6 +80,10 @@ private:
     std::vector<ArrowProjectile> arrows;
     bool chatActive = false;
     std::string chatBuffer;
+
+    // True si el jugador local está muerto (fantasma). Lo activa
+    // PlayerDiedEvent dirigido a nuestro id (no está en otherPlayers).
+    bool localGhost = false;
 
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;

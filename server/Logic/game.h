@@ -73,6 +73,9 @@ public:
 
     bool hasPlayer(int playerId) const;
 
+    // True si el jugador está muerto (fantasma).
+    bool isPlayerGhost(int playerId) const;
+
     std::vector<int> getPlayerIds() const;
 
     void updatePlayerData(int playerId);

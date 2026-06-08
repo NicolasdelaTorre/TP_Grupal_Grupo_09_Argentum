@@ -168,6 +168,12 @@ uint32_t Game::getPlayerNextLevelExp(int playerId) const {
 
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
+bool Game::isPlayerGhost(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    return it->second.getData().isGhost;
+}
+
 std::vector<int> Game::getPlayerIds() const {
     std::vector<int> ids;
     ids.reserve(players.size());
@@ -458,17 +464,32 @@ Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount
 Game::InteractionResult Game::revivePlayer(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    // TODO(team-gameplay): chequear que PlayerData.isGhost == true, resetear posición al sacerdote más cercano y curar.
-    std::cout << "REVIVE player=" << playerId << " (stub)" << std::endl;
-    return {true, "Volviste a la vida (stub)"};
+    if (!it->second.getData().isGhost) {
+        return {false, "Ya estás vivo"};
+    }
+    // Reaparece en el spawn de la ciudad. resetStats() limpia isGhost y
+    // restaura HP/MP. TODO(team-gameplay): tp al sacerdote más cercano según
+    // enunciado (proporcional a la distancia).
+    Position old = it->second.getPosition();
+    Position newPos = findSpawnPosition();
+    map.moveEntity(playerId, old.x, old.y, newPos.x, newPos.y, /*isPlayer=*/true,
+                   it->second.getMapId());
+    it->second.move(newPos);
+    it->second.resetStats();
+    std::cout << "REVIVE player=" << playerId << " at (" << newPos.x << "," << newPos.y << ")"
+              << std::endl;
+    return {true, "Volviste a la vida"};
 }
 
 Game::InteractionResult Game::healPlayer(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    // TODO(team-gameplay): poner hp=maxHp, mana=maxMana.
-    std::cout << "HEAL player=" << playerId << " (stub)" << std::endl;
-    return {true, "Te curaste (stub)"};
+    if (it->second.getData().isGhost) {
+        return {false, "Estás muerto, primero resucitá"};
+    }
+    // resetStats restaura HP/MP a su máximo. Sirve como cura completa.
+    it->second.resetStats();
+    return {true, "Te curaste"};
 }
 
 Game::InteractionResult Game::meditatePlayer(int playerId) {
