@@ -79,6 +79,8 @@ void Gameloop::dispatch(const ClientEvent& ev) {
         handleEquip(pid, p->getInvSlot());
     } else if (auto* p = dynamic_cast<const UnequipItemEvent*>(&ev)) {
         handleUnequip(pid, p->getSlotType());
+    } else if (auto* p = dynamic_cast<const ChatMessageEvent*>(&ev)) {
+        handleChat(pid, p->getText());
     } else if (dynamic_cast<const DisconnectEvent*>(&ev)) {
         handleDisconnect(pid);
     }
@@ -380,4 +382,28 @@ void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
             clientMonitor.sendToClient(recipientId, ev);
         }
     }
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────
+
+void Gameloop::handleChat(int playerId, const std::string& text) {
+    if (text.empty())
+        return;
+    if (text[0] == '/') {
+        handleChatCommand(playerId, text);
+        return;
+    }
+    const std::string& name = game.getPlayerName(playerId);
+    std::cout << "CHAT " << name << "(" << playerId << "): " << text << std::endl;
+    clientMonitor.broadcast(
+            std::make_shared<ChatBroadcastEvent>(static_cast<uint16_t>(playerId), name, text));
+}
+
+void Gameloop::handleChatCommand(int playerId, const std::string& text) {
+    auto pos = text.find(' ');
+    std::string cmd = (pos == std::string::npos) ? text : text.substr(0, pos);
+    std::cout << "CHAT_CMD player=" << playerId << " cmd='" << cmd << "'" << std::endl;
+    std::string reply = "Comando desconocido: " + cmd;
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), std::move(reply)));
 }

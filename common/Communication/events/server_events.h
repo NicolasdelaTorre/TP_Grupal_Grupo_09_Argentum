@@ -263,4 +263,21 @@ public:
     static std::unique_ptr<NpcRespawnedEvent> deserialize(CommonProtocol& proto);
 };
 
+// CHAT_MSG: [opcode][author_id:2][name_len:2][name][msg_len:2][msg].
+// author_id=0 indica mensaje del sistema (name vacío).
+class ChatBroadcastEvent: public ServerEvent {
+private:
+    uint16_t authorId;
+    std::string authorName;
+    std::string text;
+
+public:
+    ChatBroadcastEvent(uint16_t authorId, std::string authorName, std::string text);
+    uint16_t getAuthorId() const { return authorId; }
+    const std::string& getAuthorName() const { return authorName; }
+    const std::string& getText() const { return text; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<ChatBroadcastEvent> deserialize(CommonProtocol& proto);
+};
+
 #endif

@@ -32,6 +32,8 @@ std::unique_ptr<ClientEvent> ClientEvent::deserialize(uint8_t opcode, CommonProt
             return EquipItemEvent::deserialize(proto);
         case ClientMsg::UNEQUIP_ITEM:
             return UnequipItemEvent::deserialize(proto);
+        case ClientMsg::CHAT:
+            return ChatMessageEvent::deserialize(proto);
         default:
             throw std::runtime_error("ClientEvent: unknown opcode");
     }
@@ -199,6 +201,22 @@ void UnequipItemEvent::serialize(CommonProtocol& proto) const {
 std::unique_ptr<UnequipItemEvent> UnequipItemEvent::deserialize(CommonProtocol& proto) {
     uint8_t type = proto.receive_byte();
     return std::make_unique<UnequipItemEvent>(type);
+}
+
+// ── ChatMessageEvent ─────────────────────────────────────────────────────
+
+ChatMessageEvent::ChatMessageEvent(std::string text): text(std::move(text)) {}
+
+void ChatMessageEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ClientMsg::CHAT));
+    proto.send_two_bytes_number(static_cast<uint16_t>(text.size()));
+    proto.send_message(std::vector<char>(text.begin(), text.end()));
+}
+
+std::unique_ptr<ChatMessageEvent> ChatMessageEvent::deserialize(CommonProtocol& proto) {
+    uint16_t len = proto.receive_two_bytes_number();
+    std::string text = len ? proto.receive_message(len) : "";
+    return std::make_unique<ChatMessageEvent>(std::move(text));
 }
 
 // ── DisconnectEvent ──────────────────────────────────────────────────────

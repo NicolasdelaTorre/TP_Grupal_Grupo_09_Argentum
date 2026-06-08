@@ -60,6 +60,12 @@ public:
     void handleDrop(int playerId, uint8_t invSlot);
     void handleEquip(int playerId, uint8_t invSlot);
     void handleUnequip(int playerId, uint8_t slotType);
+    // Si text empieza con '/', va al parser de comandos. Sino se broadcastea
+    // tal cual con [authorId][authorName][text].
+    void handleChat(int playerId, const std::string& text);
+    // Parsea "/cmd arg1 arg2 ..." y dispara la acción. Si el comando no
+    // existe, le manda al jugador un ChatBroadcastEvent del sistema.
+    void handleChatCommand(int playerId, const std::string& text);
 };
 
 #endif

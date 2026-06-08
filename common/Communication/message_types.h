@@ -15,14 +15,15 @@ enum class ClientMsg : uint8_t {
     PICK_UP_ITEM = 0x0D,    // [opcode]
     DROP_ITEM = 0x0E,       // [opcode][inv_slot:1]
     EQUIP_ITEM = 0x0F,      // [opcode][inv_slot:1] — equipa, o usa si es poción (consume)
-    UNEQUIP_ITEM = 0x10     // [opcode][slot_type:1] — 0=arma, 1=armadura, 2=casco, 3=escudo
+    UNEQUIP_ITEM = 0x10,    // [opcode][slot_type:1] — 0=arma, 1=armadura, 2=casco, 3=escudo
+    CHAT = 0x11             // [opcode][len:2][texto] — texto libre o /comando arg
 };
 
 // Mensajes Servidor → Cliente
 enum class ServerMsg : uint8_t {
     POSICION_JUGADORES = 0x80,   // [opcode][cant:2][[id:1][x:2][y:2]...]
     STATS_JUGADOR = 0x81,        // [opcode][hp:2][maxHp:2][mana:2][maxMana:2][gold:4][exp:4][nextLevelExp:4][level:1]
-    CHAT_MSG = 0x82,             // [opcode][len:2][texto]
+    CHAT_MSG = 0x82,             // [opcode][author_id:2][name_len:2][name][msg_len:2][msg] — author_id=0 si es msg del sistema
     MAP = 0x83,                  // [opcode][width:2][height:2][CellCount:2][[textureId:2][obstacleId:2][safeZone:1]]...
     LOGIN_OK = 0x84,             // [opcode][spawn_x:2][spawn_y:2]
     LOGIN_FAIL = 0x85,           // [opcode]

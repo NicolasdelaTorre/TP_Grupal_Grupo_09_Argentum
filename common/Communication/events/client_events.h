@@ -143,6 +143,18 @@ public:
     static std::unique_ptr<UnequipItemEvent> deserialize(CommonProtocol& proto);
 };
 
+// CHAT: [opcode][len:2][texto]. Texto libre. Si empieza con '/', el server lo trata como comando (cheat, comprar, etc.) y NO lo broadcastea.
+class ChatMessageEvent: public ClientEvent {
+private:
+    std::string text;
+
+public:
+    explicit ChatMessageEvent(std::string text);
+    const std::string& getText() const { return text; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<ChatMessageEvent> deserialize(CommonProtocol& proto);
+};
+
 // DisconnectEvent NO se serializa: el Receiver del server lo encola directamente cuando detecta que el socket del cliente se cerró
 class DisconnectEvent: public ClientEvent {
 public:

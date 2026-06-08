@@ -173,9 +173,39 @@ bool GameScreen::handleEvents(float dt) {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return false;
+
+        // Modo chat: capturamos texto y volamos cualquier otro input.
+        if (chatActive) {
+            if (e.type == SDL_TEXTINPUT) {
+                chatBuffer += e.text.text;
+            } else if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                    if (!chatBuffer.empty()) {
+                        clientEvents.push(std::make_shared<ChatMessageEvent>(chatBuffer));
+                    }
+                    chatBuffer.clear();
+                    chatActive = false;
+                    SDL_StopTextInput();
+                } else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                    chatBuffer.clear();
+                    chatActive = false;
+                    SDL_StopTextInput();
+                } else if (e.key.keysym.sym == SDLK_BACKSPACE && !chatBuffer.empty()) {
+                    chatBuffer.pop_back();
+                }
+            }
+            continue;
+        }
+
         if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE)
                 return false;
+            if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                chatActive = true;
+                chatBuffer.clear();
+                SDL_StartTextInput();
+                continue;
+            }
         }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             // Click sobre otro player o NPC → ATTACK con id del target.
@@ -210,6 +240,12 @@ bool GameScreen::handleEvents(float dt) {
                 }
             }
         }
+    }
+
+    // En modo chat las teclas no mueven al jugador.
+    if (chatActive) {
+        player.moving = false;
+        return true;
     }
 
     // Movimiento continuo con teclas sostenidas (level-triggered).
@@ -469,6 +505,13 @@ void GameScreen::consumeServerEvents() {
                 it->second.targetX = it->second.visual.x;
                 it->second.targetY = it->second.visual.y;
                 it->second.alive = true;
+            }
+        } else if (auto* cb = dynamic_cast<ChatBroadcastEvent*>(ev.get())) {
+            // TODO(team-ui): dibujar burbuja sobre el autor o ventana de chat.
+            if (cb->getAuthorId() == 0) {
+                std::cout << "[sistema] " << cb->getText() << std::endl;
+            } else {
+                std::cout << "[chat] " << cb->getAuthorName() << ": " << cb->getText() << std::endl;
             }
         }
     }

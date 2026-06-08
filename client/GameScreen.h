@@ -77,6 +77,8 @@ private:
     std::vector<DroppedItem> droppedItems;
     std::vector<BloodEffect> bloodEffects;
     std::vector<ArrowProjectile> arrows;
+    bool chatActive = false;
+    std::string chatBuffer;
 
     // Stats del jugador local (vienen por STATS_JUGADOR).
     uint16_t health = 0;

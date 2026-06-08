@@ -40,6 +40,8 @@ std::unique_ptr<ServerEvent> ServerEvent::deserialize(uint8_t opcode, CommonProt
             return NpcDiedEvent::deserialize(proto);
         case ServerMsg::NPC_RESPAWNED:
             return NpcRespawnedEvent::deserialize(proto);
+        case ServerMsg::CHAT_MSG:
+            return ChatBroadcastEvent::deserialize(proto);
         default:
             throw std::runtime_error("ServerEvent: unknown opcode");
     }
@@ -359,4 +361,27 @@ std::unique_ptr<NpcRespawnedEvent> NpcRespawnedEvent::deserialize(CommonProtocol
     int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
     return std::make_unique<NpcRespawnedEvent>(id, x, y);
+}
+
+// ── ChatBroadcastEvent ───────────────────────────────────────────────────
+
+ChatBroadcastEvent::ChatBroadcastEvent(uint16_t authorId, std::string authorName, std::string text):
+        authorId(authorId), authorName(std::move(authorName)), text(std::move(text)) {}
+
+void ChatBroadcastEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::CHAT_MSG));
+    proto.send_two_bytes_number(authorId);
+    proto.send_two_bytes_number(static_cast<uint16_t>(authorName.size()));
+    proto.send_message(std::vector<char>(authorName.begin(), authorName.end()));
+    proto.send_two_bytes_number(static_cast<uint16_t>(text.size()));
+    proto.send_message(std::vector<char>(text.begin(), text.end()));
+}
+
+std::unique_ptr<ChatBroadcastEvent> ChatBroadcastEvent::deserialize(CommonProtocol& proto) {
+    uint16_t authorId = proto.receive_two_bytes_number();
+    uint16_t nameLen = proto.receive_two_bytes_number();
+    std::string name = nameLen ? proto.receive_message(nameLen) : "";
+    uint16_t msgLen = proto.receive_two_bytes_number();
+    std::string text = msgLen ? proto.receive_message(msgLen) : "";
+    return std::make_unique<ChatBroadcastEvent>(authorId, std::move(name), std::move(text));
 }
