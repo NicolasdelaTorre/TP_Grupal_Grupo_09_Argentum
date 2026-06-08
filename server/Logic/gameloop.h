@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "../../common/Communication/events/server_event.h"
 #include "../../common/Communication/move_direction.h"
@@ -24,6 +25,11 @@ private:
     Game game;
     ServerProtocol& protocol;
     TurnManager turnManager;
+
+    // NPC amigo actualmente seleccionado por cada jugador (click). Los comandos
+    // dirigidos a NPCs (/comprar, /vender, /depositar, etc.) actúan sobre éste.
+    // Si no hay entrada, el jugador no tiene selección activa.
+    std::unordered_map<int, uint16_t> selectedNpc;
 
     // Construye un StatsEvent con el snapshot actual del jugador.
     std::shared_ptr<ServerEvent> buildStatsEvent(int idPlayer);
@@ -65,6 +71,9 @@ public:
     // Parsea "/cmd arg1 arg2 ..." y dispara la acción. Si el comando no
     // existe, le manda al jugador un ChatBroadcastEvent del sistema.
     void handleChatCommand(int playerId, const std::string& text);
+    // Click sobre un NPC amigo: valida adyacencia (≤2 tiles) y guarda la
+    // selección. Responde con mensaje del sistema.
+    void handleSelectNpc(int playerId, uint16_t npcId);
 };
 
 #endif

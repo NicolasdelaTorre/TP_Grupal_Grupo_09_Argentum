@@ -1,5 +1,6 @@
 #include "map.h"
 
+#include <cstdlib>
 #include <stdexcept>
 #include <utility>
 #include <random>
@@ -513,4 +514,27 @@ void Map::placePlayerIntoTheDungeon(int playerId, const std::string& mapId) {
     }
 
     throw std::runtime_error("Map Error: trying to place player into a non-existent dungeon with id " + mapId);
+}
+
+uint16_t Map::addFriendlyNpc(int16_t x, int16_t y, uint8_t type, std::string name) {
+    uint16_t id = friendlyIdCounter++;
+    friendlyNpcs.push_back(FriendlyNpc{id, x, y, type, std::move(name)});
+    return id;
+}
+
+const std::vector<FriendlyNpc>& Map::getFriendlyNpcs() const { return friendlyNpcs; }
+
+const FriendlyNpc* Map::getFriendlyNpc(uint16_t id) const {
+    for (const auto& f : friendlyNpcs) {
+        if (f.id == id) return &f;
+    }
+    return nullptr;
+}
+
+int Map::friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendlyId) const {
+    const FriendlyNpc* f = getFriendlyNpc(friendlyId);
+    if (!f) return -1;
+    int dx = std::abs(static_cast<int>(playerX) - static_cast<int>(f->x));
+    int dy = std::abs(static_cast<int>(playerY) - static_cast<int>(f->y));
+    return std::max(dx, dy);
 }

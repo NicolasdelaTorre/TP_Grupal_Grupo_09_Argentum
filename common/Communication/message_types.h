@@ -15,7 +15,8 @@ enum class ClientMsg : uint8_t {
     DROP_ITEM = 0x0E,       // [opcode][inv_slot:1]
     EQUIP_ITEM = 0x0F,      // [opcode][inv_slot:1] — equipa, o usa si es poción (consume)
     UNEQUIP_ITEM = 0x10,    // [opcode][slot_type:1] — 0=arma, 1=armadura, 2=casco, 3=escudo
-    CHAT = 0x11             // [opcode][len:2][texto] — texto libre o /comando arg
+    CHAT = 0x11,            // [opcode][len:2][texto] — texto libre o /comando arg
+    SELECT_NPC = 0x12       // [opcode][npc_id:2] — click sobre amigo (merchant/banker/priest)
 };
 
 // Mensajes Servidor → Cliente

@@ -88,13 +88,49 @@ public:
     std::shared_ptr<AttackResultEvent> processAttack(int playerId, uint8_t targetType,
                                                     uint16_t targetId);
 
-    // ── Cheats invocables desde el chat (/vidainf, /gold, etc.) 
+    // ── Cheats invocables desde el chat (/vidainf, /gold, etc.)
     bool cheatToggleInfiniteHealth(int playerId);
     bool cheatToggleInfiniteMana(int playerId);
     bool cheatSuicide(int playerId);
     bool cheatLevelUp(int playerId);
     bool cheatAddGold(int playerId, uint32_t amount);
     bool cheatSpawnItem(int playerId, uint8_t itemId);
+
+    // ── Interacción con NPCs amigos ─────────────────────────────────────
+    // Resultado simple: ok + mensaje legible para mostrarle al jugador en el chat del sistema. Los stubs solo loguean hay que meter la lógica real usando las clases Merchant/Banker/Priest que ya existen.
+    struct InteractionResult {
+        bool ok = false;
+        std::string message;
+    };
+
+    // /listar dirigido a un merchant: items que vende [{id, name, price}].
+    // Dirigido a un banker: items y oro guardados en la cuenta del jugador.
+    // Devuelve líneas de texto listas para mostrar (1 por item).
+    std::vector<std::string> listMerchantInventory(uint8_t npcType);
+    std::vector<std::string> listBankAccount(int playerId, uint8_t npcType);
+
+    // /comprar <item>: merchant o priest (priest vende hechizos/pociones).
+    InteractionResult buyFromNpc(int playerId, uint8_t npcType, const std::string& itemName);
+
+    // /vender <item>: solo merchant.
+    InteractionResult sellToNpc(int playerId, uint8_t npcType, const std::string& itemName);
+
+    // /depositar <item> o /depositar oro <N>: solo banker.
+    InteractionResult depositItemToBank(int playerId, const std::string& itemName);
+    InteractionResult depositGoldToBank(int playerId, uint32_t amount);
+
+    // /retirar <item> o /retirar oro <N>: solo banker.
+    InteractionResult withdrawItemFromBank(int playerId, const std::string& itemName);
+    InteractionResult withdrawGoldFromBank(int playerId, uint32_t amount);
+
+    // /resucitar (priest): solo si el jugador es fantasma.
+    InteractionResult revivePlayer(int playerId);
+
+    // /curar (priest): recupera vida y maná.
+    InteractionResult healPlayer(int playerId);
+
+    // /meditar: arranca meditación (recupera mana con el tiempo). Sin NPC.
+    InteractionResult meditatePlayer(int playerId);
 
     // Recoge lo que haya en la celda del jugador (`/tomar`).
     // TODO(team-gameplay): buscar item en droppedItems en la posición del

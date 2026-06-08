@@ -384,6 +384,12 @@ Map loadMapFromYaml(const std::string& path) {
         }
     }
 
+    // Amigos de las ciudades. Recolectamos {x,y,type,name} y los registramos
+    // en el Map después de construirlo (necesitamos sus ids para el snapshot
+    // que se manda al cliente al loguearse).
+    struct PendingFriendly { int16_t x; int16_t y; uint8_t wireType; std::string name; };
+    std::vector<PendingFriendly> pendingFriendlies;
+
     // Zonas: las de tipo ciudad -> safe zone + fixed_npcs bloquean su celda;
     // las de tipo bioma se cargan con su posición, tamaño y spawns de criaturas.
     std::vector<Biome> biomes;
@@ -408,8 +414,18 @@ Map loadMapFromYaml(const std::string& path) {
                     int16_t ny = npc["position"][1].as<int16_t>();
                     const std::string npcType =
                             npc["type"] ? npc["type"].as<std::string>() : std::string();
+                    const std::string npcName =
+                            npc["name"] ? npc["name"].as<std::string>() : std::string();
                     applyObstacle(cells, width, height, nx, ny, 1, 1, npcTypeFromString(npcType));
-                    // markNpcOccupancy(cells, width, height, nx, ny, npcType);
+
+                    // merchant/banker/priest → guardamos para registrarlos como
+                    // amigos con id propio en el Map.
+                    uint8_t wireType = 0;
+                    if (npcType == "merchant") wireType = static_cast<uint8_t>(NpcType::MERCHANT);
+                    else if (npcType == "banker") wireType = static_cast<uint8_t>(NpcType::BANKER);
+                    else if (npcType == "priest") wireType = static_cast<uint8_t>(NpcType::PRIEST);
+                    else continue;
+                    pendingFriendlies.push_back({nx, ny, wireType, npcName});
                 }
             }
         }
@@ -461,7 +477,12 @@ Map loadMapFromYaml(const std::string& path) {
 
     std::cout << "Map loaded (" << width << "x" << height << "), spawn at (" << spawn.x << ", "
               << spawn.y << "), " << entries.size() << " entr(y/ies), " << environments.size()
-              << " environment(s), " << biomes.size() << " biome(s)" << std::endl;
+              << " environment(s), " << biomes.size() << " biome(s), "
+              << pendingFriendlies.size() << " friendly NPC(s)" << std::endl;
 
-    return Map(width, height, std::move(cells), spawn, std::move(entries), std::move(biomes));
+    Map result(width, height, std::move(cells), spawn, std::move(entries), std::move(biomes));
+    for (auto& f : pendingFriendlies) {
+        result.addFriendlyNpc(f.x, f.y, f.wireType, std::move(f.name));
+    }
+    return result;
 }

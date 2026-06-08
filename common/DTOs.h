@@ -96,8 +96,19 @@ struct Weapon: public Obj {
     uint8_t damage;
 };
 
-// Tipo de criatura NPC dinámica
-enum class NpcType : uint8_t { SPIDER = 0, SKELETON, ZOMBIE, GOBLIN, ORC, GOLEM };
+// Tipo de criatura NPC dinámica. SPIDER..GOLEM son hostiles, el resto son
+// amigos de las ciudades (interactuables por click + comando).
+enum class NpcType : uint8_t {
+    SPIDER = 0,
+    SKELETON,
+    ZOMBIE,
+    GOBLIN,
+    ORC,
+    GOLEM,
+    MERCHANT,
+    BANKER,
+    PRIEST
+};
 
 struct NpcEntity {
     uint16_t id = 0;

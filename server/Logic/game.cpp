@@ -381,6 +381,104 @@ bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
     return true;
 }
 
+// ── Interacción con NPCs amigos ──────────────────────────────────
+// stubs solo loguean — team-gameplay rellena la lógica real usando las
+// clases Merchant/Banker/Priest existentes.
+
+std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
+    std::cout << "LIST merchant type=" << (int)npcType << " (stub)" << std::endl;
+    // TODO(team-gameplay): devolver items reales del merchant según la
+    // configuración de items.toml.
+    return {"(stub) Sin items disponibles. Implementar listMerchantInventory."};
+}
+
+std::vector<std::string> Game::listBankAccount(int playerId, uint8_t npcType) {
+    std::cout << "LIST bank player=" << playerId << " type=" << (int)npcType << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): leer Banker::accounts (server/Logic/NPC/banker.h) y devolver el oro + items guardados del jugador.
+    return {"(stub) Cuenta vacía. Implementar listBankAccount."};
+}
+
+Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
+                                         const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "BUY player=" << playerId << " npcType=" << (int)npcType << " item=" << itemName
+              << " (stub)" << std::endl;
+    // TODO(team-gameplay): validar oro, restar precio, addItem al inventario.
+    return {true, "Compraste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
+                                        const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "SELL player=" << playerId << " npcType=" << (int)npcType << " item=" << itemName
+              << " (stub)" << std::endl;
+    // TODO(team-gameplay): buscar el item en inventario, removerlo, sumar oro.
+    return {true, "Vendiste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::depositItemToBank(int playerId, const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "DEPOSIT_ITEM player=" << playerId << " item=" << itemName << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): usar Banker::depositItem.
+    return {true, "Depositaste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "DEPOSIT_GOLD player=" << playerId << " amount=" << amount << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): validar oro del jugador, restar, sumar a Banker::depositGold.
+    return {true, "Depositaste " + std::to_string(amount) + " de oro (stub)"};
+}
+
+Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::string& itemName) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "WITHDRAW_ITEM player=" << playerId << " item=" << itemName << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): usar Banker::withdrawItem.
+    return {true, "Retiraste " + itemName + " (stub)"};
+}
+
+Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    std::cout << "WITHDRAW_GOLD player=" << playerId << " amount=" << amount << " (stub)"
+              << std::endl;
+    // TODO(team-gameplay): usar Banker::withdrawGold.
+    return {true, "Retiraste " + std::to_string(amount) + " de oro (stub)"};
+}
+
+Game::InteractionResult Game::revivePlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    // TODO(team-gameplay): chequear que PlayerData.isGhost == true, resetear posición al sacerdote más cercano y curar.
+    std::cout << "REVIVE player=" << playerId << " (stub)" << std::endl;
+    return {true, "Volviste a la vida (stub)"};
+}
+
+Game::InteractionResult Game::healPlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    // TODO(team-gameplay): poner hp=maxHp, mana=maxMana.
+    std::cout << "HEAL player=" << playerId << " (stub)" << std::endl;
+    return {true, "Te curaste (stub)"};
+}
+
+Game::InteractionResult Game::meditatePlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe"};
+    // TODO(team-gameplay): flag isMeditating, tick que recupera mana según FClaseMeditacion * Inteligencia * segundos (fórmula del enunciado).
+    std::cout << "MEDITATE player=" << playerId << " (stub)" << std::endl;
+    return {true, "Empezaste a meditar (stub)"};
+}
+
 bool Game::pickUpItemAt(int /*playerId*/) {
     // TODO(team-gameplay): buscar item en droppedItems en la celda del
     // jugador, llamarlo a player.addItem y removerlo del piso. Stub vacío.

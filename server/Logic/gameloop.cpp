@@ -79,6 +79,8 @@ void Gameloop::dispatch(const ClientEvent& ev) {
         handleUnequip(pid, p->getSlotType());
     } else if (auto* p = dynamic_cast<const ChatMessageEvent*>(&ev)) {
         handleChat(pid, p->getText());
+    } else if (auto* p = dynamic_cast<const SelectNpcEvent*>(&ev)) {
+        handleSelectNpc(pid, p->getNpcId());
     } else if (dynamic_cast<const DisconnectEvent*>(&ev)) {
         handleDisconnect(pid);
     }
@@ -146,6 +148,7 @@ void Gameloop::handleDisconnect(int playerId) {
         return;
     std::cout << "Player " << game.getPlayerName(playerId) << " (id=" << playerId
               << ") disconnected" << std::endl;
+    selectedNpc.erase(playerId);
     game.removePlayer(playerId);
     clientMonitor.broadcastExcept(
             playerId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)));
@@ -216,6 +219,12 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         bool alive = !npc->isDead();
         clientMonitor.sendToClient(
                 playerId, std::make_shared<NewNpcEvent>(npcId, np.x, np.y, type, alive));
+    }
+
+    // Snapshot de NPCs amigos (merchant/banker/priest): ids ≥ 10000, no se mueven ni mueren. Vienen del YAML como fixed_npcs de las zonas city.
+    for (const auto& f : map.getFriendlyNpcs()) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<NewNpcEvent>(f.id, f.x, f.y, f.type, /*alive=*/true));
     }
 }
 
@@ -375,6 +384,42 @@ void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
     }
 }
 
+// ── Selección de NPC amigo ───────────────────────────────────────────────
+
+// Distancia máxima en la que un jugador puede interactuar con un NPC amigo. 2 = cualquier tile dentro de un cuadrado de 5x5 centrado en él.
+static constexpr int MAX_INTERACTION_DISTANCE = 2;
+
+static const char* friendlyKindName(uint8_t type) {
+    if (type == static_cast<uint8_t>(NpcType::MERCHANT)) return "Comerciante";
+    if (type == static_cast<uint8_t>(NpcType::BANKER)) return "Banquero";
+    if (type == static_cast<uint8_t>(NpcType::PRIEST)) return "Sacerdote";
+    return "NPC";
+}
+
+void Gameloop::handleSelectNpc(int playerId, uint16_t npcId) {
+    if (!game.hasPlayer(playerId))
+        return;
+    const FriendlyNpc* f = map.getFriendlyNpc(npcId);
+    if (!f) {
+        // No es un amigo. Click sobre hostil → ignoramos (el click sobre
+        // hostiles ya se manda como AttackEvent desde el cliente).
+        return;
+    }
+    Position p = game.getPlayerPosition(playerId);
+    int dist = map.friendlyNpcDistance(p.x, p.y, npcId);
+    if (dist < 0 || dist > MAX_INTERACTION_DISTANCE) {
+        clientMonitor.sendToClient(
+                playerId,
+                std::make_shared<ChatBroadcastEvent>(0, std::string(),
+                                                    "Estás demasiado lejos de " + f->name));
+        return;
+    }
+    selectedNpc[playerId] = npcId;
+    std::string msg = "Hablás con " + f->name + " (" + friendlyKindName(f->type) + ")";
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), std::move(msg)));
+}
+
 // ── Chat ─────────────────────────────────────────────────────────────────
 
 void Gameloop::handleChat(int playerId, const std::string& text) {
@@ -447,8 +492,128 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
                 } else reply = "Error";
             } catch (...) { reply = "Uso: /item <itemId>"; }
         }
+    } else if (cmd == "/meditar") {
+        auto r = game.meditatePlayer(playerId);
+        reply = r.message;
     } else {
-        reply = "Comando desconocido: " + cmd;
+        // Comandos que requieren un NPC amigo seleccionado.
+        auto itSel = selectedNpc.find(playerId);
+        const FriendlyNpc* sel =
+                itSel != selectedNpc.end() ? map.getFriendlyNpc(itSel->second) : nullptr;
+        const uint8_t MERCHANT = static_cast<uint8_t>(NpcType::MERCHANT);
+        const uint8_t BANKER = static_cast<uint8_t>(NpcType::BANKER);
+        const uint8_t PRIEST = static_cast<uint8_t>(NpcType::PRIEST);
+
+        // Helper local: revalida la distancia al NPC seleccionado.
+        auto stillNear = [&]() -> bool {
+            if (!sel) return false;
+            Position p = game.getPlayerPosition(playerId);
+            int d = map.friendlyNpcDistance(p.x, p.y, sel->id);
+            return d >= 0 && d <= MAX_INTERACTION_DISTANCE;
+        };
+        auto joinFrom = [&](size_t from) -> std::string {
+            std::string out;
+            for (size_t i = from; i < parts.size(); i++) {
+                if (i > from) out += ' ';
+                out += parts[i];
+            }
+            return out;
+        };
+
+        if (cmd == "/listar") {
+            if (!sel || !stillNear()) {
+                reply = "Necesitás estar cerca de un comerciante o banquero (click)";
+            } else if (sel->type == MERCHANT) {
+                auto lines = game.listMerchantInventory(sel->type);
+                for (const auto& l : lines) {
+                    clientMonitor.sendToClient(
+                            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), l));
+                }
+                reply = "Fin de la lista";
+            } else if (sel->type == BANKER) {
+                auto lines = game.listBankAccount(playerId, sel->type);
+                for (const auto& l : lines) {
+                    clientMonitor.sendToClient(
+                            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), l));
+                }
+                reply = "Fin de la lista";
+            } else {
+                reply = "Este NPC no tiene nada para listar";
+            }
+        } else if (cmd == "/comprar") {
+            if (parts.size() < 2) { reply = "Uso: /comprar <objeto>"; }
+            else if (!sel || !stillNear()) { reply = "No hay comerciante seleccionado cerca"; }
+            else if (sel->type != MERCHANT && sel->type != PRIEST) {
+                reply = "Sólo podés comprarle a un comerciante o sacerdote";
+            } else {
+                auto r = game.buyFromNpc(playerId, sel->type, joinFrom(1));
+                reply = r.message;
+                if (r.ok) { refreshStats = true; refreshInventory = true; }
+            }
+        } else if (cmd == "/vender") {
+            if (parts.size() < 2) { reply = "Uso: /vender <objeto>"; }
+            else if (!sel || !stillNear() || sel->type != MERCHANT) {
+                reply = "No hay comerciante seleccionado cerca";
+            } else {
+                auto r = game.sellToNpc(playerId, sel->type, joinFrom(1));
+                reply = r.message;
+                if (r.ok) { refreshStats = true; refreshInventory = true; }
+            }
+        } else if (cmd == "/depositar") {
+            if (parts.size() < 2) { reply = "Uso: /depositar <objeto> | /depositar oro <cant>"; }
+            else if (!sel || !stillNear() || sel->type != BANKER) {
+                reply = "No hay banquero seleccionado cerca";
+            } else if (parts[1] == "oro") {
+                if (parts.size() < 3) { reply = "Uso: /depositar oro <cant>"; }
+                else {
+                    try {
+                        uint32_t n = static_cast<uint32_t>(std::stoul(parts[2]));
+                        auto r = game.depositGoldToBank(playerId, n);
+                        reply = r.message;
+                        if (r.ok) refreshStats = true;
+                    } catch (...) { reply = "Uso: /depositar oro <cant>"; }
+                }
+            } else {
+                auto r = game.depositItemToBank(playerId, joinFrom(1));
+                reply = r.message;
+                if (r.ok) refreshInventory = true;
+            }
+        } else if (cmd == "/retirar") {
+            if (parts.size() < 2) { reply = "Uso: /retirar <objeto> | /retirar oro <cant>"; }
+            else if (!sel || !stillNear() || sel->type != BANKER) {
+                reply = "No hay banquero seleccionado cerca";
+            } else if (parts[1] == "oro") {
+                if (parts.size() < 3) { reply = "Uso: /retirar oro <cant>"; }
+                else {
+                    try {
+                        uint32_t n = static_cast<uint32_t>(std::stoul(parts[2]));
+                        auto r = game.withdrawGoldFromBank(playerId, n);
+                        reply = r.message;
+                        if (r.ok) refreshStats = true;
+                    } catch (...) { reply = "Uso: /retirar oro <cant>"; }
+                }
+            } else {
+                auto r = game.withdrawItemFromBank(playerId, joinFrom(1));
+                reply = r.message;
+                if (r.ok) refreshInventory = true;
+            }
+        } else if (cmd == "/resucitar") {
+            // El enunciado permite tipear /resucitar sin estar cerca (te
+            // teletransporta al sacerdote más cercano). No requerimos selección.
+            auto r = game.revivePlayer(playerId);
+            reply = r.message;
+            if (r.ok) refreshStats = true;
+        } else if (cmd == "/curar") {
+            if (!sel || !stillNear() || sel->type != PRIEST) {
+                reply = "No hay sacerdote seleccionado cerca";
+            } else {
+                auto r = game.healPlayer(playerId);
+                reply = r.message;
+                if (r.ok) refreshStats = true;
+            }
+        } else {
+            reply = "Comando desconocido: " + cmd;
+        }
     }
 
     clientMonitor.sendToClient(playerId,

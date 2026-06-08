@@ -131,6 +131,18 @@ public:
     static std::unique_ptr<UnequipItemEvent> deserialize(CommonProtocol& proto);
 };
 
+// SELECT_NPC: [opcode][npc_id:2].
+class SelectNpcEvent: public ClientEvent {
+private:
+    uint16_t npcId;
+
+public:
+    explicit SelectNpcEvent(uint16_t npcId);
+    uint16_t getNpcId() const { return npcId; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<SelectNpcEvent> deserialize(CommonProtocol& proto);
+};
+
 // CHAT: [opcode][len:2][texto]. Texto libre. Si empieza con '/', el server lo trata como comando (cheat, comprar, etc.) y NO lo broadcastea.
 class ChatMessageEvent: public ClientEvent {
 private:

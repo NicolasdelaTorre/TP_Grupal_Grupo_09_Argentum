@@ -233,8 +233,18 @@ bool GameScreen::handleEvents(float dt) {
                     int nTileX = (int)(n.visual.x + HEAD_OFFSET);
                     int nTileY = (int)(n.visual.y + FEET_OFFSET);
                     if (nTileX == clickTileX && nTileY == clickTileY) {
-                        clientEvents.push(std::make_shared<AttackEvent>(
-                                /*targetType=*/1, static_cast<uint16_t>(entry.first)));
+                        // Amigos (merchant/banker/priest) → SELECT_NPC.
+                        // Hostiles (spider/skeleton/etc) → ATTACK.
+                        bool isFriendly = (n.visual.type == NpcType::MERCHANT ||
+                                           n.visual.type == NpcType::BANKER ||
+                                           n.visual.type == NpcType::PRIEST);
+                        if (isFriendly) {
+                            clientEvents.push(std::make_shared<SelectNpcEvent>(
+                                    static_cast<uint16_t>(entry.first)));
+                        } else {
+                            clientEvents.push(std::make_shared<AttackEvent>(
+                                    /*targetType=*/1, static_cast<uint16_t>(entry.first)));
+                        }
                         break;
                     }
                 }

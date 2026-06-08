@@ -32,6 +32,8 @@ std::unique_ptr<ClientEvent> ClientEvent::deserialize(uint8_t opcode, CommonProt
             return UnequipItemEvent::deserialize(proto);
         case ClientMsg::CHAT:
             return ChatMessageEvent::deserialize(proto);
+        case ClientMsg::SELECT_NPC:
+            return SelectNpcEvent::deserialize(proto);
         default:
             throw std::runtime_error("ClientEvent: unknown opcode");
     }
@@ -185,6 +187,20 @@ void UnequipItemEvent::serialize(CommonProtocol& proto) const {
 std::unique_ptr<UnequipItemEvent> UnequipItemEvent::deserialize(CommonProtocol& proto) {
     uint8_t type = proto.receive_byte();
     return std::make_unique<UnequipItemEvent>(type);
+}
+
+// ── SelectNpcEvent ───────────────────────────────────────────────────────
+
+SelectNpcEvent::SelectNpcEvent(uint16_t npcId): npcId(npcId) {}
+
+void SelectNpcEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ClientMsg::SELECT_NPC));
+    proto.send_two_bytes_number(npcId);
+}
+
+std::unique_ptr<SelectNpcEvent> SelectNpcEvent::deserialize(CommonProtocol& proto) {
+    uint16_t id = proto.receive_two_bytes_number();
+    return std::make_unique<SelectNpcEvent>(id);
 }
 
 // ── ChatMessageEvent ─────────────────────────────────────────────────────
