@@ -397,9 +397,21 @@ void Gameloop::handleDrop(int playerId, uint8_t invSlot) {
 void Gameloop::handleEquip(int playerId, uint8_t invSlot) {
     if (!game.hasPlayer(playerId))
         return;
-    auto before = game.getInventorySnapshot(playerId);
-    if (!game.equipOrUseItem(playerId, invSlot))
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés equiparte"));
         return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    if (!game.equipOrUseItem(playerId, invSlot)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(),
+                                                              "No se pudo equipar ese slot"));
+        return;
+    }
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), "Item equipado"));
     auto after = game.getInventorySnapshot(playerId);
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
 }
@@ -407,9 +419,21 @@ void Gameloop::handleEquip(int playerId, uint8_t invSlot) {
 void Gameloop::handleUnequip(int playerId, uint8_t slotType) {
     if (!game.hasPlayer(playerId))
         return;
-    auto before = game.getInventorySnapshot(playerId);
-    if (!game.unequipSlot(playerId, slotType))
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés desequiparte"));
         return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    if (!game.unequipSlot(playerId, slotType)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "No tenías ese slot equipado"));
+        return;
+    }
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), "Item desequipado"));
     auto after = game.getInventorySnapshot(playerId);
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
 }
@@ -573,6 +597,33 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
                 handleDrop(playerId, slot);
                 return;
             } catch (...) { reply = "Uso: /tirar <slot>"; }
+        }
+    } else if (cmd == "/equipar") {
+        if (parts.size() < 2) {
+            reply = "Uso: /equipar <slot>";
+        } else {
+            try {
+                uint8_t slot = static_cast<uint8_t>(std::stoul(parts[1]));
+                handleEquip(playerId, slot);
+                return;
+            } catch (...) { reply = "Uso: /equipar <slot>"; }
+        }
+    } else if (cmd == "/desequipar") {
+        if (parts.size() < 2) {
+            reply = "Uso: /desequipar <arma|armor|casco|escudo>";
+        } else {
+            const std::string& which = parts[1];
+            uint8_t slotType = 255;
+            if (which == "arma") slotType = 0;
+            else if (which == "armor" || which == "armadura") slotType = 1;
+            else if (which == "casco") slotType = 2;
+            else if (which == "escudo") slotType = 3;
+            if (slotType == 255) {
+                reply = "Uso: /desequipar <arma|armor|casco|escudo>";
+            } else {
+                handleUnequip(playerId, slotType);
+                return;
+            }
         }
     } else {
         // Comandos que requieren un NPC amigo seleccionado.

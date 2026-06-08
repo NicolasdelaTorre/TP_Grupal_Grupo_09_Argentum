@@ -54,8 +54,8 @@ void Item::createItem(const std::string& itemName) {
                 case ItemType::ARMOR:
                 case ItemType::HELMET:
                 case ItemType::SHIELD:
-                    minDefense = toml::find<uint16_t>(item, "defense");
-                    maxDefense = toml::find<uint16_t>(item, "defense");
+                    minDefense = toml::find<uint16_t>(item, "minDefense");
+                    maxDefense = toml::find<uint16_t>(item, "maxDefense");
                     break;
                 case ItemType::HEALTH_POTION:
                     healthRestore = toml::find<uint16_t>(item, "healthRestore");
