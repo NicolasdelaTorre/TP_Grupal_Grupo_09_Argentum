@@ -99,6 +99,8 @@ struct NpcEntity {
     NpcType type = NpcType::SPIDER;
 };
 
+
+
 // Item dropped on the floor. x/y are tile coordinates.
 // sheetId 0 → Items_recolectables.png, 1 → Items_recolectables_2.png, 2 → Items_recolectables_3.png
 struct DroppedItem {

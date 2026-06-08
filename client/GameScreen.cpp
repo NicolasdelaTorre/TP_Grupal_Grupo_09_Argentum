@@ -7,6 +7,11 @@
 
 #include "tile_textures.h"
 
+// Ancho de la franja del HUD a la derecha (inventario + fondo). El área jugable
+// es screenW - HUD_PANEL_W, y la cámara centra al jugador ahí (no en toda la
+// pantalla) para que el sprite quede centrado a la izquierda del inventario.
+static constexpr int HUD_PANEL_W = 230;
+
 namespace {
 
 // ReceivedMap (wire) → GameMap (lo que pinta el MapRenderer).
@@ -63,6 +68,8 @@ GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath
                        Queue<std::string>& events_queue, Queue<std::string>& server_queue,
                        const ReceivedMap& mapData, Position spawn, Player player):
         renderer(renderer),
+        chatTtf(),
+        chatFont(assetsPath + "/font.ttf", 14),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
         map(convertToGameMap(mapData)),
@@ -92,13 +99,26 @@ bool GameScreen::run() {
     }
 }
 
+float GameScreen::uiScale() const {
+    int w, h;
+    SDL_GetRendererOutputSize(renderer.Get(), &w, &h);
+    return h / (float)BASE_SCREEN_H;
+}
+
+int GameScreen::hudPanelW() const { return (int)(HUD_PANEL_W * uiScale()); }
+
+int GameScreen::chatBoxH() const { return (int)(CHAT_BOX_H * uiScale()); }
+
 void GameScreen::render() {
     int screenW, screenH;
     SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
 
-    // Cámara centrada en el jugadorANIM_SPEED
-    float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
-    float camY = player.y * TILE_SIZE - screenH / 2.0f + TILE_SIZE / 2.0f;
+    // Cámara centrada en el jugador dentro del área jugable (sin contar el HUD).
+    float playW = screenW - hudPanelW();
+    float camX = player.x * TILE_SIZE - playW / 2.0f + TILE_SIZE / 2.0f;
+    // Centramos al jugador en el área que queda debajo de la caja de chat:
+    // el "techo" de la zona jugable es el borde inferior del chat.
+    float camY = player.y * TILE_SIZE - (screenH + chatBoxH()) / 2.0f + TILE_SIZE / 2.0f;
 
     // Clampear cámara al mapa
     camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
@@ -133,6 +153,8 @@ void GameScreen::render() {
 
     renderHUD();
 
+    renderChat();
+
     renderer.Present();
 }
 
@@ -140,8 +162,11 @@ bool GameScreen::handleEvents(float dt) {
     // Para resolver clicks en coords de mundo necesitamos la cámara.
     int screenW, screenH;
     SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
-    float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
-    float camY = player.y * TILE_SIZE - screenH / 2.0f + TILE_SIZE / 2.0f;
+    float playW = screenW - hudPanelW();
+    float camX = player.x * TILE_SIZE - playW / 2.0f + TILE_SIZE / 2.0f;
+    // Centramos al jugador en el área que queda debajo de la caja de chat:
+    // el "techo" de la zona jugable es el borde inferior del chat.
+    float camY = player.y * TILE_SIZE - (screenH + chatBoxH()) / 2.0f + TILE_SIZE / 2.0f;
     camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
     camY = std::max(0.0f, std::min(camY, (float)(map.height * TILE_SIZE - screenH)));
 
@@ -151,9 +176,40 @@ bool GameScreen::handleEvents(float dt) {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT)
             return false;
+
+        // Mientras el chat está abierto, capturamos todo el teclado para escribir
+        // el comando. Enter lo manda, Escape cancela, Backspace borra.
+        if (chatActive) {
+            if (e.type == SDL_TEXTINPUT) {
+                chatInput += e.text.text;
+            } else if (e.type == SDL_KEYDOWN) {
+                SDL_Keycode sym = e.key.keysym.sym;
+                if (sym == SDLK_RETURN || sym == SDLK_KP_ENTER) {
+                    submitChat();
+                    chatInput.clear();
+                    chatActive = false;
+                    SDL_StopTextInput();
+                } else if (sym == SDLK_ESCAPE) {
+                    chatInput.clear();
+                    chatActive = false;
+                    SDL_StopTextInput();
+                } else if (sym == SDLK_BACKSPACE) {
+                    if (!chatInput.empty())
+                        chatInput.pop_back();
+                }
+            }
+            continue;  // chat abierto: ignoramos movimiento/clicks
+        }
+
         if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE)
                 return false;
+            // Enter abre la barra de chat para tipear un comando.
+            if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
+                chatActive = true;
+                SDL_StartTextInput();
+                continue;
+            }
         }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             // Click sobre otro player → ATTACK con id del target.
@@ -174,19 +230,20 @@ bool GameScreen::handleEvents(float dt) {
     }
 
     // Movimiento continuo con teclas sostenidas (level-triggered).
-    const Uint8* keys = SDL_GetKeyboardState(nullptr);
+    // Con el chat abierto no movemos: las teclas son texto del comando.
+    const Uint8* keys = chatActive ? nullptr : SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
 
-    if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
+    if (keys && (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W])) {
         dy = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::UP;
-    } else if (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S]) {
+    } else if (keys && (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S])) {
         dy = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::DOWN;
-    } else if (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A]) {
+    } else if (keys && (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A])) {
         dx = -PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::LEFT;
-    } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
+    } else if (keys && (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D])) {
         dx = PLAYER_MOVE_SPEED * dt;
         player.dir = Direction::RIGHT;
     }
@@ -217,6 +274,115 @@ bool GameScreen::handleEvents(float dt) {
     notifyTileChange();
     notifyDirectionChange();
     return true;
+}
+
+void GameScreen::addChatLine(const std::string& line) {
+    chatHistory.push_back(line);
+    if (chatHistory.size() > MAX_CHAT_LINES)
+        chatHistory.erase(chatHistory.begin(),
+                          chatHistory.end() - static_cast<long>(MAX_CHAT_LINES));
+}
+
+// Parsea el texto del chat a un evento que entiende client_sender y lo encola.
+// Formato esperado: "/comando [argumento]". Comandos desconocidos se ignoran.
+// Cada comando (y su feedback local) queda registrado en el historial del chat.
+void GameScreen::submitChat() {
+    // Trim de espacios a los costados.
+    size_t start = chatInput.find_first_not_of(" \t");
+    if (start == std::string::npos)
+        return;
+    size_t end = chatInput.find_last_not_of(" \t");
+    std::string msg = chatInput.substr(start, end - start + 1);
+
+    // Eco de lo tipeado.
+    addChatLine("> " + msg);
+
+    // Separamos comando y argumento (lo que va después del primer espacio).
+    std::string cmd, arg;
+    size_t sp = msg.find(' ');
+    if (sp == std::string::npos) {
+        cmd = msg;
+    } else {
+        cmd = msg.substr(0, sp);
+        size_t argStart = msg.find_first_not_of(' ', sp);
+        if (argStart != std::string::npos)
+            arg = msg.substr(argStart);
+    }
+
+    // Comandos sin argumento.
+    if (cmd == "/tomar") {
+        events_queue.push("PICK_UP");
+    } else if (cmd == "/oro") {
+        events_queue.push("CHEAT_GOLD");
+    } else if (cmd == "/exp") {
+        events_queue.push("CHEAT_EXPERIENCE");
+    } else if (cmd == "/morir") {
+        events_queue.push("CHEAT_SUICIDE");
+    } else if (cmd == "/tirar" && !arg.empty()) {
+        // /tirar <slot>  → suelta el item de esa slot del inventario.
+        events_queue.push("DROP:" + arg);
+    } else if (cmd == "/equipar" && !arg.empty()) {
+        // /equipar <slot> → equipa el item de esa slot.
+        events_queue.push("EQUIP:" + arg);
+    } else if (cmd == "/desequipar" && !arg.empty()) {
+        // /desequipar <tipo> → desequipa la slot de equipo de ese tipo.
+        events_queue.push("UNEQUIP:" + arg);
+    } else {
+        addChatLine("  comando desconocido");
+    }
+}
+
+void GameScreen::renderChat() {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    // Escalamos toda la geometría del chat para que mantenga su proporción en
+    // ventana fija y en fullscreen (ver uiScale).
+    float scale = uiScale();
+    const int LINE_H = (int)(CHAT_LINE_H * scale);  // alto de cada línea de texto
+    const int PAD = (int)(CHAT_PAD * scale);         // margen interno de la caja
+    // La caja ocupa todo el área jugable: termina donde empieza el panel del HUD
+    // (fondo del inventario) a la derecha.
+    const int BAR_W = screenW - hudPanelW();
+    // La caja muestra MAX_CHAT_LINES de historial + 1 línea de input.
+    const int boxH = chatBoxH();
+
+    // Fondo negro semi-transparente. Necesitamos blend habilitado para el alpha.
+    renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+    renderer.SetDrawColor(0, 0, 0, 140);
+    renderer.FillRect(SDL2pp::Rect(0, 0, BAR_W, boxH));
+    renderer.SetDrawBlendMode(SDL_BLENDMODE_NONE);
+
+    auto drawLine = [&](const std::string& text, int row, SDL_Color color) {
+        if (text.empty())
+            return;
+        try {
+            auto surface = chatFont.RenderUTF8_Blended(text, color);
+            SDL2pp::Texture tex(renderer, surface);
+            auto [tw, th] = tex.GetSize();
+            // Escalamos el texto (renderizado a tamaño fijo) de forma uniforme
+            // para que entre en la línea escalada sin deformarse.
+            float textScale = th > 0 ? (float)LINE_H / th : 1.0f;
+            int dstW = std::min((int)(tw * textScale), BAR_W - PAD * 2);
+            int y = PAD + row * LINE_H;
+            renderer.Copy(tex, SDL2pp::NullOpt, SDL2pp::Rect(PAD + 2, y, dstW, LINE_H));
+        } catch (...) {}
+    };
+
+    // Historial: ocupa las primeras MAX_CHAT_LINES filas, alineado abajo
+    // (las líneas más nuevas quedan pegadas a la línea de input).
+    SDL_Color histColor = {210, 210, 210, 255};
+    int firstRow = (int)MAX_CHAT_LINES - (int)chatHistory.size();
+    for (size_t i = 0; i < chatHistory.size(); i++)
+        drawLine(chatHistory[i], firstRow + (int)i, histColor);
+
+    // Línea de input (siempre visible, en la última fila). Mientras se escribe
+    // mostramos un cursor "_"; si no, un prompt apagado.
+    SDL_Color inputColor = chatActive ? SDL_Color{255, 255, 255, 255}
+                                      : SDL_Color{140, 140, 140, 255};
+    std::string inputLine = chatActive ? "> " + chatInput + "_"
+                                       : "Enter para escribir un comando";
+    drawLine(inputLine, (int)MAX_CHAT_LINES, inputColor);
 }
 
 void GameScreen::notifyDirectionChange() {
@@ -432,10 +598,24 @@ void GameScreen::consumeServerEvents() {
             // del spritesheet lo define la capa de render.
             std::cout << "PLAYER_EQUIPPED " << event << std::endl;
         } else if (event.rfind("INVENTORY:", 0) == 0) {
-            // INVENTORY:<n>:<id1>:...:<eqW>:<eqA>:<eqH>:<eqS>
-            // TODO(team-ui): dibujar el inventario en el HUD y resaltar lo
-            // equipado. Por ahora solo loggeamos para confirmar el flujo.
-            std::cout << "INVENTORY_UPDATE: " << event << std::endl;
+            // INVENTORY:<n>:<id1>:...:<idN>:<eqW>:<eqA>:<eqH>:<eqS>
+            // Solo nos quedamos con los N itemIds (slots ocupadas, en orden) para
+            // dibujarlos sobre el grid del inventario. Los 4 equipped van al final.
+            size_t c1 = event.find(':');
+            size_t c2 = event.find(':', c1 + 1);
+            if (c2 == std::string::npos)
+                continue;
+            int n = std::stoi(event.substr(c1 + 1, c2 - c1 - 1));
+            inventoryItems.clear();
+            size_t pos = c2;
+            for (int i = 0; i < n && pos != std::string::npos; i++) {
+                size_t next = event.find(':', pos + 1);
+                inventoryItems.push_back(static_cast<uint8_t>(
+                        std::stoi(event.substr(pos + 1, next == std::string::npos
+                                                                ? std::string::npos
+                                                                : next - pos - 1))));
+                pos = next;
+            }
         } else if (event.rfind("STATS:", 0) == 0) {
             // STATS:<hp>:<maxHp>:<mana>:<maxMana>:<gold>:<exp>:<nextLvlExp>:<level>
             size_t c1 = event.find(':');
@@ -473,7 +653,63 @@ void GameScreen::renderBloodEffects(float camX, float camY) {
 }
 
 void GameScreen::renderHUD() {
-    // TODO(team-ui): dibujar HUD con HP/MP/oro/exp/nivel a partir de los
-    // miembros `health/maxHealth/mana/maxMana/gold/experience/nextLevelExp/level`
-    // que ya se actualizan al recibir STATS_JUGADOR.
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    // Fondo del HUD: cubre toda la franja derecha. El inventario va encima,
+    // dejando el fondo visible arriba y abajo (espacio para HP/Mana/Exp/oro/nivel).
+    // El PNG es escala de grises; color mod multiplica cada pixel, así que el
+    // blanco toma el tinte (azul) y el negro queda negro.
+    // Escalamos el HUD para mantener su proporción en ventana fija y fullscreen.
+    float scale = uiScale();
+    const int hudW = hudPanelW();
+
+    SDL2pp::Texture& fondo = cache.get("/Pantallas/Fondo_inventario.png");
+    fondo.SetColorMod(120, 160, 255);
+    renderer.Copy(fondo, SDL2pp::NullOpt, SDL2pp::Rect(screenW - hudW, 0, hudW, screenH));
+
+    // Left panel of the PNG is 5 cols x 7 rows in ~246x240px source pixels.
+    // Crop to 3 cols x 5 rows and scale up so cells appear bigger.
+    const int INV_W = (int)(210 * scale);
+    const int INV_H = (int)(255 * scale);
+
+    int invX = screenW - hudW + (hudW - INV_W) / 2;
+    int invY = screenH / 2 - INV_H / 2;
+
+    renderer.Copy(cache.get("/Pantallas/Inventario_completo.png"),
+                  SDL2pp::Rect(0, 0, 140, 175),
+                  SDL2pp::Rect(invX, invY, INV_W, INV_H));
+
+    // Items sobre el grid. El inventario visible es 3 cols x 5 rows = 15 slots;
+    // inventoryItems trae solo las slots ocupadas, en orden (fila por fila).
+    static constexpr int GRID_COLS = 3;
+    static constexpr int GRID_ROWS = 5;
+    // Items_inventario.png: 31 cols x 10 rows de iconos cuadrados (~33px).
+    static constexpr int SHEET_COLS = 31;
+    static constexpr float SHEET_CELL = 1024.0f / SHEET_COLS;  // px por icono en el sheet
+
+    SDL2pp::Texture& itemsTex = cache.get("/Pantallas/Items_inventario.png");
+    float cw = INV_W / (float)GRID_COLS;
+    float ch = INV_H / (float)GRID_ROWS;
+    int pad = (int)(4 * scale);  // margen para que el icono entre dentro del recuadro
+
+    for (size_t i = 0; i < inventoryItems.size() && i < GRID_COLS * GRID_ROWS; i++) {
+        uint8_t itemId = inventoryItems[i];
+        if (itemId == 0)
+            continue;
+        // itemId es 1-based (ver items.toml); el sheet es row-major desde 0.
+        int cell = itemId - 1;
+        int srcX = (int)((cell % SHEET_COLS) * SHEET_CELL);
+        int srcY = (int)((cell / SHEET_COLS) * SHEET_CELL);
+
+        int col = i % GRID_COLS;
+        int row = i / GRID_COLS;
+        int dstX = invX + (int)(col * cw) + pad;
+        int dstY = invY + (int)(row * ch) + pad;
+        int dstW = (int)cw - 2 * pad;
+        int dstH = (int)ch - 2 * pad;
+
+        renderer.Copy(itemsTex, SDL2pp::Rect(srcX, srcY, (int)SHEET_CELL, (int)SHEET_CELL),
+                      SDL2pp::Rect(dstX, dstY, dstW, dstH));
+    }
 }

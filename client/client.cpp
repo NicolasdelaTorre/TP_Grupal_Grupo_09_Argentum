@@ -25,7 +25,7 @@ void client::run() {
     SDL2pp::SDLTTF ttf;
     SDL2pp::SDLImage img(IMG_INIT_PNG);
 
-    SDL2pp::Window window("Argentum", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
+    SDL2pp::Window window("Argentum", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 900, 600,
                           SDL_WINDOW_SHOWN | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
     SDL2pp::Renderer renderer(window, -1, SDL_RENDERER_ACCELERATED);
 
