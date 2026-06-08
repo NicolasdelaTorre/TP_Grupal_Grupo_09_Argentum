@@ -263,6 +263,39 @@ public:
     static std::unique_ptr<NpcRespawnedEvent> deserialize(CommonProtocol& proto);
 };
 
+// ITEM_DROPPED: [opcode][drop_id:2][item_id:1][x:2][y:2]. Aparece un item en
+// el piso. dropId es la clave que después se usa para sacarlo del piso con
+// ItemPickedUpEvent. Tanto un /tirar como el drop de un NPC muerto disparan
+// este evento.
+class ItemDroppedEvent: public ServerEvent {
+private:
+    uint16_t dropId;
+    uint8_t itemId;
+    int16_t x;
+    int16_t y;
+
+public:
+    ItemDroppedEvent(uint16_t dropId, uint8_t itemId, int16_t x, int16_t y);
+    uint16_t getDropId() const { return dropId; }
+    uint8_t getItemId() const { return itemId; }
+    int16_t getX() const { return x; }
+    int16_t getY() const { return y; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<ItemDroppedEvent> deserialize(CommonProtocol& proto);
+};
+
+// ITEM_PICKED_UP: [opcode][drop_id:2]. El cliente saca ese dropId del piso.
+class ItemPickedUpEvent: public ServerEvent {
+private:
+    uint16_t dropId;
+
+public:
+    explicit ItemPickedUpEvent(uint16_t dropId);
+    uint16_t getDropId() const { return dropId; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<ItemPickedUpEvent> deserialize(CommonProtocol& proto);
+};
+
 // PLAYER_DIED: [opcode][id:2]. El cliente cambia el sprite a fantasma.
 class PlayerDiedEvent: public ServerEvent {
 private:

@@ -243,6 +243,13 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         clientMonitor.sendToClient(
                 playerId, std::make_shared<NewNpcEvent>(f.id, f.x, f.y, f.type, /*alive=*/true));
     }
+
+    // Snapshot de items en el piso. Mandamos un ItemDroppedEvent por cada uno;
+    // así el cliente unifica el code path con los drops que llegan en vivo.
+    for (const auto& d : game.getDroppedItems()) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ItemDroppedEvent>(d.dropId, d.itemId, d.x, d.y));
+    }
 }
 
 void Gameloop::handleHeadSelected(int /*playerId*/, uint8_t /*headId*/) {
@@ -348,9 +355,20 @@ static void broadcastInventoryChanges(int playerId, const Game::InventorySnapsho
 void Gameloop::handlePickUp(int playerId) {
     if (!game.hasPlayer(playerId))
         return;
-    auto before = game.getInventorySnapshot(playerId);
-    if (!game.pickUpItemAt(playerId))
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés levantar items"));
         return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    auto r = game.pickUpItemAt(playerId);
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), r.message));
+    if (!r.ok) return;
+    // Broadcast a todos que ese drop ya no está en el piso + actualizamos
+    // inventario del dueño.
+    clientMonitor.broadcast(std::make_shared<ItemPickedUpEvent>(r.record.dropId));
     auto after = game.getInventorySnapshot(playerId);
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
 }
@@ -358,9 +376,20 @@ void Gameloop::handlePickUp(int playerId) {
 void Gameloop::handleDrop(int playerId, uint8_t invSlot) {
     if (!game.hasPlayer(playerId))
         return;
-    auto before = game.getInventorySnapshot(playerId);
-    if (!game.dropItem(playerId, invSlot))
+    if (game.isPlayerGhost(playerId)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<ChatBroadcastEvent>(
+                                  0, std::string(), "Estás muerto, no podés tirar items"));
         return;
+    }
+    auto before = game.getInventorySnapshot(playerId);
+    auto r = game.dropItem(playerId, invSlot);
+    clientMonitor.sendToClient(
+            playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), r.message));
+    if (!r.ok) return;
+    // Broadcast a todos que apareció un item nuevo en el piso.
+    clientMonitor.broadcast(std::make_shared<ItemDroppedEvent>(
+            r.record.dropId, r.record.itemId, r.record.x, r.record.y));
     auto after = game.getInventorySnapshot(playerId);
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
 }
@@ -528,6 +557,23 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
     } else if (cmd == "/meditar") {
         auto r = game.meditatePlayer(playerId);
         reply = r.message;
+    } else if (cmd == "/tomar") {
+        // /tomar levanta lo que haya en la celda del jugador. El reply lo
+        // arma handlePickUp (incluye ChatBroadcastEvent + ItemPickedUpEvent).
+        handlePickUp(playerId);
+        return;
+    } else if (cmd == "/tirar") {
+        // /tirar <slot>. TODO(team-ui-nico): cuando haya UI de selección de
+        // inventario, llamar sin args y usar selectedSlot local del cliente.
+        if (parts.size() < 2) {
+            reply = "Uso: /tirar <slot>";
+        } else {
+            try {
+                uint8_t slot = static_cast<uint8_t>(std::stoul(parts[1]));
+                handleDrop(playerId, slot);
+                return;
+            } catch (...) { reply = "Uso: /tirar <slot>"; }
+        }
     } else {
         // Comandos que requieren un NPC amigo seleccionado.
         auto itSel = selectedNpc.find(playerId);

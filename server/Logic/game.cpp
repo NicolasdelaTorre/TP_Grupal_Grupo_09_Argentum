@@ -378,12 +378,47 @@ bool Game::cheatAddGold(int playerId, uint32_t amount) {
     return true;
 }
 
+// Mapeo de itemId → nombre del item, según items.toml. Lo usan cheatSpawnItem
+// y otros stubs que necesitan crear un item por id.
+static const char* itemNameById(uint8_t id) {
+    switch (id) {
+        case 1: return "Sword";
+        case 2: return "Axe";
+        case 3: return "Hammer";
+        case 4: return "Ash Staff";
+        case 5: return "Elven Flute";
+        case 6: return "Root Staff";
+        case 7: return "Socketed Staff";
+        case 8: return "Simple Bow";
+        case 9: return "Composite Bow";
+        case 10: return "Lether Armor";
+        case 11: return "Plate Armor";
+        case 12: return "Blue Tunic";
+        case 13: return "Hood";
+        case 14: return "Iron Helmet";
+        case 15: return "Turtle Shield";
+        case 16: return "Iron Shield";
+        case 17: return "Wizard Hat";
+        case 18: return "Health Potion";
+        case 19: return "Mana Potion";
+        default: return nullptr;
+    }
+}
+
 bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
-    // TODO(team-gameplay): mapear itemId → name y llamar player.addItem(name).
-    std::cout << "CHEAT spawn item id=" << (int)itemId << " para player=" << playerId << " (stub)"
-              << std::endl;
+    const char* name = itemNameById(itemId);
+    if (!name) {
+        std::cout << "CHEAT spawn item id=" << (int)itemId << " desconocido" << std::endl;
+        return false;
+    }
+    if (!it->second.addItem(name)) {
+        std::cout << "CHEAT spawn item id=" << (int)itemId << " inventario lleno" << std::endl;
+        return false;
+    }
+    std::cout << "CHEAT spawn item id=" << (int)itemId << " (" << name << ") para player="
+              << playerId << std::endl;
     return true;
 }
 
@@ -500,26 +535,42 @@ Game::InteractionResult Game::meditatePlayer(int playerId) {
     return {true, "Empezaste a meditar (stub)"};
 }
 
-bool Game::pickUpItemAt(int /*playerId*/) {
-    // TODO(team-gameplay): buscar item en droppedItems en la celda del
-    // jugador, llamarlo a player.addItem y removerlo del piso. Stub vacío.
-    return false;
+Game::DropResult Game::pickUpItemAt(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return {false, "Jugador no existe", {}};
+    Position pos = it->second.getPosition();
+    // Buscamos el primer drop en la celda del jugador.
+    for (size_t i = 0; i < droppedItems.size(); i++) {
+        if (droppedItems[i].x == pos.x && droppedItems[i].y == pos.y) {
+            DroppedItemRecord rec = droppedItems[i];
+            droppedItems.erase(droppedItems.begin() + i);
+            // TODO(team-gameplay): mapear itemId → itemName y llamar
+            // it->second.addItem(name). Hoy solo sacamos el drop del piso.
+            std::cout << "PICKUP player=" << playerId << " dropId=" << rec.dropId
+                      << " itemId=" << (int)rec.itemId << " at (" << rec.x << "," << rec.y << ")"
+                      << std::endl;
+            return {true, "Levantaste el item (stub)", rec};
+        }
+    }
+    return {false, "No hay nada para levantar acá", {}};
 }
 
-bool Game::dropItem(int playerId, uint8_t invSlot) {
+Game::DropResult Game::dropItem(int playerId, uint8_t invSlot) {
     auto it = players.find(playerId);
-    if (it == players.end()) {
-        return false;
-    }
+    if (it == players.end()) return {false, "Jugador no existe", {}};
     auto inv = it->second.getInventory();
-    if (invSlot >= inv.size()) {
-        return false;
-    }
-    // TODO(team-gameplay): agregar el item a droppedItems en la celda
-    // actual del jugador. Stub.
+    if (invSlot >= inv.size()) return {false, "Slot inválido", {}};
+    Position pos = it->second.getPosition();
+    uint8_t itemId = inv[invSlot].getId();
+    std::string itemName = inv[invSlot].getName();
+    // TODO(team-gameplay): remover el item del inventario del jugador
+    // (player.removeFromSlot(slot)). Hoy el item se queda duplicado.
+    DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y};
+    droppedItems.push_back(rec);
     std::cout << "DROP player=" << playerId << " slot=" << (int)invSlot
-              << " name=" << inv[invSlot].getName() << " (stub: item se pierde)" << std::endl;
-    return true;
+              << " name=" << itemName << " dropId=" << rec.dropId << " at (" << rec.x
+              << "," << rec.y << ")" << std::endl;
+    return {true, "Tiraste " + itemName, rec};
 }
 
 bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {

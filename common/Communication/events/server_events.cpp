@@ -46,6 +46,10 @@ std::unique_ptr<ServerEvent> ServerEvent::deserialize(uint8_t opcode, CommonProt
             return PlayerDiedEvent::deserialize(proto);
         case ServerMsg::PLAYER_REVIVED:
             return PlayerRevivedEvent::deserialize(proto);
+        case ServerMsg::ITEM_DROPPED:
+            return ItemDroppedEvent::deserialize(proto);
+        case ServerMsg::ITEM_PICKED_UP:
+            return ItemPickedUpEvent::deserialize(proto);
         default:
             throw std::runtime_error("ServerEvent: unknown opcode");
     }
@@ -421,4 +425,39 @@ std::unique_ptr<PlayerRevivedEvent> PlayerRevivedEvent::deserialize(CommonProtoc
     int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
     return std::make_unique<PlayerRevivedEvent>(id, x, y);
+}
+
+// ── ItemDroppedEvent ─────────────────────────────────────────────────────
+
+ItemDroppedEvent::ItemDroppedEvent(uint16_t dropId, uint8_t itemId, int16_t x, int16_t y):
+        dropId(dropId), itemId(itemId), x(x), y(y) {}
+
+void ItemDroppedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::ITEM_DROPPED));
+    proto.send_two_bytes_number(dropId);
+    proto.sendByte(itemId);
+    proto.send_two_bytes_number(static_cast<uint16_t>(x));
+    proto.send_two_bytes_number(static_cast<uint16_t>(y));
+}
+
+std::unique_ptr<ItemDroppedEvent> ItemDroppedEvent::deserialize(CommonProtocol& proto) {
+    uint16_t dropId = proto.receive_two_bytes_number();
+    uint8_t itemId = proto.receive_byte();
+    int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
+    int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
+    return std::make_unique<ItemDroppedEvent>(dropId, itemId, x, y);
+}
+
+// ── ItemPickedUpEvent ────────────────────────────────────────────────────
+
+ItemPickedUpEvent::ItemPickedUpEvent(uint16_t dropId): dropId(dropId) {}
+
+void ItemPickedUpEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::ITEM_PICKED_UP));
+    proto.send_two_bytes_number(dropId);
+}
+
+std::unique_ptr<ItemPickedUpEvent> ItemPickedUpEvent::deserialize(CommonProtocol& proto) {
+    uint16_t dropId = proto.receive_two_bytes_number();
+    return std::make_unique<ItemPickedUpEvent>(dropId);
 }

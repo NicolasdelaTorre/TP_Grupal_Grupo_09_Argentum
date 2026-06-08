@@ -16,11 +16,26 @@
 #include "yaml_map_loader.h"
 
 class Game {
+public:
+    // Definido acá arriba porque lo usan tanto miembros privados como métodos
+    // públicos (pickUp/drop devuelven DropResult que lo contiene).
+    struct DroppedItemRecord {
+        uint16_t dropId;
+        uint8_t itemId;
+        int16_t x;
+        int16_t y;
+    };
+
 private:
     Map& map;
     Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
     BinaryParser parser;
+    // Items tirados al piso (de /tirar o drops de NPC muerto). El id es
+    // auto-incremental y nunca se reusa para que el cliente pueda referirse
+    // a un drop específico al levantarlo.
+    uint16_t nextDropId = 1;
+    std::vector<DroppedItemRecord> droppedItems;
     // Encuentra una posición libre para spawnear. Tira excepción si no hay ninguna.
     Position findSpawnPosition() const;
 
@@ -135,15 +150,22 @@ public:
     // /meditar: arranca meditación (recupera mana con el tiempo). Sin NPC.
     InteractionResult meditatePlayer(int playerId);
 
-    // Recoge lo que haya en la celda del jugador (`/tomar`).
-    // TODO(team-gameplay): buscar item en droppedItems en la posición del
-    // jugador, llamarlo a player.addItem y removerlo del piso. Hoy stub.
-    bool pickUpItemAt(int playerId);
+    // ── Items en el suelo ───────────────────────────────────────────────
+    const std::vector<DroppedItemRecord>& getDroppedItems() const { return droppedItems; }
 
-    // Tira el item del slot al piso (`/tirar`).
-    // TODO(team-gameplay): sacar de player.inventory[invSlot] y agregar a
-    // droppedItems en la posición del jugador. Hoy stub.
-    bool dropItem(int playerId, uint8_t invSlot);
+    // Resultado de pickUp/drop con el record afectado para que gameloop
+    // pueda armar el ItemDroppedEvent/ItemPickedUpEvent.
+    struct DropResult {
+        bool ok = false;
+        std::string message;
+        DroppedItemRecord record;
+    };
+
+    // /tomar: si hay un drop en la celda del jugador, lo agrega al inventario.
+    DropResult pickUpItemAt(int playerId);
+
+    // /tirar <slot>: saca el item del inventario y lo deja en la celda del jugador.
+    DropResult dropItem(int playerId, uint8_t invSlot);
 
     // Equipa o usa el item del slot según su tipo (ver ADR-002).
     // TODO(team-gameplay): si arma/armor/casco/escudo → player.equipItem(slot).

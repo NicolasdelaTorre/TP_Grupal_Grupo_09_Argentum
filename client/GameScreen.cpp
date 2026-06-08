@@ -516,6 +516,26 @@ void GameScreen::consumeServerEvents() {
                 it->second.targetY = it->second.visual.y;
                 it->second.alive = true;
             }
+        } else if (auto* id_ = dynamic_cast<ItemDroppedEvent*>(ev.get())) {
+            DroppedItem di;
+            di.dropId = id_->getDropId();
+            di.x = id_->getX();
+            di.y = id_->getY();
+            // TODO(team-ui-nico): elegir sheetId/itemId reales según el id que
+            // viene del server. Por ahora cae todo en el primer sprite.
+            di.sheetId = 0;
+            di.itemId = id_->getItemId();
+            droppedItems.push_back(di);
+            std::cout << "[drop] item " << (int)id_->getItemId() << " en (" << id_->getX() << ","
+                      << id_->getY() << ") dropId=" << id_->getDropId() << std::endl;
+        } else if (auto* ip = dynamic_cast<ItemPickedUpEvent*>(ev.get())) {
+            for (auto it2 = droppedItems.begin(); it2 != droppedItems.end(); ++it2) {
+                if (it2->dropId == ip->getDropId()) {
+                    droppedItems.erase(it2);
+                    break;
+                }
+            }
+            std::cout << "[pickup] dropId=" << ip->getDropId() << " levantado" << std::endl;
         } else if (auto* pd = dynamic_cast<PlayerDiedEvent*>(ev.get())) {
             auto it = otherPlayers.find(pd->getId());
             if (it != otherPlayers.end()) {
