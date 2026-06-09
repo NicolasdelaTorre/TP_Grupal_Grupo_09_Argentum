@@ -4,29 +4,29 @@
 
 [trader]
 items = [
-    { itemId = 1, price = 50 },     # Sword
-    { itemId = 2, price = 80 },     # Axe
-    { itemId = 3, price = 120 },    # Hammer
-    { itemId = 8, price = 60 },     # Simple Bow
-    { itemId = 9, price = 180 },    # Composite Bow
-    { itemId = 10, price = 70 },    # Lether Armor
-    { itemId = 11, price = 200 },   # Plate Armor
-    { itemId = 12, price = 90 },    # Blue Tunic
-    { itemId = 13, price = 30 },    # Hood
-    { itemId = 14, price = 90 },    # Iron Helmet
-    { itemId = 15, price = 25 },    # Turtle Shield
-    { itemId = 16, price = 75 },    # Iron Shield
-    { itemId = 18, price = 40 },    # Health Potion
-    { itemId = 19, price = 40 },    # Mana Potion
+    { itemId = 1, price = 50 },     # sword
+    { itemId = 2, price = 80 },     # axe
+    { itemId = 3, price = 120 },    # hammer
+    { itemId = 8, price = 60 },     # simple bow
+    { itemId = 9, price = 180 },    # composite bow
+    { itemId = 10, price = 70 },    # leather armor
+    { itemId = 11, price = 200 },   # plate armor
+    { itemId = 12, price = 90 },    # blue tunic
+    { itemId = 13, price = 30 },    # hood
+    { itemId = 14, price = 90 },    # iron helmet
+    { itemId = 15, price = 25 },    # turtle shield
+    { itemId = 16, price = 75 },    # iron shield
+    { itemId = 18, price = 40 },    # health potion
+    { itemId = 19, price = 40 },    # mana potion
 ]
 
 [priest]
 items = [
-    { itemId = 4, price = 100 },    # Ash Staff
-    { itemId = 5, price = 150 },    # Elven Flute
-    { itemId = 6, price = 220 },    # Root Staff
-    { itemId = 7, price = 320 },    # Socketed Staff
-    { itemId = 17, price = 110 },   # Wizard Hat
-    { itemId = 18, price = 40 },    # Health Potion
-    { itemId = 19, price = 40 },    # Mana Potion
+    { itemId = 4, price = 100 },    # ash staff
+    { itemId = 5, price = 150 },    # elven flute
+    { itemId = 6, price = 220 },    # root staff
+    { itemId = 7, price = 320 },    # socketed staff
+    { itemId = 17, price = 110 },   # wizard hat
+    { itemId = 18, price = 40 },    # health potion
+    { itemId = 19, price = 40 },    # mana potion
 ]

@@ -1,6 +1,6 @@
 [[item]]
 id = 1
-name = "Sword"
+name = "sword"
 type = "WEAPON"
 distance = false
 minDamage = 2
@@ -8,7 +8,7 @@ maxDamage = 5
 
 [[item]]
 id = 2
-name = "Axe"
+name = "axe"
 type = "WEAPON"
 distance = false
 minDamage = 4
@@ -16,7 +16,7 @@ maxDamage = 5
 
 [[item]]
 id = 3
-name = "Hammer"
+name = "hammer"
 type = "WEAPON"
 distance = true
 minDamage = 1
@@ -24,7 +24,7 @@ maxDamage = 9
 
 [[item]]
 id = 4
-name = "Ash Staff"
+name = "ash staff"
 type = "MAGIC"
 distance = true
 minDamage = 2
@@ -33,7 +33,7 @@ manaCost = 5
 
 [[item]]
 id = 5
-name = "Elven Flute"
+name = "elven flute"
 type = "HEAL"
 distance = true
 healthRestore = 50
@@ -41,7 +41,7 @@ manaCost = 100
 
 [[item]]
 id = 6
-name = "Root Staff"
+name = "root staff"
 type = "MAGIC"
 distance = true
 minDamage = 4
@@ -50,7 +50,7 @@ manaCost = 15
 
 [[item]]
 id = 7
-name = "Socketed Staff"
+name = "socketed staff"
 type = "MAGIC"
 distance = true
 minDamage = 8
@@ -59,7 +59,7 @@ manaCost = 30
 
 [[item]]
 id = 8
-name = "Simple Bow"
+name = "simple bow"
 type = "WEAPON"
 distance = true
 minDamage = 1
@@ -67,7 +67,7 @@ maxDamage = 4
 
 [[item]]
 id = 9
-name = "Composite Bow"
+name = "composite bow"
 type = "WEAPON"
 distance = true
 minDamage = 4
@@ -75,68 +75,68 @@ maxDamage = 16
 
 [[item]]
 id = 10
-name = "Lether Armor"
+name = "leather armor"
 type = "ARMOR"
 minDefense = 2
 maxDefense = 6
 
 [[item]]
 id = 11
-name = "Plate Armor"
+name = "plate armor"
 type = "ARMOR"
 minDefense = 15
 maxDefense = 30
 
 [[item]]
 id = 12
-name = "Blue Tunic"
+name = "blue tunic"
 type = "ARMOR"
 minDefense = 6
 maxDefense = 10
 
 [[item]]
 id = 13
-name = "Hood"
+name = "hood"
 type = "HELMET"
 minDefense = 1
 maxDefense = 4
 
 [[item]]
 id = 14
-name = "Iron Helmet"
+name = "iron helmet"
 type = "HELMET"
 minDefense = 4
 maxDefense = 8
 
 [[item]]
 id = 15
-name = "Turtle Shield"
+name = "turtle shield"
 type = "SHIELD"
 minDefense = 1
 maxDefense = 2
 
 [[item]]
 id = 16
-name = "Iron Shield"
+name = "iron shield"
 type = "SHIELD"
 minDefense = 1
 maxDefense = 4
 
 [[item]]
 id = 17
-name = "Wizard Hat"
+name = "wizard hat"
 type = "HELMET"
 minDefense = 4
 maxDefense = 12
 
 [[item]]
 id = 18
-name = "Health Potion"
+name = "health potion"
 type = "HEALTH_POTION"
 healthRestore = 50
 
 [[item]]
 id = 19
-name = "Mana Potion"
+name = "mana potion"
 type = "MANA_POTION"
 manaRestore = 50

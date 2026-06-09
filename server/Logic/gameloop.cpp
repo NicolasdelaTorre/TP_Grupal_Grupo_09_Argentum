@@ -721,8 +721,8 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
 
         if (cmd == "/listar") {
             if (!sel || !stillNear()) {
-                reply = "Necesitás estar cerca de un comerciante o banquero (click)";
-            } else if (sel->type == MERCHANT) {
+                reply = "Necesitás estar cerca de un comerciante, sacerdote o banquero (click)";
+            } else if (sel->type == MERCHANT || sel->type == PRIEST) {
                 auto lines = game.listMerchantInventory(sel->type);
                 for (const auto& l : lines) {
                     clientMonitor.sendToClient(
