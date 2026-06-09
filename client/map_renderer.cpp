@@ -25,12 +25,12 @@ const char* itemSheetPath(uint8_t sheetId) {
 
 // Devuelve el path del sprite para NPCs de ciudad (obstáculos fijos en el mapa).
 // Retorna nullptr si el tipo no es un NPC de ciudad.
-const char* cityNpcTexturePath(ObstacleType type) {
+const char* cityNpcTexturePath(ObstacleCode type) {
     switch (type) {
-        case ObstacleType::NPC:
-        case ObstacleType::NPC_PRIEST:
-        case ObstacleType::NPC_MERCHANT:
-        case ObstacleType::NPC_BANKER:
+        case ObstacleCode::NPC:
+        case ObstacleCode::NPC_PRIEST:
+        case ObstacleCode::NPC_MERCHANT:
+        case ObstacleCode::NPC_BANKER:
             return "/Skins/NPC/Sacerdote.png";
         default:
             return nullptr;
@@ -38,41 +38,41 @@ const char* cityNpcTexturePath(ObstacleType type) {
 }
 
 // Devuelve el path del sprite para criaturas NPC dinámicas.
-const char* npcEntityTexturePath(NpcType type) {
+const char* npcEntityTexturePath(NpcCode type) {
     switch (type) {
-        case NpcType::SPIDER:
+        case NpcCode::SPIDER:
             return "/Skins/NPC/araña.png";
-        case NpcType::SKELETON:
+        case NpcCode::SKELETON:
             return "/Skins/NPC/Esqueleto.png";
-        case NpcType::ZOMBIE:
+        case NpcCode::ZOMBIE:
             return "/Skins/NPC/Goblin.png";
-        case NpcType::GOBLIN:
+        case NpcCode::GOBLIN:
             return "/Skins/NPC/Goblin.png";
-        case NpcType::ORC:
+        case NpcCode::ORC:
             return "/Skins/NPC/Orc.png";
-        case NpcType::GOLEM:
+        case NpcCode::GOLEM:
             return "/Skins/NPC/Golem.png";
         default:
             return "/Skins/NPC/araña.png";
     }
 }
 
-const char* obstacleTexturePath(ObstacleType type) {
+const char* obstacleTexturePath(ObstacleCode type) {
     switch (type) {
-        case ObstacleType::ROCK:
+        case ObstacleCode::ROCK:
             return "/Obstaculos/roca_01_ajustada.png";
-        case ObstacleType::ROCK_SMALL:
+        case ObstacleCode::ROCK_SMALL:
             return "/Obstaculos/roca_03_ajustada.png";
-        // case ObstacleType::ROCK_LARGE: return "/Obstaculos/roca_01_ajustada.png";
-        case ObstacleType::LAMP:
+        // case ObstacleCode::ROCK_LARGE: return "/Obstaculos/roca_01_ajustada.png";
+        case ObstacleCode::LAMP:
             return "/Obstaculos/lampara_corregida.png";
-        case ObstacleType::WOOD:
+        case ObstacleCode::WOOD:
             return "/Obstaculos/maderas_apiladas_corregida.png";
-        case ObstacleType::CART:
+        case ObstacleCode::CART:
             return "/Obstaculos/segunda_carretilla_primera_fila.png";
-        case ObstacleType::MILL:
+        case ObstacleCode::MILL:
             return "/Obstaculos/molino_recortado.png";
-        case ObstacleType::CACTUS:
+        case ObstacleCode::CACTUS:
             return "/Obstaculos/cactus_arriba_derecha_128x128.png";
         default:
             return nullptr;
@@ -110,13 +110,13 @@ void MapRenderer::render(const GameMap& map, float camX, float camY) {
 // Source crop rect for each obstacle image, excluding the drop-shadow overhang
 // that extends past the rock body to the lower-right.
 // Returns NullOpt to use the full image.
-SDL2pp::Optional<SDL2pp::Rect> obstacleSourceCrop(ObstacleType type) {
+SDL2pp::Optional<SDL2pp::Rect> obstacleSourceCrop(ObstacleCode type) {
     switch (type) {
         // roca_01_ajustada.png (437x327): rock body ends ~col 350, row 315
-        case ObstacleType::ROCK:
+        case ObstacleCode::ROCK:
             return SDL2pp::Rect(0, 0, 350, 315);
         // roca_03_ajustada.png (168x134): rock body ends ~col 140, row 120
-        case ObstacleType::ROCK_SMALL:
+        case ObstacleCode::ROCK_SMALL:
             return SDL2pp::Rect(0, 0, 140, 120);
         default:
             return SDL2pp::NullOpt;
@@ -136,7 +136,7 @@ void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
     for (int y = startY; y < endY; y++) {
         for (int x = startX; x < endX; x++) {
             const TileData& tile = map.at(x, y);
-            if (tile.obstacleType == ObstacleType::NONE)
+            if (tile.obstacleType == ObstacleCode::NONE)
                 continue;
 
             // Solo renderizamos desde la celda ancla (esquina superior-izquierda del grupo).
@@ -179,10 +179,10 @@ void MapRenderer::renderPlayer(const Player_& player, float camX, float camY) {
 
     if (player.killed) {
         int ghostRow = row;
-        if (player.dir == Direction::LEFT)
-            ghostRow = static_cast<int>(Direction::RIGHT);
-        else if (player.dir == Direction::RIGHT)
-            ghostRow = static_cast<int>(Direction::LEFT);
+        if (player.dir == SpriteRow::LEFT)
+            ghostRow = static_cast<int>(SpriteRow::RIGHT);
+        else if (player.dir == SpriteRow::RIGHT)
+            ghostRow = static_cast<int>(SpriteRow::LEFT);
         SDL2pp::Rect src(col * PHANTOM_SPRITE_W, ghostRow * PHANTOM_SPRITE_H, PHANTOM_SPRITE_W,
                          PHANTOM_SPRITE_H);
         SDL2pp::Rect dst(screenX, screenY, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
@@ -219,23 +219,23 @@ void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
     SDL2pp::Rect src(0, 0, TILE_SIZE, TILE_SIZE);
 
     switch (tile.floor) {
-        case TileType::GRASS: {
+        case TileCode::GRASS: {
             static constexpr int VAR_W = 170;
             static constexpr int VAR_H = 128;
             SDL2pp::Rect varSrc(tile.variant * VAR_W, 0, VAR_W, VAR_H);
             renderer.Copy(cache.get("/Mapa/Tiles_pasto.png"), varSrc, dst);
             break;
         }
-        case TileType::WATER:
+        case TileCode::WATER:
             renderer.Copy(cache.get("/Mapa/Tiles_agua.png"), src, dst);
             break;
-        case TileType::DIRT:
+        case TileCode::DIRT:
             renderer.Copy(cache.get("/Mapa/Tile_tierra.png"), src, dst);
             break;
-        case TileType::SAND:
+        case TileCode::SAND:
             renderer.Copy(cache.get("/Mapa/Tiles_arena.png"), src, dst);
             break;
-        case TileType::INTERIOR:
+        case TileCode::INTERIOR:
             renderer.Copy(cache.get("/Mapa/Tiles_interiores.png"), src, dst);
             break;
     }
@@ -264,7 +264,7 @@ void MapRenderer::renderWeapon(const Player_& player, float camX, float camY) {
 }
 
 void MapRenderer::renderShield(const Player_& player, float camX, float camY) {
-    if (player.killed || player.shieldId < 0 || player.dir == Direction::UP)
+    if (player.killed || player.shieldId < 0 || player.dir == SpriteRow::UP)
         return;
 
     static const char* shieldFiles[] = {"/Armas/Escudo.png"};

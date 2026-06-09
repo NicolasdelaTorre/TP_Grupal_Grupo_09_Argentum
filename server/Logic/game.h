@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "../../common/Communication/events/server_events.h"
-#include "../../common/Communication/move_direction.h"
+#include "../../common/DTOs.h"
 #include "../../common/position.h"
 
 #include "binary_parser.h"
@@ -52,8 +52,7 @@ public:
     explicit Game(Map& world);
 
     // Da de alta un jugador (nuevo o cargado del binario).
-    bool addPlayer(int playerId, const std::string& name, const std::string& race,
-                   const std::string& class_);
+    bool addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_);
 
     // Mueve un casillero en la dirección indicada. False si está bloqueado.
     bool movePlayer(int playerId, MoveDirection direction);

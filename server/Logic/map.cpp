@@ -22,7 +22,7 @@ Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spaw
     setNPC();
 
     for (auto& cell : this->cells) {
-        if (cell.obstacleId == static_cast<uint8_t>(ObstacleType::ENTRY)) {
+        if (cell.obstacleId == static_cast<uint8_t>(ObstacleCode::ENTRY)) {
             cell.isWalkable = true;
             cell.obstacleId = 0;
         }
@@ -35,13 +35,13 @@ void Map::setNPC() {
         Cell& cell = cells[i];
         std::string npcType;
         switch (cell.obstacleId) {
-            case static_cast<uint8_t>(ObstacleType::NPC_BANKER):
+            case static_cast<uint8_t>(ObstacleCode::NPC_BANKER):
                 npcType = "banker";
                 break;
-            case static_cast<uint8_t>(ObstacleType::NPC_MERCHANT):
+            case static_cast<uint8_t>(ObstacleCode::NPC_MERCHANT):
                 npcType = "trader";
                 break;
-            case static_cast<uint8_t>(ObstacleType::NPC_PRIEST):
+            case static_cast<uint8_t>(ObstacleCode::NPC_PRIEST):
                 npcType = "priest";
                 break;
             default:

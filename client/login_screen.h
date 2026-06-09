@@ -7,6 +7,8 @@
 
 #include "../common/DTOs.h"
 
+#include "visual_types.h"
+
 
 class LoginScreen {
 public:

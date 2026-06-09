@@ -5,22 +5,22 @@
 #include <memory>
 #include <string>
 
-#include "../move_direction.h"
+#include "../../DTOs.h"
 
 #include "client_event.h"
 
-// USER_ARRIVAL: [opcode][name_len:2][name][race_len:2][race][class_len:2][class].
+// USER_ARRIVAL: [opcode][name_len:2][name][race:1][class:1]. race y class son bytes de RaceCode/ClassCode.
 class UserArrivalEvent: public ClientEvent {
 private:
     std::string name;
-    std::string race;
-    std::string class_;
+    RaceCode race;
+    ClassCode class_;
 
 public:
-    UserArrivalEvent(std::string name, std::string race, std::string class_);
+    UserArrivalEvent(std::string name, RaceCode race, ClassCode class_);
     const std::string& getName() const { return name; }
-    const std::string& getRace() const { return race; }
-    const std::string& getClass() const { return class_; }
+    RaceCode getRace() const { return race; }
+    ClassCode getClass() const { return class_; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<UserArrivalEvent> deserialize(CommonProtocol& proto);
 };

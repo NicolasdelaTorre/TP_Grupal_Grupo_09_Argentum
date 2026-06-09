@@ -1,39 +1,23 @@
-//
-// Created by nicolas on 19/5/26.
-//
-
 #ifndef TP_GRUPAL_GRUPO_09_ARGENTUM_DTOS_H
 #define TP_GRUPAL_GRUPO_09_ARGENTUM_DTOS_H
 
 #include <cstdint>
-#include <string>
-#include <vector>
 
-// enum class Command { ... };
-using Command = std::string;
+// Data Transfer Objects: tipos compartidos entre cliente y server. Lo que
+// vive aca o viaja por el wire (enums con valor binario). NO debe haber
+// logica, constantes de renderer ni structs propios de cliente/server.
+// Los structs visuales del cliente viven en client/visual_types.h.
 
-// enum class ServerMessageType { ... };
-using ServerMessageType = std::string;
-
-
-static constexpr float ANIM_SPEED = 0.15f;        // segundos por frame
-static constexpr float PLAYER_MOVE_SPEED = 4.0f;  // tiles por segundo
-static constexpr int TILE_SIZE = 64;              // tiles son 128x128
-static constexpr int SPRITE_W = 27;               // frame del personaje
-static constexpr int SPRITE_H = 49;
-static constexpr int PHANTOM_SPRITE_W = 32;  // distancia en tiles del centro del cuerpo a la cabeza
-static constexpr int PHANTOM_SPRITE_H = 64;
-static constexpr int ANIM_FRAMES = 4;  // columnas del spritesheet
-
-
-struct LoginResult {
-    std::vector<char> username;
-    bool confirmed;
+// Direcciones de movimiento/giro (MovementEvent / TurnEvent).
+enum class MoveDirection : uint8_t {
+    TOP = 3,
+    BOTTOM = 4,
+    LEFT = 5,
+    RIGHT = 6,
 };
 
-
-// ── Tipos de tile ─────────────────────────────────────────────
-enum class TileType : uint8_t {
+// Tipos de tile (piso). Viaja como byte en el wire.
+enum class TileCode : uint8_t {
     GRASS = 0,
     WATER,
     DIRT,
@@ -41,65 +25,48 @@ enum class TileType : uint8_t {
     INTERIOR  // piso de ciudad / interior
 };
 
-// Tipos de obstáculo. Se mandan como obstacleId en cada Cell del mapa.
-enum class ObstacleType : uint8_t {
+// Tipos de obstaculo. Viaja como obstacleId en cada Cell del mapa.
+enum class ObstacleCode : uint8_t {
     NONE = 0,
-    ROCK = 1,  // roca (3x3) → 7225.png
-    TREE = 2,  // arbol / arbol_grande / tronco (sin textura)
-    NPC = 3,   // NPC genérico (fallback)
+    ROCK = 1,
+    TREE = 2,
+    NPC = 3,
     ENTRY = 4,
     WALL = 5,
-    ROCK_SMALL = 6,     // piedra_pequenia (2x2) → roca_03_ajustada.png
-    ROCK_LARGE = 7,     // piedra_grande (6x4)   → roca_01_ajustada.png
-    LAMP = 8,           // lampara_ciudad  (1x1) → lampara_corregida.png
-    WOOD = 9,           // pila_maderas    (1x1) → maderas_apiladas_corregida.png
-    CART = 10,          // carretilla      (2x2) → segunda_carretilla_primera_fila.png
-    MILL = 11,          // molino          (6x4) → molino_recortado.png
-    CACTUS = 12,        // cactus          (1x1) → cactus_arriba_derecha_128x128.png
-    BUSH = 13,          // arbusto         (1x1) (sin textura)
-    NPC_PRIEST = 14,    // sacerdote → Sacerdote.png
-    NPC_MERCHANT = 15,  // comerciante → Sacerdote.png
-    NPC_BANKER = 16,    // banquero → Sacerdote.png
-    BANK = 17,           // banco                 → banco.png
-    HOUSE_BLUE = 18,      // casa_madera_azul      → casa_madera_azul.png
-    HOUSE_RED = 19,       // casa_madera_roja      → casa_madera_roja.png
-    HOUSE_SNOW = 20,      // casa_nevada           → casa_nevada.png
-    FENCE = 21,           // cerca_madera          → 638.png
-    TARGET = 22,          // diana                 → diana.png
-    HAYBALE = 23,         // fardo_heno            → haybale.png
-    FOUNTAIN = 24,        // fuente                → fuente.png
-    BLACKSMITH = 25,      // herrero               → herrero.png
-    HOTEL = 26,           // hotel                 → hotel.png
-    CHURCH = 27,          // iglesia               → iglesia.png
-    TRAINING_DUMMY = 28,  // munieco_entrenamiento → munieco.png
-    EXIT = 29,            // salida (environment → mapa principal); no transitable
+    ROCK_SMALL = 6,
+    ROCK_LARGE = 7,
+    LAMP = 8,
+    WOOD = 9,
+    CART = 10,
+    MILL = 11,
+    CACTUS = 12,
+    BUSH = 13,
+    NPC_PRIEST = 14,
+    NPC_MERCHANT = 15,
+    NPC_BANKER = 16,
+    BANK = 17,
+    HOUSE_BLUE = 18,
+    HOUSE_RED = 19,
+    HOUSE_SNOW = 20,
+    FENCE = 21,
+    TARGET = 22,
+    HAYBALE = 23,
+    FOUNTAIN = 24,
+    BLACKSMITH = 25,
+    HOTEL = 26,
+    CHURCH = 27,
+    TRAINING_DUMMY = 28,
+    EXIT = 29,
 };
-
-// ── Dirección del personaje ───────────────────────────────────
-enum class Direction : uint8_t { UP = 1, LEFT = 2, DOWN = 0, RIGHT = 3 };
-
-enum class Direction_phantom : uint8_t { UP = 1, LEFT = 3, DOWN = 0, RIGHT = 2 };
 
 enum class RaceCode : uint8_t { HUMAN = 0, ELF, DWARF, GNOME };
 
-enum class Classtype : uint8_t { MAGE = 0, CLERIC, PALADIN, WARRIOR };
+enum class ClassCode : uint8_t { MAGE = 0, CLERIC, CHAMPION, WARRIOR };
 
-enum class WeaponType : uint8_t { MELEE = 0, RANGED };
+enum class WeaponCode : uint8_t { MELEE = 0, RANGED };
 
-struct Obj {
-    uint8_t id;
-    std::string name;
-    std::string imagePath;
-};
-
-struct Weapon: public Obj {
-    WeaponType type;
-    uint8_t damage;
-};
-
-// Tipo de criatura NPC dinámica. SPIDER..GOLEM son hostiles, el resto son
-// amigos de las ciudades (interactuables por click + comando).
-enum class NpcType : uint8_t {
+// Tipo de criatura NPC. SPIDER..GOLEM son hostiles, el resto amigos de ciudad.
+enum class NpcCode : uint8_t {
     SPIDER = 0,
     SKELETON,
     ZOMBIE,
@@ -111,44 +78,4 @@ enum class NpcType : uint8_t {
     PRIEST
 };
 
-struct NpcEntity {
-    uint16_t id = 0;
-    float x = 0, y = 0;
-    Direction dir = Direction::DOWN;
-    bool moving = false;
-    int animFrame = 0;
-    float animTimer = 0.0f;
-    NpcType type = NpcType::SPIDER;
-};
-
-
-
-// Item dropped on the floor. x/y are tile coordinates.
-// sheetId 0 → Items_recolectables.png, 1 → Items_recolectables_2.png, 2 → Items_recolectables_3.png
-// dropId es la clave que asigna el server para identificar el drop al levantarlo.
-struct DroppedItem {
-    uint16_t dropId = 0;
-    int16_t x = 0, y = 0;
-    uint8_t sheetId = 0;
-    uint16_t itemId = 0;  // row * cols_per_row + col
-};
-
-struct Player_ {
-    uint16_t id = 0;
-    float x = 5.0f, y = 5.0f;  // posición en tiles
-    Direction dir = Direction::DOWN;
-    bool moving = false;
-    int animFrame = 0;
-    float animTimer = 0.0f;
-    int skin = 2;
-    int headId = 6;
-    int helmetId = 10;  // 0–21 = column in Gorros.png, -1 = no helmet
-    int weaponId = 2;   // 0=Espada, 1=Daga, 2=Arco, 3=Baculo, -1=sin arma
-    int shieldId = 0;   // 0 = Escudo.png, -1 = no shield
-    RaceCode race = RaceCode::HUMAN;
-    Classtype classtype = Classtype::MAGE;
-    std::vector<Obj> inventory;
-    bool killed = false;
-};
-
-#endif  // TP_GRUPAL_GRUPO_09_ARGENTUM_DTOS_H
+#endif

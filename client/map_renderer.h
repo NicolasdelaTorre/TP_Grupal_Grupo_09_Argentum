@@ -9,7 +9,9 @@
 
 #include "../common/DTOs.h"
 
+#include "render_constants.h"
 #include "texture_cache.h"
+#include "visual_types.h"
 
 
 // ── Proyectil de flecha (puramente visual, lado cliente) ──────
@@ -22,10 +24,10 @@ struct ArrowProjectile {
 
 // ── Datos de un tile del mapa ─────────────────────────────────
 struct TileData {
-    TileType floor = TileType::GRASS;
+    TileCode floor = TileCode::GRASS;
     bool blocked = false;
     uint8_t variant = 0;  // 0, 1 o 2 para grass
-    ObstacleType obstacleType = ObstacleType::NONE;
+    ObstacleCode obstacleType = ObstacleCode::NONE;
 };
 
 // ── Mapa ──────────────────────────────────────────────────────
@@ -56,7 +58,7 @@ public:
     void renderHead(const Player_& player, float camX, float camY);
     void renderHelmet(const Player_& player, float camX, float camY);
 
-    // Renderiza los NPCs estáticos de ciudad (tiles con ObstacleType::NPC_*)
+    // Renderiza los NPCs estáticos de ciudad (tiles con ObstacleCode::NPC_*)
     void renderCityNpcs(const GameMap& map, float camX, float camY);
 
     // Renderiza una criatura NPC dinámica (araña, esqueleto, etc.)

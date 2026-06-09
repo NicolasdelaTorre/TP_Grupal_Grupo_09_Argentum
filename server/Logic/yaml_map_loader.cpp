@@ -14,68 +14,68 @@
 
 namespace {
 
-// Convierte el "type" de un NPC fijo del YAML al código de ObstacleType.
+// Convierte el "type" de un NPC fijo del YAML al código de ObstacleCode.
 uint8_t npcTypeFromString(const std::string& type) {
     if (type == "priest")
-        return static_cast<uint8_t>(ObstacleType::NPC_PRIEST);
+        return static_cast<uint8_t>(ObstacleCode::NPC_PRIEST);
     if (type == "merchant")
-        return static_cast<uint8_t>(ObstacleType::NPC_MERCHANT);
+        return static_cast<uint8_t>(ObstacleCode::NPC_MERCHANT);
     if (type == "banker")
-        return static_cast<uint8_t>(ObstacleType::NPC_BANKER);
-    return static_cast<uint8_t>(ObstacleType::NPC);
+        return static_cast<uint8_t>(ObstacleCode::NPC_BANKER);
+    return static_cast<uint8_t>(ObstacleCode::NPC);
 }
 
-// Convierte el "type" del YAML al código de ObstacleType que va por la red.
+// Convierte el "type" del YAML al código de ObstacleCode que va por la red.
 uint8_t obstacleTypeFromString(const std::string& type) {
     if (type == "roca")
-        return static_cast<uint8_t>(ObstacleType::ROCK);
+        return static_cast<uint8_t>(ObstacleCode::ROCK);
     if (type == "piedra_pequenia")
-        return static_cast<uint8_t>(ObstacleType::ROCK_SMALL);
+        return static_cast<uint8_t>(ObstacleCode::ROCK_SMALL);
     if (type == "piedra_grande")
-        return static_cast<uint8_t>(ObstacleType::ROCK_LARGE);
+        return static_cast<uint8_t>(ObstacleCode::ROCK_LARGE);
     if (type == "arbol" || type == "arbol_grande" || type == "tronco")
-        return static_cast<uint8_t>(ObstacleType::TREE);
+        return static_cast<uint8_t>(ObstacleCode::TREE);
     if (type == "arbusto")
-        return static_cast<uint8_t>(ObstacleType::BUSH);
+        return static_cast<uint8_t>(ObstacleCode::BUSH);
     if (type == "cactus")
-        return static_cast<uint8_t>(ObstacleType::CACTUS);
+        return static_cast<uint8_t>(ObstacleCode::CACTUS);
     if (type == "lampara_ciudad")
-        return static_cast<uint8_t>(ObstacleType::LAMP);
+        return static_cast<uint8_t>(ObstacleCode::LAMP);
     if (type == "pila_maderas")
-        return static_cast<uint8_t>(ObstacleType::WOOD);
+        return static_cast<uint8_t>(ObstacleCode::WOOD);
     if (type == "carretilla_de_madera")
-        return static_cast<uint8_t>(ObstacleType::CART);
+        return static_cast<uint8_t>(ObstacleCode::CART);
     if (type == "molino")
-        return static_cast<uint8_t>(ObstacleType::MILL);
+        return static_cast<uint8_t>(ObstacleCode::MILL);
     if (type == "banco")
-        return static_cast<uint8_t>(ObstacleType::BANK);
+        return static_cast<uint8_t>(ObstacleCode::BANK);
     if (type == "casa_madera_azul")
-        return static_cast<uint8_t>(ObstacleType::HOUSE_BLUE);
+        return static_cast<uint8_t>(ObstacleCode::HOUSE_BLUE);
     if (type == "casa_madera_roja")
-        return static_cast<uint8_t>(ObstacleType::HOUSE_RED);
+        return static_cast<uint8_t>(ObstacleCode::HOUSE_RED);
     if (type == "casa_nevada")
-        return static_cast<uint8_t>(ObstacleType::HOUSE_SNOW);
+        return static_cast<uint8_t>(ObstacleCode::HOUSE_SNOW);
     if (type == "cerca_madera")
-        return static_cast<uint8_t>(ObstacleType::FENCE);
+        return static_cast<uint8_t>(ObstacleCode::FENCE);
     if (type == "diana")
-        return static_cast<uint8_t>(ObstacleType::TARGET);
+        return static_cast<uint8_t>(ObstacleCode::TARGET);
     if (type == "fardo_heno")
-        return static_cast<uint8_t>(ObstacleType::HAYBALE);
+        return static_cast<uint8_t>(ObstacleCode::HAYBALE);
     if (type == "fuente")
-        return static_cast<uint8_t>(ObstacleType::FOUNTAIN);
+        return static_cast<uint8_t>(ObstacleCode::FOUNTAIN);
     if (type == "herrero")
-        return static_cast<uint8_t>(ObstacleType::BLACKSMITH);
+        return static_cast<uint8_t>(ObstacleCode::BLACKSMITH);
     if (type == "hotel")
-        return static_cast<uint8_t>(ObstacleType::HOTEL);
+        return static_cast<uint8_t>(ObstacleCode::HOTEL);
     if (type == "iglesia")
-        return static_cast<uint8_t>(ObstacleType::CHURCH);
+        return static_cast<uint8_t>(ObstacleCode::CHURCH);
     if (type == "munieco_entrenamiento")
-        return static_cast<uint8_t>(ObstacleType::TRAINING_DUMMY);
+        return static_cast<uint8_t>(ObstacleCode::TRAINING_DUMMY);
     if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
         type == "pilar" || type == "pared_mazmorra_derecha" ||
         type == "pared_mazmorra_izquierda" || type == "pared_mazmorra_vertical")
-        return static_cast<uint8_t>(ObstacleType::WALL);
-    return static_cast<uint8_t>(ObstacleType::ROCK);
+        return static_cast<uint8_t>(ObstacleCode::WALL);
+    return static_cast<uint8_t>(ObstacleCode::ROCK);
 }
 
 void initializeDefaultCells(std::vector<Cell>& cells) {
@@ -200,7 +200,7 @@ void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16
 }
 
 // Vuelca las salidas del environment en sus celdas: como las paredes, marcan la
-// celda con su obstáculo (ObstacleType::EXIT) y la vuelven no transitable.
+// celda con su obstáculo (ObstacleCode::EXIT) y la vuelven no transitable.
 // Devuelve la posición de cada celda ocupada por una salida.
 std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t envWidth,
                                             int16_t envHeight, const YAML::Node& exits) {
@@ -221,7 +221,7 @@ std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t en
             h = node["size"][1].as<int16_t>();
         }
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
-                      y, w, h, static_cast<uint8_t>(ObstacleType::EXIT));
+                      y, w, h, static_cast<uint8_t>(ObstacleCode::EXIT));
         for (int16_t dy = 0; dy < h; ++dy) {
             for (int16_t dx = 0; dx < w; ++dx) {
                 const int16_t cx = static_cast<int16_t>(x + dx);
@@ -425,7 +425,7 @@ Map loadMapFromYaml(const std::string& path) {
         applyFloorGrid(cells, width, height, root["biome_map"]["data"].as<std::string>());
     }
 
-    // Obstáculos: cada celda guarda el código de ObstacleType
+    // Obstáculos: cada celda guarda el código de ObstacleCode
     if (root["obstacles"]) {
         for (const auto& obs: root["obstacles"]) {
             std::string type = obs["type"].as<std::string>();
@@ -475,9 +475,9 @@ Map loadMapFromYaml(const std::string& path) {
                     // merchant/banker/priest → guardamos para registrarlos como
                     // amigos con id propio en el Map.
                     uint8_t wireType = 0;
-                    if (npcType == "merchant") wireType = static_cast<uint8_t>(NpcType::MERCHANT);
-                    else if (npcType == "banker") wireType = static_cast<uint8_t>(NpcType::BANKER);
-                    else if (npcType == "priest") wireType = static_cast<uint8_t>(NpcType::PRIEST);
+                    if (npcType == "merchant") wireType = static_cast<uint8_t>(NpcCode::MERCHANT);
+                    else if (npcType == "banker") wireType = static_cast<uint8_t>(NpcCode::BANKER);
+                    else if (npcType == "priest") wireType = static_cast<uint8_t>(NpcCode::PRIEST);
                     else continue;
                     pendingFriendlies.push_back({nx, ny, wireType, npcName});
                 }
@@ -497,7 +497,7 @@ Map loadMapFromYaml(const std::string& path) {
             int16_t ew = entry["size"][0].as<int16_t>();
             int16_t eh = entry["size"][1].as<int16_t>();
             applyObstacle(cells, width, height, ex, ey, ew, eh,
-                          static_cast<uint8_t>(ObstacleType::ENTRY));
+                          static_cast<uint8_t>(ObstacleCode::ENTRY));
 
             LoadedEntry loadedEntry;
             if (entry["id"])

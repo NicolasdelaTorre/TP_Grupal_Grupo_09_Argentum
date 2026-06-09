@@ -41,7 +41,7 @@ void Client::run() {
     // Handshake sincrónico (login + mapa) antes de arrancar los hilos.
     // Raza/clase hardcodeadas hasta que haya UI para elegirlas.
     std::string name(result.username.begin(), result.username.end());
-    protocol.send(UserArrivalEvent(name, "Elf", "Mage"));
+    protocol.send(UserArrivalEvent(name, RaceCode::ELF, ClassCode::MAGE));
 
     auto ev = protocol.receiveEvent();
     Player_ player;
