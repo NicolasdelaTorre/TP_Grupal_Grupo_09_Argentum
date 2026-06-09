@@ -8,8 +8,6 @@
 #include "../common/Communication/events/client_events.h"
 #include "../common/Communication/message_types.h"
 
-#include "tile_textures.h"
-
 namespace {
 
 // MapEvent (wire) → GameMap (lo que pinta el MapRenderer).
@@ -21,18 +19,19 @@ GameMap convertToGameMap(const MapEvent& m) {
     gm.tiles.resize(cells.size());
     for (size_t i = 0; i < cells.size(); i++) {
         const auto& cell = cells[i];
-        // safeZone fuerza piso de ciudad (priority sobre textureId del bioma).
-        if (cell.safeZone) {
-            gm.tiles[i].floor = TileCode::INTERIOR;
-        } else {
-            gm.tiles[i].floor = tileTypeFromTextureId(cell.textureId);
-        }
+        gm.tiles[i].textureId = cell.textureId;
         if (cell.obstacleId != 0) {
             gm.tiles[i].blocked = true;
             gm.tiles[i].obstacleType = static_cast<ObstacleCode>(cell.obstacleId);
         } else {
             gm.tiles[i].blocked = false;
         }
+    }
+    // Obstáculos colocados
+    const auto& obstacles = m.getObstacles();
+    gm.obstacles.reserve(obstacles.size());
+    for (const auto& o: obstacles) {
+        gm.obstacles.push_back({static_cast<ObstacleCode>(o.type), o.x, o.y, o.w, o.h});
     }
     return gm;
 }

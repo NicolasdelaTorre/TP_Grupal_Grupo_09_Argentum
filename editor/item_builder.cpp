@@ -16,9 +16,6 @@ QGraphicsRectItem* ItemBuilder::buildPlayerSpawn(const QString& id) {
     rect->setBrush(Qt::NoBrush);
     rect->setPen(Qt::NoPen);
 
-    // El spawn se muestra con una textura propia (placeholder en ui_textures).
-    // Mientras esa textura no exista, se deja un marcador mínimo con label para
-    // que el punto siga siendo visible en el editor.
     QPixmap pixmap;
     if (pixmap.load(QStringLiteral(PLAYER_SPAWN_TEXTURE))) {
         auto* texture_item = new QGraphicsPixmapItem(
@@ -118,6 +115,7 @@ QGraphicsRectItem* ItemBuilder::buildExit(const QString& id, const QString& temp
     const int pixel_h = height * CELL_DISPLAY_SIZE;
     auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
 
+    // dibuja a tamaño nativo, ancla esquina inferior izquierda a esquina inferior izquierda del rect
     QPixmap pixmap;
     const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
     rect->setBrush(Qt::NoBrush);
@@ -142,8 +140,7 @@ QGraphicsRectItem* ItemBuilder::buildFloor(const QString& id, const QString& tem
     rect->setBrush(Qt::NoBrush);
     rect->setPen(Qt::NoPen);
 
-    // Las texturas de piso ya vienen a 64x64 (= CELL_DISPLAY_SIZE), se dibujan
-    // tal cual cubriendo la celda.
+    // Las texturas de piso ya vienen a 64x64, se dibuja tal cual
     QPixmap pixmap;
     if (!texturePath.isEmpty() && pixmap.load(texturePath)) {
         auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);

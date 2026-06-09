@@ -24,10 +24,23 @@ struct ArrowProjectile {
 
 // ── Datos de un tile del mapa ─────────────────────────────────
 struct TileData {
+    uint16_t textureId = 1;
     TileCode floor = TileCode::GRASS;
     bool blocked = false;
     uint8_t variant = 0;  // 0, 1 o 2 para grass
     ObstacleCode obstacleType = ObstacleCode::NONE;
+};
+
+// ── Obstáculo colocado ────────────────────────────────────────
+// (x, y, w, h) es el rectángulo (footprint) que bloquea, en tiles. La textura
+// se dibuja a tamaño nativo anclada a la esquina inferior izquierda del
+// footprint, sin importar el tamaño que bloquea.
+struct MapObstacle {
+    ObstacleCode type = ObstacleCode::NONE;
+    int x = 0;
+    int y = 0;
+    int w = 1;
+    int h = 1;
 };
 
 // ── Mapa ──────────────────────────────────────────────────────
@@ -35,6 +48,7 @@ struct GameMap {
     int width = 0;
     int height = 0;
     std::vector<TileData> tiles;
+    std::vector<MapObstacle> obstacles;
 
     TileData& at(int x, int y) { return tiles[y * width + x]; }
     const TileData& at(int x, int y) const { return tiles[y * width + x]; }

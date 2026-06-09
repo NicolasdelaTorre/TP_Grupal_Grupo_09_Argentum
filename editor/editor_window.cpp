@@ -142,30 +142,7 @@ EditorWindow::EditorWindow(QWidget* parent):
         QMainWindow(parent), ui_(new Ui::EditorWindow), tool_group_(new QButtonGroup(this)) {
     ui_->setupUi(this);
 
-    {
-        QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
-        QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
-        if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
-            const QPixmap arg_scaled = logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
-            const QPixmap me_scaled = logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
-
-            const int overlap_px = 50;
-            const int total_w = std::max(arg_scaled.width(), me_scaled.width());
-            const int total_h = arg_scaled.height() + me_scaled.height() - overlap_px;
-
-            QPixmap composite(total_w, total_h);
-            composite.fill(Qt::transparent);
-            QPainter painter(&composite);
-            painter.setRenderHint(QPainter::SmoothPixmapTransform);
-            painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
-            painter.drawPixmap((total_w - me_scaled.width()) / 2, arg_scaled.height() - overlap_px,
-                               me_scaled);
-            painter.end();
-
-            ui_->labelLogoArgentum->setPixmap(composite);
-        }
-        ui_->labelLogoMapEditor->setVisible(false);
-    }
+    buildLogo();
 
     auto back_to_main_policy = ui_->btnBackToMainMap->sizePolicy();
     back_to_main_policy.setRetainSizeWhenHidden(true);
@@ -232,6 +209,31 @@ EditorWindow::EditorWindow(QWidget* parent):
 }
 
 EditorWindow::~EditorWindow() { delete ui_; }
+
+void EditorWindow::buildLogo() {
+    QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
+    QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
+    if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
+        const QPixmap arg_scaled = logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
+        const QPixmap me_scaled = logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
+
+        const int overlap_px = 50;
+        const int total_w = std::max(arg_scaled.width(), me_scaled.width());
+        const int total_h = arg_scaled.height() + me_scaled.height() - overlap_px;
+
+        QPixmap composite(total_w, total_h);
+        composite.fill(Qt::transparent);
+        QPainter painter(&composite);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
+        painter.drawPixmap((total_w - me_scaled.width()) / 2, arg_scaled.height() - overlap_px,
+                           me_scaled);
+        painter.end();
+
+        ui_->labelLogoArgentum->setPixmap(composite);
+    }
+    ui_->labelLogoMapEditor->setVisible(false);
+}
 
 void EditorWindow::setupTemplates() {
     for (const auto& biome: templates_.biomes()) {
@@ -390,7 +392,7 @@ void EditorWindow::selectFloorMode() {
 }
 
 void EditorWindow::selectEnvironmentMode() {
-    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+    if (map_canvas_->editingMode() == EditingMode::MainMap) {
         ui_->toolsStack->setCurrentWidget(ui_->pageToolEnvironments);
         selectTool(EditorTool::Entry);
         return;
@@ -401,7 +403,7 @@ void EditorWindow::selectEnvironmentMode() {
 }
 
 void EditorWindow::selectExitsMode() {
-    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+    if (map_canvas_->editingMode() == EditingMode::MainMap) {
         return;
     }
     ui_->toolsStack->setCurrentWidget(ui_->pageToolExits);
@@ -421,8 +423,8 @@ void EditorWindow::selectDefaultMode() {
 
 void EditorWindow::updateDimensionsLabel() {
     ui_->labelMapDimensions->setText(QStringLiteral("Map Size: %1 x %2")
-                                             .arg(map_canvas_->map_width())
-                                             .arg(map_canvas_->map_height()));
+                                             .arg(map_canvas_->mapWidth())
+                                             .arg(map_canvas_->mapHeight()));
 }
 
 void EditorWindow::onApplyMapResize() {
@@ -488,13 +490,13 @@ void EditorWindow::onApplyMapResize() {
         return true;
     };
 
-    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+    if (map_canvas_->editingMode() == EditingMode::MainMap) {
         if (!applyTo(main_doc_, QStringLiteral("the main map"))) {
             return;
         }
         map_canvas_->loadFromDocument(main_doc_, EditingMode::MainMap);
     } else {
-        Environment* env = find_environment(current_environment_id_);
+        Environment* env = findEnvironment(current_environment_id_);
         if (!env) {
             return;
         }
@@ -595,7 +597,7 @@ void EditorWindow::openExistingMap() {
     main_doc_ = loaded;
     current_environment_id_.clear();
 
-    // Reanudar los contadores por encima de los ids ya usados para no pisarlos.
+    // reanudar contadores
     auto index_after = [](const std::string& id, const QString& prefix) -> int {
         const QString qid = QString::fromStdString(id);
         if (!qid.startsWith(prefix)) {
@@ -698,10 +700,10 @@ void EditorWindow::onEnvironmentDoubleClicked(QListWidgetItem* item) {
 }
 
 void EditorWindow::onEditEnvironmentCreatures() {
-    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+    if (map_canvas_->editingMode() == EditingMode::MainMap) {
         return;
     }
-    Environment* env = find_environment(current_environment_id_);
+    Environment* env = findEnvironment(current_environment_id_);
     if (!env) {
         return;
     }
@@ -721,7 +723,7 @@ void EditorWindow::onEditEnvironmentCreatures() {
 }
 
 void EditorWindow::backToMainMap() {
-    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+    if (map_canvas_->editingMode() == EditingMode::MainMap) {
         return;
     }
     saveCurrentToDocument();
@@ -738,14 +740,14 @@ void EditorWindow::backToMainMap() {
 
 void EditorWindow::saveCurrentToDocument() {
     const MapDocument current = map_canvas_->buildDocument();
-    if (map_canvas_->editing_mode() == EditingMode::MainMap) {
+    if (map_canvas_->editingMode() == EditingMode::MainMap) {
         const auto saved_envs = main_doc_.environments;
         main_doc_ = current;
         main_doc_.environments = saved_envs;
         return;
     }
 
-    Environment* env = find_environment(current_environment_id_);
+    Environment* env = findEnvironment(current_environment_id_);
     if (!env) {
         return;
     }
@@ -757,7 +759,7 @@ void EditorWindow::saveCurrentToDocument() {
 
 void EditorWindow::enterEnvironment(const QString& environment_id) {
     saveCurrentToDocument();
-    const Environment* env = find_environment(environment_id);
+    const Environment* env = findEnvironment(environment_id);
     if (!env) {
         return;
     }
@@ -811,7 +813,7 @@ void EditorWindow::refreshEnvironmentsList() {
     }
 }
 
-Environment* EditorWindow::find_environment(const QString& id) {
+Environment* EditorWindow::findEnvironment(const QString& id) {
     for (auto& env: main_doc_.environments) {
         if (QString::fromStdString(env.id) == id) {
             return &env;

@@ -51,6 +51,7 @@ private:
     static bool canShrinkDocument(const MapDocument& doc, const ResizeDelta& delta);
     static void applyResizeToDocument(MapDocument& doc, const ResizeDelta& delta);
 
+    void buildLogo();
     void setupTemplates();
     void setupTools();
     void setupNewMapPage();
@@ -83,8 +84,7 @@ private:
     void saveMap();
     void setMainOnlySectionsVisible(bool visible);
 
-    Environment* find_environment(const QString& id);
-    const Environment* find_environment(const QString& id) const;
+    Environment* findEnvironment(const QString& id);
 };
 
 #endif

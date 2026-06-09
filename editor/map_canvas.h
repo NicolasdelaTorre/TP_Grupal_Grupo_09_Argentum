@@ -29,11 +29,9 @@ public:
     void createMap(const QString& map_id, const QString& map_name, int width, int height);
     void setActiveTool(const ToolInfo& tool);
 
-    QString map_id() const;
-    QString map_name() const;
-    int map_width() const;
-    int map_height() const;
-    EditingMode editing_mode() const;
+    int mapWidth() const;
+    int mapHeight() const;
+    EditingMode editingMode() const;
 
     MapDocument buildDocument() const;
     void loadFromDocument(const MapDocument& document, EditingMode mode);
@@ -42,7 +40,6 @@ public:
                         const QString& template_id, int cell_x, int cell_y);
 
 signals:
-    void statusMessage(const QString& message);
     void entryPlacementRequested(const QString& template_id, int cell_x, int cell_y);
     void entryDeleted(const QString& environment_id);
     void saveRequested();
@@ -71,13 +68,10 @@ private:
     bool drawing_zone_ = false;
     QPoint zone_start_cell_;
     QGraphicsRectItem* zone_preview_ = nullptr;
-    QGraphicsPixmapItem* biome_tint_item_ = nullptr;
-    // Items renderizados por celda para los biomas que tienen textura. Se reconstruyen
-    // en cada rebuildBiomeTint().
+    // para los biomas que tienen textura.
     std::vector<QGraphicsPixmapItem*> biome_texture_items_;
     QGraphicsRectItem* env_floor_item_ = nullptr;
     QGraphicsPixmapItem* env_exterior_item_ = nullptr;
-    // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
     QString env_floor_texture_;
     QString last_hover_zone_id_;
 
@@ -94,8 +88,7 @@ private:
     void placeWallAt(int cell_x, int cell_y);
     void placeExitAt(int cell_x, int cell_y);
     void placeFloorAt(int cell_x, int cell_y);
-    // Reconstruye los modificadores de piso a partir del grid del biome_map
-    // cargado (las celdas cuyo valor coincide con un grid_value de piso).
+    bool fitsInMap(int cell_x, int cell_y, int w, int h, const QString& name);
     void loadFloorsFromGrid(const MapDocument& document);
     void requestEntryAt(int cell_x, int cell_y);
     void finishBiomeZoneDraw(int end_cell_x, int end_cell_y);
@@ -105,7 +98,7 @@ private:
     QRect normalizedCellRect(const QPoint& a, const QPoint& b) const;
     void zoomIn();
     void zoomOut();
-    void rebuildBiomeTint();
+    void rebuildBiomeTextures();
     void rebuildEnvironmentLayers();
     bool isToolAllowed(EditorTool tool) const;
 };

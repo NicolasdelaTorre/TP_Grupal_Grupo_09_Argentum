@@ -175,9 +175,12 @@ Biome parseBiome(const YAML::Node& zone) {
 }
 
 // Aplica una lista de obstáculos/paredes del environment sobre sus celdas.
-// `typeKey` es la clave del YAML que tiene el tipo ("type" u "template").
+// `typeKey` es la clave del YAML que tiene el tipo ("type" u "template"). Si
+// `out` no es nullptr, además junta cada obstáculo como entidad colocada (con su
+// footprint) para que el cliente lo pueda dibujar a tamaño nativo.
 void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16_t envHeight,
-                               const YAML::Node& nodes, const char* typeKey) {
+                               const YAML::Node& nodes, const char* typeKey,
+                               std::vector<PlacedObstacle>* out = nullptr) {
     if (!nodes)
         return;
     for (const auto& node: nodes) {
@@ -194,8 +197,11 @@ void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16
             w = node["size"][0].as<int16_t>();
             h = node["size"][1].as<int16_t>();
         }
+        const uint8_t typeCode = obstacleTypeFromString(type);
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
-                      y, w, h, obstacleTypeFromString(type));
+                      y, w, h, typeCode);
+        if (out)
+            out->push_back({typeCode, x, y, static_cast<uint16_t>(w), static_cast<uint16_t>(h)});
     }
 }
 
@@ -376,7 +382,7 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
         // y el tile negro en las exteriores.
         if (!env.cells.empty()) {
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["obstacles"],
-                                      "type");
+                                      "type", &env.obstacles);
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
                                       "template");
             env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"]);
@@ -425,7 +431,11 @@ Map loadMapFromYaml(const std::string& path) {
         applyFloorGrid(cells, width, height, root["biome_map"]["data"].as<std::string>());
     }
 
-    // Obstáculos: cada celda guarda el código de ObstacleCode
+    // Obstáculos: cada celda del footprint guarda el código de ObstacleCode (para
+    // la colisión) y, además, guardamos el obstáculo como entidad colocada con su
+    // rectángulo (footprint) para que el cliente lo dibuje a tamaño nativo. El
+    // tamaño que bloquea es independiente del tamaño de la textura.
+    std::vector<PlacedObstacle> placedObstacles;
     if (root["obstacles"]) {
         for (const auto& obs: root["obstacles"]) {
             std::string type = obs["type"].as<std::string>();
@@ -435,6 +445,8 @@ Map loadMapFromYaml(const std::string& path) {
             int16_t ow = obs["size"][0].as<int16_t>();
             int16_t oh = obs["size"][1].as<int16_t>();
             applyObstacle(cells, width, height, ox, oy, ow, oh, typeCode);
+            placedObstacles.push_back({typeCode, ox, oy, static_cast<uint16_t>(ow),
+                                       static_cast<uint16_t>(oh)});
         }
     }
 
@@ -534,7 +546,8 @@ Map loadMapFromYaml(const std::string& path) {
               << " environment(s), " << biomes.size() << " biome(s), "
               << pendingFriendlies.size() << " friendly NPC(s)" << std::endl;
 
-    Map result(width, height, std::move(cells), spawn, std::move(entries), std::move(biomes));
+    Map result(width, height, std::move(cells), spawn, std::move(entries), std::move(biomes),
+               std::move(placedObstacles));
     for (auto& f : pendingFriendlies) {
         result.addFriendlyNpc(f.x, f.y, f.wireType, std::move(f.name));
     }
