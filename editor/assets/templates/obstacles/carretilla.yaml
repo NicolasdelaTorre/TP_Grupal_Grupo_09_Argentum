@@ -1,6 +1,0 @@
-template_id: carretilla_de_madera
-name: "Carretilla de madera"
-size:
-  width: 2
-  height: 2
-texture: "segunda_carretilla_primera_fila.png"

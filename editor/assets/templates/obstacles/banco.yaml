@@ -1,6 +1,0 @@
-template_id: banco  
-name: "Banco"
-size:
-  width: 8
-  height: 4
-texture: "banco.png"

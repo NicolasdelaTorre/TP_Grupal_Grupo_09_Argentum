@@ -1,0 +1,6 @@
+template_id: cactus_big
+name: "Big Cactus"
+size:
+  width: 1
+  height: 1
+texture: "cactus_big.png"

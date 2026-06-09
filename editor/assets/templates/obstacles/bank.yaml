@@ -1,0 +1,6 @@
+template_id: bank 
+name: "Bank"
+size:
+  width: 8
+  height: 4
+texture: "bank.png"

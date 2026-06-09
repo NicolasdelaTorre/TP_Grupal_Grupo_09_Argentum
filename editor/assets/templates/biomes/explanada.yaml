@@ -1,8 +1,0 @@
-template_id: explanada
-name: "Explanada"
-default_size:
-  width: 30
-  height: 20
-texture: "tiles/explanada.png"
-color: "#7FA84E"
-allowed_creatures: []

@@ -1,0 +1,6 @@
+template_id: cart
+name: "Cart"
+size:
+  width: 2
+  height: 2
+texture: "cart.png"

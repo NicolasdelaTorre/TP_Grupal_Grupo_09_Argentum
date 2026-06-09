@@ -1,0 +1,6 @@
+template_id: haybale
+name: "Haybale"
+size:
+  width: 1
+  height: 1
+texture: "haybale.png"

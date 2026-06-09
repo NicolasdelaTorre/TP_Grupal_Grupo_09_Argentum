@@ -1,0 +1,6 @@
+template_id: vertical_wall
+name: Vertical Wall
+size:
+  width: 1
+  height: 1
+texture: "walls/mazmorra.png"

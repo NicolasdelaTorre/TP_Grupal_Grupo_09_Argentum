@@ -1,6 +1,0 @@
-template_id: munieco_entrenamiento
-name: "Muñeco de entrenamiento"
-size:
-  width: 1
-  height: 1
-texture: "munieco.png"

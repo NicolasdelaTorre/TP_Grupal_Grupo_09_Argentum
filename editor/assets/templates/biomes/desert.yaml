@@ -1,0 +1,9 @@
+template_id: desert
+name: "Desert"
+default_size:
+  width: 25
+  height: 20
+texture: "tiles/desierto.png"
+color: "#D9B86A"
+allowed_creatures:
+  - skeleton

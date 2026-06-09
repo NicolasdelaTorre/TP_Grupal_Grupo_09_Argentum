@@ -1,0 +1,6 @@
+template_id: left_wall
+name: Left Wall
+size:
+  width: 1
+  height: 2
+texture: "walls/left_mazmorra.png"

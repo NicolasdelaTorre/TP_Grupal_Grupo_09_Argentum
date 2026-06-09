@@ -1,0 +1,6 @@
+template_id: wooden_fence
+name: "Wooden fence"
+size:
+  width: 2
+  height: 1
+texture: "wooden_fence.png"

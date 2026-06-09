@@ -1,6 +1,0 @@
-template_id: tile_pasto
-name: "Tile de pasto"
-size:
-  width: 2
-  height: 2
-texture: "tile_pasto_128x128.png"

@@ -1,6 +1,0 @@
-template_id: iglesia
-name: "Iglesia"
-size:
-  width: 9
-  height: 10
-texture: "iglesia.png"

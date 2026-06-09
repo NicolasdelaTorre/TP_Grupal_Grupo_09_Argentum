@@ -1,6 +1,0 @@
-template_id: pila_maderas
-name: "Pila de madera"
-size:
-  width: 1
-  height: 1
-texture: "maderas_apiladas_corregida.png"

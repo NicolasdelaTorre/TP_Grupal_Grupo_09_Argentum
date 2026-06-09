@@ -1,0 +1,4 @@
+template_id: black_cobblestone
+name: "Black Cobblestone"
+texture: "tiles/adoquin_oscuro.png"
+grid_value: 10

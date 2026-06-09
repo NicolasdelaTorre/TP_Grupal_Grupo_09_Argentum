@@ -1,6 +1,0 @@
-template_id: molino
-name: "Molino"
-size:
-  width: 6
-  height: 4
-texture: "molino_recortado.png"

@@ -1,0 +1,4 @@
+template_id: wood_planks
+name: "Wood Planks"
+texture: "tiles/madera.png"
+grid_value: 11

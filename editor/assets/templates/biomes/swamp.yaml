@@ -1,0 +1,12 @@
+template_id: swamp
+name: "Swamp"
+default_size:
+  width: 35
+  height: 25
+texture: "tiles/pantano.png"
+color: "#4B5E3A"
+allowed_creatures:
+  - zombie
+  - spider
+  - skeleton
+  - goblin
