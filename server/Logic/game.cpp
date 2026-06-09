@@ -8,7 +8,8 @@
 #include "NPC/creature.h"
 
 Game::Game(Map& world):
-        map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()) {}
+        map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
+        bank(0, "global", 0, 0) {}
 
 bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
     Position spawn;
@@ -21,6 +22,9 @@ bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, Class
         players.emplace(playerId, Player(parser.loadPlayerData(name), name));
         spawn = players.at(playerId).getPosition();
     }
+
+    // Cargar/crear la cuenta del banco para este jugador.
+    bank.addPlayer(name);
 
     map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
 
@@ -474,10 +478,16 @@ Game::InteractionResult Game::depositItemToBank(int playerId, const std::string&
 Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "DEPOSIT_GOLD player=" << playerId << " amount=" << amount << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): validar oro del jugador, restar, sumar a Banker::depositGold.
-    return {true, "Depositaste " + std::to_string(amount) + " de oro (stub)"};
+    if (amount == 0) return {false, "Cantidad invalida"};
+    if (!it->second.removeGold(amount)) {
+        return {false, "No tenes suficiente oro"};
+    }
+    if (!bank.depositGold(it->second.getName(), amount)) {
+        // overflow en la cuenta: devolvemos el oro al jugador para no perderlo.
+        it->second.addGold(amount);
+        return {false, "No se pudo depositar (cuenta llena)"};
+    }
+    return {true, "Depositaste " + std::to_string(amount) + " de oro"};
 }
 
 Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::string& itemName) {
@@ -492,10 +502,21 @@ Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::stri
 Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "WITHDRAW_GOLD player=" << playerId << " amount=" << amount << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): usar Banker::withdrawGold.
-    return {true, "Retiraste " + std::to_string(amount) + " de oro (stub)"};
+    if (amount == 0) return {false, "Cantidad invalida"};
+    uint32_t got = bank.withdrawGold(it->second.getName(), amount);
+    if (got == 0) return {false, "No tenes esa cantidad en el banco"};
+    // addGold respeta el cap OroMax = 100 * Nivel^1.1. El sobrante se pierde
+    // o queda en el banco (aca devolvemos al banco lo que no entro).
+    uint32_t before = it->second.getData().gold;
+    it->second.addGold(got);
+    uint32_t added = it->second.getData().gold - before;
+    if (added < got) {
+        bank.depositGold(it->second.getName(), got - added);
+        if (added == 0) return {false, "Ya tenes el oro maximo encima"};
+        return {true, "Retiraste " + std::to_string(added) +
+                       " (no entraba mas por el cap)"};
+    }
+    return {true, "Retiraste " + std::to_string(got) + " de oro"};
 }
 
 Game::InteractionResult Game::revivePlayer(int playerId) {

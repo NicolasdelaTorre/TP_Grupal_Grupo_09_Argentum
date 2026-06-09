@@ -324,3 +324,9 @@ void Player::addGold(uint32_t amount) {
     uint32_t room = cap - data.gold;
     data.gold += std::min(amount, room);
 }
+
+bool Player::removeGold(uint32_t amount) {
+    if (data.gold < amount) return false;
+    data.gold -= amount;
+    return true;
+}

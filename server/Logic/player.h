@@ -129,6 +129,9 @@ public:
 
     // Suma oro respetando el cap = 100 * Nivel^1.1 (formula del enunciado).
     void addGold(uint32_t amount);
+
+    // Resta oro. Devuelve false si no tiene suficiente (sin cambios).
+    bool removeGold(uint32_t amount);
 };
 
 #endif

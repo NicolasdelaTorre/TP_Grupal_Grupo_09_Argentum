@@ -12,6 +12,7 @@
 
 #include "binary_parser.h"
 #include "map.h"
+#include "NPC/banker.h"
 #include "player.h"
 #include "yaml_map_loader.h"
 
@@ -31,6 +32,8 @@ private:
     Position playerSpawn;  // posición de spawn que viene del YAML
     std::unordered_map<int, Player> players;
     BinaryParser parser;
+    // Singleton del banco
+    Banker bank;
     // Items tirados al piso (de /tirar o drops de NPC muerto). El id es
     // auto-incremental y nunca se reusa para que el cliente pueda referirse
     // a un drop específico al levantarlo.
