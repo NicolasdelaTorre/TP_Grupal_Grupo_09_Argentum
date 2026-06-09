@@ -93,17 +93,9 @@ bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y
         return false;
     }
 
-    QColor fill(120, 90, 60);
-    if (!obstacle->color.empty()) {
-        QColor parsed(QString::fromStdString(obstacle->color));
-        if (parsed.isValid()) {
-            fill = parsed;
-        }
-    }
-
     const QString id = nextObstacleId();
     auto* item = item_builder_.buildObstacle(id, QString::fromStdString(obstacle->id),
-                                             obstacle->width, obstacle->height, fill,
+                                             obstacle->width, obstacle->height,
                                              QString::fromStdString(obstacle->texture));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_OBSTACLE);
@@ -149,16 +141,9 @@ bool SceneController::placeEntry(const QString& entry_id, const QString& environ
         return false;
     }
 
-    QColor fill(120, 90, 60);
-    if (!tpl->color.empty()) {
-        QColor parsed(QString::fromStdString(tpl->color));
-        if (parsed.isValid()) {
-            fill = parsed;
-        }
-    }
-
     auto* item = item_builder_.buildEntry(entry_id, QString::fromStdString(tpl->id), environment_id,
-                                          tpl->width, tpl->height, fill);
+                                          tpl->width, tpl->height,
+                                          QString::fromStdString(tpl->texture));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_ENTRY);
     scene_->addItem(item);
@@ -244,17 +229,9 @@ bool SceneController::placeFloor(const ToolInfo& tool, int cell_x, int cell_y, Q
         }
     }
 
-    QColor fill(150, 150, 150);
-    if (!floor->color.empty()) {
-        QColor parsed(QString::fromStdString(floor->color));
-        if (parsed.isValid()) {
-            fill = parsed;
-        }
-    }
-
     const QString id = floor_id.isEmpty() ? nextFloorId() : floor_id;
     bumpCounter(next_floor_id_, id, QStringLiteral("floor_"));
-    auto* item = item_builder_.buildFloor(id, QString::fromStdString(floor->id), fill,
+    auto* item = item_builder_.buildFloor(id, QString::fromStdString(floor->id),
                                           QString::fromStdString(floor->texture));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_FLOOR_MODIFIER);
@@ -274,9 +251,11 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
         return false;
     }
 
-    // Los biomas ya no definen color: se distinguen por su textura. La zona usa
-    // el color por defecto solo como guía visual del área en el editor.
-    const QColor fill = resolveZoneColor(std::string(), false);
+    // El overlay translúcido de la zona usa el color definido en el template del
+    // bioma (elegido para parecerse a su tile), dando variedad visual en el editor.
+    const auto* biome_tpl = templates_.find_biome(tool.biome_template_id.toStdString());
+    const QColor fill =
+            resolveZoneColor(biome_tpl ? biome_tpl->color : std::string(), false);
 
     const QString id = zone_id.isEmpty() ? nextZoneId() : zone_id;
     bumpCounter(next_zone_id_, id, QStringLiteral("zone_"));
@@ -422,6 +401,11 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             entry.y = cell_y;
             entry.width = item->data(DATA_WIDTH).toInt();
             entry.height = item->data(DATA_HEIGHT).toInt();
+            if (const auto* tpl = templates_.find_entry(entry.type)) {
+                if (!tpl->texture.empty()) {
+                    entry.texture = std::filesystem::path(tpl->texture).filename().string();
+                }
+            }
             document.entries.push_back(entry);
             continue;
         }

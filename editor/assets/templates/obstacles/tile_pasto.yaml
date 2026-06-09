@@ -3,5 +3,4 @@ name: "Tile de pasto"
 size:
   width: 2
   height: 2
-color: "#9A9A9A"
 texture: "tile_pasto_128x128.png"

@@ -3,5 +3,4 @@ name: "Pila de madera"
 size:
   width: 1
   height: 1
-color: "#9A9A9A"
 texture: "maderas_apiladas_corregida.png"

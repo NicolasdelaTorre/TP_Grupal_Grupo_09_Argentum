@@ -4,6 +4,7 @@ default_size:
   width: 25
   height: 20
 texture: "tiles/cementerio.png"
+color: "#6B7A5E"
 allowed_creatures:
   - skeleton
   - zombie

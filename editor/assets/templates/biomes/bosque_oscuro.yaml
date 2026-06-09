@@ -4,6 +4,7 @@ default_size:
   width: 40
   height: 25
 texture: "tiles/bosque_oscuro.png"
+color: "#2E3D24"
 allowed_creatures:
   - zombie
   - skeleton

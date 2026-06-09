@@ -3,5 +3,4 @@ name: "Iglesia"
 size:
   width: 9
   height: 10
-color: "#8B5A2B"
 texture: "iglesia.png"

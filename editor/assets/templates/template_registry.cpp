@@ -7,6 +7,15 @@
 
 #include "editor_constants.h"
 
+const EnvironmentTypeInfo& environment_type_info(const std::string& type) {
+    static const EnvironmentTypeInfo kCueva{"cueva", "Cueva", "tiles/cueva.png"};
+    static const EnvironmentTypeInfo kMazmorra{"mazmorra", "Mazmorra", "tiles/mazmorra.png"};
+    if (type == kMazmorra.type) {
+        return kMazmorra;
+    }
+    return kCueva;
+}
+
 bool TemplateRegistry::load() {
     cities_.clear();
     biomes_.clear();
@@ -252,6 +261,10 @@ bool TemplateRegistry::load_biome_file(const std::string& path) {
             }
         }
 
+        if (const auto colorNode = root["color"]) {
+            biome.color = colorNode.as<std::string>();
+        }
+
         const auto creaturesNode = root["allowed_creatures"];
         if (creaturesNode && creaturesNode.IsSequence()) {
             for (const auto& creatureNode: creaturesNode) {
@@ -277,10 +290,6 @@ bool TemplateRegistry::load_obstacle_file(const std::string& path) {
         if (sizeNode) {
             obstacle.width = sizeNode["width"].as<int>();
             obstacle.height = sizeNode["height"].as<int>();
-        }
-
-        if (const auto colorNode = root["color"]) {
-            obstacle.color = colorNode.as<std::string>();
         }
 
         if (const auto textureNode = root["texture"]) {
@@ -312,29 +321,17 @@ bool TemplateRegistry::load_entry_file(const std::string& path) {
             entry.height = sizeNode["height"].as<int>();
         }
 
-        if (const auto colorNode = root["color"]) {
-            entry.color = colorNode.as<std::string>();
-        }
-
-        const auto sizesNode = root["available_environment_sizes"];
-        if (sizesNode && sizesNode.IsSequence()) {
-            for (const auto& sizeOption: sizesNode) {
-                EnvironmentSizeOption option;
-                option.width = sizeOption["width"].as<int>();
-                option.height = sizeOption["height"].as<int>();
-                entry.environment_sizes.push_back(option);
+        if (const auto textureNode = root["texture"]) {
+            const auto filename = textureNode.as<std::string>();
+            if (!filename.empty()) {
+                const std::filesystem::path resolved =
+                        std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
+                entry.texture = resolved.string();
             }
         }
 
-        if (const auto floorNode = root["floor_color"]) {
-            entry.floor_color = floorNode.as<std::string>();
-        }
-
-        // La textura de piso se guarda sin resolver (ruta relativa al directorio
-        // de imágenes de common). El renderer del editor la resuelve al pintarla,
-        // y se escribe tal cual en el YAML del mapa para que sea portable.
-        if (const auto floorTextureNode = root["floor_texture"]) {
-            entry.floor_texture = floorTextureNode.as<std::string>();
+        if (const auto envTypeNode = root["environment_type"]) {
+            entry.environment_type = envTypeNode.as<std::string>();
         }
 
         entries_.push_back(entry);
@@ -408,10 +405,6 @@ bool TemplateRegistry::load_floor_file(const std::string& path) {
         FloorTemplate floor;
         floor.id = root["template_id"].as<std::string>();
         floor.name = root["name"].as<std::string>();
-
-        if (const auto colorNode = root["color"]) {
-            floor.color = colorNode.as<std::string>();
-        }
 
         if (const auto textureNode = root["texture"]) {
             const auto filename = textureNode.as<std::string>();

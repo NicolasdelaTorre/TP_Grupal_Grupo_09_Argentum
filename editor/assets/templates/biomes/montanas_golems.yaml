@@ -4,5 +4,6 @@ default_size:
   width: 40
   height: 30
 texture: "tiles/rocosa.png"
+color: "#8C8C8C"
 allowed_creatures:
   - golem

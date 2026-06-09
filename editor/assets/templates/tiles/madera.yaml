@@ -1,5 +1,4 @@
 template_id: madera
 name: "Madera"
-color: "#7A4B25"
 texture: "tiles/madera.png"
 grid_value: 11

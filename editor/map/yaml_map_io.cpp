@@ -139,6 +139,9 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 out << YAML::Flow << YAML::BeginSeq << entry.x << entry.y << YAML::EndSeq;
                 out << YAML::Key << "size" << YAML::Value;
                 out << YAML::Flow << YAML::BeginSeq << entry.width << entry.height << YAML::EndSeq;
+                if (!entry.texture.empty()) {
+                    out << YAML::Key << "texture" << YAML::Value << entry.texture;
+                }
                 out << YAML::EndMap;
             }
             out << YAML::EndSeq;
@@ -229,10 +232,6 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                         out << YAML::EndMap;
                     }
                     out << YAML::EndSeq;
-                }
-
-                if (!env.floor_color.empty()) {
-                    out << YAML::Key << "floor_color" << YAML::Value << env.floor_color;
                 }
 
                 if (!env.floor_texture.empty()) {
@@ -339,6 +338,9 @@ Entry YamlMapIO::read_entry(const YAML::Node& node) {
         entry.width = node["size"][0].as<int>();
         entry.height = node["size"][1].as<int>();
     }
+    if (node["texture"]) {
+        entry.texture = node["texture"].as<std::string>();
+    }
     return entry;
 }
 
@@ -414,9 +416,6 @@ Environment YamlMapIO::read_environment(const YAML::Node& node) {
                     spawn_node["max_population"] ? spawn_node["max_population"].as<int>() : 0;
             env.spawns.push_back(spawn);
         }
-    }
-    if (node["floor_color"]) {
-        env.floor_color = node["floor_color"].as<std::string>();
     }
     if (node["floor_texture"]) {
         env.floor_texture = node["floor_texture"].as<std::string>();

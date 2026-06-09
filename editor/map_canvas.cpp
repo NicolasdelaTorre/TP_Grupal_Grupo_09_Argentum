@@ -103,7 +103,7 @@ void MapCanvas::initializeScene(const QString& map_id, const QString& map_name, 
     env_exterior_item_->setScale(CELL_DISPLAY_SIZE);
     env_exterior_item_->setZValue(-1.6);
     env_exterior_item_->setVisible(false);
-    // drawGrid();
+    drawGrid();
     scene_->setSceneRect(0, 0, scene_width, scene_height);
     QTimer::singleShot(0, this, [this]() { applyInitialView(); });
 }
@@ -190,7 +190,6 @@ MapDocument MapCanvas::buildDocument() const {
 
 void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) {
     editing_mode_ = mode;
-    env_floor_color_ = QString::fromStdString(document.floor_color);
     env_floor_texture_ = QString::fromStdString(document.floor_texture);
     initializeScene(QString::fromStdString(document.map.id),
                     QString::fromStdString(document.map.name), document.map.width,
@@ -769,8 +768,8 @@ void MapCanvas::rebuildEnvironmentLayers() {
         return;
     }
 
-    // pintar piso: si el template de entrada define una textura, se usa un brush
-    // texturizado (se repite por celda); si no, se cae al color sólido.
+    // pintar piso: el entorno siempre tiene una textura de tile; se usa un brush
+    // texturizado que se repite por celda.
     env_floor_item_->setRect(0, 0, W * CELL_DISPLAY_SIZE, H * CELL_DISPLAY_SIZE);
     env_floor_item_->setPos(0, 0);
 
@@ -786,18 +785,7 @@ void MapCanvas::rebuildEnvironmentLayers() {
         }
     }
 
-    if (!floor_tile.isNull()) {
-        env_floor_item_->setBrush(QBrush(floor_tile));
-    } else {
-        QColor floor_color(60, 60, 60);
-        if (!env_floor_color_.isEmpty()) {
-            QColor parsed(env_floor_color_);
-            if (parsed.isValid()) {
-                floor_color = parsed;
-            }
-        }
-        env_floor_item_->setBrush(QBrush(floor_color));
-    }
+    env_floor_item_->setBrush(floor_tile.isNull() ? QBrush(Qt::NoBrush) : QBrush(floor_tile));
     env_floor_item_->setVisible(true);
 
     // detectar paredes

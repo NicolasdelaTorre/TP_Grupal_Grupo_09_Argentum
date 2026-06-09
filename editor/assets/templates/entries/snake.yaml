@@ -1,0 +1,7 @@
+template_id: mazmorra_serpiente
+name: "Mazmorra serpiente"
+size:
+  width: 3
+  height: 3
+texture: "entries/snake.png"
+environment_type: mazmorra

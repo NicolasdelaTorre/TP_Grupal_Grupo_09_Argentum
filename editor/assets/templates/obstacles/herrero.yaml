@@ -3,5 +3,4 @@ name: "Herrero"
 size:
   width: 3
   height: 2
-color: "#8B5A2B"
 texture: "herrero.png"

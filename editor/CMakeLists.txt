@@ -51,5 +51,6 @@ target_compile_definitions(taller_editor
         EDITOR_TEMPLATES_EXITS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/exits"
         EDITOR_TEMPLATES_FLOORS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/templates/tiles"
         EDITOR_ASSETS_IMAGES_PATH="${CMAKE_SOURCE_DIR}/common/assets/images"
+        EDITOR_ASSETS_UI_TEXTURES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets/ui_textures"
         EDITOR_SAVE_MAP_PATH="${CMAKE_SOURCE_DIR}/server/assets/maps"
     )

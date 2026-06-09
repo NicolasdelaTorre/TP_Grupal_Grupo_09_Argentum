@@ -61,6 +61,7 @@ struct Entry {
     int y = 0;
     int width = 1;
     int height = 1;
+    std::string texture;
 };
 
 struct Wall {
@@ -94,7 +95,6 @@ struct Environment {
     std::vector<Wall> walls;
     std::vector<Exit> exits;
     std::vector<CreatureSpawn> spawns;
-    std::string floor_color;
     // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
     std::string floor_texture;
 };
@@ -109,7 +109,6 @@ struct MapDocument {
     std::vector<Environment> environments;
     std::vector<Wall> walls;
     std::vector<Exit> exits;
-    std::string floor_color;
     // Textura de piso para entornos (ruta relativa a common/assets/images).
     std::string floor_texture;
     std::vector<uint8_t> biome_grid;
