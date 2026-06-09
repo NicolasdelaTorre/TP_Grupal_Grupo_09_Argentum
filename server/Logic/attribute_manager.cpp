@@ -40,30 +40,22 @@ ClassAttribute AttributeManager::readClass(const toml::value& config,
     return clase;
 }
 
-RaceAttribute AttributeManager::getRaceAttribute(const std::string& raceName) {
-    if (raceName == "Human") {
-        return attributes.human;
-    } else if (raceName == "Elf") {
-        return attributes.elf;
-    } else if (raceName == "Dwarf") {
-        return attributes.dwarf;
-    } else if (raceName == "Gnome") {
-        return attributes.gnome;
-    } else {
-        throw std::runtime_error("Unknown race");
+RaceAttribute AttributeManager::getRaceAttribute(RaceCode race) {
+    switch (race) {
+        case RaceCode::HUMAN: return attributes.human;
+        case RaceCode::ELF:   return attributes.elf;
+        case RaceCode::DWARF: return attributes.dwarf;
+        case RaceCode::GNOME: return attributes.gnome;
+        default: throw std::runtime_error("Unknown race");
     }
 }
 
-ClassAttribute AttributeManager::getClassAttribute(const std::string& className) {
-    if (className == "Mage") {
-        return attributes.mage;
-    } else if (className == "Cleric") {
-        return attributes.cleric;
-    } else if (className == "Champion") {
-        return attributes.champion;
-    } else if (className == "Warrior") {
-        return attributes.warrior;
-    } else {
-        throw std::runtime_error("Unknown class");
+ClassAttribute AttributeManager::getClassAttribute(ClassCode class_) {
+    switch (class_) {
+        case ClassCode::MAGE:     return attributes.mage;
+        case ClassCode::CLERIC:   return attributes.cleric;
+        case ClassCode::CHAMPION: return attributes.champion;
+        case ClassCode::WARRIOR:  return attributes.warrior;
+        default: throw std::runtime_error("Unknown class");
     }
 }

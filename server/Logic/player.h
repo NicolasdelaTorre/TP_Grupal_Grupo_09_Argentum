@@ -25,7 +25,7 @@ struct PlayerData {
     uint16_t mana;
 
     RaceCode race;
-    Class_::ClassCode class_;
+    ClassCode class_;
     uint8_t mapId;
     uint8_t level;
     uint8_t equippedWeapon;
@@ -53,10 +53,12 @@ private:
     uint16_t maxHealth;
     uint16_t maxMana;
     bool isMeditating;
+    // Flags de cheats runtime: NO se guardan en PlayerData (no persisten al reloguear).
+    bool infiniteHealth = false;
+    bool infiniteMana = false;
 
 public:
-    explicit Player(const std::string& name, Position position, const std::string& race,
-                    const std::string& class_);
+    explicit Player(const std::string& name, Position position, RaceCode race, ClassCode class_);
 
     Player(PlayerData data, const std::string& name);
 
@@ -113,6 +115,20 @@ public:
     void restoreManaForMeditation();
 
     void resetStats();
+
+    // Mata al jugador instantaneamente (HP=0, fantasma). Ignora infiniteHealth:
+    // se usa para acciones voluntarias como /suicidio, no para damage de combate.
+    void kill();
+
+    // Cheats runtime (no persisten). Devuelven el nuevo estado del flag.
+    bool toggleInfiniteHealth();
+    bool toggleInfiniteMana();
+
+    // Sube un nivel y refresca stats al maximo segun raza/clase.
+    void levelUp();
+
+    // Suma oro respetando el cap = 100 * Nivel^1.1 (formula del enunciado).
+    void addGold(uint32_t amount);
 };
 
 #endif

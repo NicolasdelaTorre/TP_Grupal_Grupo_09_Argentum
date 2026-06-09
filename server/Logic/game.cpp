@@ -10,8 +10,7 @@
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()) {}
 
-bool Game::addPlayer(int playerId, const std::string& name, const std::string& race,
-                     const std::string& class_) {
+bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
     Position spawn;
 
     if (!parser.checkPlayerExists(name)) {
@@ -25,8 +24,8 @@ bool Game::addPlayer(int playerId, const std::string& name, const std::string& r
 
     map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
 
-    std::cout << "Hi " << name << " (" << race << "/" << class_ << ") spawned at (" << spawn.x
-              << ", " << spawn.y << ")" << std::endl;
+    std::cout << "Hi " << name << " (" << Race::toString(race) << "/" << PlayerClass::toString(class_)
+              << ") spawned at (" << spawn.x << ", " << spawn.y << ")" << std::endl;
 
     return true;
 }
@@ -344,23 +343,23 @@ void Game::setSkin(int playerId, uint8_t skinId) {
 bool Game::cheatToggleInfiniteHealth(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
-    // TODO(team-gameplay): flag en PlayerData + check en receiveDamage.
-    std::cout << "CHEAT vidainf toggled para player=" << playerId << " (stub)" << std::endl;
+    bool on = it->second.toggleInfiniteHealth();
+    std::cout << "CHEAT vidainf " << (on ? "ON" : "OFF") << " para player=" << playerId << std::endl;
     return true;
 }
 
 bool Game::cheatToggleInfiniteMana(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
-    // TODO(team-gameplay): flag en PlayerData + check en consumeMana.
-    std::cout << "CHEAT manainf toggled para player=" << playerId << " (stub)" << std::endl;
+    bool on = it->second.toggleInfiniteMana();
+    std::cout << "CHEAT manainf " << (on ? "ON" : "OFF") << " para player=" << playerId << std::endl;
     return true;
 }
 
 bool Game::cheatSuicide(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
-    it->second.receiveDamage(it->second.getMaxHealth());
+    it->second.kill();
     std::cout << "CHEAT suicidio aplicado a player=" << playerId << std::endl;
     return true;
 }
@@ -368,19 +367,16 @@ bool Game::cheatSuicide(int playerId) {
 bool Game::cheatLevelUp(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
-    // TODO(team-gameplay): incrementar PlayerData.level + recalcular maxHP/maxMana
-    // según raza/clase y resetear exp. Hoy solo refrescamos stats con resetStats.
-    it->second.resetStats();
-    std::cout << "CHEAT levelup aplicado a player=" << playerId << " (stub, solo reset)"
-              << std::endl;
+    it->second.levelUp();
+    std::cout << "CHEAT levelup aplicado a player=" << playerId << std::endl;
     return true;
 }
 
 bool Game::cheatAddGold(int playerId, uint32_t amount) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
-    // TODO(team-gameplay): exponer setter de gold en Player; hoy solo logueo.
-    std::cout << "CHEAT gold +" << amount << " para player=" << playerId << " (stub)" << std::endl;
+    it->second.addGold(amount);
+    std::cout << "CHEAT gold +" << amount << " para player=" << playerId << std::endl;
     return true;
 }
 

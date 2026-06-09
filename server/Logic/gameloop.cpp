@@ -10,8 +10,8 @@
 
 #include "NPC/creature.h"
 
-// Mapea el nombre del NPC (del toml) al byte de NpcType que espera el cliente
-// (enum NpcType en common/DTOs.h). Si no matchea, devuelve 0 (SPIDER) como fallback.
+// Mapea el nombre del NPC (del toml) al byte de NpcCode que espera el cliente
+// (enum NpcCode en common/DTOs.h). Si no matchea, devuelve 0 (SPIDER) como fallback.
 static uint8_t npcTypeFromName(const std::string& name) {
     if (name == "spider") return 0;
     if (name == "skeleton") return 1;
@@ -175,8 +175,8 @@ void Gameloop::handleDisconnect(int playerId) {
             playerId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)));
 }
 
-void Gameloop::handleUserArrival(int playerId, const std::string& name, const std::string& race,
-                                 const std::string& class_) {
+void Gameloop::handleUserArrival(int playerId, const std::string& name, RaceCode race,
+                                 ClassCode class_) {
     bool success = game.addPlayer(playerId, name, race, class_);
     uint8_t opcode = success ? static_cast<uint8_t>(ServerMsg::FIRST_LOGIN)
                              : static_cast<uint8_t>(ServerMsg::LOGIN_FAIL);
@@ -488,9 +488,9 @@ void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
 static constexpr int MAX_INTERACTION_DISTANCE = 2;
 
 static const char* friendlyKindName(uint8_t type) {
-    if (type == static_cast<uint8_t>(NpcType::MERCHANT)) return "Comerciante";
-    if (type == static_cast<uint8_t>(NpcType::BANKER)) return "Banquero";
-    if (type == static_cast<uint8_t>(NpcType::PRIEST)) return "Sacerdote";
+    if (type == static_cast<uint8_t>(NpcCode::MERCHANT)) return "Comerciante";
+    if (type == static_cast<uint8_t>(NpcCode::BANKER)) return "Banquero";
+    if (type == static_cast<uint8_t>(NpcCode::PRIEST)) return "Sacerdote";
     return "NPC";
 }
 
@@ -647,9 +647,9 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
         auto itSel = selectedNpc.find(playerId);
         const FriendlyNpc* sel =
                 itSel != selectedNpc.end() ? map.getFriendlyNpc(itSel->second) : nullptr;
-        const uint8_t MERCHANT = static_cast<uint8_t>(NpcType::MERCHANT);
-        const uint8_t BANKER = static_cast<uint8_t>(NpcType::BANKER);
-        const uint8_t PRIEST = static_cast<uint8_t>(NpcType::PRIEST);
+        const uint8_t MERCHANT = static_cast<uint8_t>(NpcCode::MERCHANT);
+        const uint8_t BANKER = static_cast<uint8_t>(NpcCode::BANKER);
+        const uint8_t PRIEST = static_cast<uint8_t>(NpcCode::PRIEST);
 
         // Helper local: revalida la distancia al NPC seleccionado.
         auto stillNear = [&]() -> bool {

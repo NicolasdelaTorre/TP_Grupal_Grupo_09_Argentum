@@ -59,7 +59,7 @@ struct FriendlyNpc {
     uint16_t id;
     int16_t x;
     int16_t y;
-    uint8_t type;  // wire byte de NpcType: MERCHANT=6, BANKER=7, PRIEST=8
+    uint8_t type;  // wire byte de NpcCode: MERCHANT=6, BANKER=7, PRIEST=8
     std::string name;
 };
 
