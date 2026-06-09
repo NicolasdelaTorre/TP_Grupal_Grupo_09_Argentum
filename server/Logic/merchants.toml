@@ -1,0 +1,32 @@
+# Catalogos de comerciantes y sacerdotes.
+# itemId mapea a server/Logic/items.toml (ver itemNameById en game.cpp).
+# El precio es lo que paga el jugador al comprar. Al vender recibe la mitad.
+
+[trader]
+items = [
+    { itemId = 1, price = 50 },     # Sword
+    { itemId = 2, price = 80 },     # Axe
+    { itemId = 3, price = 120 },    # Hammer
+    { itemId = 8, price = 60 },     # Simple Bow
+    { itemId = 9, price = 180 },    # Composite Bow
+    { itemId = 10, price = 70 },    # Lether Armor
+    { itemId = 11, price = 200 },   # Plate Armor
+    { itemId = 12, price = 90 },    # Blue Tunic
+    { itemId = 13, price = 30 },    # Hood
+    { itemId = 14, price = 90 },    # Iron Helmet
+    { itemId = 15, price = 25 },    # Turtle Shield
+    { itemId = 16, price = 75 },    # Iron Shield
+    { itemId = 18, price = 40 },    # Health Potion
+    { itemId = 19, price = 40 },    # Mana Potion
+]
+
+[priest]
+items = [
+    { itemId = 4, price = 100 },    # Ash Staff
+    { itemId = 5, price = 150 },    # Elven Flute
+    { itemId = 6, price = 220 },    # Root Staff
+    { itemId = 7, price = 320 },    # Socketed Staff
+    { itemId = 17, price = 110 },   # Wizard Hat
+    { itemId = 18, price = 40 },    # Health Potion
+    { itemId = 19, price = 40 },    # Mana Potion
+]

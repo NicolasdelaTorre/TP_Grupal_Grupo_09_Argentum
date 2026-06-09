@@ -7,10 +7,27 @@
 #include <stdexcept>
 
 #include "NPC/creature.h"
+#include "toml.hpp"
 
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
-        bank(0, "global", 0, 0) {}
+        bank(0, "global", 0, 0) {
+    // Catalogos de merchant/priest desde TOML.
+    try {
+        const toml::value cfg = toml::parse("server/Logic/merchants.toml");
+        for (const char* type : {"trader", "priest"}) {
+            const auto& arr = toml::find<std::vector<toml::value>>(cfg, type, "items");
+            auto& vec = merchantCatalog[type];
+            for (const auto& entry : arr) {
+                auto id = toml::find<uint8_t>(entry, "itemId");
+                auto price = toml::find<uint32_t>(entry, "price");
+                vec.emplace_back(id, price);
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "WARN: no pude cargar merchants.toml: " << e.what() << std::endl;
+    }
+}
 
 bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
     Position spawn;
@@ -449,10 +466,22 @@ bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
 // clases Merchant/Banker/Priest existentes.
 
 std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
-    std::cout << "LIST merchant type=" << (int)npcType << " (stub)" << std::endl;
-    // TODO(team-gameplay): devolver items reales del merchant según la
-    // configuración de items.toml.
-    return {"(stub) Sin items disponibles. Implementar listMerchantInventory."};
+    std::string type;
+    if (npcType == static_cast<uint8_t>(NpcCode::MERCHANT)) type = "trader";
+    else if (npcType == static_cast<uint8_t>(NpcCode::PRIEST)) type = "priest";
+    else return {"Este NPC no vende nada"};
+
+    auto it = merchantCatalog.find(type);
+    if (it == merchantCatalog.end() || it->second.empty()) {
+        return {"Sin items en venta"};
+    }
+    std::vector<std::string> lines;
+    for (const auto& [id, price] : it->second) {
+        const char* name = itemNameById(id);
+        if (!name) continue;
+        lines.push_back(std::string("- ") + name + " ($" + std::to_string(price) + ")");
+    }
+    return lines;
 }
 
 std::vector<std::string> Game::listBankAccount(int playerId, uint8_t /*npcType*/) {

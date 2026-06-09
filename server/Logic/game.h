@@ -34,6 +34,9 @@ private:
     BinaryParser parser;
     // Singleton del banco
     Banker bank;
+    // Catalogos compartidos por tipo de comerciante ("trader" o "priest").
+    // Cargados de server/Logic/merchants.toml al inicio. Pair = (itemId, precio).
+    std::unordered_map<std::string, std::vector<std::pair<uint8_t, uint32_t>>> merchantCatalog;
     // Items tirados al piso (de /tirar o drops de NPC muerto). El id es
     // auto-incremental y nunca se reusa para que el cliente pueda referirse
     // a un drop específico al levantarlo.
