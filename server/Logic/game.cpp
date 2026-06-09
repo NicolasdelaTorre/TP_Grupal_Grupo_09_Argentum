@@ -239,10 +239,13 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
     }
 
     Position old = player.getPosition();
+    if (!map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId)) return false;
+
     player.move(next);
     player.setDirection(static_cast<uint8_t>(direction));
-    map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId);
+
     checkEntry(playerId);
+
     return true;
 }
 
@@ -266,7 +269,7 @@ void Game::checkEntry(int playerId) {
             // Si veníamos del overworld vamos a la dungeon; si veníamos de
             // una dungeon, salimos al overworld.
             if (currentMapId == 0)
-                map.placePlayerIntoTheDungeon(playerId, mapId);
+                map.placePlayerIntoTheDungeon(playerId, pos, mapId);
             else
                 map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');

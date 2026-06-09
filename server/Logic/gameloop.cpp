@@ -129,11 +129,16 @@ void Gameloop::PlayerTurns() {
         game.movePlayer(playerId, MoveDirection::TOP);
 
         auto r = game.revivePlayer(playerId);
+        std::string reply = r.message;
         if (r.ok) {
             Position p = game.getPlayerPosition(playerId);
             clientMonitor.broadcast(std::make_shared<PlayerRevivedEvent>(
                     static_cast<uint16_t>(playerId), p.x, p.y));
         }
+
+        clientMonitor.sendToClient(playerId,
+                               std::make_shared<ChatBroadcastEvent>(0, std::string(), reply));
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
     }
 }
 
@@ -787,6 +792,7 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
             }
         } else if (cmd == "/resucitar") {
             game.startPlayerResurrect(playerId);
+            return;
         } else if (cmd == "/curar") {
             if (!sel || !stillNear() || sel->type != PRIEST) {
                 reply = "No hay sacerdote seleccionado cerca";

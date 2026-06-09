@@ -356,7 +356,9 @@ uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
             continue;  // out of bounds
         }
 
-        Cell cell = getCell(static_cast<size_t>(y) * width + x, mapId);
+        uint16_t currentWidth = getWidth(mapId);
+
+        Cell cell = getCell(static_cast<size_t>(y) * currentWidth + x, mapId);
         if (isPlayer && cell.playerId != 0) {
             return cell.playerId;  // player in sight
         }
@@ -382,7 +384,9 @@ uint8_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId
                 continue;
             }
 
-            Cell cell = getCell(static_cast<size_t>(checkY) * width + checkX, mapId);
+            uint16_t currentWidth = getWidth(mapId);
+
+            Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
             if (isPlayer && cell.playerId != 0) {
                 return cell.playerId;  // player in distance
             }
@@ -412,20 +416,20 @@ void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t
         }
     }
 
-    std::vector<Cell>& cells = this->cells;
+    std::vector<Cell>* cells = &this->cells;
     if (mapId > 0) {
         for (auto& entry : entries) {
-            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                cells = entry.environment.cells;
+            if (entry.id.back() == '0' + mapId) {
+                cells = &entry.environment.cells;
                 break;
             }
         }
     }
 
     if (isPlayer) {
-        cells[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(entityId);
+        (*cells)[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(entityId);
     } else {
-        cells[static_cast<size_t>(y) * width + x].npcId = static_cast<uint8_t>(entityId);
+        (*cells)[static_cast<size_t>(y) * width + x].npcId = static_cast<uint8_t>(entityId);
     }
 }
 
@@ -442,7 +446,9 @@ Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId) {
                 continue;
             }
 
-            Cell cell = getCell(static_cast<size_t>(checkY) * width + checkX, mapId);
+            uint16_t currentWidth = getWidth(mapId);
+
+            Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
             if (cell.playerId != 0) {
                 return Position{checkX, checkY};
             }
@@ -452,31 +458,31 @@ Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId) {
     return Position{-1, -1};
 }
 
-void Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId) {
-    std::vector<Cell>& cells = this->cells;
+bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId) {
+    std::vector<Cell>* cells = &this->cells;
     if (mapId > 0) {
         for (auto& entry : entries) {
-            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                cells = entry.environment.cells;
+            if (entry.id.back() == '0' + mapId) {
+                cells = &entry.environment.cells;
                 break;
             }
         }
     }
 
-    if (isInBounds(oldX, oldY, mapId)) {
+    uint16_t currentWidth = getWidth(mapId);
+
+    if (isInBounds(oldX, oldY, mapId) && isInBounds(newX, newY, mapId) && !occupiedByEntity(newX, newY, mapId)) {
         if (isPlayer) {
-            cells[static_cast<size_t>(oldY) * width + oldX].playerId = 0;
+            (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].playerId = 0;
+            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].playerId = static_cast<uint8_t>(entityId);
         } else {
-            cells[static_cast<size_t>(oldY) * width + oldX].npcId = 0;
+            (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].npcId = 0;
+            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].npcId = static_cast<uint8_t>(entityId);
         }
+        return true;
     }
-    if (isInBounds(newX, newY, mapId)) {
-        if (isPlayer) {
-            cells[static_cast<size_t>(newY) * width + newX].playerId = static_cast<uint8_t>(entityId);
-        } else {
-            cells[static_cast<size_t>(newY) * width + newX].npcId = static_cast<uint8_t>(entityId);
-        }
-    }
+
+    return false;
 }
 
 void Map::removePlayer(int16_t x, int16_t y, uint8_t mapId) {
@@ -552,9 +558,10 @@ bool Map::checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId) {
     return false;  // No entry at the position
 }
 
-void Map::placePlayerIntoTheDungeon(int playerId, const std::string& mapId) {
+void Map::placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId) {
     for (const auto& entry : entries) {
         if (entry.id == mapId) {
+            removePlayer(playerPosition.x, playerPosition.y, 0);  // Remove player from overworld
             placeEntity(playerId, entry.environment.playerSpawn.x, entry.environment.playerSpawn.y, true, mapId[mapId.size() - 1] - '0');
             return;
         }
