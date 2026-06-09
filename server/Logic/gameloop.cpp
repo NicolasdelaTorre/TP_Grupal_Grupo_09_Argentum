@@ -544,10 +544,62 @@ void Gameloop::handleChat(int playerId, const std::string& text) {
         handleChatCommand(playerId, text);
         return;
     }
+    if (text[0] == '@') {
+        handlePrivateMessage(playerId, text);
+        return;
+    }
     const std::string& name = game.getPlayerName(playerId);
     std::cout << "CHAT " << name << "(" << playerId << "): " << text << std::endl;
     clientMonitor.broadcast(
             std::make_shared<ChatBroadcastEvent>(static_cast<uint16_t>(playerId), name, text));
+}
+
+// Mensaje privado: "@nick mensaje". Se busca al destinatario por nombre, se le
+// manda el texto con prefijo [priv] y al emisor una copia tambien con prefijo
+// para confirmar que se envio.
+void Gameloop::handlePrivateMessage(int playerId, const std::string& text) {
+    // text[0] == '@'. Buscar el primer espacio para cortar nick / mensaje.
+    size_t space = text.find(' ');
+    if (space == std::string::npos || space <= 1) {
+        clientMonitor.sendToClient(playerId, std::make_shared<ChatBroadcastEvent>(
+                0, std::string(), "Uso: @<nick> <mensaje>"));
+        return;
+    }
+    std::string targetName = text.substr(1, space - 1);
+    // Saltar espacios consecutivos antes del mensaje.
+    size_t msgStart = text.find_first_not_of(' ', space);
+    if (msgStart == std::string::npos) {
+        clientMonitor.sendToClient(playerId, std::make_shared<ChatBroadcastEvent>(
+                0, std::string(), "Uso: @<nick> <mensaje>"));
+        return;
+    }
+    std::string msg = text.substr(msgStart);
+
+    const std::string& senderName = game.getPlayerName(playerId);
+    if (targetName == senderName) {
+        clientMonitor.sendToClient(playerId, std::make_shared<ChatBroadcastEvent>(
+                0, std::string(), "No te podes mandar mensajes a vos mismo"));
+        return;
+    }
+
+    // Buscar destinatario por nombre entre los conectados.
+    int targetId = -1;
+    for (int pid : game.getPlayerIds()) {
+        if (game.getPlayerName(pid) == targetName) { targetId = pid; break; }
+    }
+    if (targetId == -1) {
+        clientMonitor.sendToClient(playerId, std::make_shared<ChatBroadcastEvent>(
+                0, std::string(), targetName + " no esta conectado"));
+        return;
+    }
+
+    std::cout << "PRIV " << senderName << " -> " << targetName << ": " << msg << std::endl;
+    // Al destinatario: viene del emisor (authorId = sender) con prefijo [priv].
+    clientMonitor.sendToClient(targetId, std::make_shared<ChatBroadcastEvent>(
+            static_cast<uint16_t>(playerId), senderName, "[priv] " + msg));
+    // Al emisor: confirmacion (autoria del sistema).
+    clientMonitor.sendToClient(playerId, std::make_shared<ChatBroadcastEvent>(
+            0, std::string(), "[priv a " + targetName + "] " + msg));
 }
 
 // Helper: parte "cmd arg1 arg2 ..." en palabras (ignora espacios consecutivos).
@@ -686,8 +738,8 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
 
         if (cmd == "/listar") {
             if (!sel || !stillNear()) {
-                reply = "Necesitás estar cerca de un comerciante o banquero (click)";
-            } else if (sel->type == MERCHANT) {
+                reply = "Necesitás estar cerca de un comerciante, sacerdote o banquero (click)";
+            } else if (sel->type == MERCHANT || sel->type == PRIEST) {
                 auto lines = game.listMerchantInventory(sel->type);
                 for (const auto& l : lines) {
                     clientMonitor.sendToClient(

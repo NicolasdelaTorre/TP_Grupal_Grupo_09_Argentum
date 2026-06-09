@@ -34,6 +34,12 @@ class Banker : public NPC {
 
         uint8_t withdrawItem(const std::string& name, uint8_t itemId);
 
+        // Lectura del estado de una cuenta. Devuelve 0 si no existe.
+        uint32_t getGold(const std::string& name) const;
+
+        // Devuelve los itemIds guardados (sin slots vacios). Vacio si no existe.
+        std::vector<uint8_t> getItems(const std::string& name) const;
+
         ~Banker() override;
 };
 

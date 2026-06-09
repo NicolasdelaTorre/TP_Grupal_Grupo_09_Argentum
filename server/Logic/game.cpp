@@ -1,14 +1,33 @@
 #include "game.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 
 #include "NPC/creature.h"
+#include "toml.hpp"
 
 Game::Game(Map& world):
-        map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()) {}
+        map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
+        bank(0, "global", 0, 0) {
+    // Catalogos de merchant/priest desde TOML.
+    try {
+        const toml::value cfg = toml::parse("server/Logic/merchants.toml");
+        for (const char* type : {"trader", "priest"}) {
+            const auto& arr = toml::find<std::vector<toml::value>>(cfg, type, "items");
+            auto& vec = merchantCatalog[type];
+            for (const auto& entry : arr) {
+                auto id = toml::find<uint8_t>(entry, "itemId");
+                auto price = toml::find<uint32_t>(entry, "price");
+                vec.emplace_back(id, price);
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "WARN: no pude cargar merchants.toml: " << e.what() << std::endl;
+    }
+}
 
 bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
     Position spawn;
@@ -21,6 +40,9 @@ bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, Class
         players.emplace(playerId, Player(parser.loadPlayerData(name), name));
         spawn = players.at(playerId).getPosition();
     }
+
+    // Cargar/crear la cuenta del banco para este jugador.
+    bank.addPlayer(name);
 
     map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
 
@@ -380,31 +402,42 @@ bool Game::cheatAddGold(int playerId, uint32_t amount) {
     return true;
 }
 
-// Mapeo de itemId → nombre del item, según items.toml. Lo usan cheatSpawnItem
-// y otros stubs que necesitan crear un item por id.
+// Mapeo de itemId -> nombre canonico (en minuscula, igual que en items.toml).
 static const char* itemNameById(uint8_t id) {
     switch (id) {
-        case 1: return "Sword";
-        case 2: return "Axe";
-        case 3: return "Hammer";
-        case 4: return "Ash Staff";
-        case 5: return "Elven Flute";
-        case 6: return "Root Staff";
-        case 7: return "Socketed Staff";
-        case 8: return "Simple Bow";
-        case 9: return "Composite Bow";
-        case 10: return "Lether Armor";
-        case 11: return "Plate Armor";
-        case 12: return "Blue Tunic";
-        case 13: return "Hood";
-        case 14: return "Iron Helmet";
-        case 15: return "Turtle Shield";
-        case 16: return "Iron Shield";
-        case 17: return "Wizard Hat";
-        case 18: return "Health Potion";
-        case 19: return "Mana Potion";
+        case 1: return "sword";
+        case 2: return "axe";
+        case 3: return "hammer";
+        case 4: return "ash staff";
+        case 5: return "elven flute";
+        case 6: return "root staff";
+        case 7: return "socketed staff";
+        case 8: return "simple bow";
+        case 9: return "composite bow";
+        case 10: return "leather armor";
+        case 11: return "plate armor";
+        case 12: return "blue tunic";
+        case 13: return "hood";
+        case 14: return "iron helmet";
+        case 15: return "turtle shield";
+        case 16: return "iron shield";
+        case 17: return "wizard hat";
+        case 18: return "health potion";
+        case 19: return "mana potion";
         default: return nullptr;
     }
+}
+
+// Inverso de itemNameById. Acepta el input en cualquier capitalizacion
+// ("sword", "Sword", "SWORD"); como los canonicos ya son minuscula, solo
+// hace falta lowercasear el input. Devuelve 0 si no existe.
+static uint8_t itemIdByName(std::string name) {
+    for (char& c : name) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (uint8_t id = 1; id <= 19; id++) {
+        const char* n = itemNameById(id);
+        if (n && name == n) return id;
+    }
+    return 0;
 }
 
 bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
@@ -429,73 +462,176 @@ bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
 // clases Merchant/Banker/Priest existentes.
 
 std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
-    std::cout << "LIST merchant type=" << (int)npcType << " (stub)" << std::endl;
-    // TODO(team-gameplay): devolver items reales del merchant según la
-    // configuración de items.toml.
-    return {"(stub) Sin items disponibles. Implementar listMerchantInventory."};
+    std::string type;
+    if (npcType == static_cast<uint8_t>(NpcCode::MERCHANT)) type = "trader";
+    else if (npcType == static_cast<uint8_t>(NpcCode::PRIEST)) type = "priest";
+    else return {"Este NPC no vende nada"};
+
+    auto it = merchantCatalog.find(type);
+    if (it == merchantCatalog.end() || it->second.empty()) {
+        return {"Sin items en venta"};
+    }
+    std::vector<std::string> lines;
+    for (const auto& [id, price] : it->second) {
+        const char* name = itemNameById(id);
+        if (!name) continue;
+        lines.push_back(std::string("- ") + name + " ($" + std::to_string(price) + ")");
+    }
+    return lines;
 }
 
-std::vector<std::string> Game::listBankAccount(int playerId, uint8_t npcType) {
-    std::cout << "LIST bank player=" << playerId << " type=" << (int)npcType << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): leer Banker::accounts (server/Logic/NPC/banker.h) y devolver el oro + items guardados del jugador.
-    return {"(stub) Cuenta vacía. Implementar listBankAccount."};
+std::vector<std::string> Game::listBankAccount(int playerId, uint8_t /*npcType*/) {
+    std::vector<std::string> lines;
+    auto it = players.find(playerId);
+    if (it == players.end()) return lines;
+    const std::string& name = it->second.getName();
+    lines.push_back("Oro guardado: " + std::to_string(bank.getGold(name)));
+    auto items = bank.getItems(name);
+    if (items.empty()) {
+        lines.push_back("Sin items guardados");
+    } else {
+        for (uint8_t id : items) {
+            const char* n = itemNameById(id);
+            lines.push_back(std::string("- ") + (n ? n : "(desconocido)"));
+        }
+    }
+    return lines;
+}
+
+// Devuelve el catalogo correspondiente al tipo de NPC, o nullptr si no vende.
+static const std::vector<std::pair<uint8_t, uint32_t>>* catalogFor(
+        const std::unordered_map<std::string, std::vector<std::pair<uint8_t, uint32_t>>>& cat,
+        uint8_t npcType) {
+    std::string type;
+    if (npcType == static_cast<uint8_t>(NpcCode::MERCHANT)) type = "trader";
+    else if (npcType == static_cast<uint8_t>(NpcCode::PRIEST)) type = "priest";
+    else return nullptr;
+    auto it = cat.find(type);
+    return it == cat.end() ? nullptr : &it->second;
 }
 
 Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
                                          const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "BUY player=" << playerId << " npcType=" << (int)npcType << " item=" << itemName
-              << " (stub)" << std::endl;
-    // TODO(team-gameplay): validar oro, restar precio, addItem al inventario.
-    return {true, "Compraste " + itemName + " (stub)"};
+    uint8_t itemId = itemIdByName(itemName);
+    if (itemId == 0) return {false, "Item desconocido: " + itemName};
+    std::string canonical = itemNameById(itemId);
+
+    const auto* catalog = catalogFor(merchantCatalog, npcType);
+    if (!catalog) return {false, "Este NPC no vende nada"};
+
+    uint32_t price = 0;
+    bool found = false;
+    for (const auto& [id, p] : *catalog) {
+        if (id == itemId) { price = p; found = true; break; }
+    }
+    if (!found) return {false, "No vende " + canonical};
+    if (it->second.getData().gold < price) {
+        return {false, "Te faltan " + std::to_string(price - it->second.getData().gold) + " de oro"};
+    }
+    if (!it->second.addItem(canonical)) {
+        return {false, "Tu inventario esta lleno"};
+    }
+    it->second.removeGold(price);
+    return {true, "Compraste " + canonical + " por " + std::to_string(price)};
 }
 
 Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
                                         const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "SELL player=" << playerId << " npcType=" << (int)npcType << " item=" << itemName
-              << " (stub)" << std::endl;
-    // TODO(team-gameplay): buscar el item en inventario, removerlo, sumar oro.
-    return {true, "Vendiste " + itemName + " (stub)"};
+    // Solo el comerciante compra. El sacerdote no.
+    if (npcType != static_cast<uint8_t>(NpcCode::MERCHANT)) {
+        return {false, "Solo el comerciante compra items"};
+    }
+    uint8_t itemId = itemIdByName(itemName);
+    if (itemId == 0) return {false, "Item desconocido: " + itemName};
+    std::string canonical = itemNameById(itemId);
+
+    // El precio de venta es la mitad del precio de compra del trader.
+    const auto* catalog = catalogFor(merchantCatalog, npcType);
+    if (!catalog) return {false, "Este NPC no compra"};
+    uint32_t buyPrice = 0;
+    for (const auto& [id, p] : *catalog) {
+        if (id == itemId) { buyPrice = p; break; }
+    }
+    if (buyPrice == 0) return {false, "No compra " + canonical};
+    uint32_t sellPrice = buyPrice / 2;
+
+    if (it->second.removeItemByName(canonical) == 0) {
+        return {false, "No tenes " + canonical + " en el inventario"};
+    }
+    it->second.addGold(sellPrice);
+    return {true, "Vendiste " + canonical + " por " + std::to_string(sellPrice)};
 }
 
 Game::InteractionResult Game::depositItemToBank(int playerId, const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "DEPOSIT_ITEM player=" << playerId << " item=" << itemName << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): usar Banker::depositItem.
-    return {true, "Depositaste " + itemName + " (stub)"};
+    uint8_t itemId = itemIdByName(itemName);
+    if (itemId == 0) return {false, "Item desconocido: " + itemName};
+    std::string canonical = itemNameById(itemId);
+    if (it->second.removeItemByName(canonical) == 0) {
+        return {false, "No tenes " + canonical + " en el inventario"};
+    }
+    if (!bank.depositItem(it->second.getName(), itemId)) {
+        // cuenta llena: lo devolvemos al inventario para no perderlo.
+        it->second.addItem(canonical);
+        return {false, "El banco esta lleno"};
+    }
+    return {true, "Depositaste " + canonical};
 }
 
 Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "DEPOSIT_GOLD player=" << playerId << " amount=" << amount << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): validar oro del jugador, restar, sumar a Banker::depositGold.
-    return {true, "Depositaste " + std::to_string(amount) + " de oro (stub)"};
+    if (amount == 0) return {false, "Cantidad invalida"};
+    if (!it->second.removeGold(amount)) {
+        return {false, "No tenes suficiente oro"};
+    }
+    if (!bank.depositGold(it->second.getName(), amount)) {
+        // overflow en la cuenta: devolvemos el oro al jugador para no perderlo.
+        it->second.addGold(amount);
+        return {false, "No se pudo depositar (cuenta llena)"};
+    }
+    return {true, "Depositaste " + std::to_string(amount) + " de oro"};
 }
 
 Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "WITHDRAW_ITEM player=" << playerId << " item=" << itemName << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): usar Banker::withdrawItem.
-    return {true, "Retiraste " + itemName + " (stub)"};
+    uint8_t itemId = itemIdByName(itemName);
+    if (itemId == 0) return {false, "Item desconocido: " + itemName};
+    std::string canonical = itemNameById(itemId);
+    uint8_t got = bank.withdrawItem(it->second.getName(), itemId);
+    if (got == 0) return {false, "No tenes " + canonical + " en el banco"};
+    if (!it->second.addItem(canonical)) {
+        // inventario lleno: lo devolvemos al banco para no perderlo.
+        bank.depositItem(it->second.getName(), got);
+        return {false, "Tu inventario esta lleno"};
+    }
+    return {true, "Retiraste " + canonical};
 }
 
 Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "WITHDRAW_GOLD player=" << playerId << " amount=" << amount << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): usar Banker::withdrawGold.
-    return {true, "Retiraste " + std::to_string(amount) + " de oro (stub)"};
+    if (amount == 0) return {false, "Cantidad invalida"};
+    uint32_t got = bank.withdrawGold(it->second.getName(), amount);
+    if (got == 0) return {false, "No tenes esa cantidad en el banco"};
+    // addGold respeta el cap OroMax = 100 * Nivel^1.1. El sobrante se pierde
+    // o queda en el banco (aca devolvemos al banco lo que no entro).
+    uint32_t before = it->second.getData().gold;
+    it->second.addGold(got);
+    uint32_t added = it->second.getData().gold - before;
+    if (added < got) {
+        bank.depositGold(it->second.getName(), got - added);
+        if (added == 0) return {false, "Ya tenes el oro maximo encima"};
+        return {true, "Retiraste " + std::to_string(added) +
+                       " (no entraba mas por el cap)"};
+    }
+    return {true, "Retiraste " + std::to_string(got) + " de oro"};
 }
 
 Game::InteractionResult Game::revivePlayer(int playerId) {

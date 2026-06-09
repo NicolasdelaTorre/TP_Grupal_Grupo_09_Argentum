@@ -163,6 +163,21 @@ bool Player::addItem(const std::string& itemName) {
     return false;
 }
 
+uint8_t Player::removeItemByName(const std::string& itemName) {
+    for (size_t i = 0; i < inventory.size(); i++) {
+        if (inventory[i].getName() == itemName) {
+            uint8_t id = inventory[i].getId();
+            inventory.erase(inventory.begin() + i);
+            // Recompactar data.inventory para que matchee el vector.
+            for (size_t j = 0; j < N; j++) {
+                data.inventory[j] = j < inventory.size() ? inventory[j].getId() : 0;
+            }
+            return id;
+        }
+    }
+    return 0;
+}
+
 bool Player::equipItem(int inventorySlot) {
     if (inventorySlot < 0 || (size_t)inventorySlot >= inventory.size()) {
         return false;
@@ -323,4 +338,10 @@ void Player::addGold(uint32_t amount) {
     if (data.gold >= cap) return;
     uint32_t room = cap - data.gold;
     data.gold += std::min(amount, room);
+}
+
+bool Player::removeGold(uint32_t amount) {
+    if (data.gold < amount) return false;
+    data.gold -= amount;
+    return true;
 }
