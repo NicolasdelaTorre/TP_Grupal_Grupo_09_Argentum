@@ -6,11 +6,10 @@
 
 #include "../common/common_tiles.h"
 
+#include "item_sprites.h"
+
 namespace {
 
-static constexpr int ITEM_CELL = 32;       // each cell in all three sheets is 32×32 px
-static constexpr int ITEM_COLS_512 = 16;   // 512px sheets → 16 columns
-static constexpr int ITEM_COLS_1024 = 32;  // 1024px sheet  → 32 columns
 static constexpr int ITEM_DRAW_SIZE = 40;  // render size on screen (scaled up from 32px)
 static constexpr const char* COMMON_ASSET_PATH = "../common/assets/images/";
 
@@ -22,19 +21,6 @@ SDL_Color colorFromHex(const char* hex) {
         return {0, 0, 0, 255};
     }
     return {static_cast<Uint8>(r), static_cast<Uint8>(g), static_cast<Uint8>(b), 255};
-}
-
-const char* itemSheetPath(uint8_t sheetId) {
-    switch (sheetId) {
-        case 0:
-            return "/Pantallas/Items_recolectables.png";
-        case 1:
-            return "/Pantallas/Items_recolectables_2.png";
-        case 2:
-            return "/Pantallas/Items_recolectables_3.png";
-        default:
-            return nullptr;
-    }
 }
 
 // Devuelve el path del sprite para NPCs de ciudad (obstáculos fijos en el mapa).
@@ -364,21 +350,17 @@ void MapRenderer::renderCityNpcs(const GameMap& map, float camX, float camY) {
 void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, float camX,
                                      float camY) {
     for (const auto& item: items) {
-        const char* tex = itemSheetPath(item.sheetId);
-        if (!tex)
-            continue;
-
-        int cols = (item.sheetId == 2) ? ITEM_COLS_1024 : ITEM_COLS_512;
-        int row = item.itemId / cols;
-        int col = item.itemId % cols;
-        SDL2pp::Rect src(col * ITEM_CELL, row * ITEM_CELL, ITEM_CELL, ITEM_CELL);
+        // Mismo mapeo que el inventario: el id del item (items.toml) define de
+        // qué sheet y celda sale el dibujo. Así el item en el piso coincide.
+        ItemSpriteRef ref = itemSpriteFor(item.itemId);
+        SDL2pp::Rect src(ref.srcX, ref.srcY, ref.srcW, ref.srcH);
 
         int screenX = (int)(item.x * TILE_SIZE - camX) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
         int screenY = (int)(item.y * TILE_SIZE - camY) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
         SDL2pp::Rect dst(screenX, screenY, ITEM_DRAW_SIZE, ITEM_DRAW_SIZE);
 
         try {
-            renderer.Copy(cache.get(tex), src, dst);
+            renderer.Copy(cache.get(ref.sheetPath), src, dst);
         } catch (...) {}
     }
 }

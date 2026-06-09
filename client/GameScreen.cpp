@@ -8,6 +8,9 @@
 #include "../common/Communication/events/client_events.h"
 #include "../common/Communication/message_types.h"
 
+#include "item_sprites.h"
+#include "tile_textures.h"
+
 namespace {
 
 // MapEvent (wire) → GameMap (lo que pinta el MapRenderer).
@@ -628,7 +631,7 @@ void GameScreen::renderInventoryPanel() {
     fondo.SetColorMod(120, 160, 255);
     renderer.Copy(fondo, SDL2pp::NullOpt, SDL2pp::Rect(screenW - hudW, 0, hudW, screenH));
 
-    // Panel del inventario: recorte 3 cols x 5 rows del PNG completo, escalado.
+    // Panel del inventario: recorte 4 cols x 5 rows del PNG completo, escalado.
     const int INV_W = (int)(210 * scale);
     const int INV_H = (int)(255 * scale);
     int invX = screenW - hudW + (hudW - INV_W) / 2;
@@ -637,14 +640,11 @@ void GameScreen::renderInventoryPanel() {
                   SDL2pp::Rect(0, 0, 140, 175),
                   SDL2pp::Rect(invX, invY, INV_W, INV_H));
 
-    // Items sobre el grid: 3 cols x 5 rows = 15 slots.
-    static constexpr int GRID_COLS = 3;
+    // Items sobre el grid: 4 cols x 5 rows = 20 slots. El recorte de cada item
+    // sale del mapeo compartido (item_sprites.h), igual que los items del piso.
+    static constexpr int GRID_COLS = 4;
     static constexpr int GRID_ROWS = 5;
-    // Items_inventario.png: 31 cols x 10 rows, iconos cuadrados.
-    static constexpr int SHEET_COLS = 31;
-    static constexpr float SHEET_CELL = 1024.0f / SHEET_COLS;
 
-    SDL2pp::Texture& itemsTex = cache.get("/Pantallas/Items_inventario.png");
     float cw = INV_W / (float)GRID_COLS;
     float ch = INV_H / (float)GRID_ROWS;
     int pad = (int)(4 * scale);
@@ -652,10 +652,8 @@ void GameScreen::renderInventoryPanel() {
     for (size_t i = 0; i < inventoryItems.size() && i < GRID_COLS * GRID_ROWS; i++) {
         uint8_t itemId = inventoryItems[i];
         if (itemId == 0) continue;
-        // itemId es 1-based (ver items.toml); el sheet es row-major desde 0.
-        int cell = itemId - 1;
-        int srcX = (int)((cell % SHEET_COLS) * SHEET_CELL);
-        int srcY = (int)((cell / SHEET_COLS) * SHEET_CELL);
+        ItemSpriteRef ref = itemSpriteFor(itemId);
+        SDL2pp::Texture& itemsTex = cache.get(ref.sheetPath);
 
         int col = i % GRID_COLS;
         int row = i / GRID_COLS;
@@ -664,7 +662,7 @@ void GameScreen::renderInventoryPanel() {
         int dstW = (int)cw - 2 * pad;
         int dstH = (int)ch - 2 * pad;
 
-        renderer.Copy(itemsTex, SDL2pp::Rect(srcX, srcY, (int)SHEET_CELL, (int)SHEET_CELL),
+        renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
                       SDL2pp::Rect(dstX, dstY, dstW, dstH));
     }
 }
