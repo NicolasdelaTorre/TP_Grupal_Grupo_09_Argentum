@@ -18,6 +18,8 @@ struct LoginResult {
     bool confirmed;
 };
 
+
+constexpr int SKIN_DEFAULT = 0;  // índice del skin por defecto (columna en Skins.png)
 // Item tirado al piso (DroppedItemEvent). sheetId y itemId mapean al
 // spritesheet de items. dropId es la clave que asigna el server.
 struct DroppedItem {
@@ -35,7 +37,7 @@ struct Player_ {
     bool moving = false;
     int animFrame = 0;
     float animTimer = 0.0f;
-    int skin = 2;
+    int skin = SKIN_DEFAULT;
     int headId = 6;
     int helmetId = 10;
     int weaponId = 2;

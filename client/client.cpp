@@ -59,12 +59,9 @@ void Client::run() {
         HeadSelectionResult headResult = headSelection.run();
         if (!headResult.confirmed)
             return;
-        CharCreationScreen charCreation(renderer, "AO_IMGS", headResult.headId);
-        CharCreationResult charResult = charCreation.run();
-        if (!charResult.confirmed)
-            return;
-        protocol.send(SkinSelectedEvent(static_cast<uint8_t>(charResult.skinId)));
-        player.skin = charResult.skinId;
+        protocol.send(SkinSelectedEvent(static_cast<uint8_t>(SKIN_DEFAULT)));
+        player.skin = SKIN_DEFAULT;
+        player.headId = headResult.headId;
         ev = protocol.receiveEvent();
     }
 
