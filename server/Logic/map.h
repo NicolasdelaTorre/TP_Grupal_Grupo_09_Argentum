@@ -125,6 +125,8 @@ public:
 
     std::string getMapId(uint16_t x, uint16_t y);
 
+    Position getEntryPosition(uint8_t mapId);
+
     Position getEntrySpawnPosition(const std::string& mapId);
 
     // Devuelve true si (x, y) está dentro de los límites del mapa.
@@ -135,15 +137,15 @@ public:
 
     bool occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const;
 
-    uint8_t nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
+    uint16_t nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
     // Mueve el entityId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
-    void moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId);
+    bool moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId);
 
     // Limpia el playerId de la celda. Se llama al desconectar / morir.
     void removePlayer(int16_t x, int16_t y, uint8_t mapId);
 
-    uint8_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
+    uint16_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
     void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
@@ -157,7 +159,7 @@ public:
 
     bool checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId);
 
-    void placePlayerIntoTheDungeon(int playerId, const std::string& mapId);
+    void placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId);
 
     void placePlayerIntoTheOverworld(int playerId, uint8_t mapId);
 
@@ -174,6 +176,9 @@ public:
 
     // Distancia del jugador al amigo. -1 si no existe el amigo.
     int friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendlyId) const;
+    int calculateTeleportingTime(Position playerPosition, uint8_t mapId);
+
+    Position searchNearestPriest(int16_t x, int16_t y);
 };
 
 #endif

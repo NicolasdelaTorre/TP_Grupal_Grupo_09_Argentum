@@ -48,6 +48,14 @@ private:
     // True si ningún jugador está parado en pos.
     bool isPositionFree(Position pos) const;
 
+    /*
+    bool processUser(int playerId, const std::string& user);
+
+    bool turnPlayer(int playerId, const std::string& direction);
+
+    bool processHeal(int playerId);
+    */
+
     // Stub de evasión. TODO(team-gameplay): implementar fórmula real con
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
     bool tryEvade(int attackerId, int targetId) const;
@@ -65,6 +73,8 @@ public:
 
     // Gira sin moverse.
     bool turnPlayer(int playerId, MoveDirection direction);
+
+    bool processMovement(int playerId, const std::string& direction);
 
     Position getPlayerPosition(int playerId) const;
 
@@ -90,6 +100,8 @@ public:
     uint32_t getPlayerNextLevelExp(int playerId) const;
 
     uint8_t getPlayerLevel(int playerId) const;
+
+    uint8_t getPlayerMapId(int playerId) const;
 
     bool hasPlayer(int playerId) const;
 
@@ -198,7 +210,13 @@ public:
 
     bool checkIfPlayerIsMeditating(int playerId) const;
 
+    bool checkIfPlayerIsTeleporting(int playerId) const;
+
     void restorePlayerManaForMeditation(int playerId);
+
+    void finishTeleportingState(int playerId);
+
+    bool startPlayerResurrect(int playerId);
 
     void removePlayer(int playerId);
 

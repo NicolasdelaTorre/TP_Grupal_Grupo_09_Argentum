@@ -187,6 +187,14 @@ uint32_t Game::getPlayerNextLevelExp(int playerId) const {
     return 0;
 }
 
+uint8_t Game::getPlayerMapId(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().mapId;
+}
+
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
 bool Game::isPlayerGhost(int playerId) const {
@@ -246,17 +254,16 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
         return false;
     }
 
-    if (!isPositionFree(next)) {
-        std::cout << "Player can't move in that direction (occupied by another player)"
-                  << std::endl;
-        return false;
-    }
-
     Position old = player.getPosition();
+    // moveEntity valida internamente que la celda destino no este ocupada por
+    // NPC ni por player y devuelve false si lo esta.
+    if (!map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId)) return false;
+
     player.move(next);
     player.setDirection(static_cast<uint8_t>(direction));
-    map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId);
+
     checkEntry(playerId);
+
     return true;
 }
 
@@ -280,7 +287,7 @@ void Game::checkEntry(int playerId) {
             // Si veníamos del overworld vamos a la dungeon; si veníamos de
             // una dungeon, salimos al overworld.
             if (currentMapId == 0)
-                map.placePlayerIntoTheDungeon(playerId, mapId);
+                map.placePlayerIntoTheDungeon(playerId, pos, mapId);
             else
                 map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
@@ -637,22 +644,14 @@ Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount
 Game::InteractionResult Game::revivePlayer(int playerId) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    if (!it->second.getData().isGhost) {
-        return {false, "Ya estás vivo"};
-    }
-    // Reaparece en el spawn de la ciudad. resetStats() limpia isGhost y
-    // restaura HP/MP. TODO(team-gameplay): tp al sacerdote más cercano según
-    // enunciado (proporcional a la distancia).
-    Position old = it->second.getPosition();
-    Position newPos = findSpawnPosition();
-    map.moveEntity(playerId, old.x, old.y, newPos.x, newPos.y, /*isPlayer=*/true,
-                   it->second.getMapId());
-    it->second.move(newPos);
-    it->second.resetStats();
-    std::cout << "REVIVE player=" << playerId << " at (" << newPos.x << "," << newPos.y << ")"
-              << std::endl;
+
+    it->second.revive();
+    
+    // it->second.resetStats();
+
     return {true, "Volviste a la vida"};
 }
+
 
 Game::InteractionResult Game::healPlayer(int playerId) {
     auto it = players.find(playerId);
@@ -774,6 +773,29 @@ bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
     return true;
 }
 
+/*
+bool Game::processChatCommand(int playerId, const std::string& chatCommand) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (chatCommand == "meditar") {
+        // Command: /meditar
+        itPlayer->second.switchMeditationState();
+    } else if (chatCommand == "resucitar") {
+        // Command: /resucitar
+        if (itPlayer->second.isAlive()) {
+            return false;
+        }
+
+        itPlayer->second.startTeleporting();
+    }
+
+    return true;
+}
+    */
+
 bool Game::checkIfPlayerIsMeditating(int playerId) const {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
@@ -784,6 +806,25 @@ bool Game::checkIfPlayerIsMeditating(int playerId) const {
     return itPlayer->second.getMeditationState() ? 1 : 0;
 }
 
+bool Game::checkIfPlayerIsTeleporting(int playerId) const {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        // It's ok if the player is not found. The player has disconnected
+        return false;
+    }
+
+    return itPlayer->second.getTeleportingState() ? 1 : 0;
+}
+
+void Game::finishTeleportingState(int playerId) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    itPlayer->second.finishTeleporting();
+}
+
 void Game::restorePlayerManaForMeditation(int playerId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
@@ -791,6 +832,21 @@ void Game::restorePlayerManaForMeditation(int playerId) {
     }
 
     itPlayer->second.restoreManaForMeditation();
+}
+
+bool Game::startPlayerResurrect(int playerId) {
+    auto itPlayer = players.find(playerId);
+    if (itPlayer == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    if (itPlayer->second.isAlive()) {
+        return false;
+    }
+
+    itPlayer->second.startTeleporting();
+
+    return true;
 }
 
 Game::~Game() {

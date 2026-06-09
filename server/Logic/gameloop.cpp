@@ -95,10 +95,49 @@ void Gameloop::PlayerTurns() {
     turnManager.addPlayers(playerIds);
     turnManager.removePlayers(playerIds);
 
+    // Verify if a player is teleporting to a city
+    for (int playerId : playerIds) {
+        if (game.hasPlayer(playerId) && game.checkIfPlayerIsTeleporting(playerId) && !turnManager.alreadyTeleporting(playerId)) {
+            int timeToTeleport = map.calculateTeleportingTime(game.getPlayerPosition(playerId), game.getPlayerMapId(playerId));
+            turnManager.setTimeToTeleport(playerId, timeToTeleport);
+        }
+    }
+
+    // Get Players ready to restore mana by meditating
     std::vector<int> playersToRestoreMana = turnManager.getPlayersReadyToRestoreMana();
     for (int playerId: playersToRestoreMana) {
         game.restorePlayerManaForMeditation(playerId);
         // Cada vez que recuperamos mana mandamos stats actualizados.
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
+
+    // Get Players ready to teleport to a city
+    std::vector<int> playersToTeleport = turnManager.getPlayersReadyToTeleport();
+    for (int playerId : playersToTeleport) {
+        game.finishTeleportingState(playerId);
+        Position playerPosition = {0, 0};
+        uint8_t mapId = game.getPlayerMapId(playerId);
+        if (mapId > 0) {
+            playerPosition = map.getEntryPosition(mapId);
+        } else {
+            playerPosition = game.getPlayerPosition(playerId);
+        }
+
+        Position priestPosition = map.searchNearestPriest(playerPosition.x, playerPosition.y);
+
+        map.moveEntity(playerId, playerPosition.x, playerPosition.y, priestPosition.x, priestPosition.y + 1, true, 0);
+        game.movePlayer(playerId, MoveDirection::TOP);
+
+        auto r = game.revivePlayer(playerId);
+        std::string reply = r.message;
+        if (r.ok) {
+            Position p = game.getPlayerPosition(playerId);
+            clientMonitor.broadcast(std::make_shared<PlayerRevivedEvent>(
+                    static_cast<uint16_t>(playerId), p.x, p.y));
+        }
+
+        clientMonitor.sendToClient(playerId,
+                               std::make_shared<ChatBroadcastEvent>(0, std::string(), reply));
         clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
     }
 }
@@ -113,17 +152,19 @@ void Gameloop::NPCTurns() {
         Creature* npc = map.getNPC(npcId);
         Position oldPos = npc->getPosition();
         Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
-        if (newPos.x == -1)
+        
+        if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
             continue;
-        if (newPos.x == oldPos.x && newPos.y == oldPos.y)
-            continue;
-        map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId());
-        // Solo el overworld viaja al cliente (mapId=0).
-        if (npc->getMapId() != 0)
-            continue;
-        uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
-                                       static_cast<int16_t>(newPos.y - oldPos.y));
-        clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
+        if (map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId())) {
+            npc->move(newPos);
+
+            // Solo el overworld viaja al cliente (mapId=0).
+            if (npc->getMapId() != 0)
+                continue;
+            uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
+                                        static_cast<int16_t>(newPos.y - oldPos.y));
+            clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
+        }
     }
 
     // NPCs que toca atacar: si tienen un jugador adyacente, le aplican daño y
@@ -814,16 +855,8 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
                 if (r.ok) refreshInventory = true;
             }
         } else if (cmd == "/resucitar") {
-            // El enunciado permite tipear /resucitar sin estar cerca (te
-            // teletransporta al sacerdote más cercano). No requerimos selección.
-            auto r = game.revivePlayer(playerId);
-            reply = r.message;
-            if (r.ok) {
-                refreshStats = true;
-                Position p = game.getPlayerPosition(playerId);
-                clientMonitor.broadcast(std::make_shared<PlayerRevivedEvent>(
-                        static_cast<uint16_t>(playerId), p.x, p.y));
-            }
+            game.startPlayerResurrect(playerId);
+            return;
         } else if (cmd == "/curar") {
             if (!sel || !stillNear() || sel->type != PRIEST) {
                 reply = "No hay sacerdote seleccionado cerca";
