@@ -72,6 +72,9 @@ public:
     // Parsea "/cmd arg1 arg2 ..." y dispara la acción. Si el comando no
     // existe, le manda al jugador un ChatBroadcastEvent del sistema.
     void handleChatCommand(int playerId, const std::string& text);
+    // Parsea "@nick mensaje" y se lo manda solo al destinatario (mas copia al
+    // emisor). Si el nick no esta conectado, avisa al emisor.
+    void handlePrivateMessage(int playerId, const std::string& text);
     // Click sobre un NPC amigo: valida adyacencia (≤2 tiles) y guarda la
     // selección. Responde con mensaje del sistema.
     void handleSelectNpc(int playerId, uint16_t npcId);
