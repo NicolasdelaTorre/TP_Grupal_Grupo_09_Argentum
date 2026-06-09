@@ -78,6 +78,8 @@ GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath
                        OutgoingQueue& clientEvents, IncomingQueue& serverEvents,
                        const MapEvent& mapData, Position spawn, Player_ player):
         renderer(renderer),
+        chatTtf(),
+        chatFont(assetsPath + "/font.ttf", 14),
         cache(renderer, assetsPath),
         mapRenderer(renderer, cache),
         map(convertToGameMap(mapData)),
@@ -111,11 +113,13 @@ void GameScreen::render() {
     int screenW, screenH;
     SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
 
-    // Cámara centrada en el jugadorANIM_SPEED
-    float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
-    float camY = player.y * TILE_SIZE - screenH / 2.0f + TILE_SIZE / 2.0f;
+    // Camara centrada en el area jugable (sin contar el HUD derecho ni la
+    // caja de chat de arriba), para que el sprite no quede tapado.
+    float playW = screenW - hudPanelW();
+    float camX = player.x * TILE_SIZE - playW / 2.0f + TILE_SIZE / 2.0f;
+    float camY = player.y * TILE_SIZE - (screenH + chatBoxH()) / 2.0f + TILE_SIZE / 2.0f;
 
-    // Clampear cámara al mapa
+    // Clampear camara al mapa
     camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
     camY = std::max(0.0f, std::min(camY, (float)(map.height * TILE_SIZE - screenH)));
 
@@ -153,17 +157,20 @@ void GameScreen::render() {
 
     renderBloodEffects(camX, camY);
 
-    renderHUD();
+    renderStatsBar();
+    renderInventoryPanel();
+    renderChat();
 
     renderer.Present();
 }
 
 bool GameScreen::handleEvents(float dt) {
-    // Para resolver clicks en coords de mundo necesitamos la cámara.
+    // Para resolver clicks en coords de mundo necesitamos la camara (misma que render()).
     int screenW, screenH;
     SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
-    float camX = player.x * TILE_SIZE - screenW / 2.0f + TILE_SIZE / 2.0f;
-    float camY = player.y * TILE_SIZE - screenH / 2.0f + TILE_SIZE / 2.0f;
+    float playW = screenW - hudPanelW();
+    float camX = player.x * TILE_SIZE - playW / 2.0f + TILE_SIZE / 2.0f;
+    float camY = player.y * TILE_SIZE - (screenH + chatBoxH()) / 2.0f + TILE_SIZE / 2.0f;
     camX = std::max(0.0f, std::min(camX, (float)(map.width * TILE_SIZE - screenW)));
     camY = std::max(0.0f, std::min(camY, (float)(map.height * TILE_SIZE - screenH)));
 
@@ -181,6 +188,7 @@ bool GameScreen::handleEvents(float dt) {
             } else if (e.type == SDL_KEYDOWN) {
                 if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER) {
                     if (!chatBuffer.empty()) {
+                        addChatLine("> " + chatBuffer);
                         clientEvents.push(std::make_shared<ChatMessageEvent>(chatBuffer));
                     }
                     chatBuffer.clear();
@@ -470,9 +478,10 @@ void GameScreen::consumeServerEvents() {
                       << " slot=" << (int)eq->getSlot() << " itemId=" << (int)eq->getItemId()
                       << std::endl;
         } else if (auto* inv = dynamic_cast<InventoryUpdateEvent*>(ev.get())) {
-            // TODO(team-ui): dibujar el inventario en el HUD.
-            std::cout << "INVENTORY_UPDATE count=" << inv->getItems().size()
-                      << " eqW=" << (int)inv->getEquippedWeapon() << std::endl;
+            inventoryItems.clear();
+            for (uint8_t id: inv->getItems()) {
+                if (id != 0) inventoryItems.push_back(id);
+            }
         } else if (auto* st = dynamic_cast<StatsEvent*>(ev.get())) {
             health = st->getHp();
             maxHealth = st->getMaxHp();
@@ -565,11 +574,10 @@ void GameScreen::consumeServerEvents() {
                           << pr->getX() << "," << pr->getY() << ")" << std::endl;
             }
         } else if (auto* cb = dynamic_cast<ChatBroadcastEvent*>(ev.get())) {
-            // TODO(team-ui): dibujar burbuja sobre el autor o ventana de chat.
             if (cb->getAuthorId() == 0) {
-                std::cout << "[sistema] " << cb->getText() << std::endl;
+                addChatLine("[sistema] " + cb->getText());
             } else {
-                std::cout << "[chat] " << cb->getAuthorName() << ": " << cb->getText() << std::endl;
+                addChatLine(cb->getAuthorName() + ": " + cb->getText());
             }
         }
     }
@@ -584,8 +592,126 @@ void GameScreen::renderBloodEffects(float camX, float camY) {
     }
 }
 
-void GameScreen::renderHUD() {
-    // TODO(team-ui): dibujar HUD con HP/MP/oro/exp/nivel a partir de los
-    // miembros `health/maxHealth/mana/maxMana/gold/experience/nextLevelExp/level`
-    // que ya se actualizan al recibir STATS_JUGADOR.
+void GameScreen::renderStatsBar() {
+    // TODO(team-ui): dibujar barra HP/MP/oro/exp/nivel en la esquina superior
+    // izquierda a partir de health/maxHealth/mana/maxMana/gold/etc.
+}
+
+float GameScreen::uiScale() const {
+    int w, h;
+    SDL_GetRendererOutputSize(renderer.Get(), &w, &h);
+    (void)w;
+    return h / (float)BASE_SCREEN_H;
+}
+
+int GameScreen::hudPanelW() const { return (int)(HUD_PANEL_W * uiScale()); }
+
+int GameScreen::chatBoxH() const { return (int)(CHAT_BOX_H * uiScale()); }
+
+void GameScreen::addChatLine(const std::string& line) {
+    chatHistory.push_back(line);
+    if (chatHistory.size() > MAX_CHAT_LINES) {
+        chatHistory.erase(chatHistory.begin(),
+                          chatHistory.end() - static_cast<long>(MAX_CHAT_LINES));
+    }
+}
+
+void GameScreen::renderInventoryPanel() {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    float scale = uiScale();
+    const int hudW = hudPanelW();
+
+    // Fondo del HUD: cubre toda la franja derecha. El PNG es escala de grises;
+    // colorMod tinta el blanco.
+    SDL2pp::Texture& fondo = cache.get("/Pantallas/Fondo_inventario.png");
+    fondo.SetColorMod(120, 160, 255);
+    renderer.Copy(fondo, SDL2pp::NullOpt, SDL2pp::Rect(screenW - hudW, 0, hudW, screenH));
+
+    // Panel del inventario: recorte 3 cols x 5 rows del PNG completo, escalado.
+    const int INV_W = (int)(210 * scale);
+    const int INV_H = (int)(255 * scale);
+    int invX = screenW - hudW + (hudW - INV_W) / 2;
+    int invY = screenH / 2 - INV_H / 2;
+    renderer.Copy(cache.get("/Pantallas/Inventario_completo.png"),
+                  SDL2pp::Rect(0, 0, 140, 175),
+                  SDL2pp::Rect(invX, invY, INV_W, INV_H));
+
+    // Items sobre el grid: 3 cols x 5 rows = 15 slots.
+    static constexpr int GRID_COLS = 3;
+    static constexpr int GRID_ROWS = 5;
+    // Items_inventario.png: 31 cols x 10 rows, iconos cuadrados.
+    static constexpr int SHEET_COLS = 31;
+    static constexpr float SHEET_CELL = 1024.0f / SHEET_COLS;
+
+    SDL2pp::Texture& itemsTex = cache.get("/Pantallas/Items_inventario.png");
+    float cw = INV_W / (float)GRID_COLS;
+    float ch = INV_H / (float)GRID_ROWS;
+    int pad = (int)(4 * scale);
+
+    for (size_t i = 0; i < inventoryItems.size() && i < GRID_COLS * GRID_ROWS; i++) {
+        uint8_t itemId = inventoryItems[i];
+        if (itemId == 0) continue;
+        // itemId es 1-based (ver items.toml); el sheet es row-major desde 0.
+        int cell = itemId - 1;
+        int srcX = (int)((cell % SHEET_COLS) * SHEET_CELL);
+        int srcY = (int)((cell / SHEET_COLS) * SHEET_CELL);
+
+        int col = i % GRID_COLS;
+        int row = i / GRID_COLS;
+        int dstX = invX + (int)(col * cw) + pad;
+        int dstY = invY + (int)(row * ch) + pad;
+        int dstW = (int)cw - 2 * pad;
+        int dstH = (int)ch - 2 * pad;
+
+        renderer.Copy(itemsTex, SDL2pp::Rect(srcX, srcY, (int)SHEET_CELL, (int)SHEET_CELL),
+                      SDL2pp::Rect(dstX, dstY, dstW, dstH));
+    }
+}
+
+void GameScreen::renderChat() {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+    (void)screenH;
+
+    float scale = uiScale();
+    const int BAR_W = screenW - hudPanelW();
+    const int boxH = chatBoxH();
+
+    // Fondo negro semi-transparente.
+    renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+    renderer.SetDrawColor(0, 0, 0, 160);
+    renderer.FillRect(SDL2pp::Rect(0, 0, BAR_W, boxH));
+
+    SDL_Color color = {255, 255, 255, 255};
+    int lineH = (int)(CHAT_LINE_H * scale);
+    int pad = (int)(CHAT_PAD * scale);
+
+    // Historial: hasta MAX_CHAT_LINES desde arriba.
+    for (size_t i = 0; i < chatHistory.size(); i++) {
+        const std::string& text = chatHistory[i];
+        if (text.empty()) continue;
+        try {
+            auto surface = chatFont.RenderUTF8_Blended(text, color);
+            SDL2pp::Texture tex(renderer, surface);
+            int tw = tex.GetWidth();
+            int th = tex.GetHeight();
+            renderer.Copy(tex, SDL2pp::NullOpt,
+                          SDL2pp::Rect(pad, pad + (int)i * lineH, tw, th));
+        } catch (...) {}
+    }
+
+    // Linea de input (solo si chat activo). Prefijo ">".
+    if (chatActive) {
+        std::string prompt = "> " + chatBuffer + "_";
+        try {
+            auto surface = chatFont.RenderUTF8_Blended(prompt, color);
+            SDL2pp::Texture tex(renderer, surface);
+            int tw = tex.GetWidth();
+            int th = tex.GetHeight();
+            renderer.Copy(tex, SDL2pp::NullOpt,
+                          SDL2pp::Rect(pad, boxH - pad - th, tw, th));
+        } catch (...) {}
+    }
 }
