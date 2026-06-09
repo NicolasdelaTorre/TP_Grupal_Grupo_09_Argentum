@@ -198,12 +198,29 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         Cell c = map.getCell(i, 0);
         cells.push_back({c.textureId, c.obstacleId, c.safeZone});
     }
+    // Obstáculos colocados
+    std::vector<MapObstacleData> obstacles;
+    const auto& placed = map.getObstacles(0);
+    obstacles.reserve(placed.size());
+    for (const auto& o: placed) {
+        obstacles.push_back({o.type, o.x, o.y, o.w, o.h});
+    }
     clientMonitor.sendToClient(playerId,
                                std::make_shared<MapEvent>(map.getWidth(0), map.getHeight(0),
-                                                          std::move(cells)));
+                                                          std::move(cells), std::move(obstacles)));
 
     // Stats iniciales.
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+
+    // Inventario inicial: sin esto el cliente arranca con el panel vacío y no
+    // ve los items persistidos hasta que cambie algo (pickup/drop/equip).
+    {
+        auto snap = game.getInventorySnapshot(playerId);
+        clientMonitor.sendToClient(playerId,
+                                   std::make_shared<InventoryUpdateEvent>(
+                                           snap.items, snap.equippedWeapon, snap.equippedArmor,
+                                           snap.equippedHelmet, snap.equippedShield));
+    }
 
     // Mandarle un NEW_PLAYER por cada jugador que ya estaba + sus PLAYER_EQUIPPED.
     // Si alguno está como fantasma, también su PlayerDiedEvent para que el

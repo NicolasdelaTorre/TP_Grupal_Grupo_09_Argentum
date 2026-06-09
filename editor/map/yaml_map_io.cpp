@@ -11,9 +11,7 @@ void YamlMapIO::write_floor_grid(YAML::Emitter& out, const MapDocument& document
     const int width = document.map.width;
     const int height = document.map.height;
 
-    // Cada fila del mapa es una línea de `width` caracteres. La codificación es
-    // base 36 (0-9 y luego a-z), un carácter por celda. Cada carácter representa
-    // el grid_value del tile de piso.
+    // Cada carácter representa el grid_value del tile de piso.
     std::string grid;
     grid.reserve(static_cast<size_t>(width + 1) * height);
     for (int y = 0; y < height; ++y) {
@@ -48,8 +46,7 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
         out << YAML::Key << "height" << YAML::Value << document.map.height;
         out << YAML::EndMap;
 
-        // Grid de tiles de piso pre-calculado. Se escribe con la clave histórica
-        // "biome_map" por compatibilidad con mapas existentes.
+        // Grid de tiles de piso pre-calculado.
         if (!document.biome_grid.empty() && document.map.width > 0 && document.map.height > 0) {
             write_floor_grid(out, document);
         }
@@ -439,9 +436,8 @@ bool YamlMapIO::load(MapDocument& document, const std::string& path) {
         document.map.width = map["width"].as<int>();
         document.map.height = map["height"].as<int>();
 
-        // El grid de tiles de piso se recalcula al guardar a partir de las zonas y
-        // los pisos, pero se lee al cargar para reconstruir los tiles independientes
-        // (las celdas con valores que no corresponden a ningún bioma).
+        // El grid de tiles de piso se recalcula al guardar a partir de los biomas, 
+        // pero se lee al cargar para reconstruir los tiles independientes
         if (root["biome_map"] && root["biome_map"]["data"]) {
             const int width = document.map.width;
             const int height = document.map.height;

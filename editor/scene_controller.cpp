@@ -55,7 +55,7 @@ void SceneController::bumpCounter(int& counter, const QString& id, const QString
     }
 }
 
-// obtener item en celda
+// obtener item superior en celda
 QGraphicsItem* SceneController::topLevelItemAtCell(int cell_x, int cell_y) const {
     const QRectF area(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE,
                       CELL_DISPLAY_SIZE);
@@ -211,9 +211,10 @@ bool SceneController::placeFloor(const ToolInfo& tool, int cell_x, int cell_y, Q
         return false;
     }
 
-    // Evitar apilar varios pisos en la misma celda: si ya hay uno, se reemplaza.
+    // si ya hay uno, se reemplaza.
     const QRectF area(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE,
                       CELL_DISPLAY_SIZE);
+    std::vector<QGraphicsItem*> floors_to_delete;
     for (auto* existing: scene_->items(area)) {
         QGraphicsItem* current = existing;
         while (current->parentItem()) {
@@ -223,10 +224,16 @@ bool SceneController::placeFloor(const ToolInfo& tool, int cell_x, int cell_y, Q
             const int ex = static_cast<int>(current->pos().x()) / CELL_DISPLAY_SIZE;
             const int ey = static_cast<int>(current->pos().y()) / CELL_DISPLAY_SIZE;
             if (ex == cell_x && ey == cell_y) {
-                scene_->removeItem(current);
-                delete current;
+                if (std::find(floors_to_delete.begin(), floors_to_delete.end(), current) ==
+                    floors_to_delete.end()) {
+                    floors_to_delete.push_back(current);
+                }
             }
         }
+    }
+    for (auto* floor_item: floors_to_delete) {
+        scene_->removeItem(floor_item);
+        delete floor_item;
     }
 
     const QString id = floor_id.isEmpty() ? nextFloorId() : floor_id;
@@ -251,8 +258,7 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
         return false;
     }
 
-    // El overlay translúcido de la zona usa el color definido en el template del
-    // bioma (elegido para parecerse a su tile), dando variedad visual en el editor.
+    // el overlay translúcido de la zona
     const auto* biome_tpl = templates_.find_biome(tool.biome_template_id.toStdString());
     const QColor fill =
             resolveZoneColor(biome_tpl ? biome_tpl->color : std::string(), false);
@@ -301,36 +307,39 @@ DeletedItem SceneController::deleteAtCell(int cell_x, int cell_y) {
     scene_->removeItem(item);
     delete item;
 
-    // Al borrar una ciudad, arrastramos todos los obstáculos que contiene.
+    // al borrar una ciudad, borramos todos que esta dentro
     if (item_type == CITY_ZONE_TYPE) {
-        deleteObstaclesInArea(city_x, city_y, city_w, city_h);
+        deleteItemsInArea(OBSTACLE_TYPE, city_x, city_y, city_w, city_h);
+        deleteItemsInArea(FLOOR_TYPE, city_x, city_y, city_w, city_h);
     }
     return result;
 }
 
-void SceneController::deleteObstaclesInArea(int x, int y, int w, int h) {
+void SceneController::deleteItemsInArea(const QString& type, int x, int y, int w, int h) {
     if (w <= 0 || h <= 0) {
         return;
     }
     std::vector<QGraphicsItem*> to_delete;
     for (auto* item: scene_->items()) {
-        if (item->data(DATA_TYPE).toString() != OBSTACLE_TYPE) {
+        QGraphicsItem* current = item;
+        while (current->parentItem()) {
+            current = current->parentItem();
+        }
+        if (current->data(DATA_TYPE).toString() != type) {
             continue;
         }
-        const int cell_x = static_cast<int>(item->pos().x()) / CELL_DISPLAY_SIZE;
-        const int cell_y = static_cast<int>(item->pos().y()) / CELL_DISPLAY_SIZE;
+        const int cell_x = static_cast<int>(current->pos().x()) / CELL_DISPLAY_SIZE;
+        const int cell_y = static_cast<int>(current->pos().y()) / CELL_DISPLAY_SIZE;
         if (cell_x >= x && cell_x < x + w && cell_y >= y && cell_y < y + h) {
-            to_delete.push_back(item);
+            if (std::find(to_delete.begin(), to_delete.end(), current) == to_delete.end()) {
+                to_delete.push_back(current);
+            }
         }
     }
     for (auto* item: to_delete) {
         scene_->removeItem(item);
         delete item;
     }
-}
-
-const QHash<QString, std::vector<CreatureSpawn>>& SceneController::biome_spawns() const {
-    return biome_spawns_;
 }
 
 std::vector<CreatureSpawn> SceneController::biomeSpawnsFor(const QString& zone_id) const {
@@ -353,8 +362,7 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
     document.map.width = width;
     document.map.height = height;
 
-    // Fuentes de bioma (en orden de escena) para reconstruir el grid con Dijkstra.
-    // El valor numérico paralelo es el BiomeType de cada fuente.
+    // fuentes de bioma para reconstruir el grid con Dijkstra
     std::vector<BiomeSource> biome_sources;
     std::vector<uint8_t> biome_values;
 
@@ -382,7 +390,7 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             obstacle.y = cell_y;
             obstacle.width = item->data(DATA_WIDTH).toInt();
             obstacle.height = item->data(DATA_HEIGHT).toInt();
-            // Resolver textura via template
+            // resolver textura via template
             if (const auto* tpl = templates_.find_obstacle(obstacle.type)) {
                 if (!tpl->texture.empty()) {
                     obstacle.texture = std::filesystem::path(tpl->texture).filename().string();
@@ -489,8 +497,7 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
         }
     }
 
-    // Congelar el resultado del Dijkstra en una matriz para que el cliente no
-    // tenga que recomputarlo: cada celda guarda el valor de BiomeType.
+
     document.biome_grid.assign(static_cast<size_t>(width) * height,
                                static_cast<uint8_t>(BiomeType::NONE));
     if (!biome_sources.empty()) {
@@ -503,9 +510,7 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
         }
     }
 
-    // Los modificadores de piso se superponen al grid de biomas: cada celda con
-    // un piso sobreescribe su número por el `grid_value` del template. Se aplican
-    // al final para que ganen sobre el valor de bioma subyacente.
+    // los floors se superponen al grid de biomas
     for (auto* item: scene_->items()) {
         if (item->data(DATA_TYPE).toString() != FLOOR_TYPE) {
             continue;

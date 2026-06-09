@@ -12,15 +12,6 @@
 
 #include "editor_constants.h"
 
-QString EnvironmentSpawnDialog::prettify(const QString& text) {
-    if (text.isEmpty()) {
-        return text;
-    }
-    QString pretty = text;
-    pretty.replace(QLatin1Char('_'), QLatin1Char(' '));
-    return pretty.left(1).toUpper() + pretty.mid(1);
-}
-
 int EnvironmentSpawnDialog::initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
                                                    const std::string& creature) {
     const auto it = std::find_if(
@@ -62,9 +53,7 @@ EnvironmentSpawnDialog::EnvironmentSpawnDialog(const QString& environment_name,
 
     int row = 0;
     for (const auto& creature: creatures) {
-        const QString creature_label = prettify(QString::fromStdString(creature));
-
-        auto* name_label = new QLabel(creature_label);
+        auto* name_label = new QLabel(QString::fromStdString(creature));
         auto* slider = new QSlider(Qt::Horizontal);
         slider->setRange(CREATURE_SLIDER_MIN, CREATURE_SLIDER_MAX);
         slider->setValue(initial_population_for(initial_spawns, creature));

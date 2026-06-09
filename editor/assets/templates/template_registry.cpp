@@ -8,12 +8,12 @@
 #include "editor_constants.h"
 
 const EnvironmentTypeInfo& environment_type_info(const std::string& type) {
-    static const EnvironmentTypeInfo kCueva{"cueva", "Cueva", "tiles/cueva.png"};
-    static const EnvironmentTypeInfo kMazmorra{"mazmorra", "Mazmorra", "tiles/mazmorra.png"};
-    if (type == kMazmorra.type) {
-        return kMazmorra;
+    static const EnvironmentTypeInfo Cueva{"cueva", "Cueva", "tiles/cueva.png"};
+    static const EnvironmentTypeInfo Mazmorra{"mazmorra", "Mazmorra", "tiles/mazmorra.png"};
+    if (type == Mazmorra.type) {
+        return Mazmorra;
     }
-    return kCueva;
+    return Cueva;
 }
 
 bool TemplateRegistry::load() {
