@@ -19,6 +19,8 @@ struct NPCTimer {
 
 struct PlayerTimer {
     int timeToRestoreManaMeditating; // 1000 miliseconds while the player is meditating
+    int timeToTeleport; // Depends on the distance to the city
+    int currentTimeToTeleport; // Time that the player has been teleporting
 };
 
 class TurnManager {
@@ -38,6 +40,12 @@ class TurnManager {
         void updateTimers();
 
         std::vector<int> getPlayersReadyToRestoreMana();
+
+        bool alreadyTeleporting(int playerId);
+
+        void setTimeToTeleport(int playerId, int timeToTeleport);
+
+        std::vector<int> getPlayersReadyToTeleport();
 
         // Return all NPCs that are ready to move or attack, and reset their timers.
         std::vector<uint16_t> getNPCsReady(bool forMove);

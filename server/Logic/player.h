@@ -56,6 +56,7 @@ private:
     // Flags de cheats runtime: NO se guardan en PlayerData (no persisten al reloguear).
     bool infiniteHealth = false;
     bool infiniteMana = false;
+    bool teleporting;
 
 public:
     explicit Player(const std::string& name, Position position, RaceCode race, ClassCode class_);
@@ -87,6 +88,8 @@ public:
     uint8_t getMapId() const;
 
     bool getMeditationState() const;
+
+    bool getTeleportingState() const;
 
     bool hasLongDistanceWeapon();
 
@@ -129,6 +132,11 @@ public:
 
     // Suma oro respetando el cap = 100 * Nivel^1.1 (formula del enunciado).
     void addGold(uint32_t amount);
+    void startTeleporting();
+
+    void finishTeleporting();
+
+    void revive();
 };
 
 #endif

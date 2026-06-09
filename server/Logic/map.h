@@ -125,6 +125,8 @@ public:
 
     std::string getMapId(uint16_t x, uint16_t y);
 
+    Position getEntryPosition(uint8_t mapId);
+
     Position getEntrySpawnPosition(const std::string& mapId);
 
     // Devuelve true si (x, y) está dentro de los límites del mapa.
@@ -174,6 +176,9 @@ public:
 
     // Distancia del jugador al amigo. -1 si no existe el amigo.
     int friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendlyId) const;
+    int calculateTeleportingTime(Position playerPosition, uint8_t mapId);
+
+    Position searchNearestPriest(int16_t x, int16_t y);
 };
 
 #endif

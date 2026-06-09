@@ -9,7 +9,7 @@
 class NPC {
     protected:
         uint16_t id;
-        const std::string& name;
+        std::string name;
         Position position;
         uint8_t mapId;
 
@@ -17,7 +17,9 @@ class NPC {
         NPC(uint16_t id, const std::string& name, uint16_t x, uint16_t y, uint8_t mapId);
 
         uint16_t getId() const { return id; }
-        const std::string& getName() const { return name; }
+        const std::string& getName() const;
+
+        Position getPosition() const;
 
         virtual ~NPC() = default;
 };

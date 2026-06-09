@@ -61,6 +61,11 @@ void Map::setNPC() {
             npcs[newNpcId] = std::make_unique<Merchant>(newNpcId, npcType, x, y);
         else if (npcType == "banker")
             npcs[newNpcId] = std::make_unique<Banker>(newNpcId, npcType, x, y);
+
+        if (npcType == "")
+            std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
+        else 
+            std::cout << "NPC " << npcType << " spawned at (" << x << ", " << y << ") with ID " << newNpcId << std::endl;
     }
 
     // Aggresive NPCs
@@ -72,16 +77,14 @@ void Map::setNPC() {
     // Dungeons
     for (auto& entry : entries) {
         std::cout << "Entry: (" << entry.x << ", " << entry.y << ")" << std::endl;
-        if (entry.type == "") {
-            Biome biome;
-            biome.type = entry.environment.type;
-            biome.position = {entry.x, entry.y};
-            biome.width = entry.width;
-            biome.height = entry.height;
-            biome.spawns = entry.environment.spawns;
+        Biome biome;
+        biome.type = entry.environment.type;
+        biome.position = {0, 0};
+        biome.width = entry.width;
+        biome.height = entry.height;
+        biome.spawns = entry.environment.spawns;
 
-            spawnNPC(biome, entry.environment.cells, static_cast<uint8_t>(entry.id[entry.id.size() - 1] - '0'));
-        }
+        spawnNPC(biome, entry.environment.cells, static_cast<uint8_t>(entry.id[entry.id.size() - 1] - '0'));
     }
 }
 
@@ -129,7 +132,8 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             Position pos = validCells[indexCell];
             indexCell++;
 
-            uint16_t newNpcId = npcIdCounter++;
+            uint16_t newNpcId = npcIdCounter;
+            npcIdCounter++;
 
             // Ocuppy cell
             Cell& targetCell = cells[static_cast<size_t>(pos.y) * getWidth(mapId) + pos.x];
@@ -138,6 +142,9 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
 
             // Save npc
             npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y);
+
+            if (spawnInfo.creature == "")
+                std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
         }
     }
 }
@@ -257,6 +264,16 @@ std::string Map::getMapId(uint16_t x, uint16_t y) {
     }
 
     return "";
+}
+
+Position Map::getEntryPosition(uint8_t mapId) {
+    for (const auto& entry : entries) {
+        if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+            return {entry.x, entry.y};
+        }
+    }
+
+    throw std::runtime_error("Map Error: entry not found for mapId " + std::to_string(mapId));
 }
 
 Position Map::getEntrySpawnPosition(const std::string& mapId) {
@@ -581,4 +598,48 @@ int Map::friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendly
     int dx = std::abs(static_cast<int>(playerX) - static_cast<int>(f->x));
     int dy = std::abs(static_cast<int>(playerY) - static_cast<int>(f->y));
     return std::max(dx, dy);
+}
+
+int Map::calculateTeleportingTime(Position playerPosition, uint8_t mapId) {
+    int16_t x = playerPosition.x;
+    int16_t y = playerPosition.y;
+
+    // Check if the player is in a Dungeon
+    if (mapId > 0) {
+        for (const auto& entry : entries) {
+            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+                x = entry.x;
+                y = entry.y;
+            }
+        }
+    }
+
+    Position nearestPriestPos = searchNearestPriest(x, y);
+
+    if (nearestPriestPos.x != -1 && nearestPriestPos.y != -1)
+        return std::abs(nearestPriestPos.x - x) + std::abs(nearestPriestPos.y - y);
+
+    throw std::runtime_error("Map Error: no priest found");
+}
+
+Position Map::searchNearestPriest(int16_t x, int16_t y) {
+    Position nearestPriestPos{-1, -1};
+    int minDistance = std::numeric_limits<int>::max();
+
+    for (const auto& npc : npcs) {
+        if (npc.second->getName() == "priest") {
+            Position npcPos = npc.second->getPosition();
+            int distance = std::abs(npcPos.x - x) + std::abs(npcPos.y - y);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPriestPos = npcPos;
+            }
+        }
+    }
+
+    if (nearestPriestPos.x != -1 && nearestPriestPos.y != -1) {
+        return nearestPriestPos;
+    }
+
+    throw std::runtime_error("Map Error: no priest found");
 }

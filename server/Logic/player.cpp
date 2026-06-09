@@ -87,11 +87,17 @@ Player::Player(PlayerData data, const std::string& name): data(std::move(data)),
 }
 
 void Player::move(Position newPosition) {
+    if (teleporting) return;
+
     isMeditating = false;
     data.position = newPosition; 
 }
 
-void Player::setDirection(uint8_t dir) { direction = dir; }
+void Player::setDirection(uint8_t dir) {
+    if (teleporting) return;
+
+    direction = dir; 
+}
 
 const std::string& Player::getName() const { return name; }
 
@@ -115,9 +121,14 @@ uint8_t Player::getMapId() const { return data.mapId; }
 
 bool Player::getMeditationState() const { return isMeditating; }
 
+bool Player::getTeleportingState() const { return teleporting; }
+
 bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
+    if (teleporting) return;
+
+    // Cambiar proximamente
     if (data.isGhost) {
         std::cout << "Player " << name << " is already a ghost and can't receive more damage." << std::endl;
         return;
@@ -141,7 +152,7 @@ bool Player::isEquipped() { return !equippedWeapon.emptyItem(); }
 bool Player::isAlive() { return !data.isGhost; }
 
 uint16_t Player::dealDamage() {
-    if (equippedWeapon.emptyItem() || !equippedWeapon.isOffensiveWeapon()) {
+    if (teleporting || equippedWeapon.emptyItem() || !equippedWeapon.isOffensiveWeapon()) {
         return 0;
     }
 
@@ -152,6 +163,8 @@ uint16_t Player::dealDamage() {
 }
 
 bool Player::addItem(const std::string& itemName) {
+    if (teleporting) return false;
+
     Item newItem;
     newItem.createItem(itemName);
     if (inventory.size() < N) {
@@ -164,6 +177,8 @@ bool Player::addItem(const std::string& itemName) {
 }
 
 bool Player::equipItem(int inventorySlot) {
+    if (teleporting) return false;
+
     if (inventorySlot < 0 || (size_t)inventorySlot >= inventory.size()) {
         return false;
     }
@@ -203,6 +218,8 @@ bool Player::equipItem(int inventorySlot) {
 }
 
 bool Player::unequipItem(ItemType type) {
+    if (teleporting) return false;
+
     switch (type) {
         case ItemType::WEAPON:
             if (equippedWeapon.emptyItem())
@@ -235,7 +252,7 @@ bool Player::unequipItem(ItemType type) {
 }
 
 uint16_t Player::heal() {
-    if (equippedWeapon.emptyItem() || equippedWeapon.getType() != ItemType::HEAL) {
+    if (teleporting || equippedWeapon.emptyItem() || equippedWeapon.getType() != ItemType::HEAL) {
         return 0;
     }
 
@@ -277,6 +294,19 @@ void Player::restoreManaForMeditation() {
         }
         data.mana += manaRestore;
     }
+}
+
+void Player::startTeleporting() {
+    teleporting = true;
+}
+
+void Player::finishTeleporting() {
+    teleporting = false;
+}
+
+void Player::revive() {
+    data.isGhost = false;
+    data.health = maxHealth;
 }
 
 void Player::resetStats() {
