@@ -455,11 +455,22 @@ std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
     return {"(stub) Sin items disponibles. Implementar listMerchantInventory."};
 }
 
-std::vector<std::string> Game::listBankAccount(int playerId, uint8_t npcType) {
-    std::cout << "LIST bank player=" << playerId << " type=" << (int)npcType << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): leer Banker::accounts (server/Logic/NPC/banker.h) y devolver el oro + items guardados del jugador.
-    return {"(stub) Cuenta vacía. Implementar listBankAccount."};
+std::vector<std::string> Game::listBankAccount(int playerId, uint8_t /*npcType*/) {
+    std::vector<std::string> lines;
+    auto it = players.find(playerId);
+    if (it == players.end()) return lines;
+    const std::string& name = it->second.getName();
+    lines.push_back("Oro guardado: " + std::to_string(bank.getGold(name)));
+    auto items = bank.getItems(name);
+    if (items.empty()) {
+        lines.push_back("Sin items guardados");
+    } else {
+        for (uint8_t id : items) {
+            const char* n = itemNameById(id);
+            lines.push_back(std::string("- ") + (n ? n : "(desconocido)"));
+        }
+    }
+    return lines;
 }
 
 Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,

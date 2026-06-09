@@ -68,6 +68,26 @@ uint8_t Banker::withdrawItem(const std::string& name, uint8_t itemId) {
     return 0; // account not found
 }
 
+uint32_t Banker::getGold(const std::string& name) const {
+    for (const auto& account: accounts) {
+        if (account.name == name) return account.gold;
+    }
+    return 0;
+}
+
+std::vector<uint8_t> Banker::getItems(const std::string& name) const {
+    std::vector<uint8_t> out;
+    for (const auto& account: accounts) {
+        if (account.name == name) {
+            for (size_t i = 0; i < N; i++) {
+                if (account.items[i] != 0) out.push_back(account.items[i]);
+            }
+            return out;
+        }
+    }
+    return out;
+}
+
 Banker::~Banker() {
     for (const auto& account: accounts) {
         parser.updateBankAccount(account);
