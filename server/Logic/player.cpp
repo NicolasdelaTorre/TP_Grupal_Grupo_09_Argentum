@@ -1,10 +1,10 @@
 #include "player.h"
 
+#include <algorithm>
 #include <utility>
 #include <iostream>
 
-Player::Player(const std::string& name, Position position, const std::string& race,
-               const std::string& class_):
+Player::Player(const std::string& name, Position position, RaceCode race, ClassCode class_):
         name(name), isMeditating(false) {
     inventory.reserve(N);
     data.level = 1;
@@ -17,8 +17,8 @@ Player::Player(const std::string& name, Position position, const std::string& ra
     data.mana = StatsDefinition().maxMana(data.level, race, class_);
     maxMana = data.mana;
 
-    data.race = Race::fromString(race);
-    data.class_ = Class_::fromString(class_);
+    data.race = race;
+    data.class_ = class_;
     data.mapId = 0; // Overworld
     data.equippedWeapon = 0;
     data.equippedArmor = 0;
@@ -35,10 +35,8 @@ Player::Player(const std::string& name, Position position, const std::string& ra
 
 Player::Player(PlayerData data, const std::string& name): data(std::move(data)), name(name), isMeditating(false) {
     inventory.reserve(N);
-    maxHealth = StatsDefinition().maxHealth(data.level, Race::toString(data.race),
-                                            Class_::ToString(data.class_));
-    maxMana = StatsDefinition().maxMana(data.level, Race::toString(data.race),
-                                        Class_::ToString(data.class_));
+    maxHealth = StatsDefinition().maxHealth(this->data.level, this->data.race, this->data.class_);
+    maxMana = StatsDefinition().maxMana(this->data.level, this->data.race, this->data.class_);
 
     for (size_t slot = 0; slot < N; ++slot) {
         uint8_t itemId = this->data.inventory[slot];
@@ -120,13 +118,15 @@ bool Player::getMeditationState() const { return isMeditating; }
 bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
-    // Cambiar proximamente
     if (data.isGhost) {
         std::cout << "Player " << name << " is already a ghost and can't receive more damage." << std::endl;
         return;
-    } else {
-        std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
     }
+    if (infiniteHealth) {
+        std::cout << "Player " << name << " ignored " << damage << " damage (vidainf)." << std::endl;
+        return;
+    }
+    std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
     isMeditating = false;
     if (damage >= data.health) {
         data.health = 0;
@@ -147,7 +147,7 @@ uint16_t Player::dealDamage() {
 
     isMeditating = false;
 
-    return StatsDefinition().damage(Race::toString(data.race), equippedWeapon.getMinDamage(),
+    return StatsDefinition().damage(data.race, equippedWeapon.getMinDamage(),
                                     equippedWeapon.getMaxDamage());
 }
 
@@ -243,7 +243,7 @@ uint16_t Player::heal() {
 
     uint16_t manaCost = equippedWeapon.getManaWaste();
 
-    if (manaCost != 0) {
+    if (manaCost != 0 && !infiniteMana) {
         data.mana = (data.mana >= manaCost) ? data.mana - manaCost : 0;
     }
 
@@ -271,7 +271,7 @@ void Player::switchMeditationState() {
 
 void Player::restoreManaForMeditation() {
     if (isMeditating) {
-        uint16_t manaRestore = StatsDefinition().meditationManaRestore(Race::toString(data.race), Class_::ToString(data.class_));
+        uint16_t manaRestore = StatsDefinition().meditationManaRestore(data.race, data.class_);
         if ((data.mana + manaRestore) > maxMana) {
             manaRestore = maxMana - data.mana;
         }
@@ -280,9 +280,47 @@ void Player::restoreManaForMeditation() {
 }
 
 void Player::resetStats() {
-    maxHealth = StatsDefinition().maxHealth(data.level, "Elf", "Mage");
-    maxMana = StatsDefinition().maxMana(data.level, "Elf", "Mage");
+    maxHealth = StatsDefinition().maxHealth(data.level, data.race, data.class_);
+    maxMana = StatsDefinition().maxMana(data.level, data.race, data.class_);
     data.health = maxHealth;
     data.mana = maxMana;
     data.isGhost = false;
+}
+
+void Player::kill() {
+    data.health = 0;
+    data.isGhost = true;
+    isMeditating = false;
+}
+
+bool Player::toggleInfiniteHealth() {
+    infiniteHealth = !infiniteHealth;
+    if (infiniteHealth) {
+        data.health = maxHealth;
+        data.isGhost = false;
+    }
+    return infiniteHealth;
+}
+
+bool Player::toggleInfiniteMana() {
+    infiniteMana = !infiniteMana;
+    if (infiniteMana) {
+        data.mana = maxMana;
+    }
+    return infiniteMana;
+}
+
+void Player::levelUp() {
+    if (data.level < 255) {
+        data.level++;
+    }
+    data.experience = 0;
+    resetStats();
+}
+
+void Player::addGold(uint32_t amount) {
+    uint32_t cap = StatsDefinition().safeGold(data.level);
+    if (data.gold >= cap) return;
+    uint32_t room = cap - data.gold;
+    data.gold += std::min(amount, room);
 }

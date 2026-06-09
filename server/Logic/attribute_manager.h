@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "../../common/DTOs.h"
 #include "toml.hpp"
 
 struct RaceAttribute {
@@ -45,9 +46,9 @@ private:
 public:
     explicit AttributeManager(const std::string& filename);
 
-    RaceAttribute getRaceAttribute(const std::string& raceName);
+    RaceAttribute getRaceAttribute(RaceCode race);
 
-    ClassAttribute getClassAttribute(const std::string& className);
+    ClassAttribute getClassAttribute(ClassCode class_);
 };
 
 #endif

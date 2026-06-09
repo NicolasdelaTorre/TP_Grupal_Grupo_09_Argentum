@@ -3,7 +3,7 @@
 
 // Mensajes Cliente → Servidor.
 // Los valores del campo `direccion` de MOVEMENT/TURN viven en el enum
-// MoveDirection (common/Communication/move_direction.h), no acá.
+// MoveDirection (common/DTOs.h), no acá.
 enum class ClientMsg : uint8_t {
     USER_ARRIVAL = 0x01,    // [opcode][len:2][nombre][len:2][raza][len:2][clase]
     MOVEMENT = 0x02,        // [opcode][direccion:1] — direccion ∈ MoveDirection
@@ -38,7 +38,7 @@ enum class ServerMsg : uint8_t {
     ATTACK_RESULT = 0x8E,  // [opcode][attacker_id:2][target_type:1][target_id:2][damage:2][hit:1] — target_type: 0=player, 1=npc. hit: 1=impactó, 0=evadió.
     INVENTORY_UPDATE = 0x8F,  // [opcode][count:1][[itemId:1]...×count][eqWeapon:1][eqArmor:1][eqHelmet:1][eqShield:1]
     PLAYER_EQUIPPED = 0x90,   // [opcode][playerId:2][slot:1][itemId:1]
-    NEW_NPC = 0x91,           // [opcode][id:2][x:2][y:2][type:1][alive:1] — type = NpcType (spider=0, skeleton=1, ...). alive=0 si está muerto al snapshot.
+    NEW_NPC = 0x91,           // [opcode][id:2][x:2][y:2][type:1][alive:1] — type = NpcCode (spider=0, skeleton=1, ...). alive=0 si está muerto al snapshot.
     NPC_MOVED = 0x92,         // [opcode][id:2][x:2][y:2][dir:1]
     NPC_DIED = 0x93,          // [opcode][id:2]
     NPC_RESPAWNED = 0x94,     // [opcode][id:2][x:2][y:2]

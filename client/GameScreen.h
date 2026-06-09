@@ -13,6 +13,8 @@
 #include "Communication/client_receiver.h"  // IncomingQueue alias
 #include "Communication/client_sender.h"    // OutgoingQueue alias
 #include "map_renderer.h"
+#include "render_constants.h"
+#include "visual_types.h"
 
 static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
@@ -67,7 +69,7 @@ private:
     OutgoingQueue& clientEvents;
     int lastTileX;
     int lastTileY;
-    Direction lastSentDir;  // última dirección que mandamos al server (para detectar giros)
+    SpriteRow lastSentDir;  // última dirección que mandamos al server (para detectar giros)
 
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
     // pushea tipados.

@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 #include "../../common/Communication/events/server_event.h"
-#include "../../common/Communication/move_direction.h"
+#include "../../common/DTOs.h"
 #include "../../common/position.h"
 #include "../../common/thread.h"
 #include "../Communication/client_monitor.h"
@@ -56,8 +56,7 @@ public:
     void dispatch(const ClientEvent& ev);
 
     void handleDisconnect(int playerId);
-    void handleUserArrival(int playerId, const std::string& name, const std::string& race,
-                           const std::string& class_);
+    void handleUserArrival(int playerId, const std::string& name, RaceCode race, ClassCode class_);
     void handleSkinSelected(int playerId, uint8_t skinId);
     void handleHeadSelected(int playerId, uint8_t headId);
     void handleMovement(int playerId, MoveDirection direction);

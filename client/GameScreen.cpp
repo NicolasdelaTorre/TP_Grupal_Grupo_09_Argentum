@@ -23,13 +23,13 @@ GameMap convertToGameMap(const MapEvent& m) {
         const auto& cell = cells[i];
         // safeZone fuerza piso de ciudad (priority sobre textureId del bioma).
         if (cell.safeZone) {
-            gm.tiles[i].floor = TileType::INTERIOR;
+            gm.tiles[i].floor = TileCode::INTERIOR;
         } else {
             gm.tiles[i].floor = tileTypeFromTextureId(cell.textureId);
         }
         if (cell.obstacleId != 0) {
             gm.tiles[i].blocked = true;
-            gm.tiles[i].obstacleType = static_cast<ObstacleType>(cell.obstacleId);
+            gm.tiles[i].obstacleType = static_cast<ObstacleCode>(cell.obstacleId);
         } else {
             gm.tiles[i].blocked = false;
         }
@@ -37,13 +37,13 @@ GameMap convertToGameMap(const MapEvent& m) {
     return gm;
 }
 
-// Convierte un Direction (sprite) al MoveDirection del wire.
-MoveDirection spriteDirToWire(Direction d) {
+// Convierte un SpriteRow (sprite) al MoveDirection del wire.
+MoveDirection spriteDirToWire(SpriteRow d) {
     switch (d) {
-        case Direction::UP: return MoveDirection::TOP;
-        case Direction::DOWN: return MoveDirection::BOTTOM;
-        case Direction::LEFT: return MoveDirection::LEFT;
-        case Direction::RIGHT: return MoveDirection::RIGHT;
+        case SpriteRow::UP: return MoveDirection::TOP;
+        case SpriteRow::DOWN: return MoveDirection::BOTTOM;
+        case SpriteRow::LEFT: return MoveDirection::LEFT;
+        case SpriteRow::RIGHT: return MoveDirection::RIGHT;
     }
     return MoveDirection::BOTTOM;
 }
@@ -57,20 +57,20 @@ static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player_& p) {
     p.y = static_cast<float>(tileY);
 }
 
-// Mapea la dirección wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT) a la Direction
+// Mapea la dirección wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT) a la SpriteRow
 // del cliente (que usa otros valores porque son índices de fila en el spritesheet).
-static Direction wireDirToSpriteDir(uint8_t wireDir) {
+static SpriteRow wireDirToSpriteDir(uint8_t wireDir) {
     switch (wireDir) {
         case 3:
-            return Direction::UP;
+            return SpriteRow::UP;
         case 4:
-            return Direction::DOWN;
+            return SpriteRow::DOWN;
         case 5:
-            return Direction::LEFT;
+            return SpriteRow::LEFT;
         case 6:
-            return Direction::RIGHT;
+            return SpriteRow::RIGHT;
         default:
-            return Direction::DOWN;
+            return SpriteRow::DOWN;
     }
 }
 
@@ -235,9 +235,9 @@ bool GameScreen::handleEvents(float dt) {
                     if (nTileX == clickTileX && nTileY == clickTileY) {
                         // Amigos (merchant/banker/priest) → SELECT_NPC.
                         // Hostiles (spider/skeleton/etc) → ATTACK.
-                        bool isFriendly = (n.visual.type == NpcType::MERCHANT ||
-                                           n.visual.type == NpcType::BANKER ||
-                                           n.visual.type == NpcType::PRIEST);
+                        bool isFriendly = (n.visual.type == NpcCode::MERCHANT ||
+                                           n.visual.type == NpcCode::BANKER ||
+                                           n.visual.type == NpcCode::PRIEST);
                         if (isFriendly) {
                             clientEvents.push(std::make_shared<SelectNpcEvent>(
                                     static_cast<uint16_t>(entry.first)));
@@ -264,16 +264,16 @@ bool GameScreen::handleEvents(float dt) {
 
     if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
         dy = -PLAYER_MOVE_SPEED * dt;
-        player.dir = Direction::UP;
+        player.dir = SpriteRow::UP;
     } else if (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S]) {
         dy = PLAYER_MOVE_SPEED * dt;
-        player.dir = Direction::DOWN;
+        player.dir = SpriteRow::DOWN;
     } else if (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A]) {
         dx = -PLAYER_MOVE_SPEED * dt;
-        player.dir = Direction::LEFT;
+        player.dir = SpriteRow::LEFT;
     } else if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
         dx = PLAYER_MOVE_SPEED * dt;
-        player.dir = Direction::RIGHT;
+        player.dir = SpriteRow::RIGHT;
     }
 
     player.moving = (dx != 0 || dy != 0);
@@ -490,7 +490,7 @@ void GameScreen::consumeServerEvents() {
             rn.visual.id = nn->getId();
             rn.visual.x = static_cast<float>(nn->getX());
             rn.visual.y = static_cast<float>(nn->getY());
-            rn.visual.type = static_cast<NpcType>(nn->getType());
+            rn.visual.type = static_cast<NpcCode>(nn->getType());
             rn.targetX = rn.visual.x;
             rn.targetY = rn.visual.y;
             rn.alive = nn->getAlive();

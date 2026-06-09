@@ -41,27 +41,23 @@ std::unique_ptr<ClientEvent> ClientEvent::deserialize(uint8_t opcode, CommonProt
 
 // ── UserArrivalEvent ─────────────────────────────────────────────────────
 
-UserArrivalEvent::UserArrivalEvent(std::string name, std::string race, std::string class_):
-        name(std::move(name)), race(std::move(race)), class_(std::move(class_)) {}
+UserArrivalEvent::UserArrivalEvent(std::string name, RaceCode race, ClassCode class_):
+        name(std::move(name)), race(race), class_(class_) {}
 
 void UserArrivalEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ClientMsg::USER_ARRIVAL));
     proto.send_two_bytes_number(static_cast<uint16_t>(name.size()));
     proto.send_message(std::vector<char>(name.begin(), name.end()));
-    proto.send_two_bytes_number(static_cast<uint16_t>(race.size()));
-    proto.send_message(std::vector<char>(race.begin(), race.end()));
-    proto.send_two_bytes_number(static_cast<uint16_t>(class_.size()));
-    proto.send_message(std::vector<char>(class_.begin(), class_.end()));
+    proto.sendByte(static_cast<uint8_t>(race));
+    proto.sendByte(static_cast<uint8_t>(class_));
 }
 
 std::unique_ptr<UserArrivalEvent> UserArrivalEvent::deserialize(CommonProtocol& proto) {
     uint16_t nameLen = proto.receive_two_bytes_number();
     std::string name = nameLen ? proto.receive_message(nameLen) : "";
-    uint16_t raceLen = proto.receive_two_bytes_number();
-    std::string race = raceLen ? proto.receive_message(raceLen) : "";
-    uint16_t classLen = proto.receive_two_bytes_number();
-    std::string class_ = classLen ? proto.receive_message(classLen) : "";
-    return std::make_unique<UserArrivalEvent>(std::move(name), std::move(race), std::move(class_));
+    auto race = static_cast<RaceCode>(proto.receive_byte());
+    auto class_ = static_cast<ClassCode>(proto.receive_byte());
+    return std::make_unique<UserArrivalEvent>(std::move(name), race, class_);
 }
 
 // ── MovementEvent ────────────────────────────────────────────────────────
