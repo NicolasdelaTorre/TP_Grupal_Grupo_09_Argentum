@@ -61,6 +61,11 @@ void Map::setNPC() {
             npcs[newNpcId] = std::make_unique<Merchant>(newNpcId, npcType, x, y);
         else if (npcType == "banker")
             npcs[newNpcId] = std::make_unique<Banker>(newNpcId, npcType, x, y);
+
+        if (npcType == "")
+            std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
+        else 
+            std::cout << "NPC " << npcType << " spawned at (" << x << ", " << y << ") with ID " << newNpcId << std::endl;
     }
 
     // Aggresive NPCs
@@ -72,16 +77,14 @@ void Map::setNPC() {
     // Dungeons
     for (auto& entry : entries) {
         std::cout << "Entry: (" << entry.x << ", " << entry.y << ")" << std::endl;
-        if (entry.type == "") {
-            Biome biome;
-            biome.type = entry.environment.type;
-            biome.position = {entry.x, entry.y};
-            biome.width = entry.width;
-            biome.height = entry.height;
-            biome.spawns = entry.environment.spawns;
+        Biome biome;
+        biome.type = entry.environment.type;
+        biome.position = {0, 0};
+        biome.width = entry.width;
+        biome.height = entry.height;
+        biome.spawns = entry.environment.spawns;
 
-            spawnNPC(biome, entry.environment.cells, static_cast<uint8_t>(entry.id[entry.id.size() - 1] - '0'));
-        }
+        spawnNPC(biome, entry.environment.cells, static_cast<uint8_t>(entry.id[entry.id.size() - 1] - '0'));
     }
 }
 
@@ -129,7 +132,8 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             Position pos = validCells[indexCell];
             indexCell++;
 
-            uint16_t newNpcId = npcIdCounter++;
+            uint16_t newNpcId = npcIdCounter;
+            npcIdCounter++;
 
             // Ocuppy cell
             Cell& targetCell = cells[static_cast<size_t>(pos.y) * getWidth(mapId) + pos.x];
@@ -138,6 +142,9 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
 
             // Save npc
             npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y);
+
+            if (spawnInfo.creature == "")
+                std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
         }
     }
 }
@@ -259,6 +266,16 @@ std::string Map::getMapId(uint16_t x, uint16_t y) {
     return "";
 }
 
+Position Map::getEntryPosition(uint8_t mapId) {
+    for (const auto& entry : entries) {
+        if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+            return {entry.x, entry.y};
+        }
+    }
+
+    throw std::runtime_error("Map Error: entry not found for mapId " + std::to_string(mapId));
+}
+
 Position Map::getEntrySpawnPosition(const std::string& mapId) {
     for (const auto& entry : entries) {
         if (entry.id == mapId) {
@@ -317,29 +334,34 @@ bool Map::occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const {
            cells[static_cast<size_t>(y) * width + x].npcId != 0;
 }
 
-uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     for (size_t i = 0; i < 4; i++) {
         // Check position in the current direction
+        int16_t checkX = x;
+        int16_t checkY = y;
+
         switch (i) {
             case 0:
-                y -= 1;
+                checkY -= 1;
                 break;  // Up
             case 1:
-                y += 1;
+                checkY += 1;
                 break;  // Down
             case 2:
-                x -= 1;
+                checkX -= 1;
                 break;  // Left
             case 3:
-                x += 1;
+                checkX += 1;
                 break;  // Right
         }
 
-        if (!isInBounds(x, y, mapId)) {
+        if (!isInBounds(checkX, checkY, mapId)) {
             continue;  // out of bounds
         }
 
-        Cell cell = getCell(static_cast<size_t>(y) * width + x, mapId);
+        uint16_t currentWidth = getWidth(mapId);
+
+        Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
         if (isPlayer && cell.playerId != 0) {
             return cell.playerId;  // player in sight
         }
@@ -352,7 +374,7 @@ uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     return 0;  // no entity in sight
 }
 
-uint8_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     for (int16_t dy = -3; dy <= 3; ++dy) {
         for (int16_t dx = -3; dx <= 3; ++dx) {
             if (dx == 0 && dy == 0) {
@@ -365,7 +387,9 @@ uint8_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId
                 continue;
             }
 
-            Cell cell = getCell(static_cast<size_t>(checkY) * width + checkX, mapId);
+            uint16_t currentWidth = getWidth(mapId);
+
+            Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
             if (isPlayer && cell.playerId != 0) {
                 return cell.playerId;  // player in distance
             }
@@ -395,20 +419,20 @@ void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t
         }
     }
 
-    std::vector<Cell>& cells = this->cells;
+    std::vector<Cell>* cells = &this->cells;
     if (mapId > 0) {
         for (auto& entry : entries) {
-            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                cells = entry.environment.cells;
+            if (entry.id.back() == '0' + mapId) {
+                cells = &entry.environment.cells;
                 break;
             }
         }
     }
 
     if (isPlayer) {
-        cells[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(entityId);
+        (*cells)[static_cast<size_t>(y) * width + x].playerId = static_cast<uint16_t>(entityId);
     } else {
-        cells[static_cast<size_t>(y) * width + x].npcId = static_cast<uint8_t>(entityId);
+        (*cells)[static_cast<size_t>(y) * width + x].npcId = static_cast<uint16_t>(entityId);
     }
 }
 
@@ -425,7 +449,9 @@ Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId) {
                 continue;
             }
 
-            Cell cell = getCell(static_cast<size_t>(checkY) * width + checkX, mapId);
+            uint16_t currentWidth = getWidth(mapId);
+
+            Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
             if (cell.playerId != 0) {
                 return Position{checkX, checkY};
             }
@@ -435,31 +461,31 @@ Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId) {
     return Position{-1, -1};
 }
 
-void Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId) {
-    std::vector<Cell>& cells = this->cells;
+bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId) {
+    std::vector<Cell>* cells = &this->cells;
     if (mapId > 0) {
         for (auto& entry : entries) {
-            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                cells = entry.environment.cells;
+            if (entry.id.back() == '0' + mapId) {
+                cells = &entry.environment.cells;
                 break;
             }
         }
     }
 
-    if (isInBounds(oldX, oldY, mapId)) {
+    uint16_t currentWidth = getWidth(mapId);
+
+    if (isInBounds(oldX, oldY, mapId) && isInBounds(newX, newY, mapId) && !occupiedByEntity(newX, newY, mapId)) {
         if (isPlayer) {
-            cells[static_cast<size_t>(oldY) * width + oldX].playerId = 0;
+            (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].playerId = 0;
+            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].playerId = static_cast<uint16_t>(entityId);
         } else {
-            cells[static_cast<size_t>(oldY) * width + oldX].npcId = 0;
+            (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].npcId = 0;
+            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].npcId = static_cast<uint16_t>(entityId);
         }
+        return true;
     }
-    if (isInBounds(newX, newY, mapId)) {
-        if (isPlayer) {
-            cells[static_cast<size_t>(newY) * width + newX].playerId = static_cast<uint8_t>(entityId);
-        } else {
-            cells[static_cast<size_t>(newY) * width + newX].npcId = static_cast<uint8_t>(entityId);
-        }
-    }
+
+    return false;
 }
 
 void Map::removePlayer(int16_t x, int16_t y, uint8_t mapId) {
@@ -535,9 +561,10 @@ bool Map::checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId) {
     return false;  // No entry at the position
 }
 
-void Map::placePlayerIntoTheDungeon(int playerId, const std::string& mapId) {
+void Map::placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId) {
     for (const auto& entry : entries) {
         if (entry.id == mapId) {
+            removePlayer(playerPosition.x, playerPosition.y, 0);  // Remove player from overworld
             placeEntity(playerId, entry.environment.playerSpawn.x, entry.environment.playerSpawn.y, true, mapId[mapId.size() - 1] - '0');
             return;
         }
@@ -581,4 +608,48 @@ int Map::friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendly
     int dx = std::abs(static_cast<int>(playerX) - static_cast<int>(f->x));
     int dy = std::abs(static_cast<int>(playerY) - static_cast<int>(f->y));
     return std::max(dx, dy);
+}
+
+int Map::calculateTeleportingTime(Position playerPosition, uint8_t mapId) {
+    int16_t x = playerPosition.x;
+    int16_t y = playerPosition.y;
+
+    // Check if the player is in a Dungeon
+    if (mapId > 0) {
+        for (const auto& entry : entries) {
+            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+                x = entry.x;
+                y = entry.y;
+            }
+        }
+    }
+
+    Position nearestPriestPos = searchNearestPriest(x, y);
+
+    if (nearestPriestPos.x != -1 && nearestPriestPos.y != -1)
+        return std::abs(nearestPriestPos.x - x) + std::abs(nearestPriestPos.y - y);
+
+    throw std::runtime_error("Map Error: no priest found");
+}
+
+Position Map::searchNearestPriest(int16_t x, int16_t y) {
+    Position nearestPriestPos{-1, -1};
+    int minDistance = std::numeric_limits<int>::max();
+
+    for (const auto& npc : npcs) {
+        if (npc.second->getName() == "priest") {
+            Position npcPos = npc.second->getPosition();
+            int distance = std::abs(npcPos.x - x) + std::abs(npcPos.y - y);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestPriestPos = npcPos;
+            }
+        }
+    }
+
+    if (nearestPriestPos.x != -1 && nearestPriestPos.y != -1) {
+        return nearestPriestPos;
+    }
+
+    throw std::runtime_error("Map Error: no priest found");
 }

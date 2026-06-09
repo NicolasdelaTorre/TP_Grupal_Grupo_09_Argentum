@@ -56,6 +56,7 @@ private:
     // Flags de cheats runtime: NO se guardan en PlayerData (no persisten al reloguear).
     bool infiniteHealth = false;
     bool infiniteMana = false;
+    bool teleporting;
 
 public:
     explicit Player(const std::string& name, Position position, RaceCode race, ClassCode class_);
@@ -87,6 +88,8 @@ public:
     uint8_t getMapId() const;
 
     bool getMeditationState() const;
+
+    bool getTeleportingState() const;
 
     bool hasLongDistanceWeapon();
 
@@ -136,6 +139,12 @@ public:
 
     // Resta oro. Devuelve false si no tiene suficiente (sin cambios).
     bool removeGold(uint32_t amount);
+
+    void startTeleporting();
+
+    void finishTeleporting();
+
+    void revive();
 };
 
 #endif

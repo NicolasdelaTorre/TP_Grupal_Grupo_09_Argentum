@@ -2,7 +2,7 @@
 
 TurnManager::TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds, Map& map, Game& game) : map(map), game(game) {
     for (const auto& playerId : players) {
-        playerTimers[playerId] = {0};
+        playerTimers[playerId] = {0, 0, 0};
     }
 
     for (uint16_t npcId : npcIds) {
@@ -15,7 +15,7 @@ TurnManager::TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds,
 void TurnManager::addPlayers(std::vector<int> playerIds) {
     for (int playerId : playerIds) {
         if (playerTimers.find(playerId) == playerTimers.end()) {
-            playerTimers[playerId] = {0};
+            playerTimers[playerId] = {0, 0, 0};
         }
     }
 }
@@ -40,10 +40,16 @@ void TurnManager::updateTimers() {
         uint8_t playerId = pair.first;
         PlayerTimer& timer = pair.second;
 
+        // Meditation
         if (game.checkIfPlayerIsMeditating(playerId)) {
             timer.timeToRestoreManaMeditating += TIME;
         } else {
             timer.timeToRestoreManaMeditating = 0;
+        }
+
+        // Teleport
+        if (timer.timeToTeleport > 0) {
+            timer.currentTimeToTeleport += TIME;
         }
     }
 
@@ -78,6 +84,32 @@ std::vector<int> TurnManager::getPlayersReadyToRestoreMana() {
             readyPlayers.push_back(playerId);
             // Reset meditation timer after restoring mana
             playerTimers[playerId].timeToRestoreManaMeditating = 0;
+        }
+    }
+    return readyPlayers;
+}
+
+bool TurnManager::alreadyTeleporting(int playerId) {
+    return playerTimers.find(playerId) != playerTimers.end() && playerTimers[playerId].timeToTeleport > 0;
+}
+
+void TurnManager::setTimeToTeleport(int playerId, int timeToTeleport) {
+    if (playerTimers.find(playerId) != playerTimers.end()) {
+        playerTimers[playerId].timeToTeleport = timeToTeleport;
+    }
+}
+
+std::vector<int> TurnManager::getPlayersReadyToTeleport() {
+    std::vector<int> readyPlayers;
+    for (const auto& pair : playerTimers) {
+        uint8_t playerId = pair.first;
+        const PlayerTimer& timer = pair.second;
+
+        if (timer.timeToTeleport > 0 && timer.currentTimeToTeleport >= timer.timeToTeleport) {
+            readyPlayers.push_back(playerId);
+            // Reset teleport timers after teleporting
+            playerTimers[playerId].timeToTeleport = 0;
+            playerTimers[playerId].currentTimeToTeleport = 0;
         }
     }
     return readyPlayers;

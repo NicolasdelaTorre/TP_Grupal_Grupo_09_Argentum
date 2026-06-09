@@ -30,7 +30,7 @@ Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t
     }
 
     std::cout << "Spawned creature " << name << " with level " << level << ", health " << health
-              << " and damage " << damage << "in position (" << position.x << ", " << position.y << ")" << std::endl;
+              << " and damage " << damage << " in position (" << position.x << ", " << position.y << ")" << std::endl;
 }
 
 Position Creature::stalkPlayer(Position playerPosition) {
