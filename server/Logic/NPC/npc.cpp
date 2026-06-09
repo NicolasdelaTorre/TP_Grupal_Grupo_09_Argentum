@@ -12,3 +12,7 @@ const std::string& NPC::getName() const {
 Position NPC::getPosition() const {
     return position;
 }
+
+void NPC::move(Position newPosition) {
+    position = newPosition;
+}

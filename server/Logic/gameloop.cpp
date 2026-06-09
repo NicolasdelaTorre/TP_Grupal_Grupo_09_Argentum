@@ -152,17 +152,20 @@ void Gameloop::NPCTurns() {
         Creature* npc = map.getNPC(npcId);
         Position oldPos = npc->getPosition();
         Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
-        if (newPos.x == -1)
+        
+        if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
             continue;
-        if (newPos.x == oldPos.x && newPos.y == oldPos.y)
-            continue;
-        map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId());
-        // Solo el overworld viaja al cliente (mapId=0).
-        if (npc->getMapId() != 0)
-            continue;
-        uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
-                                       static_cast<int16_t>(newPos.y - oldPos.y));
-        clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
+
+        if (map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId())) {
+            npc->move(newPos);
+
+            // Solo el overworld viaja al cliente (mapId=0).
+            if (npc->getMapId() != 0)
+                continue;
+            uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
+                                        static_cast<int16_t>(newPos.y - oldPos.y));
+            clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
+        }
     }
 
     // NPCs que toca atacar: si tienen un jugador adyacente, le aplican daño y

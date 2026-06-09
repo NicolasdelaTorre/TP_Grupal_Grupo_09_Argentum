@@ -21,6 +21,8 @@ class NPC {
 
         Position getPosition() const;
 
+        void move(Position newPosition);
+
         virtual ~NPC() = default;
 };
 

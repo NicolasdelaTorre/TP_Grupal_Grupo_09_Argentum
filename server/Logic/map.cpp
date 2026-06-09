@@ -334,31 +334,34 @@ bool Map::occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const {
            cells[static_cast<size_t>(y) * width + x].npcId != 0;
 }
 
-uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     for (size_t i = 0; i < 4; i++) {
         // Check position in the current direction
+        int16_t checkX = x;
+        int16_t checkY = y;
+
         switch (i) {
             case 0:
-                y -= 1;
+                checkY -= 1;
                 break;  // Up
             case 1:
-                y += 1;
+                checkY += 1;
                 break;  // Down
             case 2:
-                x -= 1;
+                checkX -= 1;
                 break;  // Left
             case 3:
-                x += 1;
+                checkX += 1;
                 break;  // Right
         }
 
-        if (!isInBounds(x, y, mapId)) {
+        if (!isInBounds(checkX, checkY, mapId)) {
             continue;  // out of bounds
         }
 
         uint16_t currentWidth = getWidth(mapId);
 
-        Cell cell = getCell(static_cast<size_t>(y) * currentWidth + x, mapId);
+        Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
         if (isPlayer && cell.playerId != 0) {
             return cell.playerId;  // player in sight
         }
@@ -371,7 +374,7 @@ uint8_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     return 0;  // no entity in sight
 }
 
-uint8_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     for (int16_t dy = -3; dy <= 3; ++dy) {
         for (int16_t dx = -3; dx <= 3; ++dx) {
             if (dx == 0 && dy == 0) {
@@ -427,9 +430,9 @@ void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t
     }
 
     if (isPlayer) {
-        (*cells)[static_cast<size_t>(y) * width + x].playerId = static_cast<uint8_t>(entityId);
+        (*cells)[static_cast<size_t>(y) * width + x].playerId = static_cast<uint16_t>(entityId);
     } else {
-        (*cells)[static_cast<size_t>(y) * width + x].npcId = static_cast<uint8_t>(entityId);
+        (*cells)[static_cast<size_t>(y) * width + x].npcId = static_cast<uint16_t>(entityId);
     }
 }
 
@@ -474,10 +477,10 @@ bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int
     if (isInBounds(oldX, oldY, mapId) && isInBounds(newX, newY, mapId) && !occupiedByEntity(newX, newY, mapId)) {
         if (isPlayer) {
             (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].playerId = 0;
-            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].playerId = static_cast<uint8_t>(entityId);
+            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].playerId = static_cast<uint16_t>(entityId);
         } else {
             (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].npcId = 0;
-            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].npcId = static_cast<uint8_t>(entityId);
+            (*cells)[static_cast<size_t>(newY) * currentWidth + newX].npcId = static_cast<uint16_t>(entityId);
         }
         return true;
     }
