@@ -217,6 +217,19 @@ bool GameScreen::handleEvents(float dt) {
                 continue;
             }
         }
+        // Doble click sobre un slot del inventario → equipar/desequipar ese item.
+        // SDL marca el segundo click de un doble click con clicks == 2.
+        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT &&
+            e.button.clicks == 2) {
+            int slot = inventorySlotAt(e.button.x, e.button.y);
+            if (slot >= 0 && slot < (int)inventoryItems.size()) {
+                uint8_t itemId = inventoryItems[slot];
+                std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
+                          << std::endl;
+                clientEvents.push(std::make_shared<EquipItemEvent>(slot));
+                continue;  // consumido por el inventario, no es un ataque.
+            }
+        }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             // Click sobre otro player o NPC → ATTACK con id del target.
             // Server valida si el atacante tiene arma equipada, si es de rango
@@ -665,6 +678,35 @@ void GameScreen::renderInventoryPanel() {
         renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
                       SDL2pp::Rect(dstX, dstY, dstW, dstH));
     }
+}
+
+int GameScreen::inventorySlotAt(int mouseX, int mouseY) const {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    float scale = uiScale();
+    const int hudW = hudPanelW();
+
+    // Mismo cálculo de invX/invY/INV_W/INV_H que renderInventoryPanel().
+    const int INV_W = (int)(210 * scale);
+    const int INV_H = (int)(255 * scale);
+    int invX = screenW - hudW + (hudW - INV_W) / 2;
+    int invY = screenH / 2 - INV_H / 2;
+
+    // Fuera del rectángulo del grid → no hay slot.
+    if (mouseX < invX || mouseX >= invX + INV_W || mouseY < invY || mouseY >= invY + INV_H)
+        return -1;
+
+    static constexpr int GRID_COLS = 4;
+    static constexpr int GRID_ROWS = 5;
+    float cw = INV_W / (float)GRID_COLS;
+    float ch = INV_H / (float)GRID_ROWS;
+
+    int col = (int)((mouseX - invX) / cw);
+    int row = (int)((mouseY - invY) / ch);
+    if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS)
+        return -1;
+    return row * GRID_COLS + col;
 }
 
 void GameScreen::renderChat() {

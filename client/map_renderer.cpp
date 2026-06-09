@@ -189,9 +189,9 @@ void MapRenderer::renderPlayer(const Player_& player, float camX, float camY) {
 std::string MapRenderer::get_path(int skin) {
     switch (skin % 5) {
         case 0:
-            return "/Skins/skin_default.png";
+            return "/Skins/Skin_inicial.png";
         case 1:
-            return "/Skins/Caballero_blanco.png";
+            return "/Skins/Armadura_de_cuero.png";
         case 2:
             return "/Skins/Gladiador_azul.png";
         case 3:

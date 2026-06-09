@@ -149,6 +149,11 @@ private:
     // Dibuja el panel derecho del HUD (fondo + inventario).
     void renderInventoryPanel();
 
+    // Mapea una posición del mouse (px de pantalla) al índice de slot del grid
+    // del inventario (0..GRID_COLS*GRID_ROWS-1), o -1 si el click cae fuera del
+    // panel. Usa la misma geometría que renderInventoryPanel().
+    int inventorySlotAt(int mouseX, int mouseY) const;
+
     // Dibuja la caja de chat arriba con historial e input actual.
     void renderChat();
 
