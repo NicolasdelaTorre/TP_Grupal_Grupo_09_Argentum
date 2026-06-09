@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <limits>
 #include <queue>
+#include <utility>
 
 std::vector<int> computeBiomeOwners(int width, int height,
                                     const std::vector<BiomeSource>& sources) {
@@ -17,7 +18,7 @@ std::vector<int> computeBiomeOwners(int width, int height,
 
     std::vector<double> cost(static_cast<size_t>(W) * H, std::numeric_limits<double>::infinity());
 
-    // Velocidad de expansión por bioma: los más grandes ganan más terreno.
+    // los más grandes van mas rapido
     std::vector<double> speed(sources.size(), 1.0);
     for (size_t i = 0; i < sources.size(); ++i) {
         speed[i] =
@@ -84,4 +85,46 @@ std::vector<int> computeBiomeOwners(int width, int height,
     }
 
     return owner;
+}
+
+std::vector<bool> computeExteriorCells(int width, int height,
+                                       const std::vector<bool>& is_wall) {
+    std::vector<bool> is_exterior(static_cast<size_t>(width) * height, false);
+    if (width <= 0 || height <= 0) {
+        return is_exterior;
+    }
+
+    std::queue<std::pair<int, int>> frontier;
+    auto enqueue_if_open = [&](int x, int y) {
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            return;
+        }
+        const size_t idx = static_cast<size_t>(y) * width + x;
+        if (is_wall[idx] || is_exterior[idx]) {
+            return;
+        }
+        is_exterior[idx] = true;
+        frontier.emplace(x, y);
+    };
+
+    for (int x = 0; x < width; ++x) {
+        enqueue_if_open(x, 0);
+        enqueue_if_open(x, height - 1);
+    }
+    for (int y = 0; y < height; ++y) {
+        enqueue_if_open(0, y);
+        enqueue_if_open(width - 1, y);
+    }
+
+    const int dx4[] = {1, -1, 0, 0};
+    const int dy4[] = {0, 0, 1, -1};
+    while (!frontier.empty()) {
+        const auto [cx, cy] = frontier.front();
+        frontier.pop();
+        for (int k = 0; k < 4; ++k) {
+            enqueue_if_open(cx + dx4[k], cy + dy4[k]);
+        }
+    }
+
+    return is_exterior;
 }

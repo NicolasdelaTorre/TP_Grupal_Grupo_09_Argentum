@@ -14,12 +14,12 @@ public:
 private:
     const MapDocument& document_;
 
-    bool check_map(QString& error_title, QString& error_message) const;
-    bool check_player_spawn(QString& error_title, QString& error_message) const;
-    bool check_obstacles(QString& error_title, QString& error_message) const;
-    bool check_zones(QString& error_title, QString& error_message) const;
-    bool check_entries(QString& error_title, QString& error_message) const;
-    bool check_environments(QString& error_title, QString& error_message) const;
+    bool checkMap(QString& error_title, QString& error_message) const;
+    bool checkPlayerSpawn(QString& error_title, QString& error_message) const;
+    bool checkObstacles(QString& error_title, QString& error_message) const;
+    bool checkZones(QString& error_title, QString& error_message) const;
+    bool checkEntries(QString& error_title, QString& error_message) const;
+    bool checkEnvironments(QString& error_title, QString& error_message) const;
 };
 
 #endif

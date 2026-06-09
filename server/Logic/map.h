@@ -23,6 +23,15 @@ struct Cell {
     bool safeZone;
 };
 
+// Obstáculo colocado en el mapa.
+struct PlacedObstacle {
+    uint8_t type;  // ObstacleCode
+    int16_t x;
+    int16_t y;
+    uint16_t w;
+    uint16_t h;
+};
+
 // Spawn de criaturas: qué criatura y cuántas como máximo.
 struct CreatureSpawn {
     std::string creature;
@@ -40,6 +49,7 @@ struct LoadedEnvironment {
     std::vector<Cell> cells;  // obstáculos, paredes y salidas acá
     std::vector<CreatureSpawn> spawns;
     std::vector<Position> exits;
+    std::vector<PlacedObstacle> obstacles;  // obstáculos del environment para el render
 };
 
 // Entrada con el environment al que lleva.
@@ -84,6 +94,7 @@ private:
     Position spawn;
     std::vector<LoadedEntry> entries;
     std::vector<Biome> biomes;
+    std::vector<PlacedObstacle> obstacles;  // obstáculos del overworld
     std::vector<FriendlyNpc> friendlyNpcs;
     std::unordered_map<uint16_t, std::unique_ptr<NPC>> npcs;
 
@@ -93,7 +104,7 @@ private:
 
 public:
     // Constructor con celdas ya armadas (lo usa el YAML loader).
-    Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes);
+    Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes, std::vector<PlacedObstacle> obstacles = {});
 
     uint16_t getWidth(uint8_t mapId) const;
 
@@ -102,6 +113,9 @@ public:
     uint16_t getCellCount(uint8_t mapId) const;
 
     Cell getCell(size_t index, uint8_t mapId) const;
+
+    // sirve para overworld y environments
+    const std::vector<PlacedObstacle>& getObstacles(uint8_t mapId) const;
 
     Position getPlayerSpawn(uint8_t mapId);
 

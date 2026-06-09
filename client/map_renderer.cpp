@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+
+#include "../common/common_tiles.h"
 
 namespace {
 
@@ -9,6 +12,17 @@ static constexpr int ITEM_CELL = 32;       // each cell in all three sheets is 3
 static constexpr int ITEM_COLS_512 = 16;   // 512px sheets → 16 columns
 static constexpr int ITEM_COLS_1024 = 32;  // 1024px sheet  → 32 columns
 static constexpr int ITEM_DRAW_SIZE = 40;  // render size on screen (scaled up from 32px)
+static constexpr const char* COMMON_ASSET_PATH = "../common/assets/images/";
+
+SDL_Color colorFromHex(const char* hex) {
+    unsigned int r = 0;
+    unsigned int g = 0;
+    unsigned int b = 0;
+    if (!hex || std::sscanf(hex, "#%02x%02x%02x", &r, &g, &b) != 3) {
+        return {0, 0, 0, 255};
+    }
+    return {static_cast<Uint8>(r), static_cast<Uint8>(g), static_cast<Uint8>(b), 255};
+}
 
 const char* itemSheetPath(uint8_t sheetId) {
     switch (sheetId) {
@@ -57,23 +71,48 @@ const char* npcEntityTexturePath(NpcCode type) {
     }
 }
 
+// Texturas de obstáculos a tamaño nativo. Viven en common/assets/images; el
+// cache del cliente tiene base AO_IMGS, así que se referencian relativo a ella.
 const char* obstacleTexturePath(ObstacleCode type) {
     switch (type) {
         case ObstacleCode::ROCK:
-            return "/Obstaculos/roca_01_ajustada.png";
+            return "../common/assets/images/rock_big.png";
         case ObstacleCode::ROCK_SMALL:
-            return "/Obstaculos/roca_03_ajustada.png";
-        // case ObstacleCode::ROCK_LARGE: return "/Obstaculos/roca_01_ajustada.png";
+            return "../common/assets/images/rock_medium.png";
+        case ObstacleCode::ROCK_LARGE:
+            return "../common/assets/images/rock_big.png";
         case ObstacleCode::LAMP:
-            return "/Obstaculos/lampara_corregida.png";
+            return "../common/assets/images/street_lamp.png";
         case ObstacleCode::WOOD:
-            return "/Obstaculos/maderas_apiladas_corregida.png";
+            return "../common/assets/images/stacked_logs.png";
         case ObstacleCode::CART:
-            return "/Obstaculos/segunda_carretilla_primera_fila.png";
+            return "../common/assets/images/cart.png";
         case ObstacleCode::MILL:
-            return "/Obstaculos/molino_recortado.png";
+            return "/Obstaculos/molino_recortado.png";  // sin etextura
         case ObstacleCode::CACTUS:
-            return "/Obstaculos/cactus_arriba_derecha_128x128.png";
+            return "../common/assets/images/cactus_big.png";
+        case ObstacleCode::BANK:
+            return "../common/assets/images/bank.png";
+        case ObstacleCode::HOUSE_BLUE:
+            return "../common/assets/images/wooden_house_blue.png";
+        case ObstacleCode::HOUSE_RED:
+            return "../common/assets/images/wooden_house_red.png";
+        case ObstacleCode::FENCE:
+            return "../common/assets/images/wooden_fence.png";
+        case ObstacleCode::TARGET:
+            return "../common/assets/images/target.png";
+        case ObstacleCode::HAYBALE:
+            return "../common/assets/images/haybale.png";
+        case ObstacleCode::FOUNTAIN:
+            return "../common/assets/images/water_fountain.png";
+        case ObstacleCode::BLACKSMITH:
+            return "../common/assets/images/blacksmith.png";
+        case ObstacleCode::HOTEL:
+            return "../common/assets/images/hotel.png";
+        case ObstacleCode::CHURCH:
+            return "../common/assets/images/church.png";
+        case ObstacleCode::TRAINING_DUMMY:
+            return "../common/assets/images/training_dummy.png";
         default:
             return nullptr;
     }
@@ -107,65 +146,29 @@ void MapRenderer::render(const GameMap& map, float camX, float camY) {
 }
 
 
-// Source crop rect for each obstacle image, excluding the drop-shadow overhang
-// that extends past the rock body to the lower-right.
-// Returns NullOpt to use the full image.
-SDL2pp::Optional<SDL2pp::Rect> obstacleSourceCrop(ObstacleCode type) {
-    switch (type) {
-        // roca_01_ajustada.png (437x327): rock body ends ~col 350, row 315
-        case ObstacleCode::ROCK:
-            return SDL2pp::Rect(0, 0, 350, 315);
-        // roca_03_ajustada.png (168x134): rock body ends ~col 140, row 120
-        case ObstacleCode::ROCK_SMALL:
-            return SDL2pp::Rect(0, 0, 140, 120);
-        default:
-            return SDL2pp::NullOpt;
-    }
-}
-
-
+// Dibuja cada obstáculo a tamaño nativo de su textura, anclado a la esquina
+// inferior izquierda de su footprint (el rectángulo que bloquea). El tamaño que
+// bloquea es independiente del de la textura: la imagen se coloca tal cual se
+// carga (incluida la sombra/voladizo, que sobresale del footprint).
 void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
-    int screenW, screenH;
-    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+    for (const auto& obs: map.obstacles) {
+        const char* texPath = obstacleTexturePath(obs.type);
+        if (!texPath)
+            continue;
 
-    int startX = std::max(0, (int)(camX / TILE_SIZE));
-    int startY = std::max(0, (int)(camY / TILE_SIZE));
-    int endX = std::min(map.width, startX + screenW / TILE_SIZE + 2);
-    int endY = std::min(map.height, startY + screenH / TILE_SIZE + 2);
+        try {
+            SDL2pp::Texture& tex = cache.get(texPath);
+            const int texW = tex.GetWidth();
+            const int texH = tex.GetHeight();
 
-    for (int y = startY; y < endY; y++) {
-        for (int x = startX; x < endX; x++) {
-            const TileData& tile = map.at(x, y);
-            if (tile.obstacleType == ObstacleCode::NONE)
-                continue;
+            // Esquina inferior izquierda del footprint, en coords de pantalla.
+            const int leftX = (int)(obs.x * TILE_SIZE - camX);
+            const int bottomY = (int)((obs.y + obs.h) * TILE_SIZE - camY);
 
-            // Solo renderizamos desde la celda ancla (esquina superior-izquierda del grupo).
-            const bool leftSame = (x > 0 && map.at(x - 1, y).obstacleType == tile.obstacleType);
-            const bool aboveSame = (y > 0 && map.at(x, y - 1).obstacleType == tile.obstacleType);
-            if (leftSame || aboveSame)
-                continue;
-
-            // Medir el ancho del grupo escaneando hacia la derecha.
-            int w = 1;
-            while (x + w < map.width && map.at(x + w, y).obstacleType == tile.obstacleType) w++;
-
-            // Medir el alto del grupo escaneando hacia abajo.
-            int h = 1;
-            while (y + h < map.height && map.at(x, y + h).obstacleType == tile.obstacleType) h++;
-
-            const char* texPath = obstacleTexturePath(tile.obstacleType);
-            if (!texPath)
-                continue;
-
-            const int screenX = (int)(x * TILE_SIZE - camX);
-            const int screenY = (int)(y * TILE_SIZE - camY);
-            SDL2pp::Rect dst(screenX, screenY, w * TILE_SIZE, h * TILE_SIZE);
-
-            try {
-                renderer.Copy(cache.get(texPath), obstacleSourceCrop(tile.obstacleType), dst);
-            } catch (...) {
-                // Textura no disponible — se ignora silenciosamente.
-            }
+            SDL2pp::Rect dst(leftX, bottomY - texH, texW, texH);
+            renderer.Copy(tex, SDL2pp::NullOpt, dst);
+        } catch (...) {
+            // Textura no disponible — se ignora silenciosamente.
         }
     }
 }
@@ -216,29 +219,25 @@ std::string MapRenderer::get_path(int skin) {
 
 void MapRenderer::drawTile(const TileData& tile, int screenX, int screenY) {
     SDL2pp::Rect dst(screenX, screenY, TILE_SIZE, TILE_SIZE);
-    SDL2pp::Rect src(0, 0, TILE_SIZE, TILE_SIZE);
 
-    switch (tile.floor) {
-        case TileCode::GRASS: {
-            static constexpr int VAR_W = 170;
-            static constexpr int VAR_H = 128;
-            SDL2pp::Rect varSrc(tile.variant * VAR_W, 0, VAR_W, VAR_H);
-            renderer.Copy(cache.get("/Mapa/Tiles_pasto.png"), varSrc, dst);
-            break;
-        }
-        case TileCode::WATER:
-            renderer.Copy(cache.get("/Mapa/Tiles_agua.png"), src, dst);
-            break;
-        case TileCode::DIRT:
-            renderer.Copy(cache.get("/Mapa/Tile_tierra.png"), src, dst);
-            break;
-        case TileCode::SAND:
-            renderer.Copy(cache.get("/Mapa/Tiles_arena.png"), src, dst);
-            break;
-        case TileCode::INTERIOR:
-            renderer.Copy(cache.get("/Mapa/Tiles_interiores.png"), src, dst);
-            break;
+    const FloorTile* floorTile = floor_tile_from_grid_value(static_cast<uint8_t>(tile.textureId));
+    if (!floorTile) {
+        floorTile = floor_tile_from_grid_value(1);
     }
+
+    if (floorTile && floorTile->texture && floorTile->texture[0] != '\0') {
+        try {
+            renderer.Copy(cache.get(std::string(COMMON_ASSET_PATH) + floorTile->texture),
+                          SDL2pp::NullOpt, dst);
+            return;
+        } catch (...) {
+            // Si falta la textura, caemos al color de respaldo del tile.
+        }
+    }
+
+    const SDL_Color color = floorTile ? colorFromHex(floorTile->color) : SDL_Color{0, 0, 0, 255};
+    renderer.SetDrawColor(color.r, color.g, color.b, color.a);
+    renderer.FillRect(dst);
 }
 
 void MapRenderer::renderWeapon(const Player_& player, float camX, float camY) {

@@ -1,29 +1,29 @@
 #include "verificator.h"
 
 #include <algorithm>
-#include <queue>
-#include <utility>
 #include <vector>
+
+#include "map/biome_grid.h"
 
 #include "editor_constants.h"
 
 bool Verificator::validate(QString& error_title, QString& error_message) const {
-    if (!check_map(error_title, error_message)) {
+    if (!checkMap(error_title, error_message)) {
         return false;
     }
-    if (!check_player_spawn(error_title, error_message)) {
+    if (!checkPlayerSpawn(error_title, error_message)) {
         return false;
     }
-    if (!check_obstacles(error_title, error_message)) {
+    if (!checkObstacles(error_title, error_message)) {
         return false;
     }
-    if (!check_zones(error_title, error_message)) {
+    if (!checkZones(error_title, error_message)) {
         return false;
     }
-    if (!check_entries(error_title, error_message)) {
+    if (!checkEntries(error_title, error_message)) {
         return false;
     }
-    if (!check_environments(error_title, error_message)) {
+    if (!checkEnvironments(error_title, error_message)) {
         return false;
     }
     return true;
@@ -31,7 +31,7 @@ bool Verificator::validate(QString& error_title, QString& error_message) const {
 
 Verificator::Verificator(const MapDocument& document): document_(document) {}
 
-bool Verificator::check_map(QString& error_title, QString& error_message) const {
+bool Verificator::checkMap(QString& error_title, QString& error_message) const {
     if (document_.map.width <= 0 || document_.map.height <= 0) {
         error_title = QStringLiteral("Mapa inválido");
         error_message = QStringLiteral("El mapa debe tener ancho y alto mayores a cero.");
@@ -45,7 +45,7 @@ bool Verificator::check_map(QString& error_title, QString& error_message) const 
     return true;
 }
 
-bool Verificator::check_player_spawn(QString& error_title, QString& error_message) const {
+bool Verificator::checkPlayerSpawn(QString& error_title, QString& error_message) const {
     if (!document_.player_spawn.placed) {
         error_title = QStringLiteral("Spawn faltante");
         error_message = QStringLiteral("Debés colocar exactamente un spawn de jugador.");
@@ -62,7 +62,7 @@ bool Verificator::check_player_spawn(QString& error_title, QString& error_messag
     return true;
 }
 
-bool Verificator::check_obstacles(QString& error_title, QString& error_message) const {
+bool Verificator::checkObstacles(QString& error_title, QString& error_message) const {
     const auto it = std::find_if(document_.obstacles.begin(), document_.obstacles.end(),
                                  [this](const auto& obstacle) {
                                      return obstacle.x < 0 || obstacle.y < 0 ||
@@ -78,7 +78,7 @@ bool Verificator::check_obstacles(QString& error_title, QString& error_message) 
     return true;
 }
 
-bool Verificator::check_zones(QString& error_title, QString& error_message) const {
+bool Verificator::checkZones(QString& error_title, QString& error_message) const {
     const auto it =
             std::find_if(document_.zones.begin(), document_.zones.end(), [this](const auto& zone) {
                 return zone.area_x < 0 || zone.area_y < 0 ||
@@ -94,7 +94,7 @@ bool Verificator::check_zones(QString& error_title, QString& error_message) cons
     return true;
 }
 
-bool Verificator::check_entries(QString& error_title, QString& error_message) const {
+bool Verificator::checkEntries(QString& error_title, QString& error_message) const {
     for (const auto& entry: document_.entries) {
         if (entry.x < 0 || entry.y < 0 || entry.x + entry.width > document_.map.width ||
             entry.y + entry.height > document_.map.height) {
@@ -118,7 +118,7 @@ bool Verificator::check_entries(QString& error_title, QString& error_message) co
     return true;
 }
 
-bool Verificator::check_environments(QString& error_title, QString& error_message) const {
+bool Verificator::checkEnvironments(QString& error_title, QString& error_message) const {
     for (const auto& env: document_.environments) {
         if (env.width <= 0 || env.height <= 0) {
             error_title = QStringLiteral("Entorno inválido");
@@ -188,36 +188,7 @@ bool Verificator::check_environments(QString& error_title, QString& error_messag
             }
         }
 
-        std::vector<bool> is_exterior(static_cast<size_t>(W) * H, false);
-        std::queue<std::pair<int, int>> queue;
-        auto enqueue_if_open = [&](int x, int y) {
-            if (x < 0 || y < 0 || x >= W || y >= H) {
-                return;
-            }
-            const size_t idx = static_cast<size_t>(y) * W + x;
-            if (is_wall[idx] || is_exterior[idx]) {
-                return;
-            }
-            is_exterior[idx] = true;
-            queue.emplace(x, y);
-        };
-        for (int x = 0; x < W; ++x) {
-            enqueue_if_open(x, 0);
-            enqueue_if_open(x, H - 1);
-        }
-        for (int y = 0; y < H; ++y) {
-            enqueue_if_open(0, y);
-            enqueue_if_open(W - 1, y);
-        }
-        const int dx4[] = {1, -1, 0, 0};
-        const int dy4[] = {0, 0, 1, -1};
-        while (!queue.empty()) {
-            const auto [cx, cy] = queue.front();
-            queue.pop();
-            for (int k = 0; k < 4; ++k) {
-                enqueue_if_open(cx + dx4[k], cy + dy4[k]);
-            }
-        }
+        const std::vector<bool> is_exterior = computeExteriorCells(W, H, is_wall);
 
         bool has_interior = false;
         for (size_t i = 0; i < is_wall.size(); ++i) {

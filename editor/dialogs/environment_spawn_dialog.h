@@ -10,9 +10,6 @@
 
 class QSlider;
 
-// Diálogo para elegir el spawn de criaturas de un entorno. A diferencia del
-// bioma (que limita las criaturas a su template), un entorno admite todas las
-// criaturas disponibles del juego, que se reciben en `creatures`.
 class EnvironmentSpawnDialog: public QDialog {
     Q_OBJECT
 
@@ -32,7 +29,6 @@ private:
         std::string creature;
     };
 
-    static QString prettify(const QString& text);
     static int initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
                                       const std::string& creature);
 

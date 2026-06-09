@@ -11,7 +11,7 @@ class YamlMapIO {
 public:
     static bool save(const MapDocument& document, const std::string& path);
 
-    // CReconstruye el MapDocument completo para poder seguir editándolo.
+    // EReconstruye el MapDocument completo para poder seguir editándolo.
     static bool load(MapDocument& document, const std::string& path);
 
 private:

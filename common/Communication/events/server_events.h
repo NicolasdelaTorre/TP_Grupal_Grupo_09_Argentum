@@ -15,6 +15,18 @@ struct MapCellData {
     bool safeZone;
 };
 
+// Obstáculo colocado en el mapa. (x, y) es la esquina superior-izquierda del
+// rectángulo que bloquea (footprint), y (w, h) su tamaño en tiles. El cliente
+// dibuja la textura del tipo a tamaño nativo anclada a la esquina inferior
+// izquierda, es independiente del tamaño que bloquea.
+struct MapObstacleData {
+    uint8_t type;
+    int16_t x;
+    int16_t y;
+    uint16_t w;
+    uint16_t h;
+};
+
 // Eventos sin payload (solo el opcode). Sirve para LOGIN_FAIL, FIRST_LOGIN,
 // MOVE_OK, MOVE_FAIL.
 class OpcodeOnlyEvent: public ServerEvent {
@@ -43,18 +55,22 @@ public:
     static std::unique_ptr<LoginOkEvent> deserialize(CommonProtocol& proto);
 };
 
-// MAP: [opcode][width:2][height:2][cellCount:2][cells...].
+// MAP: [opcode][width:2][height:2][cellCount:2][cells...]
+//      [obstacleCount:2][[type:1][x:2][y:2][w:2][h:2]...].
 class MapEvent: public ServerEvent {
 private:
     uint16_t width;
     uint16_t height;
     std::vector<MapCellData> cells;
+    std::vector<MapObstacleData> obstacles;
 
 public:
-    MapEvent(uint16_t width, uint16_t height, std::vector<MapCellData> cells);
+    MapEvent(uint16_t width, uint16_t height, std::vector<MapCellData> cells,
+             std::vector<MapObstacleData> obstacles = {});
     uint16_t getWidth() const { return width; }
     uint16_t getHeight() const { return height; }
     const std::vector<MapCellData>& getCells() const { return cells; }
+    const std::vector<MapObstacleData>& getObstacles() const { return obstacles; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<MapEvent> deserialize(CommonProtocol& proto);
 };

@@ -2,12 +2,6 @@
 #define ARGENTUM_EDITOR_EDITOR_CONSTANTS_H
 
 #define CELL_DISPLAY_SIZE 64
-// Tamaño nativo (en píxeles) de las texturas de tile del piso (biomas).
-// Si difiere de CELL_DISPLAY_SIZE, los tiles de bioma se recortan a un cuadrado
-// de CELL_DISPLAY_SIZE^2 al cargarse (no se escalan, para no perder nitidez).
-// Los obstáculos y demás items asumen que su textura ya viene dimensionada para
-// su tamaño en celdas (width*CELL_DISPLAY_SIZE x height*CELL_DISPLAY_SIZE).
-#define TEXTURE_NATIVE_CELL_SIZE 128
 #define TARGET_CELL_SCREEN_PX 32
 
 #ifndef EDITOR_SAVE_MAP_PATH
@@ -65,7 +59,6 @@
 #define TEMPLATES_FLOORS_PATH EDITOR_TEMPLATES_FLOORS_PATH
 #define ASSETS_IMAGES_PATH EDITOR_ASSETS_IMAGES_PATH
 #define ASSETS_UI_TEXTURES_PATH EDITOR_ASSETS_UI_TEXTURES_PATH
-// Textura (placeholder) del spawn de jugador. Vive en assets/ui_textures.
 #define PLAYER_SPAWN_TEXTURE ASSETS_UI_TEXTURES_PATH "/player_spawn.png"
 
 #define DATA_TYPE (Qt::UserRole + 1)
@@ -98,11 +91,15 @@
 #define CREATURE_SLIDER_DEFAULT 0
 #define CREATURE_VALUE_LABEL_WIDTH 28
 
-// Z order de los elementos del mapa (de abajo hacia arriba):
-// texturas de bioma (-1.7) / tinte de bioma (-1.5) -> modificadores de piso
-// (-1.4, por encima del bioma y por debajo de la grilla en -1) -> biomas ->
-// ciudades -> obstáculos / entries / spawn (y paredes en entornos).
+inline constexpr int ENVIRONMENT_SIZE = 30;
+
+// Z order de los elementos del mapa (de abajo hacia arriba)
+#define Z_BACKGROUND -2.0
+#define Z_ENV_FLOOR -1.8
+#define Z_BIOME_TEXTURE -1.7
+#define Z_ENV_EXTERIOR -1.6
 #define Z_FLOOR_MODIFIER -1.4
+#define Z_GRID -1.0
 #define Z_BIOME_ZONE 1.0
 #define Z_CITY_ZONE 2.0
 #define Z_OBSTACLE 3.0

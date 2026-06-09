@@ -79,8 +79,12 @@ std::unique_ptr<LoginOkEvent> LoginOkEvent::deserialize(CommonProtocol& proto) {
 
 // ── MapEvent ─────────────────────────────────────────────────────────────
 
-MapEvent::MapEvent(uint16_t width, uint16_t height, std::vector<MapCellData> cells):
-        width(width), height(height), cells(std::move(cells)) {}
+MapEvent::MapEvent(uint16_t width, uint16_t height, std::vector<MapCellData> cells,
+                   std::vector<MapObstacleData> obstacles):
+        width(width),
+        height(height),
+        cells(std::move(cells)),
+        obstacles(std::move(obstacles)) {}
 
 void MapEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ServerMsg::MAP));
@@ -91,6 +95,14 @@ void MapEvent::serialize(CommonProtocol& proto) const {
         proto.send_two_bytes_number(c.textureId);
         proto.send_two_bytes_number(c.obstacleId);
         proto.sendByte(c.safeZone ? 1 : 0);
+    }
+    proto.send_two_bytes_number(static_cast<uint16_t>(obstacles.size()));
+    for (const auto& o: obstacles) {
+        proto.sendByte(o.type);
+        proto.send_two_bytes_number(static_cast<uint16_t>(o.x));
+        proto.send_two_bytes_number(static_cast<uint16_t>(o.y));
+        proto.send_two_bytes_number(o.w);
+        proto.send_two_bytes_number(o.h);
     }
 }
 
@@ -107,7 +119,19 @@ std::unique_ptr<MapEvent> MapEvent::deserialize(CommonProtocol& proto) {
         c.safeZone = (proto.receive_byte() != 0);
         cells.push_back(c);
     }
-    return std::make_unique<MapEvent>(w, h, std::move(cells));
+    uint16_t obstacleCount = proto.receive_two_bytes_number();
+    std::vector<MapObstacleData> obstacles;
+    obstacles.reserve(obstacleCount);
+    for (uint16_t i = 0; i < obstacleCount; i++) {
+        MapObstacleData o;
+        o.type = proto.receive_byte();
+        o.x = static_cast<int16_t>(proto.receive_two_bytes_number());
+        o.y = static_cast<int16_t>(proto.receive_two_bytes_number());
+        o.w = proto.receive_two_bytes_number();
+        o.h = proto.receive_two_bytes_number();
+        obstacles.push_back(o);
+    }
+    return std::make_unique<MapEvent>(w, h, std::move(cells), std::move(obstacles));
 }
 
 // ── NewPlayerEvent ───────────────────────────────────────────────────────

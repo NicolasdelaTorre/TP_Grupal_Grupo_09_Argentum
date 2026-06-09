@@ -198,9 +198,16 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         Cell c = map.getCell(i, 0);
         cells.push_back({c.textureId, c.obstacleId, c.safeZone});
     }
+    // Obstáculos colocados
+    std::vector<MapObstacleData> obstacles;
+    const auto& placed = map.getObstacles(0);
+    obstacles.reserve(placed.size());
+    for (const auto& o: placed) {
+        obstacles.push_back({o.type, o.x, o.y, o.w, o.h});
+    }
     clientMonitor.sendToClient(playerId,
                                std::make_shared<MapEvent>(map.getWidth(0), map.getHeight(0),
-                                                          std::move(cells)));
+                                                          std::move(cells), std::move(obstacles)));
 
     // Stats iniciales.
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));

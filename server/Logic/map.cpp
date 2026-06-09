@@ -13,8 +13,8 @@
 #include "../../common/DTOs.h"
 #include <iostream>
 
-Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes):
-        npcIdCounter(1), width(width), height(height), cells(std::move(cells)), spawn(spawn), entries(std::move(entries)), biomes(std::move(biomes)) {
+Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes, std::vector<PlacedObstacle> obstacles):
+        npcIdCounter(1), width(width), height(height), cells(std::move(cells)), spawn(spawn), entries(std::move(entries)), biomes(std::move(biomes)), obstacles(std::move(obstacles)) {
     if (this->cells.size() != static_cast<size_t>(width) * height) {
         throw std::invalid_argument("Map Error: cells vector size does not match width * height");
     }
@@ -203,6 +203,20 @@ Cell Map::getCell(size_t index, uint8_t mapId) const {
         throw std::out_of_range("Map Error: cell index out of range");
     }
     return cells[index];
+}
+
+const std::vector<PlacedObstacle>& Map::getObstacles(uint8_t mapId) const {
+    if (mapId > 0) {
+        for (const auto& entry: entries) {
+            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+                return entry.environment.obstacles;
+            }
+        }
+
+        throw std::runtime_error("Map Error: entry not found for mapId " + std::to_string(mapId));
+    }
+
+    return obstacles;
 }
 
 Position Map::getPlayerSpawn(uint8_t mapId) {
