@@ -4,25 +4,21 @@
 #include <QDialog>
 #include <QString>
 
-#include "assets/templates/template_registry.h"
-
-class QComboBox;
 class QLineEdit;
 
 class NewEnvironmentDialog: public QDialog {
     Q_OBJECT
 
 public:
-    NewEnvironmentDialog(const EntryTemplate& entry_template, const QString& suggested_name,
+    // `type_display_name` es el nombre del tipo de entorno (Cueva/Mazmorra), que
+    // queda fijo según el template de la entry y se muestra como solo lectura.
+    NewEnvironmentDialog(const QString& type_display_name, const QString& suggested_name,
                          QWidget* parent = nullptr);
 
     QString environment_name() const;
-    int environment_width() const;
-    int environment_height() const;
 
 private:
     QLineEdit* name_input_;
-    QComboBox* size_preset_;
 };
 
 #endif

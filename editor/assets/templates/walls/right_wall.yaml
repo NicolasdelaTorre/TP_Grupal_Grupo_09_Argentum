@@ -1,0 +1,6 @@
+template_id: right_wall
+name: Right Wall
+size:
+  width: 1
+  height: 2
+texture: "walls/right_mazmorra.png"

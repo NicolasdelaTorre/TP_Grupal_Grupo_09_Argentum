@@ -1,0 +1,6 @@
+template_id: rock_medium
+name: "Medium Rock"
+size:
+  width: 2
+  height: 2
+texture: "rock_medium.png"

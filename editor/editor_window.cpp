@@ -509,7 +509,6 @@ void EditorWindow::onApplyMapResize() {
         env_doc.obstacles = env->obstacles;
         env_doc.walls = env->walls;
         env_doc.exits = env->exits;
-        env_doc.floor_color = env->floor_color;
         env_doc.floor_texture = env->floor_texture;
 
         if (!applyTo(env_doc, QStringLiteral("the environment"))) {
@@ -633,16 +632,13 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
     if (!entry_template) {
         return;
     }
-    if (entry_template->environment_sizes.empty()) {
-        QMessageBox::warning(this, QStringLiteral("Entrada"),
-                             QStringLiteral("El template no define tamaños de entorno."));
-        return;
-    }
+
+    const EnvironmentTypeInfo& env_type = environment_type_info(entry_template->environment_type);
 
     const QString suggested = QStringLiteral("%1 %2")
                                       .arg(QString::fromStdString(entry_template->name))
                                       .arg(next_environment_index_);
-    NewEnvironmentDialog dialog(*entry_template, suggested, this);
+    NewEnvironmentDialog dialog(QString::fromStdString(env_type.name), suggested, this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
@@ -663,11 +659,10 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
     Environment env;
     env.id = env_id.toStdString();
     env.name = dialog.environment_name().toStdString();
-    env.type = entry_template->id;
-    env.width = dialog.environment_width();
-    env.height = dialog.environment_height();
-    env.floor_color = entry_template->floor_color;
-    env.floor_texture = entry_template->floor_texture;
+    env.type = env_type.type;
+    env.width = ENVIRONMENT_SIZE;
+    env.height = ENVIRONMENT_SIZE;
+    env.floor_texture = env_type.floor_texture;
     env.spawns = spawns;
     main_doc_.environments.push_back(env);
 
@@ -778,15 +773,9 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
     env_doc.obstacles = env->obstacles;
     env_doc.walls = env->walls;
     env_doc.exits = env->exits;
-    env_doc.floor_color = env->floor_color;
     env_doc.floor_texture = env->floor_texture;
-    if (const auto* entry_tpl = templates_.find_entry(env->type)) {
-        if (env_doc.floor_color.empty()) {
-            env_doc.floor_color = entry_tpl->floor_color;
-        }
-        if (env_doc.floor_texture.empty()) {
-            env_doc.floor_texture = entry_tpl->floor_texture;
-        }
+    if (env_doc.floor_texture.empty()) {
+        env_doc.floor_texture = environment_type_info(env->type).floor_texture;
     }
 
     map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);

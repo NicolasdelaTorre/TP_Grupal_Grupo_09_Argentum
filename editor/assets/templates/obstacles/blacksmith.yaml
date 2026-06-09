@@ -1,0 +1,6 @@
+template_id: blacksmith
+name: "Blacksmith"
+size:
+  width: 3
+  height: 2
+texture: "blacksmith.png"

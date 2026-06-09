@@ -1,7 +1,0 @@
-template_id: diana
-name: "Diana"
-size:
-  width: 1
-  height: 1
-color: "#C0392B"
-texture: "diana.png"

@@ -1,0 +1,6 @@
+template_id: wooden_house_blue
+name: "Blue Wooden house"
+size:
+  width: 4
+  height: 3
+texture: "wooden_house_blue.png"

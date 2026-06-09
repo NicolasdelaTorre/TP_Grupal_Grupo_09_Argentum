@@ -1,7 +1,0 @@
-template_id: piedra_grande
-name: "Piedra grande"
-size:
-  width: 6
-  height: 4
-color: "#5F5F5F"
-texture: "roca_01_ajustada.png"

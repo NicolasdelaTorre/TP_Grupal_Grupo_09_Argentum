@@ -21,7 +21,7 @@ fixed_obstacles:
   - { type: lampara_ciudad, position: [17, 22] }
   - { type: lampara_ciudad, position: [23, 22] }
   - { type: lampara_ciudad, position: [34, 22] }
-  - { type: banco, position: [3, 7] }
+  - { type: bank, position: [3, 7] }
   - { type: iglesia, position: [16, 1] }
   - { type: hotel, position: [29, 9] }
   - { type: fuente, position: [19, 14] }

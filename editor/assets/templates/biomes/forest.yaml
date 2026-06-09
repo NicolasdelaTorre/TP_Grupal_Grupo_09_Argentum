@@ -1,0 +1,10 @@
+template_id: forest
+name: "Forest"
+default_size:
+  width: 35
+  height: 20
+texture: "tiles/bosque.png"
+color: "#4E7A3A"
+allowed_creatures:
+  - spider
+  - goblin

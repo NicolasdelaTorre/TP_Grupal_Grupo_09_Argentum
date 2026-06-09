@@ -1,0 +1,9 @@
+template_id: snow 
+name: "Snow"
+default_size:
+  width: 35
+  height: 25
+texture: "tiles/nieve.png"
+color: "#DDE7EF"
+allowed_creatures:
+  - golem

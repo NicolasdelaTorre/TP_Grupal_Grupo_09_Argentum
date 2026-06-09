@@ -1,0 +1,6 @@
+template_id: water_fountain
+name: "Water Fountain"
+size:
+  width: 3
+  height: 3
+texture: "water_fountain.png"

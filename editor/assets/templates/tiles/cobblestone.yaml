@@ -1,0 +1,4 @@
+template_id: cobblestone
+name: "Cobblestone"
+texture: "tiles/adoquin.png"
+grid_value: 9

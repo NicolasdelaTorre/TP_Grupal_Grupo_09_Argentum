@@ -77,7 +77,6 @@ private:
     std::vector<QGraphicsPixmapItem*> biome_texture_items_;
     QGraphicsRectItem* env_floor_item_ = nullptr;
     QGraphicsPixmapItem* env_exterior_item_ = nullptr;
-    QString env_floor_color_;
     // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
     QString env_floor_texture_;
     QString last_hover_zone_id_;

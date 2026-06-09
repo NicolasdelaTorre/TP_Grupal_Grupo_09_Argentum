@@ -1,8 +1,0 @@
-template_id: rocosas
-name: "Rocosa"
-default_size:
-  width: 40
-  height: 30
-texture: "tiles/rocosa.png"
-allowed_creatures:
-  - golem

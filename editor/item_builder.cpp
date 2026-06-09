@@ -6,45 +6,51 @@
 
 #include "editor_constants.h"
 
-QGraphicsRectItem* ItemBuilder::make_rect(const QColor& fill, const QColor& border) {
-    auto* rect = new QGraphicsRectItem(0, 0, CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE);
-    rect->setBrush(QBrush(fill));
-    rect->setPen(QPen(border, 1));
-    return rect;
-}
-
 void ItemBuilder::attachLabel(QGraphicsRectItem* rect, const QString& text) {
     auto* label = new QGraphicsSimpleTextItem(text, rect);
     label->setPos(2, 2);
 }
 
 QGraphicsRectItem* ItemBuilder::buildPlayerSpawn(const QString& id) {
-    auto* rect = make_rect(QColor(80, 180, 255), QColor(20, 80, 160));
+    auto* rect = new QGraphicsRectItem(0, 0, CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE);
+    rect->setBrush(Qt::NoBrush);
+    rect->setPen(Qt::NoPen);
+
+    // El spawn se muestra con una textura propia (placeholder en ui_textures).
+    // Mientras esa textura no exista, se deja un marcador mínimo con label para
+    // que el punto siga siendo visible en el editor.
+    QPixmap pixmap;
+    if (pixmap.load(QStringLiteral(PLAYER_SPAWN_TEXTURE))) {
+        auto* texture_item = new QGraphicsPixmapItem(
+                pixmap.scaled(CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE, Qt::IgnoreAspectRatio,
+                              Qt::SmoothTransformation),
+                rect);
+        texture_item->setTransformationMode(Qt::SmoothTransformation);
+        texture_item->setPos(0, 0);
+    } else {
+        rect->setPen(QPen(QColor(20, 80, 160), 1));
+        attachLabel(rect, QStringLiteral("Spawn"));
+    }
+
     rect->setData(DATA_TYPE, PLAYER_SPAWN_TYPE);
     rect->setData(DATA_ID, id);
-    attachLabel(rect, QStringLiteral("Spawn"));
     return rect;
 }
 
 QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& type, int width,
-                                              int height, const QColor& fill,
-                                              const QString& texturePath) {
+                                              int height, const QString& texturePath) {
     const int pixel_w = width * CELL_DISPLAY_SIZE;
     const int pixel_h = height * CELL_DISPLAY_SIZE;
     auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
+    rect->setBrush(Qt::NoBrush);
+    rect->setPen(Qt::NoPen);
 
     // dibuja a tamaño nativo, ancla esquina inferior izquierda a esquina inferior izquierda del rect
     QPixmap pixmap;
-    const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
-    if (has_texture) {
-        rect->setBrush(Qt::NoBrush);
-        rect->setPen(Qt::NoPen);
+    if (!texturePath.isEmpty() && pixmap.load(texturePath)) {
         auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
         texture_item->setTransformationMode(Qt::SmoothTransformation);
         texture_item->setPos(0, pixel_h - pixmap.height());
-    } else {
-        rect->setBrush(QBrush(fill));
-        rect->setPen(QPen(fill.darker(160), 1));
     }
 
     rect->setData(DATA_TYPE, OBSTACLE_TYPE);
@@ -52,25 +58,32 @@ QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& 
     rect->setData(DATA_SUBTYPE, type);
     rect->setData(DATA_WIDTH, width);
     rect->setData(DATA_HEIGHT, height);
-    if (!has_texture) {
-        attachLabel(rect, type);
-    }
     return rect;
 }
 
 QGraphicsRectItem* ItemBuilder::buildEntry(const QString& id, const QString& type,
                                            const QString& environmentId, int width, int height,
-                                           const QColor& fill) {
-    auto* rect = new QGraphicsRectItem(0, 0, width * CELL_DISPLAY_SIZE, height * CELL_DISPLAY_SIZE);
-    rect->setBrush(QBrush(fill));
-    rect->setPen(QPen(fill.darker(180), 2));
+                                           const QString& texturePath) {
+    const int pixel_w = width * CELL_DISPLAY_SIZE;
+    const int pixel_h = height * CELL_DISPLAY_SIZE;
+    auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
+    rect->setBrush(Qt::NoBrush);
+    rect->setPen(Qt::NoPen);
+
+    // dibuja a tamaño nativo, ancla esquina inferior izquierda a esquina inferior izquierda del rect
+    QPixmap pixmap;
+    if (!texturePath.isEmpty() && pixmap.load(texturePath)) {
+        auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
+        texture_item->setTransformationMode(Qt::SmoothTransformation);
+        texture_item->setPos(0, pixel_h - pixmap.height());
+    }
+
     rect->setData(DATA_TYPE, ENTRY_TYPE);
     rect->setData(DATA_ID, id);
     rect->setData(DATA_SUBTYPE, type);
     rect->setData(DATA_WIDTH, width);
     rect->setData(DATA_HEIGHT, height);
     rect->setData(DATA_ENVIRONMENT_ID, environmentId);
-    attachLabel(rect, type);
     return rect;
 }
 
@@ -124,22 +137,18 @@ QGraphicsRectItem* ItemBuilder::buildExit(const QString& id, const QString& temp
 }
 
 QGraphicsRectItem* ItemBuilder::buildFloor(const QString& id, const QString& templateId,
-                                           const QColor& fill, const QString& texturePath) {
+                                           const QString& texturePath) {
     auto* rect = new QGraphicsRectItem(0, 0, CELL_DISPLAY_SIZE, CELL_DISPLAY_SIZE);
+    rect->setBrush(Qt::NoBrush);
+    rect->setPen(Qt::NoPen);
 
     // Las texturas de piso ya vienen a 64x64 (= CELL_DISPLAY_SIZE), se dibujan
-    // tal cual cubriendo la celda. Si no hay textura, se rellena con el color.
+    // tal cual cubriendo la celda.
     QPixmap pixmap;
-    const bool has_texture = !texturePath.isEmpty() && pixmap.load(texturePath);
-    if (has_texture) {
-        rect->setBrush(Qt::NoBrush);
-        rect->setPen(Qt::NoPen);
+    if (!texturePath.isEmpty() && pixmap.load(texturePath)) {
         auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
         texture_item->setTransformationMode(Qt::SmoothTransformation);
         texture_item->setPos(0, 0);
-    } else {
-        rect->setBrush(QBrush(fill));
-        rect->setPen(Qt::NoPen);
     }
 
     rect->setData(DATA_TYPE, FLOOR_TYPE);

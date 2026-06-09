@@ -44,6 +44,8 @@ struct BiomeTemplate {
     int default_width = 0;
     int default_height = 0;
     std::string texture;
+    // Color del overlay translúcido de la zona en el editor (similar a su tile).
+    std::string color;
     std::vector<std::string> allowed_creatures;
 };
 
@@ -52,27 +54,38 @@ struct ObstacleTemplate {
     std::string name;
     int width = 1;
     int height = 1;
-    std::string color;
     std::string texture;
 };
 
-struct EnvironmentSizeOption {
-    int width = 0;
-    int height = 0;
-};
-
+// Un template de entry describe únicamente el objeto que se coloca en el mapa
+// (su tamaño y textura). El tipo de entorno al que lleva (cueva/mazmorra) define
+// aparte el piso del entorno; ver EnvironmentTypeInfo.
 struct EntryTemplate {
     std::string id;
     std::string name;
     int width = 1;
     int height = 1;
-    std::string color;
-    std::vector<EnvironmentSizeOption> environment_sizes;
-    std::string floor_color;
-    // Ruta relativa (a common/assets/images) de la textura de piso del entorno.
-    // Se guarda sin resolver para que sea portable en el YAML del mapa.
+    std::string texture;
+    // Tipo de entorno al que abre esta entry: "cueva" o "mazmorra".
+    std::string environment_type;
+};
+
+// Lado de un entorno (siempre cuadrado). Fijo para todos los tipos.
+inline constexpr int ENVIRONMENT_SIZE = 30;
+
+// Definición fija de un tipo de entorno. Hay exactamente dos (cueva y mazmorra),
+// cada uno con su piso propio. No se cargan de YAML: están hardcodeados.
+struct EnvironmentTypeInfo {
+    std::string type;
+    std::string name;
+    // Ruta relativa (a common/assets/images) de la textura de piso. Se guarda
+    // sin resolver para que sea portable en el YAML del mapa.
     std::string floor_texture;
 };
+
+// Devuelve la info del tipo de entorno dado ("cueva"/"mazmorra"). Si el tipo es
+// desconocido devuelve la cueva por defecto.
+const EnvironmentTypeInfo& environment_type_info(const std::string& type);
 
 struct WallTemplate {
     std::string id;
@@ -95,7 +108,6 @@ struct ExitTemplate {
 struct FloorTemplate {
     std::string id;
     std::string name;
-    std::string color;
     std::string texture;
     int grid_value = 0;
 };

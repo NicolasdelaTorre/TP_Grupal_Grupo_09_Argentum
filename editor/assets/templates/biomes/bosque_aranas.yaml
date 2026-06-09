@@ -1,9 +1,0 @@
-template_id: bosque_aranas
-name: "Bosque de arañas"
-default_size:
-  width: 35
-  height: 20
-texture: "tiles/bosque.png"
-allowed_creatures:
-  - spider
-  - goblin

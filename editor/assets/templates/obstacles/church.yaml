@@ -1,0 +1,6 @@
+template_id: church
+name: "Church"
+size:
+  width: 9
+  height: 10
+texture: "church.png"
