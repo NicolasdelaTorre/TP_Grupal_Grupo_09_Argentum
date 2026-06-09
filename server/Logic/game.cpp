@@ -252,6 +252,14 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
         return false;
     }
 
+    // NPCs (criaturas) bloquean el paso. Map::occupiedByEntity mira
+    // cells[].playerId/npcId, que moveEntity mantiene al dia, asi que cubre
+    // tanto la posicion actual del NPC como cualquier residuo de su movimiento.
+    if (map.occupiedByEntity(next.x, next.y, mapId)) {
+        std::cout << "Player can't move in that direction (occupied by NPC)" << std::endl;
+        return false;
+    }
+
     Position old = player.getPosition();
     player.move(next);
     player.setDirection(static_cast<uint8_t>(direction));

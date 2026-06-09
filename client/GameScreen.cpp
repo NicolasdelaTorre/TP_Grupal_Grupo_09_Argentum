@@ -440,6 +440,17 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
         if (opTargetX == tileX && opTargetY == tileY)
             return true;
     }
+    // NPCs (criaturas y friendlies) tambien bloquean. Solo chequeamos la
+    // posicion visual actual: con multiples NPCs persiguiendo, sus targets
+    // suelen ser el tile del player y rodearian al player en todas las
+    // direcciones.
+    for (const auto& npcEntry: npcs) {
+        const auto& rn = npcEntry.second;
+        if (!rn.alive) continue;
+        int nx = (int)(rn.visual.x + HEAD_OFFSET);
+        int ny = (int)(rn.visual.y + FEET_OFFSET);
+        if (nx == tileX && ny == tileY) return true;
+    }
     return false;
 }
 

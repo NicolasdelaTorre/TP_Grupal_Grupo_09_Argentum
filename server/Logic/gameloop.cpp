@@ -117,6 +117,10 @@ void Gameloop::NPCTurns() {
             continue;
         if (newPos.x == oldPos.x && newPos.y == oldPos.y)
             continue;
+        // No pisar al player: si la celda destino tiene player o NPC, el NPC
+        // se queda quieto (este turno ataca o espera).
+        if (map.occupiedByEntity(newPos.x, newPos.y, npc->getMapId()))
+            continue;
         map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId());
         // Solo el overworld viaja al cliente (mapId=0).
         if (npc->getMapId() != 0)
