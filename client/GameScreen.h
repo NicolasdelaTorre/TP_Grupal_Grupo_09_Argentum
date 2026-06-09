@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -84,6 +85,11 @@ private:
     // Inventario del jugador local: itemIds en orden, solo slots ocupadas.
     // Se actualiza con InventoryUpdateEvent.
     std::vector<uint8_t> inventoryItems;
+    // itemIds (mismo espacio que inventoryItems) actualmente equipados, indexados
+    // por slotType: 0=arma, 1=armor, 2=casco, 3=escudo. 0 = ese slot está vacío.
+    // Vienen en el mismo InventoryUpdateEvent. Sirven para resaltar el item en el
+    // grid y, al desequipar, para mapear itemId -> slotType del UnequipItemEvent.
+    std::array<uint8_t, 4> equippedItems{};
     std::vector<BloodEffect> bloodEffects;
     std::vector<ArrowProjectile> arrows;
     bool chatActive = false;
@@ -153,6 +159,10 @@ private:
     // del inventario (0..GRID_COLS*GRID_ROWS-1), o -1 si el click cae fuera del
     // panel. Usa la misma geometría que renderInventoryPanel().
     int inventorySlotAt(int mouseX, int mouseY) const;
+
+    // Si itemId está equipado, devuelve su slotType (0=arma,1=armor,2=casco,
+    // 3=escudo); si no, -1. Sirve para resaltar y para el UnequipItemEvent.
+    int equippedSlotTypeOf(uint8_t itemId) const;
 
     // Dibuja la caja de chat arriba con historial e input actual.
     void renderChat();

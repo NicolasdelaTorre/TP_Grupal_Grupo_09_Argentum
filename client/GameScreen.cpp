@@ -224,9 +224,20 @@ bool GameScreen::handleEvents(float dt) {
             int slot = inventorySlotAt(e.button.x, e.button.y);
             if (slot >= 0 && slot < (int)inventoryItems.size()) {
                 uint8_t itemId = inventoryItems[slot];
-                std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
-                          << std::endl;
-                clientEvents.push(std::make_shared<EquipItemEvent>(slot));
+                // Si el item ya está equipado, el slotType es el índice en
+                // equippedItems (0=arma,1=armor,2=casco,3=escudo) → desequipar.
+                // Si no, equipar por inventory slot.
+                int slotType = equippedSlotTypeOf(itemId);
+                if (slotType >= 0) {
+                    std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
+                              << " → UNEQUIP slotType=" << slotType << std::endl;
+                    clientEvents.push(std::make_shared<UnequipItemEvent>(
+                            static_cast<uint8_t>(slotType)));
+                } else {
+                    std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
+                              << " → EQUIP" << std::endl;
+                    clientEvents.push(std::make_shared<EquipItemEvent>(static_cast<uint8_t>(slot)));
+                }
                 continue;  // consumido por el inventario, no es un ataque.
             }
         }
@@ -497,6 +508,12 @@ void GameScreen::consumeServerEvents() {
             for (uint8_t id: inv->getItems()) {
                 if (id != 0) inventoryItems.push_back(id);
             }
+            // itemIds equipados por slotType (0=arma,1=armor,2=casco,3=escudo).
+            // 0 = ese slot de equipo está vacío.
+            equippedItems[0] = inv->getEquippedWeapon();
+            equippedItems[1] = inv->getEquippedArmor();
+            equippedItems[2] = inv->getEquippedHelmet();
+            equippedItems[3] = inv->getEquippedShield();
         } else if (auto* st = dynamic_cast<StatsEvent*>(ev.get())) {
             health = st->getHp();
             maxHealth = st->getMaxHp();
@@ -675,9 +692,27 @@ void GameScreen::renderInventoryPanel() {
         int dstW = (int)cw - 2 * pad;
         int dstH = (int)ch - 2 * pad;
 
+        // Slot equipado: fondo verde semitransparente + borde, debajo del item.
+        if (equippedSlotTypeOf(itemId) >= 0) {
+            SDL2pp::Rect cell(dstX, dstY, dstW, dstH);
+            renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+            renderer.SetDrawColor(60, 220, 90, 90);
+            renderer.FillRect(cell);
+            renderer.SetDrawColor(60, 220, 90, 220);
+            renderer.DrawRect(cell);
+        }
+
         renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
                       SDL2pp::Rect(dstX, dstY, dstW, dstH));
     }
+}
+
+int GameScreen::equippedSlotTypeOf(uint8_t itemId) const {
+    if (itemId == 0) return -1;  // slot vacío, nunca "equipado".
+    for (size_t t = 0; t < equippedItems.size(); t++) {
+        if (equippedItems[t] == itemId) return (int)t;
+    }
+    return -1;
 }
 
 int GameScreen::inventorySlotAt(int mouseX, int mouseY) const {
