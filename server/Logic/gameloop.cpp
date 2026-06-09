@@ -205,6 +205,16 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
     // Stats iniciales.
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
 
+    // Inventario inicial: sin esto el cliente arranca con el panel vacío y no
+    // ve los items persistidos hasta que cambie algo (pickup/drop/equip).
+    {
+        auto snap = game.getInventorySnapshot(playerId);
+        clientMonitor.sendToClient(playerId,
+                                   std::make_shared<InventoryUpdateEvent>(
+                                           snap.items, snap.equippedWeapon, snap.equippedArmor,
+                                           snap.equippedHelmet, snap.equippedShield));
+    }
+
     // Mandarle un NEW_PLAYER por cada jugador que ya estaba + sus PLAYER_EQUIPPED.
     // Si alguno está como fantasma, también su PlayerDiedEvent para que el
     // cliente lo dibuje como fantasma desde el arranque.
