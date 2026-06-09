@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -411,6 +412,21 @@ static const char* itemNameById(uint8_t id) {
     }
 }
 
+// Inverso de itemNameById, case-insensitive: "sword", "Sword" o "SWORD" -> 1.
+// Devuelve 0 si no existe.
+static uint8_t itemIdByName(const std::string& name) {
+    auto toLower = [](std::string s) {
+        for (char& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return s;
+    };
+    std::string needle = toLower(name);
+    for (uint8_t id = 1; id <= 19; id++) {
+        const char* n = itemNameById(id);
+        if (n && toLower(n) == needle) return id;
+    }
+    return 0;
+}
+
 bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
     auto it = players.find(playerId);
     if (it == players.end()) return false;
@@ -469,10 +485,18 @@ Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
 Game::InteractionResult Game::depositItemToBank(int playerId, const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "DEPOSIT_ITEM player=" << playerId << " item=" << itemName << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): usar Banker::depositItem.
-    return {true, "Depositaste " + itemName + " (stub)"};
+    uint8_t itemId = itemIdByName(itemName);
+    if (itemId == 0) return {false, "Item desconocido: " + itemName};
+    std::string canonical = itemNameById(itemId);
+    if (it->second.removeItemByName(canonical) == 0) {
+        return {false, "No tenes " + canonical + " en el inventario"};
+    }
+    if (!bank.depositItem(it->second.getName(), itemId)) {
+        // cuenta llena: lo devolvemos al inventario para no perderlo.
+        it->second.addItem(canonical);
+        return {false, "El banco esta lleno"};
+    }
+    return {true, "Depositaste " + canonical};
 }
 
 Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
@@ -493,10 +517,17 @@ Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
 Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
-    std::cout << "WITHDRAW_ITEM player=" << playerId << " item=" << itemName << " (stub)"
-              << std::endl;
-    // TODO(team-gameplay): usar Banker::withdrawItem.
-    return {true, "Retiraste " + itemName + " (stub)"};
+    uint8_t itemId = itemIdByName(itemName);
+    if (itemId == 0) return {false, "Item desconocido: " + itemName};
+    std::string canonical = itemNameById(itemId);
+    uint8_t got = bank.withdrawItem(it->second.getName(), itemId);
+    if (got == 0) return {false, "No tenes " + canonical + " en el banco"};
+    if (!it->second.addItem(canonical)) {
+        // inventario lleno: lo devolvemos al banco para no perderlo.
+        bank.depositItem(it->second.getName(), got);
+        return {false, "Tu inventario esta lleno"};
+    }
+    return {true, "Retiraste " + canonical};
 }
 
 Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount) {

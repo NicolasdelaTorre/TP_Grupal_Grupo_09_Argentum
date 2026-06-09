@@ -100,6 +100,10 @@ public:
 
     bool addItem(const std::string& itemName);
 
+    // Saca el primer item del inventario con ese nombre. Devuelve el itemId
+    // removido o 0 si no estaba. Mantiene consistencia con data.inventory[].
+    uint8_t removeItemByName(const std::string& itemName);
+
     bool equipItem(int inventorySlot);
 
     bool unequipItem(ItemType type);
