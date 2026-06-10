@@ -92,6 +92,7 @@ std::unique_ptr<TurnEvent> TurnEvent::deserialize(CommonProtocol& proto) {
 
 SkinSelectedEvent::SkinSelectedEvent(uint8_t skinId): skinId(skinId) {}
 
+
 void SkinSelectedEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
     proto.sendByte(skinId);

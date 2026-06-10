@@ -46,7 +46,7 @@ constexpr ItemSprite kItemSprite[] = {
     {INV, 10},     // 8  Simple Bow
     {INV, 127},    // 9  Composite Bow
     {INV, 25},     // 10 Lether Armor
-    {INV, 31},     // 11 Plate Armor
+    {INV, 18},     // 11 Plate Armor
     {INV, 51},     // 12 Blue Tunic
     {GORROS, 0},   // 13 Hood
     {GORROS, 8},   // 14 Iron Helmet
