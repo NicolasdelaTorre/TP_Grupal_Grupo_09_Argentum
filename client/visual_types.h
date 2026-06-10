@@ -39,9 +39,11 @@ struct Player_ {
     float animTimer = 0.0f;
     int skin = SKIN_DEFAULT;
     int headId = 6;
-    int helmetId = 10;
-    int weaponId = 2;
-    int shieldId = 0;
+    // -1 = slot vacío (no se renderiza). Los pone applyEquipmentToVisual al
+    // recibir PlayerEquippedEvent / InventoryUpdateEvent.
+    int helmetId = -1;
+    int weaponId = -1;
+    int shieldId = -1;
     RaceCode race = RaceCode::HUMAN;
     ClassCode classCode = ClassCode::MAGE;
     bool killed = false;

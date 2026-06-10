@@ -38,6 +38,12 @@ struct OtherPlayer {
     float targetY = 0.0f;
     std::string name;
     bool ghost = false;  // PlayerDiedEvent/PlayerRevivedEvent alternan este flag
+    // Skin "base" (sin armadura) que mandó el server en NEW_PLAYER. Cuando
+    // desequipa armor, visual.skin vuelve a este valor.
+    int baseSkin = 0;
+    // itemIds equipados por slotType (0=arma, 1=armor, 2=casco, 3=escudo).
+    // Se actualizan con PlayerEquippedEvent.
+    std::array<uint8_t, 4> equippedItems{};
 };
 
 // NPC remoto. Mismo patrón que OtherPlayer: visual es el sprite, target* el tile

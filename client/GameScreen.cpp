@@ -53,6 +53,11 @@ MoveDirection spriteDirToWire(SpriteRow d) {
 
 }  // namespace
 
+// Forward decl: la implementacion vive mas abajo, junto al miembro
+// applyEquippedVisuals que la usa.
+static void applyEquipmentToVisual(Player_& visual, const std::array<uint8_t, 4>& equipped,
+                                   int baseSkin);
+
 // tile del servidor (donde caen los pies) → coords del Player.
 // p.x e p.y = tile del jugador, así el sprite queda centrado en la celda.
 static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player_& p) {
@@ -510,6 +515,7 @@ void GameScreen::consumeServerEvents() {
             op.targetY = static_cast<float>(np->getY());
             op.visual.dir = wireDirToSpriteDir(np->getDir());
             op.visual.skin = np->getSkin();
+            op.baseSkin = np->getSkin();  // skin sin armor, para volver al desequipar.
             op.name = np->getName();
             otherPlayers[np->getId()] = std::move(op);
         } else if (auto* mr = dynamic_cast<MoveRejectedEvent*>(ev.get())) {
@@ -540,10 +546,14 @@ void GameScreen::consumeServerEvents() {
                       << (ar->getHit() ? " hit for " : " MISS (") << ar->getDamage()
                       << (ar->getHit() ? " dmg" : ")") << std::endl;
         } else if (auto* eq = dynamic_cast<PlayerEquippedEvent*>(ev.get())) {
-            // TODO(team-ui): aplicar al sprite del otro jugador.
-            std::cout << "PLAYER_EQUIPPED pid=" << eq->getPlayerId()
-                      << " slot=" << (int)eq->getSlot() << " itemId=" << (int)eq->getItemId()
-                      << std::endl;
+            // Otro jugador equipo/desequipo algo (itemId=0 → desequipo).
+            // Actualizamos su slot y re-volcamos visuales.
+            auto it = otherPlayers.find(eq->getPlayerId());
+            if (it != otherPlayers.end() && eq->getSlot() < 4) {
+                it->second.equippedItems[eq->getSlot()] = eq->getItemId();
+                applyEquipmentToVisual(it->second.visual, it->second.equippedItems,
+                                       it->second.baseSkin);
+            }
         } else if (auto* inv = dynamic_cast<InventoryUpdateEvent*>(ev.get())) {
             inventoryItems.clear();
             for (uint8_t id: inv->getItems()) {
@@ -749,23 +759,31 @@ void GameScreen::renderInventoryPanel() {
     }
 }
 
-void GameScreen::applyEquippedVisuals() {
+// Helper: vuelca los itemIds equipados sobre los campos visuales de un Player_
+// (local o remoto). Se llama tras un cambio de equipo (al recibir
+// InventoryUpdateEvent para el local, o PlayerEquippedEvent para otros).
+static void applyEquipmentToVisual(Player_& visual, const std::array<uint8_t, 4>& equipped,
+                                   int baseSkin) {
     // Reset: -1 = sin equipo en ese slot; el cuerpo vuelve al skin base.
-    player.weaponId = -1;
-    player.shieldId = -1;
-    player.helmetId = -1;
-    player.skin = baseSkin;
+    visual.weaponId = -1;
+    visual.shieldId = -1;
+    visual.helmetId = -1;
+    visual.skin = baseSkin;
 
-    for (uint8_t itemId: equippedItems) {
+    for (uint8_t itemId: equipped) {
         EquipVisual v = equipVisualFor(itemId);
         switch (v.slot) {
-            case EquipSlot::WEAPON: player.weaponId = v.index; break;
-            case EquipSlot::ARMOR: player.skin = v.index; break;
-            case EquipSlot::HELMET: player.helmetId = v.index; break;
-            case EquipSlot::SHIELD: player.shieldId = v.index; break;
+            case EquipSlot::WEAPON: visual.weaponId = v.index; break;
+            case EquipSlot::ARMOR: visual.skin = v.index; break;
+            case EquipSlot::HELMET: visual.helmetId = v.index; break;
+            case EquipSlot::SHIELD: visual.shieldId = v.index; break;
             case EquipSlot::NONE: break;
         }
     }
+}
+
+void GameScreen::applyEquippedVisuals() {
+    applyEquipmentToVisual(player, equippedItems, baseSkin);
 }
 
 int GameScreen::equippedSlotTypeOf(uint8_t itemId) const {
