@@ -74,6 +74,15 @@ private:
     int lastTileY;
     SpriteRow lastSentDir;  // última dirección que mandamos al server (para detectar giros)
 
+    // Cuando el server rechaza un movimiento predicho (MoveRejectedEvent),
+    // animamos el sprite desde donde estabamos al tile correcto en
+    // SNAP_DURATION segundos. Sin esto, el sprite saltaria de golpe.
+    static constexpr float SNAP_DURATION = 0.12f;
+    bool snapping = false;
+    float snapFromX = 0.0f, snapFromY = 0.0f;  // posicion al recibir el rechazo
+    float snapToX = 0.0f, snapToY = 0.0f;      // posicion correcta segun el server
+    float snapElapsed = 0.0f;
+
     // Eventos del servidor (NEW_PLAYER / PLAYER_MOVED / PLAYER_DISCONNECTED) que el receiver
     // pushea tipados.
     IncomingQueue& serverEvents;

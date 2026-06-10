@@ -268,6 +268,12 @@ bool GameScreen::handleEvents(float dt) {
         return true;
     }
 
+    // Si estamos en medio del snap de reconciliacion, ignoramos teclas
+    if (snapping) {
+        player.moving = false;
+        return true;
+    }
+
     // Movimiento continuo con teclas sostenidas (level-triggered).
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
@@ -345,6 +351,23 @@ void GameScreen::notifyTileChange() {
 void GameScreen::update(float dt) {
     // Consumimos eventos del servidor antes de animar.
     consumeServerEvents();
+
+    // Avanza el snap suave hacia el tile que dice el server. t va de 0 a 1.
+    if (snapping) {
+        snapElapsed += dt;
+        float t = snapElapsed / SNAP_DURATION;
+        if (t >= 1.0f) {
+            player.x = snapToX;
+            player.y = snapToY;
+            snapping = false;
+            // Sin esto, notifyTileChange dispararia un MovementEvent fantasma.
+            lastTileX = (int)(player.x + HEAD_OFFSET);
+            lastTileY = (int)(player.y + FEET_OFFSET);
+        } else {
+            player.x = snapFromX + (snapToX - snapFromX) * t;
+            player.y = snapFromY + (snapToY - snapFromY) * t;
+        }
+    }
 
     // Tick blood effects and remove expired ones.
     for (auto& b: bloodEffects) b.timer -= dt;
@@ -440,15 +463,12 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
         if (opTargetX == tileX && opTargetY == tileY)
             return true;
     }
-    // NPCs (criaturas y friendlies) tambien bloquean. Solo chequeamos la
-    // posicion visual actual: con multiples NPCs persiguiendo, sus targets
-    // suelen ser el tile del player y rodearian al player en todas las
-    // direcciones.
+    // NPCs (criaturas y friendlies) tambien bloquean. Usamos el TARGET porque el server valida que no puedan caminar hacia un tile ocupado por otro NPC, así evitamos que se amontonen visualmente.
     for (const auto& npcEntry: npcs) {
         const auto& rn = npcEntry.second;
         if (!rn.alive) continue;
-        int nx = (int)(rn.visual.x + HEAD_OFFSET);
-        int ny = (int)(rn.visual.y + FEET_OFFSET);
+        int nx = (int)(rn.targetX + HEAD_OFFSET);
+        int ny = (int)(rn.targetY + FEET_OFFSET);
         if (nx == tileX && ny == tileY) return true;
     }
     return false;
@@ -466,6 +486,14 @@ void GameScreen::consumeServerEvents() {
             op.visual.skin = np->getSkin();
             op.name = np->getName();
             otherPlayers[np->getId()] = std::move(op);
+        } else if (auto* mr = dynamic_cast<MoveRejectedEvent*>(ev.get())) {
+            // Server nos dice donde estamos realmente. Arrancamos el snap suave hacia ese tile (update() lo anima).
+            snapping = true;
+            snapElapsed = 0.0f;
+            snapFromX = player.x;
+            snapFromY = player.y;
+            snapToX = static_cast<float>(mr->getX());
+            snapToY = static_cast<float>(mr->getY());
         } else if (auto* pm = dynamic_cast<PlayerMovedEvent*>(ev.get())) {
             auto it = otherPlayers.find(pm->getId());
             if (it != otherPlayers.end()) {

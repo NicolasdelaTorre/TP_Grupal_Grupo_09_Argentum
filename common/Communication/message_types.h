@@ -27,8 +27,7 @@ enum class ServerMsg : uint8_t {
     MAP = 0x83,                  // [opcode][width:2][height:2][CellCount:2][[textureId:2][obstacleId:2][safeZone:1]]...[obstacleCount:2][[type:1][x:2][y:2][w:2][h:2]]...
     LOGIN_OK = 0x84,             // [opcode][spawn_x:2][spawn_y:2]
     LOGIN_FAIL = 0x85,           // [opcode]
-    MOVE_OK = 0x86,              // [opcode]
-    MOVE_FAIL = 0x87,            // [opcode]
+    MOVE_REJECTED = 0x87,        // [opcode][x:2][y:2] — el server rechazó el movimiento y manda la posición autoritativa para que el cliente reconcilie su predicción.
     NEW_PLAYER = 0x88,           // [opcode][id:2][x:2][y:2][dir:1][skin:1][name_len:2][name:n]
     PLAYER_MOVED = 0x89,         // [opcode][id:2][x:2][y:2][dir:1]
     PLAYER_DISCONNECTED = 0x8A,  // [opcode][id:2]

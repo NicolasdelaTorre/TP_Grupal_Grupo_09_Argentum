@@ -333,20 +333,17 @@ void Gameloop::handleHeadSelected(int /*playerId*/, uint8_t /*headId*/) {
 }
 
 void Gameloop::handleMovement(int playerId, MoveDirection direction) {
-    bool success = game.movePlayer(playerId, direction);
-    if (success) {
-        clientMonitor.sendToClient(
-                playerId,
-                std::make_shared<OpcodeOnlyEvent>(static_cast<uint8_t>(ServerMsg::MOVE_OK)));
+    if (game.movePlayer(playerId, direction)) {
         Position p = game.getPlayerPosition(playerId);
         uint8_t pdir = game.getPlayerDirection(playerId);
         clientMonitor.broadcastExcept(playerId,
                                       std::make_shared<PlayerMovedEvent>(
                                               static_cast<uint16_t>(playerId), p.x, p.y, pdir));
     } else {
-        clientMonitor.sendToClient(
-                playerId,
-                std::make_shared<OpcodeOnlyEvent>(static_cast<uint8_t>(ServerMsg::MOVE_FAIL)));
+        // El server rechazo la prediccion del cliente. Le mandamos la posicion autoritativa para que reconcilie.
+        Position p = game.getPlayerPosition(playerId);
+        clientMonitor.sendToClient(playerId,
+                                   std::make_shared<MoveRejectedEvent>(p.x, p.y));
     }
 }
 
