@@ -27,8 +27,7 @@ struct MapObstacleData {
     uint16_t h;
 };
 
-// Eventos sin payload (solo el opcode). Sirve para LOGIN_FAIL, FIRST_LOGIN,
-// MOVE_OK, MOVE_FAIL.
+// Eventos sin payload (solo el opcode). Sirve para LOGIN_FAIL, FIRST_LOGIN.
 class OpcodeOnlyEvent: public ServerEvent {
 private:
     uint8_t opcode;
@@ -95,6 +94,23 @@ public:
     const std::string& getName() const { return name; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<NewPlayerEvent> deserialize(CommonProtocol& proto);
+};
+
+// MOVE_REJECTED: [opcode][x:2][y:2]. El server rechazo la prediccion del
+// cliente y le manda la posicion autoritativa para que reconcilie. Pensado
+// para los casos race-condition donde el cliente ya predijo un move que el
+// server justo rechazo (NPC moviendose al mismo tile, etc).
+class MoveRejectedEvent: public ServerEvent {
+private:
+    int16_t x;
+    int16_t y;
+
+public:
+    MoveRejectedEvent(int16_t x, int16_t y);
+    int16_t getX() const { return x; }
+    int16_t getY() const { return y; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<MoveRejectedEvent> deserialize(CommonProtocol& proto);
 };
 
 // PLAYER_MOVED: [opcode][id:2][x:2][y:2][dir:1]. También sirve para TURN.

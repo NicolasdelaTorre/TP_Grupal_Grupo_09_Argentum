@@ -53,6 +53,11 @@ MoveDirection spriteDirToWire(SpriteRow d) {
 
 }  // namespace
 
+// Forward decl: la implementacion vive mas abajo, junto al miembro
+// applyEquippedVisuals que la usa.
+static void applyEquipmentToVisual(Player_& visual, const std::array<uint8_t, 4>& equipped,
+                                   int baseSkin);
+
 // tile del servidor (donde caen los pies) → coords del Player.
 // p.x e p.y = tile del jugador, así el sprite queda centrado en la celda.
 static void tileToPlayerCoords(int16_t tileX, int16_t tileY, Player_& p) {
@@ -294,6 +299,12 @@ bool GameScreen::handleEvents(float dt) {
         return true;
     }
 
+    // Si estamos en medio del snap de reconciliacion, ignoramos teclas
+    if (snapping) {
+        player.moving = false;
+        return true;
+    }
+
     // Movimiento continuo con teclas sostenidas (level-triggered).
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     float dx = 0, dy = 0;
@@ -371,6 +382,23 @@ void GameScreen::notifyTileChange() {
 void GameScreen::update(float dt) {
     // Consumimos eventos del servidor antes de animar.
     consumeServerEvents();
+
+    // Avanza el snap suave hacia el tile que dice el server. t va de 0 a 1.
+    if (snapping) {
+        snapElapsed += dt;
+        float t = snapElapsed / SNAP_DURATION;
+        if (t >= 1.0f) {
+            player.x = snapToX;
+            player.y = snapToY;
+            snapping = false;
+            // Sin esto, notifyTileChange dispararia un MovementEvent fantasma.
+            lastTileX = (int)(player.x + HEAD_OFFSET);
+            lastTileY = (int)(player.y + FEET_OFFSET);
+        } else {
+            player.x = snapFromX + (snapToX - snapFromX) * t;
+            player.y = snapFromY + (snapToY - snapFromY) * t;
+        }
+    }
 
     // Tick blood effects and remove expired ones.
     for (auto& b: bloodEffects) b.timer -= dt;
@@ -466,15 +494,12 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
         if (opTargetX == tileX && opTargetY == tileY)
             return true;
     }
-    // NPCs (criaturas y friendlies) tambien bloquean. Solo chequeamos la
-    // posicion visual actual: con multiples NPCs persiguiendo, sus targets
-    // suelen ser el tile del player y rodearian al player en todas las
-    // direcciones.
+    // NPCs (criaturas y friendlies) tambien bloquean. Usamos el TARGET porque el server valida que no puedan caminar hacia un tile ocupado por otro NPC, así evitamos que se amontonen visualmente.
     for (const auto& npcEntry: npcs) {
         const auto& rn = npcEntry.second;
         if (!rn.alive) continue;
-        int nx = (int)(rn.visual.x + HEAD_OFFSET);
-        int ny = (int)(rn.visual.y + FEET_OFFSET);
+        int nx = (int)(rn.targetX + HEAD_OFFSET);
+        int ny = (int)(rn.targetY + FEET_OFFSET);
         if (nx == tileX && ny == tileY) return true;
     }
     return false;
@@ -490,8 +515,17 @@ void GameScreen::consumeServerEvents() {
             op.targetY = static_cast<float>(np->getY());
             op.visual.dir = wireDirToSpriteDir(np->getDir());
             op.visual.skin = np->getSkin();
+            op.baseSkin = np->getSkin();  // skin sin armor, para volver al desequipar.
             op.name = np->getName();
             otherPlayers[np->getId()] = std::move(op);
+        } else if (auto* mr = dynamic_cast<MoveRejectedEvent*>(ev.get())) {
+            // Server nos dice donde estamos realmente. Arrancamos el snap suave hacia ese tile (update() lo anima).
+            snapping = true;
+            snapElapsed = 0.0f;
+            snapFromX = player.x;
+            snapFromY = player.y;
+            snapToX = static_cast<float>(mr->getX());
+            snapToY = static_cast<float>(mr->getY());
         } else if (auto* pm = dynamic_cast<PlayerMovedEvent*>(ev.get())) {
             auto it = otherPlayers.find(pm->getId());
             if (it != otherPlayers.end()) {
@@ -512,10 +546,14 @@ void GameScreen::consumeServerEvents() {
                       << (ar->getHit() ? " hit for " : " MISS (") << ar->getDamage()
                       << (ar->getHit() ? " dmg" : ")") << std::endl;
         } else if (auto* eq = dynamic_cast<PlayerEquippedEvent*>(ev.get())) {
-            // TODO(team-ui): aplicar al sprite del otro jugador.
-            std::cout << "PLAYER_EQUIPPED pid=" << eq->getPlayerId()
-                      << " slot=" << (int)eq->getSlot() << " itemId=" << (int)eq->getItemId()
-                      << std::endl;
+            // Otro jugador equipo/desequipo algo (itemId=0 → desequipo).
+            // Actualizamos su slot y re-volcamos visuales.
+            auto it = otherPlayers.find(eq->getPlayerId());
+            if (it != otherPlayers.end() && eq->getSlot() < 4) {
+                it->second.equippedItems[eq->getSlot()] = eq->getItemId();
+                applyEquipmentToVisual(it->second.visual, it->second.equippedItems,
+                                       it->second.baseSkin);
+            }
         } else if (auto* inv = dynamic_cast<InventoryUpdateEvent*>(ev.get())) {
             inventoryItems.clear();
             for (uint8_t id: inv->getItems()) {
@@ -721,23 +759,31 @@ void GameScreen::renderInventoryPanel() {
     }
 }
 
-void GameScreen::applyEquippedVisuals() {
+// Helper: vuelca los itemIds equipados sobre los campos visuales de un Player_
+// (local o remoto). Se llama tras un cambio de equipo (al recibir
+// InventoryUpdateEvent para el local, o PlayerEquippedEvent para otros).
+static void applyEquipmentToVisual(Player_& visual, const std::array<uint8_t, 4>& equipped,
+                                   int baseSkin) {
     // Reset: -1 = sin equipo en ese slot; el cuerpo vuelve al skin base.
-    player.weaponId = -1;
-    player.shieldId = -1;
-    player.helmetId = -1;
-    player.skin = baseSkin;
+    visual.weaponId = -1;
+    visual.shieldId = -1;
+    visual.helmetId = -1;
+    visual.skin = baseSkin;
 
-    for (uint8_t itemId: equippedItems) {
+    for (uint8_t itemId: equipped) {
         EquipVisual v = equipVisualFor(itemId);
         switch (v.slot) {
-            case EquipSlot::WEAPON: player.weaponId = v.index; break;
-            case EquipSlot::ARMOR: player.skin = v.index; break;
-            case EquipSlot::HELMET: player.helmetId = v.index; break;
-            case EquipSlot::SHIELD: player.shieldId = v.index; break;
+            case EquipSlot::WEAPON: visual.weaponId = v.index; break;
+            case EquipSlot::ARMOR: visual.skin = v.index; break;
+            case EquipSlot::HELMET: visual.helmetId = v.index; break;
+            case EquipSlot::SHIELD: visual.shieldId = v.index; break;
             case EquipSlot::NONE: break;
         }
     }
+}
+
+void GameScreen::applyEquippedVisuals() {
+    applyEquipmentToVisual(player, equippedItems, baseSkin);
 }
 
 int GameScreen::equippedSlotTypeOf(uint8_t itemId) const {

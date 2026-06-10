@@ -13,9 +13,9 @@ std::unique_ptr<ServerEvent> ServerEvent::deserialize(uint8_t opcode, CommonProt
             return LoginOkEvent::deserialize(proto);
         case ServerMsg::LOGIN_FAIL:
         case ServerMsg::FIRST_LOGIN:
-        case ServerMsg::MOVE_OK:
-        case ServerMsg::MOVE_FAIL:
             return std::make_unique<OpcodeOnlyEvent>(opcode);
+        case ServerMsg::MOVE_REJECTED:
+            return MoveRejectedEvent::deserialize(proto);
         case ServerMsg::MAP:
             return MapEvent::deserialize(proto);
         case ServerMsg::NEW_PLAYER:
@@ -160,6 +160,22 @@ std::unique_ptr<NewPlayerEvent> NewPlayerEvent::deserialize(CommonProtocol& prot
     uint16_t nameLen = proto.receive_two_bytes_number();
     std::string name = proto.receive_message(nameLen);
     return std::make_unique<NewPlayerEvent>(id, x, y, dir, skin, std::move(name));
+}
+
+// ── MoveRejectedEvent ────────────────────────────────────────────────────
+
+MoveRejectedEvent::MoveRejectedEvent(int16_t x, int16_t y): x(x), y(y) {}
+
+void MoveRejectedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ServerMsg::MOVE_REJECTED));
+    proto.send_two_bytes_number(static_cast<uint16_t>(x));
+    proto.send_two_bytes_number(static_cast<uint16_t>(y));
+}
+
+std::unique_ptr<MoveRejectedEvent> MoveRejectedEvent::deserialize(CommonProtocol& proto) {
+    int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
+    int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
+    return std::make_unique<MoveRejectedEvent>(x, y);
 }
 
 // ── PlayerMovedEvent ─────────────────────────────────────────────────────
