@@ -2,7 +2,7 @@
 
 TurnManager::TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds, Map& map, Game& game) : map(map), game(game) {
     for (const auto& playerId : players) {
-        playerTimers[playerId] = {0, 0, 0};
+        playerTimers[playerId] = {0, 0, 0, 0, 0};
     }
 
     for (uint16_t npcId : npcIds) {
@@ -15,7 +15,7 @@ TurnManager::TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds,
 void TurnManager::addPlayers(std::vector<int> playerIds) {
     for (int playerId : playerIds) {
         if (playerTimers.find(playerId) == playerTimers.end()) {
-            playerTimers[playerId] = {0, 0, 0};
+            playerTimers[playerId] = {0, 0, 0, 0, 0};
         }
     }
 }
@@ -39,6 +39,21 @@ void TurnManager::updateTimers() {
     for (auto& pair : playerTimers) {
         uint8_t playerId = pair.first;
         PlayerTimer& timer = pair.second;
+
+        // Regeneration through time
+        // Health
+        if (game.lowerHealth(playerId)) {
+            timer.timeToRestoreHealth += TIME;
+        } else {
+            timer.timeToRestoreHealth = 0;
+        }
+
+        // Mana
+        if (game.lowerMana(playerId)) {
+            timer.timeToRestoreMana += TIME;
+        } else {
+            timer.timeToRestoreMana = 0;
+        }
 
         // Meditation
         if (game.checkIfPlayerIsMeditating(playerId)) {
@@ -74,7 +89,37 @@ void TurnManager::updateTimers() {
     }
 }
 
-std::vector<int> TurnManager::getPlayersReadyToRestoreMana() {
+std::vector<int> TurnManager::getPlayersReadyToRestoreHealth() {
+    std::vector<int> readyPlayers;
+    for (const auto& pair : playerTimers) {
+        uint8_t playerId = pair.first;
+        const PlayerTimer& timer = pair.second;
+
+        if (timer.timeToRestoreHealth >= 1000) {
+            readyPlayers.push_back(playerId);
+            // Reset health timer after restoring health
+            playerTimers[playerId].timeToRestoreHealth = 0;
+        }
+    }
+    return readyPlayers;
+}
+
+std::vector<int> TurnManager::getPlayersReadyToRestoreManaThroughTime() {
+    std::vector<int> readyPlayers;
+    for (const auto& pair : playerTimers) {
+        uint8_t playerId = pair.first;
+        const PlayerTimer& timer = pair.second;
+
+        if (timer.timeToRestoreMana >= 1000) {
+            readyPlayers.push_back(playerId);
+            // Reset mana timer after restoring mana
+            playerTimers[playerId].timeToRestoreMana = 0;
+        }
+    }
+    return readyPlayers;
+}
+
+std::vector<int> TurnManager::getPlayersReadyToRestoreManaByMeditation() {
     std::vector<int> readyPlayers;
     for (const auto& pair : playerTimers) {
         uint8_t playerId = pair.first;

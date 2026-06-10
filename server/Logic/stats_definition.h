@@ -16,7 +16,7 @@ public:
 
     uint16_t maxHealth(uint8_t playerLevel, RaceCode race, ClassCode class_);
 
-    uint32_t recoveryHealth(RaceCode race);
+    uint32_t recoveryStatThroughTime(RaceCode race);
 
     uint32_t safeGold(uint8_t playerLevel);
 

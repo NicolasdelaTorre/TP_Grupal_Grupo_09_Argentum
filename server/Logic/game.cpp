@@ -849,6 +849,51 @@ bool Game::startPlayerResurrect(int playerId) {
     return true;
 }
 
+bool Game::lowerHealth(int playerId) {
+    auto player = players.find(playerId);
+    if (player == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    return player->second.isAlive() && player->second.getCurrentHealth() < player->second.getMaxHealth();
+}
+
+bool Game::lowerMana(int playerId) {
+    auto player = players.find(playerId);
+    if (player == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    return player->second.isAlive() && player->second.getCurrentMana() < player->second.getMaxMana();
+}
+
+void Game::restorePlayerHealth(int playerId) {
+    auto player = players.find(playerId);
+    if (player == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    player->second.restoreHealthThroughTime();
+}
+
+void Game::restorePlayerMana(int playerId) {
+    auto player = players.find(playerId);
+    if (player == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    player->second.restoreManaThroughTime();
+}
+
+void Game::fastTravel(int playerId, Position newPosition) {
+    auto player = players.find(playerId);
+    if (player == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+
+    player->second.move(newPosition);
+}
+
 Game::~Game() {
     for (const auto& [id, _]: players) {
         updatePlayerData(id);

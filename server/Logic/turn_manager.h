@@ -21,6 +21,8 @@ struct PlayerTimer {
     int timeToRestoreManaMeditating; // 1000 miliseconds while the player is meditating
     int timeToTeleport; // Depends on the distance to the city
     int currentTimeToTeleport; // Time that the player has been teleporting
+    int timeToRestoreHealth;
+    int timeToRestoreMana;
 };
 
 class TurnManager {
@@ -39,7 +41,11 @@ class TurnManager {
 
         void updateTimers();
 
-        std::vector<int> getPlayersReadyToRestoreMana();
+        std::vector<int> getPlayersReadyToRestoreHealth();
+
+        std::vector<int> getPlayersReadyToRestoreManaThroughTime();
+
+        std::vector<int> getPlayersReadyToRestoreManaByMeditation();
 
         bool alreadyTeleporting(int playerId);
 
