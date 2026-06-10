@@ -8,6 +8,7 @@
 #include "../common/Communication/events/client_events.h"
 #include "../common/Communication/message_types.h"
 
+#include "equipment_sprites.h"
 #include "item_sprites.h"
 #include "tile_textures.h"
 
@@ -89,6 +90,7 @@ GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath
         serverEvents(serverEvents),
         player(player) {
     tileToPlayerCoords(spawn.x, spawn.y, this->player);
+    baseSkin = this->player.skin;
 
     lastTileX = (int)(this->player.x + HEAD_OFFSET);
     lastTileY = (int)(this->player.y + FEET_OFFSET);
@@ -514,6 +516,7 @@ void GameScreen::consumeServerEvents() {
             equippedItems[1] = inv->getEquippedArmor();
             equippedItems[2] = inv->getEquippedHelmet();
             equippedItems[3] = inv->getEquippedShield();
+            applyEquippedVisuals();
         } else if (auto* st = dynamic_cast<StatsEvent*>(ev.get())) {
             health = st->getHp();
             maxHealth = st->getMaxHp();
@@ -704,6 +707,25 @@ void GameScreen::renderInventoryPanel() {
 
         renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
                       SDL2pp::Rect(dstX, dstY, dstW, dstH));
+    }
+}
+
+void GameScreen::applyEquippedVisuals() {
+    // Reset: -1 = sin equipo en ese slot; el cuerpo vuelve al skin base.
+    player.weaponId = -1;
+    player.shieldId = -1;
+    player.helmetId = -1;
+    player.skin = baseSkin;
+
+    for (uint8_t itemId: equippedItems) {
+        EquipVisual v = equipVisualFor(itemId);
+        switch (v.slot) {
+            case EquipSlot::WEAPON: player.weaponId = v.index; break;
+            case EquipSlot::ARMOR: player.skin = v.index; break;
+            case EquipSlot::HELMET: player.helmetId = v.index; break;
+            case EquipSlot::SHIELD: player.shieldId = v.index; break;
+            case EquipSlot::NONE: break;
+        }
     }
 }
 

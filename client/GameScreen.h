@@ -79,6 +79,9 @@ private:
     // pushea tipados.
     IncomingQueue& serverEvents;
     Player_ player;
+    // Skin de cuerpo "base" (sin armadura), de la creación del personaje. Al
+    // desequipar la armadura, player.skin vuelve a este valor.
+    int baseSkin = SKIN_DEFAULT;
     std::unordered_map<int, OtherPlayer> otherPlayers;
     std::unordered_map<int, RemoteNpc> npcs;
     std::vector<DroppedItem> droppedItems;
@@ -163,6 +166,11 @@ private:
     // Si itemId está equipado, devuelve su slotType (0=arma,1=armor,2=casco,
     // 3=escudo); si no, -1. Sirve para resaltar y para el UnequipItemEvent.
     int equippedSlotTypeOf(uint8_t itemId) const;
+
+    // Vuelca los itemIds de equippedItems a los campos visuales del jugador local
+    // (weaponId/shieldId/helmetId/skin) usando equipVisualFor(). Lo que no esté
+    // equipado se limpia (-1, o baseSkin para el cuerpo).
+    void applyEquippedVisuals();
 
     // Dibuja la caja de chat arriba con historial e input actual.
     void renderChat();

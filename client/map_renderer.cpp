@@ -195,9 +195,7 @@ std::string MapRenderer::get_path(int skin) {
         case 2:
             return "/Skins/Gladiador_azul.png";
         case 3:
-            return "/Skins/Hechicero.png";
-        case 4:
-            return "/Skins/Hechicera.png";
+            return "/Skins/Blue_tunic.png";
         default:
             return "/Skins/skin_default.png";
     }
@@ -230,9 +228,9 @@ void MapRenderer::renderWeapon(const Player_& player, float camX, float camY) {
     if (player.killed || player.weaponId < 0)
         return;
 
-    static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Daga.png", "/Armas/Arco.png",
-                                        "/Armas/Baculo.png"};
-    if (player.weaponId >= 4)
+    static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Hacha.png", "/Armas/Arco.png", "/Armas/Arco_compuesto.png",
+                                        "/Armas/Baculo.png", "/Armas/Flauta.png", "/Armas/Martillo.png"};
+    if (player.weaponId >= 7)
         return;
 
     int row = static_cast<int>(player.dir);
@@ -298,22 +296,37 @@ void MapRenderer::renderHelmet(const Player_& player, float camX, float camY) {
     if (player.killed || player.helmetId < 0)
         return;
 
-    static constexpr int HELMET_CELL_W = 27;  // 46
-    static constexpr int HELMET_CELL_H = 64;  // 256
-    static constexpr int HEAD_CELL_W = 27;
+    // Gorros.png está organizado en bloques de 4 filas (las 4 direcciones
+    // Down/Up/Left/Right de un mismo gorro) y 32 columnas (gorros distintos).
+    // Celda = 32x64. helmetId viene empaquetado como block*32 + col, donde
+    // block = qué "fila de gorros" (grupo de 4 filas). Ver equipment_sprites.cpp.
+    static constexpr int HAT_CELL_W = 27;
+    static constexpr int HAT_CELL_H = 64;
+    static constexpr int HAT_COLS = 32;
     static constexpr int HEAD_CELL_H = 64;
 
-    int col = player.helmetId;
-    int row = static_cast<int>(player.dir);  // DOWN=0, UP=1, LEFT=2, RIGHT=3
+    int col = player.helmetId % HAT_COLS;
+    int block = player.helmetId / HAT_COLS;
+    int dir = static_cast<int>(player.dir);  // DOWN=0, UP=1, LEFT=2, RIGHT=3
+    int atlasRow = block * 4 + dir;
 
-    SDL2pp::Rect src(col * HELMET_CELL_W, row * HELMET_CELL_H, HELMET_CELL_W, HELMET_CELL_H);
+    SDL2pp::Rect src(col * HAT_CELL_W, atlasRow * HAT_CELL_H, HAT_CELL_W, HAT_CELL_H);
 
     int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
     int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
-    int headX = screenX + SPRITE_W / 2 - HEAD_CELL_W / 2;
-    int headY = screenY - HEAD_CELL_H / 4 - 3;
+    // Centrado horizontal sobre el cuerpo (misma referencia que la cabeza), y
+    // misma Y que la cabeza para que el gorro quede calzado encima.
+    int hatX = screenX + SPRITE_W / 2 - HAT_CELL_W / 2;
+    int hatY = screenY - HEAD_CELL_H / 4 - 3;
 
-    SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
+    // Ajuste fino por gorro: algunos sprites no quedan centrados en su celda.
+    // hatNudgeX > 0 corre el gorro a la izquierda. Subí/bajá el valor a ojo.
+    int hatNudgeX = 0;
+    if (player.helmetId == 38)  // Iron Helmet (con cuernos): su arte cae un poco a la derecha
+        hatNudgeX = 2;
+    hatX -= hatNudgeX;
+
+    SDL2pp::Rect dst(hatX, hatY, HAT_CELL_W, HAT_CELL_H);
 
     try {
         renderer.Copy(cache.get("/Skins/Gorros.png"), src, dst);
