@@ -8,6 +8,7 @@
 #include "../common/Communication/events/client_events.h"
 #include "../common/Communication/message_types.h"
 
+#include "equipment_sprites.h"
 #include "item_sprites.h"
 #include "tile_textures.h"
 
@@ -89,6 +90,7 @@ GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath
         serverEvents(serverEvents),
         player(player) {
     tileToPlayerCoords(spawn.x, spawn.y, this->player);
+    baseSkin = this->player.skin;
 
     lastTileX = (int)(this->player.x + HEAD_OFFSET);
     lastTileY = (int)(this->player.y + FEET_OFFSET);
@@ -215,6 +217,30 @@ bool GameScreen::handleEvents(float dt) {
                 chatBuffer.clear();
                 SDL_StartTextInput();
                 continue;
+            }
+        }
+        // Doble click sobre un slot del inventario → equipar/desequipar ese item.
+        // SDL marca el segundo click de un doble click con clicks == 2.
+        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT &&
+            e.button.clicks == 2) {
+            int slot = inventorySlotAt(e.button.x, e.button.y);
+            if (slot >= 0 && slot < (int)inventoryItems.size()) {
+                uint8_t itemId = inventoryItems[slot];
+                // Si el item ya está equipado, el slotType es el índice en
+                // equippedItems (0=arma,1=armor,2=casco,3=escudo) → desequipar.
+                // Si no, equipar por inventory slot.
+                int slotType = equippedSlotTypeOf(itemId);
+                if (slotType >= 0) {
+                    std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
+                              << " → UNEQUIP slotType=" << slotType << std::endl;
+                    clientEvents.push(std::make_shared<UnequipItemEvent>(
+                            static_cast<uint8_t>(slotType)));
+                } else {
+                    std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
+                              << " → EQUIP" << std::endl;
+                    clientEvents.push(std::make_shared<EquipItemEvent>(static_cast<uint8_t>(slot)));
+                }
+                continue;  // consumido por el inventario, no es un ataque.
             }
         }
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
@@ -495,6 +521,13 @@ void GameScreen::consumeServerEvents() {
             for (uint8_t id: inv->getItems()) {
                 if (id != 0) inventoryItems.push_back(id);
             }
+            // itemIds equipados por slotType (0=arma,1=armor,2=casco,3=escudo).
+            // 0 = ese slot de equipo está vacío.
+            equippedItems[0] = inv->getEquippedWeapon();
+            equippedItems[1] = inv->getEquippedArmor();
+            equippedItems[2] = inv->getEquippedHelmet();
+            equippedItems[3] = inv->getEquippedShield();
+            applyEquippedVisuals();
         } else if (auto* st = dynamic_cast<StatsEvent*>(ev.get())) {
             health = st->getHp();
             maxHealth = st->getMaxHp();
@@ -673,9 +706,75 @@ void GameScreen::renderInventoryPanel() {
         int dstW = (int)cw - 2 * pad;
         int dstH = (int)ch - 2 * pad;
 
+        // Slot equipado: fondo verde semitransparente + borde, debajo del item.
+        if (equippedSlotTypeOf(itemId) >= 0) {
+            SDL2pp::Rect cell(dstX, dstY, dstW, dstH);
+            renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+            renderer.SetDrawColor(60, 220, 90, 90);
+            renderer.FillRect(cell);
+            renderer.SetDrawColor(60, 220, 90, 220);
+            renderer.DrawRect(cell);
+        }
+
         renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
                       SDL2pp::Rect(dstX, dstY, dstW, dstH));
     }
+}
+
+void GameScreen::applyEquippedVisuals() {
+    // Reset: -1 = sin equipo en ese slot; el cuerpo vuelve al skin base.
+    player.weaponId = -1;
+    player.shieldId = -1;
+    player.helmetId = -1;
+    player.skin = baseSkin;
+
+    for (uint8_t itemId: equippedItems) {
+        EquipVisual v = equipVisualFor(itemId);
+        switch (v.slot) {
+            case EquipSlot::WEAPON: player.weaponId = v.index; break;
+            case EquipSlot::ARMOR: player.skin = v.index; break;
+            case EquipSlot::HELMET: player.helmetId = v.index; break;
+            case EquipSlot::SHIELD: player.shieldId = v.index; break;
+            case EquipSlot::NONE: break;
+        }
+    }
+}
+
+int GameScreen::equippedSlotTypeOf(uint8_t itemId) const {
+    if (itemId == 0) return -1;  // slot vacío, nunca "equipado".
+    for (size_t t = 0; t < equippedItems.size(); t++) {
+        if (equippedItems[t] == itemId) return (int)t;
+    }
+    return -1;
+}
+
+int GameScreen::inventorySlotAt(int mouseX, int mouseY) const {
+    int screenW, screenH;
+    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
+
+    float scale = uiScale();
+    const int hudW = hudPanelW();
+
+    // Mismo cálculo de invX/invY/INV_W/INV_H que renderInventoryPanel().
+    const int INV_W = (int)(210 * scale);
+    const int INV_H = (int)(255 * scale);
+    int invX = screenW - hudW + (hudW - INV_W) / 2;
+    int invY = screenH / 2 - INV_H / 2;
+
+    // Fuera del rectángulo del grid → no hay slot.
+    if (mouseX < invX || mouseX >= invX + INV_W || mouseY < invY || mouseY >= invY + INV_H)
+        return -1;
+
+    static constexpr int GRID_COLS = 4;
+    static constexpr int GRID_ROWS = 5;
+    float cw = INV_W / (float)GRID_COLS;
+    float ch = INV_H / (float)GRID_ROWS;
+
+    int col = (int)((mouseX - invX) / cw);
+    int row = (int)((mouseY - invY) / ch);
+    if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS)
+        return -1;
+    return row * GRID_COLS + col;
 }
 
 void GameScreen::renderChat() {

@@ -12,7 +12,6 @@
 #include "../common/Communication/message_types.h"
 
 #include "GameScreen.h"
-#include "char_creation_screen.h"
 #include "head_selection_screen.h"
 #include "login_screen.h"
 
@@ -59,12 +58,9 @@ void Client::run() {
         HeadSelectionResult headResult = headSelection.run();
         if (!headResult.confirmed)
             return;
-        CharCreationScreen charCreation(renderer, "AO_IMGS", headResult.headId);
-        CharCreationResult charResult = charCreation.run();
-        if (!charResult.confirmed)
-            return;
-        protocol.send(SkinSelectedEvent(static_cast<uint8_t>(charResult.skinId)));
-        player.skin = charResult.skinId;
+        protocol.send(SkinSelectedEvent(static_cast<uint8_t>(SKIN_DEFAULT)));
+        player.skin = 2;
+        player.headId = headResult.headId;
         ev = protocol.receiveEvent();
     }
 
