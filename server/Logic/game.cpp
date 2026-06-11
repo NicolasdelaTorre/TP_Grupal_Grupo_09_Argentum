@@ -94,7 +94,7 @@ bool Game::isPositionFree(Position pos) const {
 Position Game::getPlayerPosition(int playerId) const {
     auto it = players.find(playerId);
     if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return {-1, -1};
     }
     return it->second.getPosition();
 }
@@ -933,7 +933,7 @@ bool Game::checkIfPlayerIsTeleporting(int playerId) const {
 void Game::finishTeleportingState(int playerId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     itPlayer->second.finishTeleporting();
@@ -942,7 +942,7 @@ void Game::finishTeleportingState(int playerId) {
 void Game::restorePlayerManaForMeditation(int playerId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     itPlayer->second.restoreManaForMeditation();
@@ -966,7 +966,7 @@ bool Game::startPlayerResurrect(int playerId) {
 bool Game::lowerHealth(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return false;
     }
 
     return player->second.isAlive() && player->second.getCurrentHealth() < player->second.getMaxHealth();
@@ -975,7 +975,7 @@ bool Game::lowerHealth(int playerId) {
 bool Game::lowerMana(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return false;
     }
 
     return player->second.isAlive() && player->second.getCurrentMana() < player->second.getMaxMana();
@@ -984,7 +984,7 @@ bool Game::lowerMana(int playerId) {
 void Game::restorePlayerHealth(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     player->second.restoreHealthThroughTime();
@@ -993,7 +993,7 @@ void Game::restorePlayerHealth(int playerId) {
 void Game::restorePlayerMana(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     player->second.restoreManaThroughTime();
@@ -1002,7 +1002,7 @@ void Game::restorePlayerMana(int playerId) {
 void Game::fastTravel(int playerId, Position newPosition) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     player->second.move(newPosition);

@@ -154,6 +154,9 @@ void Gameloop::PlayerTurns() {
     for (int playerId : playerIds) {
         if (game.hasPlayer(playerId) && game.checkIfPlayerIsTeleporting(playerId) && !turnManager.alreadyTeleporting(playerId)) {
             int timeToTeleport = map.calculateTeleportingTime(game.getPlayerPosition(playerId), game.getPlayerMapId(playerId));
+
+            if (timeToTeleport == -1) continue;
+
             turnManager.setTimeToTeleport(playerId, timeToTeleport);
         }
     }
@@ -190,6 +193,10 @@ void Gameloop::PlayerTurns() {
             playerPosition = map.getEntryPosition(mapId);
         } else {
             playerPosition = game.getPlayerPosition(playerId);
+        }
+
+        if (playerPosition.x == -1 || playerPosition.y == -1) {
+            continue;
         }
 
         Position priestPosition = map.searchNearestPriest(playerPosition.x, playerPosition.y);

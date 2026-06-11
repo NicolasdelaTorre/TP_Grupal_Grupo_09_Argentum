@@ -628,6 +628,10 @@ int Map::friendlyNpcDistance(int16_t playerX, int16_t playerY, uint16_t friendly
 }
 
 int Map::calculateTeleportingTime(Position playerPosition, uint8_t mapId) {
+    if (playerPosition.x == -1 || playerPosition.y == -1) {
+        return -1;
+    }
+
     int16_t x = playerPosition.x;
     int16_t y = playerPosition.y;
 
