@@ -32,26 +32,29 @@ Game::Game(Map& world):
     }
 }
 
-bool Game::addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
-    Position spawn;
+bool Game::playerExistsInRecords(const std::string& name) {
+    return parser.checkPlayerExists(name);
+}
 
-    if (!parser.checkPlayerExists(name)) {
-        spawn = findSpawnPosition();
-        players.emplace(playerId, Player(name, spawn, race, class_));
-        parser.savePlayerData(name, players.at(playerId).getData());
-    } else {
-        players.emplace(playerId, Player(parser.loadPlayerData(name), name));
-        spawn = players.at(playerId).getPosition();
-    }
-
-    // Cargar/crear la cuenta del banco para este jugador.
+bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
+    Position spawn = findSpawnPosition();
+    players.emplace(playerId, Player(name, spawn, race, class_));
+    parser.savePlayerData(name, players.at(playerId).getData());
     bank.addPlayer(name);
-
     map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    std::cout << "Hi " << name << " (" << Race::toString(race) << "/"
+              << PlayerClass::toString(class_) << ") spawned at (" << spawn.x << ", " << spawn.y
+              << ")" << std::endl;
+    return true;
+}
 
-    std::cout << "Hi " << name << " (" << Race::toString(race) << "/" << PlayerClass::toString(class_)
-              << ") spawned at (" << spawn.x << ", " << spawn.y << ")" << std::endl;
-
+bool Game::loadExistingPlayer(int playerId, const std::string& name) {
+    players.emplace(playerId, Player(parser.loadPlayerData(name), name));
+    Position spawn = players.at(playerId).getPosition();
+    bank.addPlayer(name);
+    map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    std::cout << "Welcome back " << name << " at (" << spawn.x << ", " << spawn.y << ")"
+              << std::endl;
     return true;
 }
 
@@ -351,6 +354,14 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         }
         outcome.targetName = itTarget->second.getName();
         outcome.targetId = static_cast<int>(targetId);
+        // Zona segura: nada de PvP si atacante o target están adentro.
+        Position atkPos = itPlayer->second.getPosition();
+        Position tgtPos = itTarget->second.getPosition();
+        if (map.isSafeZone(atkPos.x, atkPos.y, mapId) ||
+            map.isSafeZone(tgtPos.x, tgtPos.y, mapId)) {
+            outcome.blockedReason = "No podés atacar dentro de una zona segura";
+            return outcome;
+        }
         // Fair play: newbies (lvl <= newbieLevel) no participan en PvP y la
         // diferencia de niveles no puede pasar maxLevelDiff.
         uint8_t tgtLvlFP = itTarget->second.getData().level;
@@ -437,14 +448,20 @@ bool Game::tryEvade(int /*attackerId*/, int targetId) const {
     return std::pow(roll, static_cast<float>(r.agility)) < thr;
 }
 
-void Game::setSkin(int playerId, uint8_t skinId) {
+void Game::setSkin(int playerId, uint8_t bodySkinId, uint8_t headSkinId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    // TODO(team-gameplay): el segundo parámetro es headId, queda en 0 hasta
-    // que se implemente la selección de cabeza.
-    itPlayer->second.setSkin(static_cast<int>(skinId), 0);
+    itPlayer->second.setSkin(bodySkinId, headSkinId);
+}
+
+uint8_t Game::getPlayerHead(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        throw std::runtime_error("Game Error: player not found");
+    }
+    return it->second.getData().headSkinId;
 }
 
 // ── Cheats invocables desde el chat ──────────────────────────────────────

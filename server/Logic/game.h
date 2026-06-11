@@ -62,8 +62,14 @@ private:
 public:
     explicit Game(Map& world);
 
-    // Da de alta un jugador (nuevo o cargado del binario).
-    bool addPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_);
+    // True si el nombre ya tiene datos en el binario de persistencia.
+    bool playerExistsInRecords(const std::string& name);
+
+    // Crea un jugador nuevo con la raza/clase elegidas y lo persiste.
+    bool addNewPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_);
+
+    // Carga un jugador desde el binario (ignora cualquier raza/clase).
+    bool loadExistingPlayer(int playerId, const std::string& name);
 
     // Mueve un casillero en la dirección indicada. False si está bloqueado.
     bool movePlayer(int playerId, MoveDirection direction);
@@ -109,7 +115,9 @@ public:
 
     void updatePlayerData(int playerId);
 
-    void setSkin(int playerId, uint8_t skinId);
+    void setSkin(int playerId, uint8_t bodySkinId, uint8_t headSkinId);
+
+    uint8_t getPlayerHead(int playerId) const;
 
     // Resumen de lo que pasó en un ataque. Lo arma processAttack y lo usa
     // gameloop para decidir broadcasts y notificaciones al chat.

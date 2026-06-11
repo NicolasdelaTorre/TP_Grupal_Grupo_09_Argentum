@@ -9,20 +9,37 @@
 
 #include "client_event.h"
 
-// USER_ARRIVAL: [opcode][name_len:2][name][race:1][class:1]. race y class son bytes de RaceCode/ClassCode.
+// USER_ARRIVAL: [opcode][name_len:2][name]. Solo el nombre: el server responde
+// LOGIN_OK directo si el jugador ya existe, o FIRST_LOGIN si hay que crearlo.
 class UserArrivalEvent: public ClientEvent {
 private:
     std::string name;
-    RaceCode race;
-    ClassCode class_;
 
 public:
-    UserArrivalEvent(std::string name, RaceCode race, ClassCode class_);
+    explicit UserArrivalEvent(std::string name);
     const std::string& getName() const { return name; }
-    RaceCode getRace() const { return race; }
-    ClassCode getClass() const { return class_; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<UserArrivalEvent> deserialize(CommonProtocol& proto);
+};
+
+// CHARACTER_CREATED: [opcode][race:1][class:1][headId:1][skinId:1]. Se manda
+// solo despues de FIRST_LOGIN, juntando raza/clase/cabeza/skin de las pantallas
+// de creacion.
+class CharacterCreatedEvent: public ClientEvent {
+private:
+    RaceCode race;
+    ClassCode class_;
+    uint8_t headId;
+    uint8_t skinId;
+
+public:
+    CharacterCreatedEvent(RaceCode race, ClassCode class_, uint8_t headId, uint8_t skinId);
+    RaceCode getRace() const { return race; }
+    ClassCode getClass() const { return class_; }
+    uint8_t getHeadId() const { return headId; }
+    uint8_t getSkinId() const { return skinId; }
+    void serialize(CommonProtocol& proto) const override;
+    static std::unique_ptr<CharacterCreatedEvent> deserialize(CommonProtocol& proto);
 };
 
 // MOVEMENT: [opcode][direction:1]. direction es un MoveDirection.
@@ -47,30 +64,6 @@ public:
     MoveDirection getDirection() const { return direction; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<TurnEvent> deserialize(CommonProtocol& proto);
-};
-
-// SKIN_SELECTED: [opcode][skin_id:1].
-class SkinSelectedEvent: public ClientEvent {
-private:
-    uint8_t skinId;
-
-public:
-    explicit SkinSelectedEvent(uint8_t skinId);
-    uint8_t getSkinId() const { return skinId; }
-    void serialize(CommonProtocol& proto) const override;
-    static std::unique_ptr<SkinSelectedEvent> deserialize(CommonProtocol& proto);
-};
-
-// HEAD_SELECTED: [opcode][head_id:1]. Hoy es stub server-side.
-class HeadSelectedEvent: public ClientEvent {
-private:
-    uint8_t headId;
-
-public:
-    explicit HeadSelectedEvent(uint8_t headId);
-    uint8_t getHeadId() const { return headId; }
-    void serialize(CommonProtocol& proto) const override;
-    static std::unique_ptr<HeadSelectedEvent> deserialize(CommonProtocol& proto);
 };
 
 // ATTACK: [opcode][target_type:1][target_id:2]. Click sobre target.

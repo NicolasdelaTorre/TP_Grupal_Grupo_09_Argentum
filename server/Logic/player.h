@@ -56,7 +56,7 @@ private:
     // Flags de cheats runtime: NO se guardan en PlayerData (no persisten al reloguear).
     bool infiniteHealth = false;
     bool infiniteMana = false;
-    bool teleporting;
+    bool teleporting = false;
 
 public:
     explicit Player(const std::string& name, Position position, RaceCode race, ClassCode class_);

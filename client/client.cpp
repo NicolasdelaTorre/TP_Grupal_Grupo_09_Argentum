@@ -37,23 +37,15 @@ void Client::run() {
     LoginResult result = login.run();
     if (!result.confirmed)
         return;
-
-    // Handshake sincrónico (login + mapa) antes de arrancar los hilos.
-    // Antes de avisar al server elegimos raza y clase. Para usuarios que ya
-    // existen el server ignora estos valores (carga los persistidos).
     std::string name(result.username.begin(), result.username.end());
 
-    CharacterCreationScreen charCreation(renderer, "AO_IMGS");
-    CharacterCreationResult cc = charCreation.run();
-    if (!cc.confirmed)
-        return;
-
-    protocol.send(UserArrivalEvent(name, cc.race, cc.class_));
+    // Handshake fase 1: mandamos solo el nombre. El server decide si entramos
+    // directo (jugador ya existe) o tenemos que pasar por creacion.
+    protocol.send(UserArrivalEvent(name));
 
     auto ev = protocol.receiveEvent();
     Player_ player;
 
-    // Usuario nuevo: char creation + skin/head al server.
     if (auto* op = dynamic_cast<OpcodeOnlyEvent*>(ev.get());
         op && op->getOpcode() == static_cast<uint8_t>(ServerMsg::LOGIN_FAIL)) {
         std::cerr << "Login failed (server rejected)" << std::endl;
@@ -62,11 +54,18 @@ void Client::run() {
 
     if (auto* op = dynamic_cast<OpcodeOnlyEvent*>(ev.get());
         op && op->getOpcode() == static_cast<uint8_t>(ServerMsg::FIRST_LOGIN)) {
+        // Jugador nuevo: pasamos por creacion + head, mandamos todo junto.
+        CharacterCreationScreen charCreation(renderer, "AO_IMGS");
+        CharacterCreationResult cc = charCreation.run();
+        if (!cc.confirmed)
+            return;
         HeadSelectionScreen headSelection(renderer, "AO_IMGS");
         HeadSelectionResult headResult = headSelection.run();
         if (!headResult.confirmed)
             return;
-        protocol.send(SkinSelectedEvent(static_cast<uint8_t>(SKIN_DEFAULT)));
+        protocol.send(CharacterCreatedEvent(cc.race, cc.class_,
+                                            static_cast<uint8_t>(headResult.headId),
+                                            static_cast<uint8_t>(SKIN_DEFAULT)));
         player.skin = SKIN_DEFAULT;
         player.headId = headResult.headId;
         ev = protocol.receiveEvent();
@@ -78,6 +77,10 @@ void Client::run() {
         return;
     }
     Position spawn{loginOk->getSpawnX(), loginOk->getSpawnY()};
+    // El server manda nuestro skin+head persistidos. Para player nuevo coinciden
+    // con lo que mandamos en CharacterCreated; para player existente vienen del binario.
+    player.skin = loginOk->getSkin();
+    player.headId = static_cast<int>(loginOk->getHead());
     std::cout << "Login OK — spawn at (" << spawn.x << ", " << spawn.y << ")" << std::endl;
 
     auto mapEv = protocol.receiveEvent();

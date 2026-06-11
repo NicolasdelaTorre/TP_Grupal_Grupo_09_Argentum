@@ -45,11 +45,15 @@ class LoginOkEvent: public ServerEvent {
 private:
     int16_t spawnX;
     int16_t spawnY;
+    uint8_t skin;
+    uint8_t head;
 
 public:
-    LoginOkEvent(int16_t spawnX, int16_t spawnY);
+    LoginOkEvent(int16_t spawnX, int16_t spawnY, uint8_t skin, uint8_t head);
     int16_t getSpawnX() const { return spawnX; }
     int16_t getSpawnY() const { return spawnY; }
+    uint8_t getSkin() const { return skin; }
+    uint8_t getHead() const { return head; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<LoginOkEvent> deserialize(CommonProtocol& proto);
 };
@@ -74,7 +78,7 @@ public:
     static std::unique_ptr<MapEvent> deserialize(CommonProtocol& proto);
 };
 
-// NEW_PLAYER: [opcode][id:2][x:2][y:2][dir:1][skin:1][name_len:2][name:n].
+// NEW_PLAYER: [opcode][id:2][x:2][y:2][dir:1][skin:1][head:1][name_len:2][name:n].
 class NewPlayerEvent: public ServerEvent {
 private:
     uint16_t id;
@@ -82,15 +86,18 @@ private:
     int16_t y;
     uint8_t dir;
     uint8_t skin;
+    uint8_t head;
     std::string name;
 
 public:
-    NewPlayerEvent(uint16_t id, int16_t x, int16_t y, uint8_t dir, uint8_t skin, std::string name);
+    NewPlayerEvent(uint16_t id, int16_t x, int16_t y, uint8_t dir, uint8_t skin, uint8_t head,
+                   std::string name);
     uint16_t getId() const { return id; }
     int16_t getX() const { return x; }
     int16_t getY() const { return y; }
     uint8_t getDir() const { return dir; }
     uint8_t getSkin() const { return skin; }
+    uint8_t getHead() const { return head; }
     const std::string& getName() const { return name; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<NewPlayerEvent> deserialize(CommonProtocol& proto);
