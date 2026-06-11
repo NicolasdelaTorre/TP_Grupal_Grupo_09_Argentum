@@ -173,6 +173,10 @@ private:
     // Dibuja el panel derecho del HUD (fondo + inventario).
     void renderInventoryPanel();
 
+    // Dibuja las barras de vida y mana debajo del inventario. Recibe la geometria
+    // del panel del inventario (ya escalada) para alinearse con su ancho.
+    void renderResourceBars(int invX, int invY, int invW, int invH, float scale);
+
     // Mapea una posición del mouse (px de pantalla) al índice de slot del grid
     // del inventario (0..GRID_COLS*GRID_ROWS-1), o -1 si el click cae fuera del
     // panel. Usa la misma geometría que renderInventoryPanel().

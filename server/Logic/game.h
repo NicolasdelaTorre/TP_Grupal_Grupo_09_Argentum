@@ -233,6 +233,16 @@ public:
 
     bool startPlayerResurrect(int playerId);
 
+    bool lowerHealth(int playerId);
+
+    bool lowerMana(int playerId);
+
+    void restorePlayerHealth(int playerId);
+
+    void restorePlayerMana(int playerId);
+
+    void fastTravel(int playerId, Position newPosition);
+
     void removePlayer(int playerId);
 
     ~Game();

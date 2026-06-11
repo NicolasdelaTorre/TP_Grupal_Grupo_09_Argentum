@@ -87,6 +87,10 @@ public:
 
     uint8_t getMapId() const;
 
+    uint16_t getCurrentHealth() const;
+
+    uint16_t getCurrentMana() const;
+
     bool getMeditationState() const;
 
     bool getTeleportingState() const;
@@ -118,6 +122,10 @@ public:
     void changeMapId(uint8_t newMapId);
 
     void switchMeditationState();
+
+    void restoreHealthThroughTime();
+
+    void restoreManaThroughTime();
 
     void restoreManaForMeditation();
 

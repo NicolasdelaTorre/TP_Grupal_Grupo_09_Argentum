@@ -3,7 +3,7 @@ constitution = 10
 force = 8
 intelligence = 6
 FRaceHealth = 15.0
-FRaceRecovery = 15.0
+FRaceRecovery = 5.0
 FRaceMana = 10.0
 
 [race.elf]
@@ -11,7 +11,7 @@ constitution = 5
 force = 5
 intelligence = 10
 FRaceHealth = 8.0
-FRaceRecovery = 20.0
+FRaceRecovery = 10.0
 FRaceMana = 15.0
 
 [race.dwarf]
@@ -19,7 +19,7 @@ constitution = 14
 force = 12
 intelligence = 4
 FRaceHealth = 20.0
-FRaceRecovery = 10.0
+FRaceRecovery = 2.0
 FRaceMana = 5.0
 
 [race.gnome]
@@ -27,7 +27,7 @@ constitution = 5
 force = 5
 intelligence = 8
 FRaceHealth = 6.0
-FRaceRecovery = 18.0
+FRaceRecovery = 8.0
 FRaceMana = 13.0
 
 [class.mage]

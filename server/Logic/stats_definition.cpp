@@ -12,7 +12,7 @@ uint16_t StatsDefinition::maxHealth(uint8_t playerLevel, RaceCode race, ClassCod
     return r.constitution * c.FClassHealth * r.FRaceHealth * playerLevel;
 }
 
-uint32_t StatsDefinition::recoveryHealth(RaceCode race) {
+uint32_t StatsDefinition::recoveryStatThroughTime(RaceCode race) {
     return attributes.getRaceAttribute(race).FRaceRecovery;
 }
 

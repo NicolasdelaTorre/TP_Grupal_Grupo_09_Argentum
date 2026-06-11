@@ -319,10 +319,8 @@ void MapRenderer::renderHelmet(const Player_& player, float camX, float camY) {
     int hatX = screenX + SPRITE_W / 2 - HAT_CELL_W / 2;
     int hatY = screenY - HEAD_CELL_H / 4 - 3;
 
-    // Ajuste fino por gorro: algunos sprites no quedan centrados en su celda.
-    // hatNudgeX > 0 corre el gorro a la izquierda. Subí/bajá el valor a ojo.
     int hatNudgeX = 0;
-    if (player.helmetId == 38)  // Iron Helmet (con cuernos): su arte cae un poco a la derecha
+    if (player.helmetId == 38)  
         hatNudgeX = 2;
     hatX -= hatNudgeX;
 

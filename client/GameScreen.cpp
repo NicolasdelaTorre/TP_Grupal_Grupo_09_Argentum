@@ -770,6 +770,136 @@ void GameScreen::renderInventoryPanel() {
         renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
                       SDL2pp::Rect(dstX, dstY, dstW, dstH));
     }
+
+    // Barras de vida/mana justo debajo del grid del inventario.
+    renderResourceBars(invX, invY, INV_W, INV_H, scale);
+}
+
+void GameScreen::renderResourceBars(int invX, int invY, int invW, int invH, float scale) {
+    // Geometria base (px a 600 de alto), escalada con uiScale().
+    const int BAR_H = (int)(22 * scale);
+    const int BAR_GAP = (int)(8 * scale);
+    const int TOP_MARGIN = (int)(14 * scale);
+    const int ICON = (int)(28 * scale);
+    const int ICON_GAP = (int)(6 * scale);
+    const int BORDER = std::max(2, (int)(3 * scale));
+
+    int iconX = invX;
+    int barX = invX + ICON + ICON_GAP;
+    int barW = invW - ICON - ICON_GAP;
+    int barY = invY + invH + TOP_MARGIN;
+
+    SDL2pp::Texture& frame = cache.get("/Pantallas/barra.png");
+    frame.SetColorMod(255, 255, 255);
+
+    // Pequeño helper local para dibujar una barra (frame + relleno + icono + texto).
+    auto drawBar = [&](int y, uint16_t value, uint16_t maxValue, SDL_Color fill,
+                       SDL2pp::Texture& iconTex, const SDL2pp::Rect& iconSrc) {
+        // Marco de madera de fondo.
+        renderer.Copy(frame, SDL2pp::NullOpt, SDL2pp::Rect(barX, y, barW, BAR_H));
+
+        // Relleno proporcional, recortado dentro del marco.
+        float frac = maxValue > 0 ? (float)value / (float)maxValue : 0.0f;
+        frac = std::clamp(frac, 0.0f, 1.0f);
+        int innerW = barW - 2 * BORDER;
+        int fillW = (int)(innerW * frac);
+        renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+        // Fondo oscuro de la porción vacía.
+        renderer.SetDrawColor(0, 0, 0, 140);
+        renderer.FillRect(SDL2pp::Rect(barX + BORDER, y + BORDER, innerW, BAR_H - 2 * BORDER));
+        if (fillW > 0) {
+            renderer.SetDrawColor(fill.r, fill.g, fill.b, 235);
+            renderer.FillRect(SDL2pp::Rect(barX + BORDER, y + BORDER, fillW, BAR_H - 2 * BORDER));
+        }
+
+        // Icono a la izquierda, centrado verticalmente respecto a la barra.
+        int iconY = y + (BAR_H - ICON) / 2;
+        renderer.Copy(iconTex, iconSrc, SDL2pp::Rect(iconX, iconY, ICON, ICON));
+
+        // Texto "value/max" centrado sobre la barra.
+        std::string label = std::to_string(value) + "/" + std::to_string(maxValue);
+        try {
+            SDL_Color white = {255, 255, 255, 255};
+            auto surface = chatFont.RenderUTF8_Blended(label, white);
+            SDL2pp::Texture tex(renderer, surface);
+            int tw = tex.GetWidth();
+            int th = tex.GetHeight();
+            renderer.Copy(tex, SDL2pp::NullOpt,
+                          SDL2pp::Rect(barX + (barW - tw) / 2, y + (BAR_H - th) / 2, tw, th));
+        } catch (...) {}
+    };
+
+    // Vida: cruz roja de Signo_vida.png (recorte de la primera cruz, arriba-izq).
+    SDL2pp::Texture& vida = cache.get("/Pantallas/Signo_vida.png");
+    drawBar(barY, health, maxHealth, SDL_Color{200, 40, 40, 255}, vida,
+            SDL2pp::Rect(3, 3, 24, 29));
+
+    // Mana: orbe azul recortado de Mana.png.
+    SDL2pp::Texture& manaIcon = cache.get("/Pantallas/Mana.png");
+    int manaY = barY + BAR_H + BAR_GAP;
+    drawBar(manaY, mana, maxMana, SDL_Color{50, 110, 230, 255}, manaIcon,
+            SDL2pp::Rect(0, 160, 128, 128));
+
+    // Oro: icono (pila de monedas) + cantidad, debajo del mana. Sin barra de
+    // relleno: es un contador, no un recurso acotado.
+    int goldY = manaY + BAR_H + BAR_GAP;
+    int iconY = goldY + (BAR_H - ICON) / 2;
+    renderer.Copy(cache.get("/Pantallas/Items_recolectables.png"),
+                  SDL2pp::Rect(0, 320, 32, 32), SDL2pp::Rect(iconX, iconY, ICON, ICON));
+    try {
+        SDL_Color goldColor = {255, 215, 60, 255};
+        auto surface = chatFont.RenderUTF8_Blended(std::to_string(gold), goldColor);
+        SDL2pp::Texture tex(renderer, surface);
+        int th = tex.GetHeight();
+        renderer.Copy(tex, SDL2pp::NullOpt,
+                      SDL2pp::Rect(iconX + ICON + ICON_GAP, goldY + (BAR_H - th) / 2,
+                                   tex.GetWidth(), th));
+    } catch (...) {}
+
+    // Experiencia + nivel, debajo del oro. El nivel va como "badge" en el slot
+    // del icono; la barra muestra el progreso hacia el siguiente nivel.
+    int expY = goldY + BAR_H + BAR_GAP;
+
+    // Badge de nivel: cuadrado oscuro con borde dorado y el número centrado.
+    int badgeY = expY + (BAR_H - ICON) / 2;
+    SDL2pp::Rect badge(iconX, badgeY, ICON, ICON);
+    renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+    renderer.SetDrawColor(20, 20, 30, 220);
+    renderer.FillRect(badge);
+    renderer.SetDrawColor(255, 215, 60, 255);
+    renderer.DrawRect(badge);
+    try {
+        SDL_Color lvlColor = {255, 235, 150, 255};
+        auto surface = chatFont.RenderUTF8_Blended(std::to_string((int)level), lvlColor);
+        SDL2pp::Texture tex(renderer, surface);
+        int tw = tex.GetWidth();
+        int th = tex.GetHeight();
+        renderer.Copy(tex, SDL2pp::NullOpt,
+                      SDL2pp::Rect(iconX + (ICON - tw) / 2, badgeY + (ICON - th) / 2, tw, th));
+    } catch (...) {}
+
+    // Barra de experiencia: marco de madera + relleno verde proporcional.
+    renderer.Copy(frame, SDL2pp::NullOpt, SDL2pp::Rect(barX, expY, barW, BAR_H));
+    float expFrac = nextLevelExp > 0 ? (float)experience / (float)nextLevelExp : 0.0f;
+    expFrac = std::clamp(expFrac, 0.0f, 1.0f);
+    int innerW = barW - 2 * BORDER;
+    renderer.SetDrawColor(0, 0, 0, 140);
+    renderer.FillRect(SDL2pp::Rect(barX + BORDER, expY + BORDER, innerW, BAR_H - 2 * BORDER));
+    int expFillW = (int)(innerW * expFrac);
+    if (expFillW > 0) {
+        renderer.SetDrawColor(120, 210, 70, 235);
+        renderer.FillRect(SDL2pp::Rect(barX + BORDER, expY + BORDER, expFillW, BAR_H - 2 * BORDER));
+    }
+    try {
+        SDL_Color white = {255, 255, 255, 255};
+        std::string label = std::to_string(experience) + "/" + std::to_string(nextLevelExp);
+        auto surface = chatFont.RenderUTF8_Blended(label, white);
+        SDL2pp::Texture tex(renderer, surface);
+        int tw = tex.GetWidth();
+        int th = tex.GetHeight();
+        renderer.Copy(tex, SDL2pp::NullOpt,
+                      SDL2pp::Rect(barX + (barW - tw) / 2, expY + (BAR_H - th) / 2, tw, th));
+    } catch (...) {}
 }
 
 // Helper: vuelca los itemIds equipados sobre los campos visuales de un Player_

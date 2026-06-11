@@ -112,8 +112,22 @@ void Gameloop::PlayerTurns() {
         }
     }
 
+    // Get Players ready to restore health
+    std::vector<int> playersToRestoreHealth = turnManager.getPlayersReadyToRestoreHealth();
+    for (int playerId: playersToRestoreHealth) {
+        game.restorePlayerHealth(playerId);
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
+
+    // Get Players ready to restore mana through time
+    std::vector<int> playersToRestoreManaThroughTime = turnManager.getPlayersReadyToRestoreManaThroughTime();
+    for (int playerId: playersToRestoreManaThroughTime) {
+        game.restorePlayerMana(playerId);
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
+
     // Get Players ready to restore mana by meditating
-    std::vector<int> playersToRestoreMana = turnManager.getPlayersReadyToRestoreMana();
+    std::vector<int> playersToRestoreMana = turnManager.getPlayersReadyToRestoreManaByMeditation();
     for (int playerId: playersToRestoreMana) {
         game.restorePlayerManaForMeditation(playerId);
         // Cada vez que recuperamos mana mandamos stats actualizados.
@@ -135,7 +149,7 @@ void Gameloop::PlayerTurns() {
         Position priestPosition = map.searchNearestPriest(playerPosition.x, playerPosition.y);
 
         map.moveEntity(playerId, playerPosition.x, playerPosition.y, priestPosition.x, priestPosition.y + 1, true, 0);
-        game.movePlayer(playerId, MoveDirection::TOP);
+        game.fastTravel(playerId, {priestPosition.x, (int16_t)(priestPosition.y + 1)});
 
         auto r = game.revivePlayer(playerId);
         std::string reply = r.message;

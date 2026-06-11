@@ -123,6 +123,10 @@ bool Player::getMeditationState() const { return isMeditating; }
 
 bool Player::getTeleportingState() const { return teleporting; }
 
+uint16_t Player::getCurrentHealth() const { return data.health; }
+
+uint16_t Player::getCurrentMana() const { return data.mana; }
+
 bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
@@ -299,6 +303,22 @@ void Player::changeMapId(uint8_t newMapId) {
 
 void Player::switchMeditationState() {
     isMeditating = !isMeditating;
+}
+
+void Player::restoreHealthThroughTime() {
+    uint16_t healthRestore = StatsDefinition().recoveryStatThroughTime(data.race);
+    if ((data.health + healthRestore) > maxHealth) {
+        healthRestore = maxHealth - data.health;
+    }
+    data.health += healthRestore;
+}
+
+void Player::restoreManaThroughTime() {
+    uint16_t manaRestore = StatsDefinition().recoveryStatThroughTime(data.race);
+    if ((data.mana + manaRestore) > maxMana) {
+        manaRestore = maxMana - data.mana;
+    }
+    data.mana += manaRestore;
 }
 
 void Player::restoreManaForMeditation() {
