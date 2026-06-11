@@ -101,6 +101,9 @@ public:
 
     bool isEquipped();
 
+    // True si itemId coincide con alguno de los slots equipados (arma/armor/casco/escudo).
+    bool isItemEquipped(uint8_t itemId) const;
+
     bool isAlive();
 
     uint16_t dealDamage();
