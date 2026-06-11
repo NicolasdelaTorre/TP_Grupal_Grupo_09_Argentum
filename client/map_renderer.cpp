@@ -6,11 +6,10 @@
 
 #include "../common/common_tiles.h"
 
+#include "item_sprites.h"
+
 namespace {
 
-static constexpr int ITEM_CELL = 32;       // each cell in all three sheets is 32×32 px
-static constexpr int ITEM_COLS_512 = 16;   // 512px sheets → 16 columns
-static constexpr int ITEM_COLS_1024 = 32;  // 1024px sheet  → 32 columns
 static constexpr int ITEM_DRAW_SIZE = 40;  // render size on screen (scaled up from 32px)
 static constexpr const char* COMMON_ASSET_PATH = "../common/assets/images/";
 
@@ -22,19 +21,6 @@ SDL_Color colorFromHex(const char* hex) {
         return {0, 0, 0, 255};
     }
     return {static_cast<Uint8>(r), static_cast<Uint8>(g), static_cast<Uint8>(b), 255};
-}
-
-const char* itemSheetPath(uint8_t sheetId) {
-    switch (sheetId) {
-        case 0:
-            return "/Pantallas/Items_recolectables.png";
-        case 1:
-            return "/Pantallas/Items_recolectables_2.png";
-        case 2:
-            return "/Pantallas/Items_recolectables_3.png";
-        default:
-            return nullptr;
-    }
 }
 
 // Devuelve el path del sprite para NPCs de ciudad (obstáculos fijos en el mapa).
@@ -71,8 +57,8 @@ const char* npcEntityTexturePath(NpcCode type) {
     }
 }
 
-// Texturas de obstáculos a tamaño nativo. Viven en common/assets/images; 
-// relativo a AO_IMGS.
+// Texturas de obstáculos a tamaño nativo. Viven en common/assets/images; el
+// cache del cliente tiene base AO_IMGS, así que se referencian relativo a ella.
 const char* obstacleTexturePath(ObstacleCode type) {
     switch (type) {
         case ObstacleCode::ROCK:
@@ -113,16 +99,6 @@ const char* obstacleTexturePath(ObstacleCode type) {
             return "../common/assets/images/church.png";
         case ObstacleCode::TRAINING_DUMMY:
             return "../common/assets/images/training_dummy.png";
-        case ObstacleCode::ENTRY:
-            return "../common/assets/images/entries/snake.png";
-        case ObstacleCode::WALL_DUNGEON_RIGHT:
-            return "../common/assets/images/walls/right_mazmorra.png";
-        case ObstacleCode::WALL_DUNGEON_LEFT:
-            return "../common/assets/images/walls/left_mazmorra.png";
-        case ObstacleCode::WALL_DUNGEON_VERTICAL:
-            return "../common/assets/images/walls/mazmorra.png";
-        case ObstacleCode::EXIT:
-            return "../common/assets/images/exits/exit_mazmorra.png";
         default:
             return nullptr;
     }
@@ -213,15 +189,13 @@ void MapRenderer::renderPlayer(const Player_& player, float camX, float camY) {
 std::string MapRenderer::get_path(int skin) {
     switch (skin % 5) {
         case 0:
-            return "/Skins/skin_default.png";
+            return "/Skins/Skin_inicial.png";
         case 1:
-            return "/Skins/Caballero_blanco.png";
+            return "/Skins/Armadura_de_cuero.png";
         case 2:
             return "/Skins/Gladiador_azul.png";
         case 3:
-            return "/Skins/Hechicero.png";
-        case 4:
-            return "/Skins/Hechicera.png";
+            return "/Skins/Blue_tunic.png";
         default:
             return "/Skins/skin_default.png";
     }
@@ -254,9 +228,10 @@ void MapRenderer::renderWeapon(const Player_& player, float camX, float camY) {
     if (player.killed || player.weaponId < 0)
         return;
 
-    static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Daga.png", "/Armas/Arco.png",
-                                        "/Armas/Baculo.png"};
-    if (player.weaponId >= 4)
+    static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Hacha.png", "/Armas/Arco.png", "/Armas/Arco_compuesto.png",
+                                        "/Armas/Ash_staff.png", "/Armas/Flauta.png", "/Armas/Martillo.png", "/Armas/Staff_Azul.png",
+                                         "/Armas/Staff_rojo.png"};
+    if (player.weaponId >= 9)
         return;
 
     int row = static_cast<int>(player.dir);
@@ -322,22 +297,35 @@ void MapRenderer::renderHelmet(const Player_& player, float camX, float camY) {
     if (player.killed || player.helmetId < 0)
         return;
 
-    static constexpr int HELMET_CELL_W = 27;  // 46
-    static constexpr int HELMET_CELL_H = 64;  // 256
-    static constexpr int HEAD_CELL_W = 27;
+    // Gorros.png está organizado en bloques de 4 filas (las 4 direcciones
+    // Down/Up/Left/Right de un mismo gorro) y 32 columnas (gorros distintos).
+    // Celda = 32x64. helmetId viene empaquetado como block*32 + col, donde
+    // block = qué "fila de gorros" (grupo de 4 filas). Ver equipment_sprites.cpp.
+    static constexpr int HAT_CELL_W = 27;
+    static constexpr int HAT_CELL_H = 64;
+    static constexpr int HAT_COLS = 32;
     static constexpr int HEAD_CELL_H = 64;
 
-    int col = player.helmetId;
-    int row = static_cast<int>(player.dir);  // DOWN=0, UP=1, LEFT=2, RIGHT=3
+    int col = player.helmetId % HAT_COLS;
+    int block = player.helmetId / HAT_COLS;
+    int dir = static_cast<int>(player.dir);  // DOWN=0, UP=1, LEFT=2, RIGHT=3
+    int atlasRow = block * 4 + dir;
 
-    SDL2pp::Rect src(col * HELMET_CELL_W, row * HELMET_CELL_H, HELMET_CELL_W, HELMET_CELL_H);
+    SDL2pp::Rect src(col * HAT_CELL_W, atlasRow * HAT_CELL_H, HAT_CELL_W, HAT_CELL_H);
 
     int screenX = (int)(player.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
     int screenY = (int)(player.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
-    int headX = screenX + SPRITE_W / 2 - HEAD_CELL_W / 2;
-    int headY = screenY - HEAD_CELL_H / 4 - 3;
+    // Centrado horizontal sobre el cuerpo (misma referencia que la cabeza), y
+    // misma Y que la cabeza para que el gorro quede calzado encima.
+    int hatX = screenX + SPRITE_W / 2 - HAT_CELL_W / 2;
+    int hatY = screenY - HEAD_CELL_H / 4 - 3;
 
-    SDL2pp::Rect dst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
+    int hatNudgeX = 0;
+    if (player.helmetId == 38)  
+        hatNudgeX = 2;
+    hatX -= hatNudgeX;
+
+    SDL2pp::Rect dst(hatX, hatY, HAT_CELL_W, HAT_CELL_H);
 
     try {
         renderer.Copy(cache.get("/Skins/Gorros.png"), src, dst);
@@ -374,21 +362,17 @@ void MapRenderer::renderCityNpcs(const GameMap& map, float camX, float camY) {
 void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, float camX,
                                      float camY) {
     for (const auto& item: items) {
-        const char* tex = itemSheetPath(item.sheetId);
-        if (!tex)
-            continue;
-
-        int cols = (item.sheetId == 2) ? ITEM_COLS_1024 : ITEM_COLS_512;
-        int row = item.itemId / cols;
-        int col = item.itemId % cols;
-        SDL2pp::Rect src(col * ITEM_CELL, row * ITEM_CELL, ITEM_CELL, ITEM_CELL);
+        // Mismo mapeo que el inventario: el id del item (items.toml) define de
+        // qué sheet y celda sale el dibujo. Así el item en el piso coincide.
+        ItemSpriteRef ref = itemSpriteFor(item.itemId);
+        SDL2pp::Rect src(ref.srcX, ref.srcY, ref.srcW, ref.srcH);
 
         int screenX = (int)(item.x * TILE_SIZE - camX) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
         int screenY = (int)(item.y * TILE_SIZE - camY) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
         SDL2pp::Rect dst(screenX, screenY, ITEM_DRAW_SIZE, ITEM_DRAW_SIZE);
 
         try {
-            renderer.Copy(cache.get(tex), src, dst);
+            renderer.Copy(cache.get(ref.sheetPath), src, dst);
         } catch (...) {}
     }
 }
@@ -415,25 +399,75 @@ void MapRenderer::renderBlood(float x, float y, int texIndex, Uint8 alpha, float
 
 void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float camX, float camY) {
     // Flechas.png: 512×512, 9 arrow types in a single row at the top.
-    // Each cell is 512/9 ≈ 56 px wide. Sprites point upper-right (45° CW from north),
+    // Each cell is 32 px wide. Sprites point upper-right (45° CW from north),
     // so the SDL2 rotation formula is: atan2(vx, -vy) * 180/π − 45.
     static constexpr int ARROW_COLS = 9;
     static constexpr int ARROW_CELL_W = 32;
     static constexpr int ARROW_DRAW_SIZE = 32;
 
+    // Explosion.png: tira horizontal de 7 frames (socketed staff). Se anima
+    // ciclando según age; este es el período de un ciclo completo.
+    static constexpr int EXPLOSION_FRAMES = 7;
+    static constexpr float EXPLOSION_FPS = 14.0f;
+
     for (const auto& arrow: arrows) {
-        int screenX = (int)(arrow.x * TILE_SIZE - camX) - ARROW_DRAW_SIZE / 2;
-        int screenY = (int)(arrow.y * TILE_SIZE - camY) - ARROW_DRAW_SIZE / 2;
+        // Parámetros que dependen del tipo de proyectil.
+        const char* texPath = "/Armas/Flechas.png";
+        int drawW = ARROW_DRAW_SIZE, drawH = ARROW_DRAW_SIZE;
+        bool rotate = true;       // alinear el sprite con la dirección de vuelo
+        double extraAngle = 0.0;  // corrección si el sprite no apunta al norte
 
-        int col = std::max(0, std::min(arrow.arrowType, ARROW_COLS - 1));
-        SDL_Rect src = {col * ARROW_CELL_W, 0, ARROW_CELL_W, ARROW_CELL_W};
-        SDL_Rect dst = {screenX, screenY, ARROW_DRAW_SIZE, ARROW_DRAW_SIZE};
+        switch (arrow.kind) {
+            case ProjectileKind::ARROW: extraAngle = -45.0; break;
+            case ProjectileKind::COMPOSITE_ARROW:
+                texPath = "/Armas/Flechas_composite_bow.png";
+                extraAngle = -45.0;  // apunta al noreste, como las flechas normales
+                break;
+            case ProjectileKind::MAGIC_ARROW:
+                texPath = "/Armas/Flecha_magica.png";
+                drawW = 22; drawH = 26;
+                break;
+            case ProjectileKind::MISSILE:
+                texPath = "/Armas/Misil.png";
+                drawW = 18; drawH = 48;  // sprite alto y angosto (63×164)
+                break;
+            case ProjectileKind::EXPLOSION:
+                texPath = "/Armas/Explosion.png";
+                drawW = 44; drawH = 44;
+                rotate = false;  // la explosión no rota: anima en el lugar
+                break;
+        }
 
-        double angle_deg = std::atan2(arrow.vx, -arrow.vy) * 180.0 / M_PI - 45.0;
+        int screenX = (int)(arrow.x * TILE_SIZE - camX) - drawW / 2;
+        int screenY = (int)(arrow.y * TILE_SIZE - camY) - drawH / 2;
+        SDL_Rect dst = {screenX, screenY, drawW, drawH};
 
         try {
-            SDL_RenderCopyEx(renderer.Get(), cache.get("/Armas/Flechas.png").Get(), &src, &dst,
-                             angle_deg, nullptr, SDL_FLIP_NONE);
+            SDL2pp::Texture& tex = cache.get(texPath);
+
+            // Recorte del sprite dentro de la textura.
+            SDL_Rect src;
+            if (arrow.kind == ProjectileKind::ARROW) {
+                int col = std::max(0, std::min(arrow.arrowType, ARROW_COLS - 1));
+                src = {col * ARROW_CELL_W, 0, ARROW_CELL_W, ARROW_CELL_W};
+            } else if (arrow.kind == ProjectileKind::EXPLOSION) {
+                int texW = tex.GetWidth(), texH = tex.GetHeight();
+                float cellW = texW / (float)EXPLOSION_FRAMES;
+                int frame = (int)(arrow.age * EXPLOSION_FPS) % EXPLOSION_FRAMES;
+                src = {(int)(frame * cellW), 0, (int)cellW, texH};
+            } else {
+                src = {0, 0, tex.GetWidth(), tex.GetHeight()};
+            }
+
+            // Tinte: estos sprites vienen en blanco y negro; colorMod los pinta.
+            tex.SetColorMod(arrow.tintR, arrow.tintG, arrow.tintB);
+
+            double angle_deg =
+                    rotate ? std::atan2(arrow.vx, -arrow.vy) * 180.0 / M_PI + extraAngle : 0.0;
+            SDL_RenderCopyEx(renderer.Get(), tex.Get(), &src, &dst, angle_deg, nullptr,
+                             SDL_FLIP_NONE);
+
+            tex.SetColorMod(255, 255, 255);  // restaurar para otros usos del cache
         } catch (...) {}
     }
 }
