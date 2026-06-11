@@ -317,6 +317,19 @@ bool Map::isWalkable(int16_t x, int16_t y, uint8_t mapId) const {
     return cells[static_cast<size_t>(y) * width + x].isWalkable;
 }
 
+bool Map::isSafeZone(int16_t x, int16_t y, uint8_t mapId) const {
+    if (!isInBounds(x, y, mapId)) return false;
+    if (mapId > 0) {
+        for (const auto& entry : entries) {
+            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+                return entry.environment.cells[static_cast<size_t>(y) * entry.environment.width + x].safeZone;
+            }
+        }
+        return false;
+    }
+    return cells[static_cast<size_t>(y) * width + x].safeZone;
+}
+
 bool Map::occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const {
     if (!isInBounds(x, y, mapId))
         return false;

@@ -12,14 +12,12 @@ std::unique_ptr<ClientEvent> ClientEvent::deserialize(uint8_t opcode, CommonProt
     switch (static_cast<ClientMsg>(opcode)) {
         case ClientMsg::USER_ARRIVAL:
             return UserArrivalEvent::deserialize(proto);
+        case ClientMsg::CHARACTER_CREATED:
+            return CharacterCreatedEvent::deserialize(proto);
         case ClientMsg::MOVEMENT:
             return MovementEvent::deserialize(proto);
         case ClientMsg::TURN:
             return TurnEvent::deserialize(proto);
-        case ClientMsg::SKIN_SELECTED:
-            return SkinSelectedEvent::deserialize(proto);
-        case ClientMsg::HEAD_SELECTED:
-            return HeadSelectedEvent::deserialize(proto);
         case ClientMsg::ATTACK:
             return AttackEvent::deserialize(proto);
         case ClientMsg::PICK_UP_ITEM:
@@ -41,23 +39,40 @@ std::unique_ptr<ClientEvent> ClientEvent::deserialize(uint8_t opcode, CommonProt
 
 // ── UserArrivalEvent ─────────────────────────────────────────────────────
 
-UserArrivalEvent::UserArrivalEvent(std::string name, RaceCode race, ClassCode class_):
-        name(std::move(name)), race(race), class_(class_) {}
+UserArrivalEvent::UserArrivalEvent(std::string name): name(std::move(name)) {}
 
 void UserArrivalEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ClientMsg::USER_ARRIVAL));
     proto.send_two_bytes_number(static_cast<uint16_t>(name.size()));
     proto.send_message(std::vector<char>(name.begin(), name.end()));
-    proto.sendByte(static_cast<uint8_t>(race));
-    proto.sendByte(static_cast<uint8_t>(class_));
 }
 
 std::unique_ptr<UserArrivalEvent> UserArrivalEvent::deserialize(CommonProtocol& proto) {
     uint16_t nameLen = proto.receive_two_bytes_number();
     std::string name = nameLen ? proto.receive_message(nameLen) : "";
+    return std::make_unique<UserArrivalEvent>(std::move(name));
+}
+
+// ── CharacterCreatedEvent ────────────────────────────────────────────────
+
+CharacterCreatedEvent::CharacterCreatedEvent(RaceCode race, ClassCode class_, uint8_t headId,
+                                             uint8_t skinId):
+        race(race), class_(class_), headId(headId), skinId(skinId) {}
+
+void CharacterCreatedEvent::serialize(CommonProtocol& proto) const {
+    proto.sendByte(static_cast<uint8_t>(ClientMsg::CHARACTER_CREATED));
+    proto.sendByte(static_cast<uint8_t>(race));
+    proto.sendByte(static_cast<uint8_t>(class_));
+    proto.sendByte(headId);
+    proto.sendByte(skinId);
+}
+
+std::unique_ptr<CharacterCreatedEvent> CharacterCreatedEvent::deserialize(CommonProtocol& proto) {
     auto race = static_cast<RaceCode>(proto.receive_byte());
     auto class_ = static_cast<ClassCode>(proto.receive_byte());
-    return std::make_unique<UserArrivalEvent>(std::move(name), race, class_);
+    uint8_t headId = proto.receive_byte();
+    uint8_t skinId = proto.receive_byte();
+    return std::make_unique<CharacterCreatedEvent>(race, class_, headId, skinId);
 }
 
 // ── MovementEvent ────────────────────────────────────────────────────────
@@ -86,35 +101,6 @@ void TurnEvent::serialize(CommonProtocol& proto) const {
 std::unique_ptr<TurnEvent> TurnEvent::deserialize(CommonProtocol& proto) {
     uint8_t dir = proto.receive_byte();
     return std::make_unique<TurnEvent>(static_cast<MoveDirection>(dir));
-}
-
-// ── SkinSelectedEvent ────────────────────────────────────────────────────
-
-SkinSelectedEvent::SkinSelectedEvent(uint8_t skinId): skinId(skinId) {}
-
-
-void SkinSelectedEvent::serialize(CommonProtocol& proto) const {
-    proto.sendByte(static_cast<uint8_t>(ClientMsg::SKIN_SELECTED));
-    proto.sendByte(skinId);
-}
-
-std::unique_ptr<SkinSelectedEvent> SkinSelectedEvent::deserialize(CommonProtocol& proto) {
-    uint8_t id = proto.receive_byte();
-    return std::make_unique<SkinSelectedEvent>(id);
-}
-
-// ── HeadSelectedEvent ────────────────────────────────────────────────────
-
-HeadSelectedEvent::HeadSelectedEvent(uint8_t headId): headId(headId) {}
-
-void HeadSelectedEvent::serialize(CommonProtocol& proto) const {
-    proto.sendByte(static_cast<uint8_t>(ClientMsg::HEAD_SELECTED));
-    proto.sendByte(headId);
-}
-
-std::unique_ptr<HeadSelectedEvent> HeadSelectedEvent::deserialize(CommonProtocol& proto) {
-    uint8_t id = proto.receive_byte();
-    return std::make_unique<HeadSelectedEvent>(id);
 }
 
 // ── AttackEvent ──────────────────────────────────────────────────────────

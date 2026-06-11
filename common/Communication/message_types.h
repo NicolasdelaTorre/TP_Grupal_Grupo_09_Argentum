@@ -5,18 +5,17 @@
 // Los valores del campo `direccion` de MOVEMENT/TURN viven en el enum
 // MoveDirection (common/DTOs.h), no acá.
 enum class ClientMsg : uint8_t {
-    USER_ARRIVAL = 0x01,    // [opcode][len:2][nombre][len:2][raza][len:2][clase]
-    MOVEMENT = 0x02,        // [opcode][direccion:1] — direccion ∈ MoveDirection
-    SKIN_SELECTED = 0x07,   // [opcode][skin_id:1]
-    TURN = 0x08,            // [opcode][direccion:1] — direccion ∈ MoveDirection
-    ATTACK = 0x09,          // [opcode][target_type:1][target_id:2]
-    HEAD_SELECTED = 0x0A,   // [opcode][head_id:1]
-    PICK_UP_ITEM = 0x0D,    // [opcode]
-    DROP_ITEM = 0x0E,       // [opcode][inv_slot:1]
-    EQUIP_ITEM = 0x0F,      // [opcode][inv_slot:1] — equipa, o usa si es poción (consume)
-    UNEQUIP_ITEM = 0x10,    // [opcode][slot_type:1] — 0=arma, 1=armadura, 2=casco, 3=escudo
-    CHAT = 0x11,            // [opcode][len:2][texto] — texto libre o /comando arg
-    SELECT_NPC = 0x12       // [opcode][npc_id:2] — click sobre amigo (merchant/banker/priest)
+    USER_ARRIVAL = 0x01,       // [opcode][len:2][nombre] — solo nombre; el server responde LOGIN_OK o FIRST_LOGIN
+    MOVEMENT = 0x02,           // [opcode][direccion:1] — direccion ∈ MoveDirection
+    CHARACTER_CREATED = 0x07,  // [opcode][raza:1][clase:1][head_id:1][skin_id:1] — se manda tras FIRST_LOGIN
+    TURN = 0x08,               // [opcode][direccion:1] — direccion ∈ MoveDirection
+    ATTACK = 0x09,             // [opcode][target_type:1][target_id:2]
+    PICK_UP_ITEM = 0x0D,       // [opcode]
+    DROP_ITEM = 0x0E,          // [opcode][inv_slot:1]
+    EQUIP_ITEM = 0x0F,         // [opcode][inv_slot:1] — equipa, o usa si es poción (consume)
+    UNEQUIP_ITEM = 0x10,       // [opcode][slot_type:1] — 0=arma, 1=armadura, 2=casco, 3=escudo
+    CHAT = 0x11,               // [opcode][len:2][texto] — texto libre o /comando arg
+    SELECT_NPC = 0x12          // [opcode][npc_id:2] — click sobre amigo (merchant/banker/priest)
 };
 
 // Mensajes Servidor → Cliente
@@ -25,10 +24,10 @@ enum class ServerMsg : uint8_t {
     STATS_JUGADOR = 0x81,        // [opcode][hp:2][maxHp:2][mana:2][maxMana:2][gold:4][exp:4][nextLevelExp:4][level:1]
     CHAT_MSG = 0x82,             // [opcode][author_id:2][name_len:2][name][msg_len:2][msg] — author_id=0 si es msg del sistema
     MAP = 0x83,                  // [opcode][width:2][height:2][CellCount:2][[textureId:2][obstacleId:2][safeZone:1]]...[obstacleCount:2][[type:1][x:2][y:2][w:2][h:2]]...
-    LOGIN_OK = 0x84,             // [opcode][spawn_x:2][spawn_y:2]
+    LOGIN_OK = 0x84,             // [opcode][spawn_x:2][spawn_y:2][skin:1][head:1]
     LOGIN_FAIL = 0x85,           // [opcode]
     MOVE_REJECTED = 0x87,        // [opcode][x:2][y:2] — el server rechazó el movimiento y manda la posición autoritativa para que el cliente reconcilie su predicción.
-    NEW_PLAYER = 0x88,           // [opcode][id:2][x:2][y:2][dir:1][skin:1][name_len:2][name:n]
+    NEW_PLAYER = 0x88,           // [opcode][id:2][x:2][y:2][dir:1][skin:1][head:1][name_len:2][name:n]
     PLAYER_MOVED = 0x89,         // [opcode][id:2][x:2][y:2][dir:1]
     PLAYER_DISCONNECTED = 0x8A,  // [opcode][id:2]
     FIRST_LOGIN = 0x8B,          // [opcode] — usuario nuevo, debe crear personaje

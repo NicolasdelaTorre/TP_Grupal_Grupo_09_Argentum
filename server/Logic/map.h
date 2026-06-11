@@ -135,6 +135,9 @@ public:
     // Devuelve true si (x, y) está en bounds y es transitable.
     bool isWalkable(int16_t x, int16_t y, uint8_t mapId) const;
 
+    // Devuelve true si (x, y) está en bounds y la celda es zona segura
+    bool isSafeZone(int16_t x, int16_t y, uint8_t mapId) const;
+
     bool occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const;
 
     uint16_t nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);

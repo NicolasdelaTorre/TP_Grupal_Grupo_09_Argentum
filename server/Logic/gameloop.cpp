@@ -162,15 +162,13 @@ void Gameloop::run() {
 void Gameloop::dispatch(const ClientEvent& ev) {
     int pid = ev.getPlayerId();
     if (auto* p = dynamic_cast<const UserArrivalEvent*>(&ev)) {
-        handleUserArrival(pid, p->getName(), p->getRace(), p->getClass());
+        handleUserArrival(pid, p->getName());
+    } else if (auto* p = dynamic_cast<const CharacterCreatedEvent*>(&ev)) {
+        handleCharacterCreated(pid, p->getRace(), p->getClass(), p->getHeadId(), p->getSkinId());
     } else if (auto* p = dynamic_cast<const MovementEvent*>(&ev)) {
         handleMovement(pid, p->getDirection());
     } else if (auto* p = dynamic_cast<const TurnEvent*>(&ev)) {
         handleTurn(pid, p->getDirection());
-    } else if (auto* p = dynamic_cast<const SkinSelectedEvent*>(&ev)) {
-        handleSkinSelected(pid, p->getSkinId());
-    } else if (auto* p = dynamic_cast<const HeadSelectedEvent*>(&ev)) {
-        handleHeadSelected(pid, p->getHeadId());
     } else if (auto* p = dynamic_cast<const AttackEvent*>(&ev)) {
         handleAttack(pid, p->getTargetType(), p->getTargetId());
     } else if (dynamic_cast<const PickUpItemEvent*>(&ev)) {
@@ -278,8 +276,11 @@ void Gameloop::NPCTurns() {
 
         Position oldPos = npc->getPosition();
         Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId(), npc->getBiomeType()));
-        
+
         if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
+            continue;
+        // Zona segura: los NPCs hostiles no pueden entrar.
+        if (map.isSafeZone(newPos.x, newPos.y, npc->getMapId()))
             continue;
         if (map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId())) {
             npc->move(newPos);
@@ -364,29 +365,55 @@ void Gameloop::handleDisconnect(int playerId) {
             playerId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)));
 }
 
-void Gameloop::handleUserArrival(int playerId, const std::string& name, RaceCode race,
-                                 ClassCode class_) {
-    bool success = game.addPlayer(playerId, name, race, class_);
-    uint8_t opcode = success ? static_cast<uint8_t>(ServerMsg::FIRST_LOGIN)
-                             : static_cast<uint8_t>(ServerMsg::LOGIN_FAIL);
-    clientMonitor.sendToClient(playerId, std::make_shared<OpcodeOnlyEvent>(opcode));
+void Gameloop::handleUserArrival(int playerId, const std::string& name) {
+    if (game.playerExistsInRecords(name)) {
+        if (!game.loadExistingPlayer(playerId, name)) {
+            clientMonitor.sendToClient(
+                    playerId, std::make_shared<OpcodeOnlyEvent>(
+                                      static_cast<uint8_t>(ServerMsg::LOGIN_FAIL)));
+            return;
+        }
+        sendPostLoginSnapshots(playerId);
+        return;
+    }
+    // Jugador nuevo: el cliente todavia tiene que mandar raza/clase/skin/head.
+    pendingNewPlayers[playerId] = name;
+    clientMonitor.sendToClient(
+            playerId,
+            std::make_shared<OpcodeOnlyEvent>(static_cast<uint8_t>(ServerMsg::FIRST_LOGIN)));
 }
 
-void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
-    if (!game.hasPlayer(playerId))
+void Gameloop::handleCharacterCreated(int playerId, RaceCode race, ClassCode class_,
+                                      uint8_t headId, uint8_t skinId) {
+    auto it = pendingNewPlayers.find(playerId);
+    if (it == pendingNewPlayers.end()) {
+        // No estaba en pending: ignorar (el cliente no debería mandarlo).
         return;
+    }
+    std::string name = std::move(it->second);
+    pendingNewPlayers.erase(it);
 
+    if (!game.addNewPlayer(playerId, name, race, class_)) {
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<OpcodeOnlyEvent>(
+                                  static_cast<uint8_t>(ServerMsg::LOGIN_FAIL)));
+        return;
+    }
+    game.setSkin(playerId, skinId, headId);
+    // addNewPlayer ya persistio el snapshot inicial; aca refrescamos para que
+    // la skin/head elegidas queden en el binario.
+    game.updatePlayerData(playerId);
+    sendPostLoginSnapshots(playerId);
+}
+
+void Gameloop::sendPostLoginSnapshots(int playerId) {
     Position p = game.getPlayerPosition(playerId);
-    game.setSkin(playerId, skinId);
-    clientMonitor.sendToClient(playerId, std::make_shared<LoginOkEvent>(p.x, p.y));
-
+    uint8_t skin = game.getPlayerSkin(playerId);
+    uint8_t head = game.getPlayerHead(playerId);
+    clientMonitor.sendToClient(playerId, std::make_shared<LoginOkEvent>(p.x, p.y, skin, head));
     sendMapSnapshot(playerId, 0);
-
-    // Stats iniciales.
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
 
-    // Inventario inicial: sin esto el cliente arranca con el panel vacío y no
-    // ve los items persistidos hasta que cambie algo (pickup/drop/equip).
     {
         auto snap = game.getInventorySnapshot(playerId);
         clientMonitor.sendToClient(playerId,
@@ -395,9 +422,6 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
                                            snap.equippedHelmet, snap.equippedShield));
     }
 
-    // Mandarle un NEW_PLAYER por cada jugador que ya estaba + sus PLAYER_EQUIPPED.
-    // Si alguno está como fantasma, también su PlayerDiedEvent para que el
-    // cliente lo dibuje como fantasma desde el arranque.
     for (int otherId: game.getPlayerIds()) {
         if (otherId == playerId)
             continue;
@@ -405,9 +429,10 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         const std::string& oname = game.getPlayerName(otherId);
         uint8_t odir = game.getPlayerDirection(otherId);
         uint8_t oskin = game.getPlayerSkin(otherId);
+        uint8_t ohead = game.getPlayerHead(otherId);
         clientMonitor.sendToClient(
                 playerId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(otherId), op.x,
-                                                          op.y, odir, oskin, oname));
+                                                          op.y, odir, oskin, ohead, oname));
         sendEquipmentSnapshot(otherId, playerId);
         if (game.isPlayerGhost(otherId)) {
             clientMonitor.sendToClient(
@@ -415,13 +440,14 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         }
     }
 
-    // Avisarles a los demás del recién llegado + su vestimenta.
     const std::string& myName = game.getPlayerName(playerId);
     uint8_t myDir = game.getPlayerDirection(playerId);
     uint8_t mySkin = game.getPlayerSkin(playerId);
-    clientMonitor.broadcastExcept(playerId,
-                                  std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId),
-                                                                   p.x, p.y, myDir, mySkin, myName));
+    uint8_t myHead = game.getPlayerHead(playerId);
+    clientMonitor.broadcastExcept(
+            playerId,
+            std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId), p.x, p.y, myDir,
+                                             mySkin, myHead, myName));
     sendEquipmentSnapshot(playerId, -1);
     if (game.isPlayerGhost(playerId)) {
         // Estado persistido en .bin: vuelve fantasma al loguearse.
@@ -441,11 +467,6 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
         clientMonitor.sendToClient(
                 playerId, std::make_shared<ItemDroppedEvent>(d.dropId, d.itemId, d.x, d.y));
     }
-}
-
-void Gameloop::handleHeadSelected(int /*playerId*/, uint8_t /*headId*/) {
-    // TODO(team-gameplay): guardar headSkinId y reenviarlo en NEW_PLAYER cuando
-    // se implemente la renderización de cabeza separada del cuerpo.
 }
 
 void Gameloop::handleMovement(int playerId, MoveDirection direction) {

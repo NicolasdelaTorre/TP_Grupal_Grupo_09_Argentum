@@ -31,6 +31,15 @@ private:
     // Si no hay entrada, el jugador no tiene selección activa.
     std::unordered_map<int, uint16_t> selectedNpc;
 
+    // Jugadores que mandaron UserArrival pero todavía no existen en el binario.
+    // El handshake espera un CharacterCreated para terminar de crearlos.
+    std::unordered_map<int, std::string> pendingNewPlayers;
+
+    // Manda LOGIN_OK + map + stats + inv + snapshot de otros players y NPCs.
+    // Lo usan ambos paths: jugador existente al loguearse y jugador nuevo
+    // recien creado.
+    void sendPostLoginSnapshots(int playerId);
+
     // Construye un StatsEvent con el snapshot actual del jugador.
     std::shared_ptr<ServerEvent> buildStatsEvent(int idPlayer);
 
@@ -63,9 +72,13 @@ public:
     void dispatch(const ClientEvent& ev);
 
     void handleDisconnect(int playerId);
-    void handleUserArrival(int playerId, const std::string& name, RaceCode race, ClassCode class_);
-    void handleSkinSelected(int playerId, uint8_t skinId);
-    void handleHeadSelected(int playerId, uint8_t headId);
+    // Handshake fase 1: recibe el nombre. Si existe, entra directo al juego.
+    // Si no, deja al jugador en pendingNewPlayers y manda FIRST_LOGIN.
+    void handleUserArrival(int playerId, const std::string& name);
+    // Handshake fase 2 (solo para nuevos): crea el player con raza/clase/head/skin
+    // recibidos en el evento, y manda LOGIN_OK + map + snapshots.
+    void handleCharacterCreated(int playerId, RaceCode race, ClassCode class_, uint8_t headId,
+                                uint8_t skinId);
     void handleMovement(int playerId, MoveDirection direction);
     void handleTurn(int playerId, MoveDirection direction);
     void handleAttack(int playerId, uint8_t targetType, uint16_t targetId);

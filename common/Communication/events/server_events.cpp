@@ -63,18 +63,23 @@ void OpcodeOnlyEvent::serialize(CommonProtocol& proto) const { proto.sendByte(op
 
 // ── LoginOkEvent ─────────────────────────────────────────────────────────
 
-LoginOkEvent::LoginOkEvent(int16_t spawnX, int16_t spawnY): spawnX(spawnX), spawnY(spawnY) {}
+LoginOkEvent::LoginOkEvent(int16_t spawnX, int16_t spawnY, uint8_t skin, uint8_t head):
+        spawnX(spawnX), spawnY(spawnY), skin(skin), head(head) {}
 
 void LoginOkEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ServerMsg::LOGIN_OK));
     proto.send_two_bytes_number(static_cast<uint16_t>(spawnX));
     proto.send_two_bytes_number(static_cast<uint16_t>(spawnY));
+    proto.sendByte(skin);
+    proto.sendByte(head);
 }
 
 std::unique_ptr<LoginOkEvent> LoginOkEvent::deserialize(CommonProtocol& proto) {
     int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
-    return std::make_unique<LoginOkEvent>(x, y);
+    uint8_t skin = proto.receive_byte();
+    uint8_t head = proto.receive_byte();
+    return std::make_unique<LoginOkEvent>(x, y, skin, head);
 }
 
 // ── MapEvent ─────────────────────────────────────────────────────────────
@@ -137,8 +142,8 @@ std::unique_ptr<MapEvent> MapEvent::deserialize(CommonProtocol& proto) {
 // ── NewPlayerEvent ───────────────────────────────────────────────────────
 
 NewPlayerEvent::NewPlayerEvent(uint16_t id, int16_t x, int16_t y, uint8_t dir, uint8_t skin,
-                               std::string name):
-        id(id), x(x), y(y), dir(dir), skin(skin), name(std::move(name)) {}
+                               uint8_t head, std::string name):
+        id(id), x(x), y(y), dir(dir), skin(skin), head(head), name(std::move(name)) {}
 
 void NewPlayerEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ServerMsg::NEW_PLAYER));
@@ -147,6 +152,7 @@ void NewPlayerEvent::serialize(CommonProtocol& proto) const {
     proto.send_two_bytes_number(static_cast<uint16_t>(y));
     proto.sendByte(dir);
     proto.sendByte(skin);
+    proto.sendByte(head);
     proto.send_two_bytes_number(static_cast<uint16_t>(name.size()));
     proto.send_message(std::vector<char>(name.begin(), name.end()));
 }
@@ -157,9 +163,10 @@ std::unique_ptr<NewPlayerEvent> NewPlayerEvent::deserialize(CommonProtocol& prot
     int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
     uint8_t dir = proto.receive_byte();
     uint8_t skin = proto.receive_byte();
+    uint8_t head = proto.receive_byte();
     uint16_t nameLen = proto.receive_two_bytes_number();
     std::string name = proto.receive_message(nameLen);
-    return std::make_unique<NewPlayerEvent>(id, x, y, dir, skin, std::move(name));
+    return std::make_unique<NewPlayerEvent>(id, x, y, dir, skin, head, std::move(name));
 }
 
 // ── MoveRejectedEvent ────────────────────────────────────────────────────

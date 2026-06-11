@@ -516,7 +516,8 @@ void GameScreen::consumeServerEvents() {
             op.targetY = static_cast<float>(np->getY());
             op.visual.dir = wireDirToSpriteDir(np->getDir());
             op.visual.skin = np->getSkin();
-            op.baseSkin = np->getSkin();  // skin sin armor, para volver al desequipar.
+            op.baseSkin = np->getSkin();
+            op.visual.headId = static_cast<int>(np->getHead());
             op.name = np->getName();
             otherPlayers[np->getId()] = std::move(op);
         } else if (auto* mr = dynamic_cast<MoveRejectedEvent*>(ev.get())) {
