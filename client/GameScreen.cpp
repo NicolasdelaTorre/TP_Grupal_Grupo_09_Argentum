@@ -230,19 +230,14 @@ bool GameScreen::handleEvents(float dt) {
             e.button.clicks == 2) {
             int slot = inventorySlotAt(e.button.x, e.button.y);
             if (slot >= 0 && slot < (int)inventoryItems.size()) {
-                uint8_t itemId = inventoryItems[slot];
                 // Si el item ya está equipado, el slotType es el índice en
                 // equippedItems (0=arma,1=armor,2=casco,3=escudo) → desequipar.
                 // Si no, equipar por inventory slot.
                 int slotType = equippedSlotTypeOfInvSlot(slot);
                 if (slotType >= 0) {
-                    std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
-                              << " → UNEQUIP slotType=" << slotType << std::endl;
                     clientEvents.push(std::make_shared<UnequipItemEvent>(
                             static_cast<uint8_t>(slotType)));
                 } else {
-                    std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
-                              << " → EQUIP" << std::endl;
                     clientEvents.push(std::make_shared<EquipItemEvent>(static_cast<uint8_t>(slot)));
                 }
                 continue;  // consumido por el inventario, no es un ataque.
@@ -363,10 +358,6 @@ void GameScreen::notifyDirectionChange() {
 void GameScreen::notifyTileChange() {
     int curTileX = (int)(player.x + HEAD_OFFSET);
     int curTileY = (int)(player.y + FEET_OFFSET);
-
-    if (curTileX != lastTileX || curTileY != lastTileY) {
-        std::cout << "Pos: (" << curTileX << ", " << curTileY << ")" << std::endl;
-    }
 
     if (curTileX != lastTileX) {
         clientEvents.push(std::make_shared<MovementEvent>(
@@ -543,11 +534,8 @@ void GameScreen::consumeServerEvents() {
                           << ") disconnected" << std::endl;
             }
             otherPlayers.erase(pd->getId());
-        } else if (auto* ar = dynamic_cast<AttackResultEvent*>(ev.get())) {
+        } else if (dynamic_cast<AttackResultEvent*>(ev.get())) {
             // TODO(team-ui): mostrar feedback visual.
-            std::cout << "ATTACK: " << ar->getAttackerId() << " -> " << ar->getTargetId()
-                      << (ar->getHit() ? " hit for " : " MISS (") << ar->getDamage()
-                      << (ar->getHit() ? " dmg" : ")") << std::endl;
         } else if (auto* eq = dynamic_cast<PlayerEquippedEvent*>(ev.get())) {
             // Otro jugador equipo/desequipo algo (itemId=0 → desequipo).
             // Actualizamos su slot y re-volcamos visuales.
@@ -578,9 +566,6 @@ void GameScreen::consumeServerEvents() {
             experience = st->getExp();
             nextLevelExp = st->getNextLvlExp();
             level = st->getLevel();
-            std::cout << "STATS hp=" << health << "/" << maxHealth << " mana=" << mana << "/"
-                      << maxMana << " gold=" << gold << " exp=" << experience << "/" << nextLevelExp
-                      << " lvl=" << (int)level << std::endl;
         } else if (auto* nn = dynamic_cast<NewNpcEvent*>(ev.get())) {
             RemoteNpc rn;
             rn.visual.id = nn->getId();
@@ -622,8 +607,6 @@ void GameScreen::consumeServerEvents() {
             di.sheetId = 0;
             di.itemId = id_->getItemId();
             droppedItems.push_back(di);
-            std::cout << "[drop] item " << (int)id_->getItemId() << " en (" << id_->getX() << ","
-                      << id_->getY() << ") dropId=" << id_->getDropId() << std::endl;
         } else if (auto* ip = dynamic_cast<ItemPickedUpEvent*>(ev.get())) {
             for (auto it2 = droppedItems.begin(); it2 != droppedItems.end(); ++it2) {
                 if (it2->dropId == ip->getDropId()) {
@@ -631,7 +614,6 @@ void GameScreen::consumeServerEvents() {
                     break;
                 }
             }
-            std::cout << "[pickup] dropId=" << ip->getDropId() << " levantado" << std::endl;
         } else if (auto* pd = dynamic_cast<PlayerDiedEvent*>(ev.get())) {
             auto it = otherPlayers.find(pd->getId());
             if (it != otherPlayers.end()) {

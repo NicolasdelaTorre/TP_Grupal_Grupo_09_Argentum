@@ -4,7 +4,6 @@
 
 #include "../toml.hpp"
 #include "../stats_definition.h"
-#include <iostream>
 
 Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y, mapId), isAlive(true) {
     // Rangos de level por zona vienen del TOML.
@@ -31,8 +30,6 @@ Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t
         }
     }
 
-    std::cout << "Spawned creature " << name << " with level " << level << ", health " << health
-              << " and damage " << damage << " in position (" << position.x << ", " << position.y << ")" << std::endl;
 }
 
 Position Creature::stalkPlayer(Position playerPosition) {
@@ -72,10 +69,7 @@ Position Creature::getPosition() const {
     return position;
 }
 
-uint16_t Creature::getDamage() const {
-    std::cout << "Creature " << name << " attacks with " << damage << " damage!" << std::endl;
-    return damage;
-}
+uint16_t Creature::getDamage() const { return damage; }
 
 uint16_t Creature::getMaxHealth() const { return maxHealth; }
 

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <utility>
-#include <iostream>
 
 Player::Player(const std::string& name, Position position, RaceCode race, ClassCode class_):
         name(name), isMeditating(false) {
@@ -131,17 +130,8 @@ bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
     if (teleporting) return;
-
-    // Cambiar proximamente
-    if (data.isGhost) {
-        std::cout << "Player " << name << " is already a ghost and can't receive more damage." << std::endl;
-        return;
-    }
-    if (infiniteHealth) {
-        std::cout << "Player " << name << " ignored " << damage << " damage (vidainf)." << std::endl;
-        return;
-    }
-    std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
+    if (data.isGhost) return;
+    if (infiniteHealth) return;
     isMeditating = false;
     if (damage >= data.health) {
         data.health = 0;

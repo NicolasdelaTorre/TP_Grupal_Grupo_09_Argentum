@@ -35,6 +35,8 @@ public:
     LootConfig getLootConfig();
 
     CreatureSpawnConfig getSpawnConfig();
+
+    RaceAttribute getRace(RaceCode race);
 };
 
 #endif

@@ -120,14 +120,28 @@ public:
 
     void setSkin(int playerId, uint8_t skinId);
 
-    // Resuelve un ataque del playerId contra un target.
-    // Devuelve directamente el AttackResultEvent listo para broadcast, o
-    // nullptr si el ataque no se ejecutó (sin arma, no hay target en línea
-    // de vista, atacante muerto, etc.). La lógica de validar arma equipada,
-    // alcance (ranged vs adyacencia melee) y daño vive adentro.
+    // Resumen de lo que pasó en un ataque. Lo arma processAttack y lo usa
+    // gameloop para decidir broadcasts y notificaciones al chat.
+    struct AttackOutcome {
+        bool valid = false;  // false si no se ejecutó (sin arma, fuera de rango...)
+        std::shared_ptr<AttackResultEvent> event;
+        uint16_t damage = 0;
+        bool evaded = false;
+        bool critical = false;
+        bool killed = false;
+        bool leveledUp = false;
+        uint8_t newLevel = 0;  // solo válido si leveledUp == true
+        std::string attackerName;
+        std::string targetName;
+        int attackerId = -1;
+        int targetId = -1;       // id del player atacado o -1 si era NPC
+        uint8_t targetType = 0;  // 0 = player, 1 = npc
+    };
+
+    // Resuelve un ataque del playerId contra un target. La lógica de validar
+    // arma equipada, alcance (ranged vs adyacencia melee) y daño vive adentro.
     // targetType: 0 = player, 1 = npc.
-    std::shared_ptr<AttackResultEvent> processAttack(int playerId, uint8_t targetType,
-                                                    uint16_t targetId);
+    AttackOutcome processAttack(int playerId, uint8_t targetType, uint16_t targetId);
 
     // ── Cheats invocables desde el chat (/vidainf, /gold, etc.)
     bool cheatToggleInfiniteHealth(int playerId);

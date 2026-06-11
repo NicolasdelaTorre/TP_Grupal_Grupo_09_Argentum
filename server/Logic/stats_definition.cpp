@@ -55,3 +55,5 @@ FormulaConstants StatsDefinition::getFormulas() { return attributes.getFormulas(
 LootConfig StatsDefinition::getLootConfig() { return attributes.getLootConfig(); }
 
 CreatureSpawnConfig StatsDefinition::getSpawnConfig() { return attributes.getSpawnConfig(); }
+
+RaceAttribute StatsDefinition::getRace(RaceCode race) { return attributes.getRaceAttribute(race); }

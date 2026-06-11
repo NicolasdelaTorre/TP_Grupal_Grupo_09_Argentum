@@ -12,6 +12,7 @@ struct RaceAttribute {
     uint8_t constitution;
     uint8_t force;
     uint8_t intelligence;
+    uint8_t agility;
     float FRaceHealth;
     float FRaceRecovery;
     float FRaceMana;
@@ -32,6 +33,8 @@ struct FormulaConstants {
     float expNextExp;
     uint8_t expKillBonusMaxPct;
     uint8_t expLevelDiffBase;
+    float evadeThreshold;
+    uint8_t criticalChancePct;
 };
 
 // Probabilidades y rangos para el drop al matar una criatura.
