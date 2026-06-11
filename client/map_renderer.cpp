@@ -229,8 +229,9 @@ void MapRenderer::renderWeapon(const Player_& player, float camX, float camY) {
         return;
 
     static const char* weaponFiles[] = {"/Armas/Espada.png", "/Armas/Hacha.png", "/Armas/Arco.png", "/Armas/Arco_compuesto.png",
-                                        "/Armas/Baculo.png", "/Armas/Flauta.png", "/Armas/Martillo.png"};
-    if (player.weaponId >= 7)
+                                        "/Armas/Ash_staff.png", "/Armas/Flauta.png", "/Armas/Martillo.png", "/Armas/Staff_Azul.png",
+                                         "/Armas/Staff_rojo.png"};
+    if (player.weaponId >= 9)
         return;
 
     int row = static_cast<int>(player.dir);
@@ -398,25 +399,75 @@ void MapRenderer::renderBlood(float x, float y, int texIndex, Uint8 alpha, float
 
 void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float camX, float camY) {
     // Flechas.png: 512×512, 9 arrow types in a single row at the top.
-    // Each cell is 512/9 ≈ 56 px wide. Sprites point upper-right (45° CW from north),
+    // Each cell is 32 px wide. Sprites point upper-right (45° CW from north),
     // so the SDL2 rotation formula is: atan2(vx, -vy) * 180/π − 45.
     static constexpr int ARROW_COLS = 9;
     static constexpr int ARROW_CELL_W = 32;
     static constexpr int ARROW_DRAW_SIZE = 32;
 
+    // Explosion.png: tira horizontal de 7 frames (socketed staff). Se anima
+    // ciclando según age; este es el período de un ciclo completo.
+    static constexpr int EXPLOSION_FRAMES = 7;
+    static constexpr float EXPLOSION_FPS = 14.0f;
+
     for (const auto& arrow: arrows) {
-        int screenX = (int)(arrow.x * TILE_SIZE - camX) - ARROW_DRAW_SIZE / 2;
-        int screenY = (int)(arrow.y * TILE_SIZE - camY) - ARROW_DRAW_SIZE / 2;
+        // Parámetros que dependen del tipo de proyectil.
+        const char* texPath = "/Armas/Flechas.png";
+        int drawW = ARROW_DRAW_SIZE, drawH = ARROW_DRAW_SIZE;
+        bool rotate = true;       // alinear el sprite con la dirección de vuelo
+        double extraAngle = 0.0;  // corrección si el sprite no apunta al norte
 
-        int col = std::max(0, std::min(arrow.arrowType, ARROW_COLS - 1));
-        SDL_Rect src = {col * ARROW_CELL_W, 0, ARROW_CELL_W, ARROW_CELL_W};
-        SDL_Rect dst = {screenX, screenY, ARROW_DRAW_SIZE, ARROW_DRAW_SIZE};
+        switch (arrow.kind) {
+            case ProjectileKind::ARROW: extraAngle = -45.0; break;
+            case ProjectileKind::COMPOSITE_ARROW:
+                texPath = "/Armas/Flechas_composite_bow.png";
+                extraAngle = -45.0;  // apunta al noreste, como las flechas normales
+                break;
+            case ProjectileKind::MAGIC_ARROW:
+                texPath = "/Armas/Flecha_magica.png";
+                drawW = 22; drawH = 26;
+                break;
+            case ProjectileKind::MISSILE:
+                texPath = "/Armas/Misil.png";
+                drawW = 18; drawH = 48;  // sprite alto y angosto (63×164)
+                break;
+            case ProjectileKind::EXPLOSION:
+                texPath = "/Armas/Explosion.png";
+                drawW = 44; drawH = 44;
+                rotate = false;  // la explosión no rota: anima en el lugar
+                break;
+        }
 
-        double angle_deg = std::atan2(arrow.vx, -arrow.vy) * 180.0 / M_PI - 45.0;
+        int screenX = (int)(arrow.x * TILE_SIZE - camX) - drawW / 2;
+        int screenY = (int)(arrow.y * TILE_SIZE - camY) - drawH / 2;
+        SDL_Rect dst = {screenX, screenY, drawW, drawH};
 
         try {
-            SDL_RenderCopyEx(renderer.Get(), cache.get("/Armas/Flechas.png").Get(), &src, &dst,
-                             angle_deg, nullptr, SDL_FLIP_NONE);
+            SDL2pp::Texture& tex = cache.get(texPath);
+
+            // Recorte del sprite dentro de la textura.
+            SDL_Rect src;
+            if (arrow.kind == ProjectileKind::ARROW) {
+                int col = std::max(0, std::min(arrow.arrowType, ARROW_COLS - 1));
+                src = {col * ARROW_CELL_W, 0, ARROW_CELL_W, ARROW_CELL_W};
+            } else if (arrow.kind == ProjectileKind::EXPLOSION) {
+                int texW = tex.GetWidth(), texH = tex.GetHeight();
+                float cellW = texW / (float)EXPLOSION_FRAMES;
+                int frame = (int)(arrow.age * EXPLOSION_FPS) % EXPLOSION_FRAMES;
+                src = {(int)(frame * cellW), 0, (int)cellW, texH};
+            } else {
+                src = {0, 0, tex.GetWidth(), tex.GetHeight()};
+            }
+
+            // Tinte: estos sprites vienen en blanco y negro; colorMod los pinta.
+            tex.SetColorMod(arrow.tintR, arrow.tintG, arrow.tintB);
+
+            double angle_deg =
+                    rotate ? std::atan2(arrow.vx, -arrow.vy) * 180.0 / M_PI + extraAngle : 0.0;
+            SDL_RenderCopyEx(renderer.Get(), tex.Get(), &src, &dst, angle_deg, nullptr,
+                             SDL_FLIP_NONE);
+
+            tex.SetColorMod(255, 255, 255);  // restaurar para otros usos del cache
         } catch (...) {}
     }
 }

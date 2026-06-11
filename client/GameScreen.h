@@ -20,6 +20,7 @@
 
 static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
+static constexpr float CHEST_OFFSET = 0.55f;  // altura del pecho (origen de proyectiles)
 
 static constexpr float BLOOD_DURATION = 0.5f;  // seconds a blood splatter stays visible
 static constexpr float ARROW_SPEED = 10.0f;    // tiles/sec
@@ -196,4 +197,9 @@ private:
 
     // Dibuja todos los efectos de sangre activos.
     void renderBloodEffects(float camX, float camY);
+
+    // Lanza un proyectil visual desde el jugador local hacia (targetX, targetY)
+    // en tiles, según el arma equipada (arco o báculo). No-op si el arma no es
+    // de rango. Puramente cosmético: el daño lo resuelve el server.
+    void spawnProjectile(float targetX, float targetY);
 };

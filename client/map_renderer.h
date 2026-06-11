@@ -14,12 +14,27 @@
 #include "visual_types.h"
 
 
-// ── Proyectil de flecha (puramente visual, lado cliente) ──────
+// ── Proyectil (puramente visual, lado cliente) ────────────────
+// Cubre tanto las flechas de arco como los hechizos de los báculos. El sprite
+// y la animación los decide ProjectileKind; el tinte (colorMod) colorea los
+// sprites que vienen en blanco y negro (Flecha_magica/Misil/Explosion).
+enum class ProjectileKind {
+    ARROW,           // Flechas.png (simple bow): rota según la dirección de vuelo
+    COMPOSITE_ARROW, // Flechas_composite_bow.png (composite bow)
+    MAGIC_ARROW,     // Flecha_magica.png (ash staff)
+    MISSILE,         // Misil.png (root staff)
+    EXPLOSION,       // Explosion.png: sheet de 7 frames, animado (socketed staff)
+};
+
 struct ArrowProjectile {
     float x, y;    // posición en tiles (centro del sprite)
     float vx, vy;  // velocidad en tiles/seg
     float lifetime;
-    int arrowType;  // 0–8, columna en Flechas.png
+    int arrowType = 0;  // 0–8, columna en Flechas.png (sólo ARROW)
+
+    ProjectileKind kind = ProjectileKind::ARROW;
+    Uint8 tintR = 255, tintG = 255, tintB = 255;  // colorMod del sprite
+    float age = 0.0f;                             // tiempo vivo (anima la explosión)
 };
 
 // ── Datos de un tile del mapa ─────────────────────────────────

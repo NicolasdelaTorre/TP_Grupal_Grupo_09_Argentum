@@ -9,7 +9,8 @@ namespace {
 //   REC2   -> Items_recolectables_2.png: 16 cols, 32x32
 //   GORROS -> Skins/Gorros.png : tira de iconos abajo, arrancando en y=764.
 //             18 cols x 5 filas, 32x32; el índice de icono == helmetId.
-enum ItemSheet { INV = 0, REC1 = 1, REC2 = 2, GORROS = 3 };
+//   STAFF_AZUL -> Armas/Icono_Staff_Azul.png: imagen suelta (1 sola celda 26x27).
+enum ItemSheet { INV = 0, REC1 = 1, REC2 = 2, GORROS = 3, STAFF_AZUL = 4 };
 
 struct SheetGeom {
     const char* path;
@@ -25,6 +26,7 @@ constexpr SheetGeom kSheets[] = {
     {"/Pantallas/Items_recolectables.png", 16, 32, 32, 0, 0},
     {"/Pantallas/Items_recolectables_2.png", 16, 32, 32, 0, 0},
     {"/Skins/Gorros.png", 18, 32, 32, 0, 764},
+    {"/Armas/Icono_Staff_Azul.png", 1, 26, 27, 0, 0},
 };
 
 // índice = id del item (items.toml), valor = {sheet, celda}.
@@ -41,10 +43,10 @@ constexpr ItemSprite kItemSprite[] = {
     {INV, 5},      // 3  Hammer
     {INV, 96},     // 4  Ash Staff
     {REC1, 68},    // 5  Elven Flute
-    {INV, 220},    // 6  Root Staff
+    {STAFF_AZUL, 0},  // 6  Root Staff -> icono propio (Icono_Staff_Azul.png)
     {INV, 241},    // 7  Socketed Staff
     {INV, 10},     // 8  Simple Bow
-    {INV, 127},    // 9  Composite Bow
+    {REC2, 4},    // 9  Composite Bow
     {INV, 25},     // 10 Lether Armor
     {INV, 18},     // 11 Plate Armor
     {INV, 51},     // 12 Blue Tunic
