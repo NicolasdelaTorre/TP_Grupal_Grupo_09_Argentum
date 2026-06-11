@@ -277,7 +277,7 @@ void Gameloop::NPCTurns() {
             continue;
 
         Position oldPos = npc->getPosition();
-        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
+        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId(), npc->getBiomeType()));
         
         if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
             continue;

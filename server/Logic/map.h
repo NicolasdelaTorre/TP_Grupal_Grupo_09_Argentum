@@ -149,7 +149,7 @@ public:
 
     void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
-    Position searchPlayer(int16_t x, int16_t y, uint8_t mapId);
+    Position searchPlayer(int16_t x, int16_t y, uint8_t mapId, std::string biomeType);
 
     bool checkNPCAlive(uint16_t npcId);
 
@@ -181,6 +181,8 @@ public:
     Position searchNearestPriest(int16_t x, int16_t y);
 
     Position getRandomPosition(std::string biomeType, uint8_t mapId);
+
+    bool positionInBiome(Position pos, std::string biomeType);
 };
 
 #endif
