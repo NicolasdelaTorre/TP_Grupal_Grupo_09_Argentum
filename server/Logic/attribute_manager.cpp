@@ -22,6 +22,8 @@ AttributeManager::AttributeManager(const std::string& filename) {
     attributes.formulas.expNextExp = toml::find<float>(config, "formula", "experience", "nextExp");
     attributes.formulas.expKillBonusMaxPct = toml::find<uint8_t>(config, "formula", "experience", "killBonusMaxPct");
     attributes.formulas.expLevelDiffBase = toml::find<uint8_t>(config, "formula", "experience", "levelDiffBase");
+    attributes.formulas.evadeThreshold = toml::find<float>(config, "formula", "combat", "evadeThreshold");
+    attributes.formulas.criticalChancePct = toml::find<uint8_t>(config, "formula", "combat", "criticalChancePct");
 
     attributes.loot.nothingChance = toml::find<uint8_t>(config, "loot", "npc", "nothingChance");
     attributes.loot.goldChance = toml::find<uint8_t>(config, "loot", "npc", "goldChance");
@@ -46,6 +48,7 @@ RaceAttribute AttributeManager::readRace(const toml::value& config, const std::s
     race.constitution = toml::find<uint8_t>(config, "race", raceName, "constitution");
     race.force = toml::find<uint8_t>(config, "race", raceName, "force");
     race.intelligence = toml::find<uint8_t>(config, "race", raceName, "intelligence");
+    race.agility = toml::find<uint8_t>(config, "race", raceName, "agility");
     race.FRaceHealth = toml::find<float>(config, "race", raceName, "FRaceHealth");
     race.FRaceRecovery = toml::find<float>(config, "race", raceName, "FRaceRecovery");
     race.FRaceMana = toml::find<float>(config, "race", raceName, "FRaceMana");

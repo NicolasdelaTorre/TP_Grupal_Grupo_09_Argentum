@@ -1,8 +1,8 @@
 #include "player.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <utility>
-#include <iostream>
 
 Player::Player(const std::string& name, Position position, RaceCode race, ClassCode class_):
         name(name), isMeditating(false) {
@@ -131,17 +131,8 @@ bool Player::hasLongDistanceWeapon() { return equippedWeapon.longDistance(); }
 
 void Player::receiveDamage(uint16_t damage) {
     if (teleporting) return;
-
-    // Cambiar proximamente
-    if (data.isGhost) {
-        std::cout << "Player " << name << " is already a ghost and can't receive more damage." << std::endl;
-        return;
-    }
-    if (infiniteHealth) {
-        std::cout << "Player " << name << " ignored " << damage << " damage (vidainf)." << std::endl;
-        return;
-    }
-    std::cout << "Player " << name << " receives " << damage << " damage!" << std::endl;
+    if (data.isGhost) return;
+    if (infiniteHealth) return;
     isMeditating = false;
     if (damage >= data.health) {
         data.health = 0;
@@ -164,11 +155,7 @@ uint16_t Player::dealDamage() {
 
     if (equippedWeapon.getType() == ItemType::MAGIC) {
         uint16_t manaCost = equippedWeapon.getManaWaste();
-        if (manaCost > data.mana && !infiniteMana) {
-            std::cout << "Player " << name << " tried to cast a spell but didn't have enough mana!" << std::endl;
-            return 0;
-        }
-
+        if (manaCost > data.mana && !infiniteMana) return 0;
         data.mana -= manaCost;
     }
 
@@ -176,6 +163,26 @@ uint16_t Player::dealDamage() {
                                     equippedWeapon.getMaxDamage());
 
     return damage;
+}
+
+// Tira un rand uniforme entre min y max inclusive.
+static uint16_t randRange(uint16_t min, uint16_t max) {
+    if (max <= min) return min;
+    return min + std::rand() % (max - min + 1);
+}
+
+uint16_t Player::rollDefense() {
+    uint16_t total = 0;
+    if (!equippedArmor.emptyItem()) {
+        total += randRange(equippedArmor.getMinDefense(), equippedArmor.getMaxDefense());
+    }
+    if (!equippedHelmet.emptyItem()) {
+        total += randRange(equippedHelmet.getMinDefense(), equippedHelmet.getMaxDefense());
+    }
+    if (!equippedShield.emptyItem()) {
+        total += randRange(equippedShield.getMinDefense(), equippedShield.getMaxDefense());
+    }
+    return total;
 }
 
 bool Player::addItem(const std::string& itemName) {
@@ -245,13 +252,11 @@ bool Player::equipItem(int inventorySlot) {
             data.health = std::min<uint16_t>(data.health + itemToEquip.getHealthRestore(), maxHealth);
             data.inventory[inventorySlot] = 0;
             inventory.erase(inventory.begin() + inventorySlot);
-            std::cout << "Player " << name << " used a health potion and restored " << itemToEquip.getHealthRestore() << " health!" << std::endl;
             break;
         case ItemType::MANA_POTION:
             data.mana = std::min<uint16_t>(data.mana + itemToEquip.getManaRestore(), maxMana);
             data.inventory[inventorySlot] = 0;
             inventory.erase(inventory.begin() + inventorySlot);
-            std::cout << "Player " << name << " used a mana potion and restored " << itemToEquip.getManaRestore() << " mana!" << std::endl;
             break;
         default:
             throw std::runtime_error("Player Error: trying to equip an item that is not exist");

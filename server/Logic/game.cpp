@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -249,10 +250,7 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
     }
 
     uint8_t mapId = player.getMapId();
-    if (!map.isWalkable(next.x, next.y, mapId)) {
-        std::cout << "Player can't move in that direction (blocked)" << std::endl;
-        return false;
-    }
+    if (!map.isWalkable(next.x, next.y, mapId)) return false;
 
     Position old = player.getPosition();
     // moveEntity valida internamente que la celda destino no este ocupada por
@@ -302,21 +300,26 @@ void Game::checkEntry(int playerId) {
     }
 }
 
-std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t targetType,
-                                                      uint16_t targetId) {
+Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16_t targetId) {
+    AttackOutcome outcome;
+    outcome.attackerId = playerId;
+    outcome.targetType = targetType;
+
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
 
     if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return nullptr;
+        return outcome;
     }
 
     if (targetType != 0 && targetType != 1) {
         throw std::runtime_error(
                 "Game Error: malformed attack command (expected player.id or npc.id)");
     }
+
+    outcome.attackerName = itPlayer->second.getName();
 
     bool targetPlayer = (targetType == 0);
     uint8_t mapId = itPlayer->second.getMapId();
@@ -329,65 +332,96 @@ std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t tar
                                   mapId);
 
     if (entityId != targetId)
-        return nullptr;
+        return outcome;
 
     uint16_t attackerId = static_cast<uint16_t>(playerId);
-
-    // Exp por ataque: Daño * max(NivelOtro - NivelAtacante + 10, 0). Si la
-    // diferencia es < -10 (target mucho mas debil) no da exp. Si target murio
-    // por este golpe, exp adicional: rand(0, 0.1) * VidaMaxDelOtro * mismo factor.
     uint8_t atkLvl = itPlayer->second.getData().level;
+    uint8_t atkLvlBefore = atkLvl;
+
+    FormulaConstants f = StatsDefinition().getFormulas();
+    bool isCritical = (std::rand() % 100) < f.criticalChancePct;
 
     if (targetType == 0) {
-        // target = player
         auto itTarget = players.find(entityId);
         if (itTarget == players.end()) {
             throw std::runtime_error("Game Error: player in sight not found");
         }
         if (!itTarget->second.isAlive()) {
-            return nullptr;
+            return outcome;
         }
-        if (tryEvade(playerId, static_cast<int>(targetId))) {
-            return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, 0, false);
+        outcome.targetName = itTarget->second.getName();
+        outcome.targetId = static_cast<int>(targetId);
+        // Solo se intenta esquivar si NO es crítico.
+        if (!isCritical && tryEvade(playerId, static_cast<int>(targetId))) {
+            outcome.valid = true;
+            outcome.evaded = true;
+            outcome.event = std::make_shared<AttackResultEvent>(attackerId, targetType, targetId,
+                                                                0, false);
+            return outcome;
         }
-        uint16_t damage = itPlayer->second.dealDamage();
+        uint16_t rawDamage = itPlayer->second.dealDamage();
+        if (isCritical) rawDamage *= 2;
+        uint16_t def = itTarget->second.rollDefense();
+        uint16_t damage = (def >= rawDamage) ? 0 : (rawDamage - def);
         uint8_t tgtLvl = itTarget->second.getData().level;
         uint16_t tgtMaxHp = itTarget->second.getMaxHealth();
         itTarget->second.receiveDamage(damage);
-        // Exp.
-        FormulaConstants f = StatsDefinition().getFormulas();
         int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
         itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
-        if (!itTarget->second.isAlive()) {
-            // rand(0, killBonusMaxPct%) * VidaMaxOtro.
+        outcome.killed = !itTarget->second.isAlive();
+        if (outcome.killed) {
             uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
             itPlayer->second.grantExp(kill * factor);
         }
-        return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
+        outcome.valid = true;
+        outcome.critical = isCritical;
+        outcome.damage = damage;
+        outcome.event = std::make_shared<AttackResultEvent>(attackerId, targetType, targetId,
+                                                            damage, true);
+    } else {
+        uint16_t damage = itPlayer->second.dealDamage();
+        if (isCritical) damage *= 2;
+        Creature* npc = map.getNPC(targetId);
+        uint8_t tgtLvl = npc->getLevel();
+        uint16_t tgtMaxHp = npc->getMaxHealth();
+        outcome.targetName = npc->getName();
+        npc->receiveDamage(damage);
+        int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
+        itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
+        outcome.killed = npc->isDead();
+        if (outcome.killed) {
+            // Sacar la creature del mapa para que deje de bloquear celda.
+            Position npcPos = npc->getPosition();
+            map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
+
+            uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
+            itPlayer->second.grantExp(kill * factor);
+        }
+        outcome.valid = true;
+        outcome.critical = isCritical;
+        outcome.damage = damage;
+        outcome.event = std::make_shared<AttackResultEvent>(attackerId, targetType, targetId,
+                                                            damage, true);
     }
 
-    // target = npc
-    uint16_t damage = itPlayer->second.dealDamage();
-    Creature* npc = map.getNPC(targetId);
-    uint8_t tgtLvl = npc->getLevel();
-    uint16_t tgtMaxHp = npc->getMaxHealth();
-    npc->receiveDamage(damage);
-    FormulaConstants f = StatsDefinition().getFormulas();
-    int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
-    itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
-    if (npc->isDead()) {
-        Position npcPos = npc->getPosition();
-        map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
-        
-        uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
-        itPlayer->second.grantExp(kill * factor);
+    uint8_t atkLvlAfter = itPlayer->second.getData().level;
+    if (atkLvlAfter > atkLvlBefore) {
+        outcome.leveledUp = true;
+        outcome.newLevel = atkLvlAfter;
     }
-    return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
+    return outcome;
 }
 
-bool Game::tryEvade(int /*attackerId*/, int /*targetId*/) const {
-    // TODO(team-gameplay): implementar fórmula real.
-    return false;
+bool Game::tryEvade(int /*attackerId*/, int targetId) const {
+    // Formula del enunciado: rand(0,1)^Agilidad < evadeThreshold.
+    auto it = players.find(targetId);
+    if (it == players.end()) return false;
+    StatsDefinition stats;
+    RaceAttribute r = stats.getRace(it->second.getData().race);
+    if (r.agility == 0) return false;
+    float thr = stats.getFormulas().evadeThreshold;
+    float roll = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+    return std::pow(roll, static_cast<float>(r.agility)) < thr;
 }
 
 void Game::setSkin(int playerId, uint8_t skinId) {
@@ -723,8 +757,6 @@ Game::DropResult Game::pickUpItemAt(int playerId) {
             // Drop de oro: se suma al gold del jugador (respetando cap).
             if (rec.itemId == GOLD_ITEM_ID) {
                 it->second.addGold(rec.goldAmount);
-                std::cout << "PICKUP gold player=" << playerId << " amount=" << rec.goldAmount
-                          << " at (" << rec.x << "," << rec.y << ")" << std::endl;
                 return {true, "Levantaste " + std::to_string(rec.goldAmount) + " de oro", rec};
             }
 
@@ -736,9 +768,6 @@ Game::DropResult Game::pickUpItemAt(int playerId) {
                 droppedItems.insert(droppedItems.begin() + i, rec);
                 return {false, "Tu inventario esta lleno", {}};
             }
-            std::cout << "PICKUP player=" << playerId << " dropId=" << rec.dropId
-                      << " itemId=" << (int)rec.itemId << " (" << name << ") at (" << rec.x << ","
-                      << rec.y << ")" << std::endl;
             return {true, std::string("Levantaste ") + name, rec};
         }
     }
@@ -759,9 +788,6 @@ Game::DropResult Game::dropItem(int playerId, uint8_t invSlot) {
     }
     DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y, 0};
     droppedItems.push_back(rec);
-    std::cout << "DROP player=" << playerId << " slot=" << (int)invSlot
-              << " name=" << itemName << " dropId=" << rec.dropId << " at (" << rec.x
-              << "," << rec.y << ")" << std::endl;
     return {true, "Tiraste " + itemName, rec};
 }
 
@@ -856,11 +882,7 @@ bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
     if (it == players.end()) {
         return false;
     }
-
-    bool ok = it->second.equipItem(static_cast<int>(invSlot));
-    std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot << " ok=" << ok
-              << std::endl;
-    return ok;
+    return it->second.equipItem(static_cast<int>(invSlot));
 }
 
 bool Game::unequipSlot(int playerId, uint8_t slotType) {
@@ -876,10 +898,7 @@ bool Game::unequipSlot(int playerId, uint8_t slotType) {
         case 3: type = ItemType::SHIELD; break;
         default: return false;
     }
-    bool ok = it->second.unequipItem(type);
-    std::cout << "UNEQUIP player=" << playerId << " slotType=" << (int)slotType << " ok=" << ok
-              << std::endl;
-    return ok;
+    return it->second.unequipItem(type);
 }
 
 Game::InventorySnapshot Game::getInventorySnapshot(int playerId) const {
@@ -901,13 +920,13 @@ Game::InventorySnapshot Game::getInventorySnapshot(int playerId) const {
     return snap;
 }
 
-bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
+uint16_t Game::applyNPCAttack(uint8_t playerId, uint16_t rawDamage) {
     auto it = players.find(playerId);
-    if (it == players.end()) {
-        return false;
-    }
-    it->second.receiveDamage(damage);
-    return true;
+    if (it == players.end()) return 0;
+    uint16_t def = it->second.rollDefense();
+    uint16_t finalDmg = (def >= rawDamage) ? 0 : (rawDamage - def);
+    it->second.receiveDamage(finalDmg);
+    return finalDmg;
 }
 
 bool Game::checkIfPlayerIsMeditating(int playerId) const {
