@@ -55,6 +55,8 @@ public:
 
     uint16_t getHealthRestore() const;
 
+    uint16_t getManaRestore() const;
+
     uint16_t getManaWaste() const;
 
     std::string getName() const;

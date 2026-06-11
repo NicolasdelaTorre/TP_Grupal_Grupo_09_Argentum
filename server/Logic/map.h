@@ -142,8 +142,8 @@ public:
     // Mueve el entityId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
     bool moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId);
 
-    // Limpia el playerId de la celda. Se llama al desconectar / morir.
-    void removePlayer(int16_t x, int16_t y, uint8_t mapId);
+    // Limpia el entityId de la celda. Se llama al desconectar / morir.
+    void removeEntity(int16_t x, int16_t y, uint8_t mapId, bool isPlayer);
 
     uint16_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
@@ -179,6 +179,8 @@ public:
     int calculateTeleportingTime(Position playerPosition, uint8_t mapId);
 
     Position searchNearestPriest(int16_t x, int16_t y);
+
+    Position getRandomPosition(std::string biomeType, uint8_t mapId);
 };
 
 #endif

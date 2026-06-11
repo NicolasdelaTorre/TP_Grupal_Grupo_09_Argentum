@@ -29,7 +29,7 @@ type = "MAGIC"
 distance = true
 minDamage = 2
 maxDamage = 4
-manaCost = 5
+manaCost = 50
 
 [[item]]
 id = 5
@@ -37,7 +37,7 @@ name = "elven flute"
 type = "HEAL"
 distance = true
 healthRestore = 50
-manaCost = 100
+manaCost = 200
 
 [[item]]
 id = 6
@@ -46,7 +46,7 @@ type = "MAGIC"
 distance = true
 minDamage = 4
 maxDamage = 8
-manaCost = 15
+manaCost = 150
 
 [[item]]
 id = 7
@@ -55,7 +55,7 @@ type = "MAGIC"
 distance = true
 minDamage = 8
 maxDamage = 20
-manaCost = 30
+manaCost = 250
 
 [[item]]
 id = 8

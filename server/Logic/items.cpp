@@ -133,6 +133,14 @@ uint16_t Item::getHealthRestore() const {
     return 0;
 }
 
+uint16_t Item::getManaRestore() const {
+    if (type == ItemType::MANA_POTION) {
+        return manaRestore;
+    }
+
+    return 0;
+}
+
 uint16_t Item::getManaWaste() const {
     if (type == ItemType::MAGIC || type == ItemType::HEAL) {
         return manaCost;
