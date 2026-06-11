@@ -84,22 +84,50 @@
            </spacer>
           </item>
           <item>
-          <widget class="QPushButton" name="btnNewMap">
-           <property name="text">
-            <string>Nuevo mapa</string>
-           </property>
-           <property name="primary" stdset="0">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnOpenMap">
-           <property name="text">
-            <string>Abrir mapa</string>
-           </property>
-          </widget>
-         </item>
+           <layout class="QVBoxLayout" name="mainMenuButtonColumn">
+            <item alignment="Qt::AlignHCenter">
+             <widget class="QPushButton" name="btnNewMap">
+              <property name="minimumSize">
+               <size>
+                <width>260</width>
+                <height>64</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>260</width>
+                <height>64</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>New map</string>
+              </property>
+              <property name="primary" stdset="0">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item alignment="Qt::AlignHCenter">
+             <widget class="QPushButton" name="btnOpenMap">
+              <property name="minimumSize">
+               <size>
+                <width>220</width>
+                <height>52</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>220</width>
+                <height>52</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Open map</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
          <item>
           <spacer name="mainMenuButtonRightSpacer">
             <property name="orientation">
@@ -133,105 +161,7 @@
       <widget class="QWidget" name="pageNewMap">
        <layout class="QVBoxLayout" name="newMapLayout">
         <item>
-         <widget class="QLabel" name="labelNewMapTitle">
-          <property name="text">
-           <string>Nuevo mapa</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="newMapTopSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="newMapFormRow">
-          <item>
-           <spacer name="newMapFormLeftSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <layout class="QFormLayout" name="newMapForm">
-            <item row="0" column="0">
-             <widget class="QLabel" name="labelNewMapId">
-              <property name="text">
-               <string>Id</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="inputNewMapId">
-              <property name="text">
-               <string>otro_mapa</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="labelNewMapName">
-              <property name="text">
-               <string>Nombre</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLineEdit" name="inputNewMapName">
-              <property name="text">
-               <string>Otro mapa</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="labelNewMapSize">
-              <property name="text">
-               <string>Tamaño</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QComboBox" name="comboNewMapSize"/>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <spacer name="newMapFormRightSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <spacer name="newMapMidSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
@@ -244,9 +174,9 @@
          </spacer>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="newMapButtonsRow">
+         <layout class="QHBoxLayout" name="newMapCardRow">
           <item>
-           <spacer name="newMapButtonsLeftSpacer">
+           <spacer name="newMapCardLeftSpacer">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -259,24 +189,255 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="btnNewMapCancel">
-            <property name="text">
-             <string>Cancelar</string>
+           <widget class="QFrame" name="newMapCard">
+            <property name="minimumSize">
+             <size>
+              <width>440</width>
+              <height>0</height>
+             </size>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>440</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <layout class="QVBoxLayout" name="newMapCardLayout">
+             <property name="leftMargin">
+              <number>36</number>
+             </property>
+             <property name="topMargin">
+              <number>32</number>
+             </property>
+             <property name="rightMargin">
+              <number>36</number>
+             </property>
+             <property name="bottomMargin">
+              <number>32</number>
+             </property>
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="labelNewMapTitle">
+               <property name="text">
+                <string>New map</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="title" stdset="0">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="labelNewMapSubtitle">
+               <property name="text">
+                <string>Set up the details of your new map</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="subtitle" stdset="0">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="newMapCardTitleSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <layout class="QFormLayout" name="newMapForm">
+               <property name="labelAlignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+               <property name="horizontalSpacing">
+                <number>14</number>
+               </property>
+               <property name="verticalSpacing">
+                <number>14</number>
+               </property>
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelNewMapId">
+                 <property name="text">
+                  <string>Id</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLineEdit" name="inputNewMapId">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>34</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>other_map</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelNewMapName">
+                 <property name="text">
+                  <string>Name</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLineEdit" name="inputNewMapName">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>34</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Other map</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelNewMapSize">
+                 <property name="text">
+                  <string>Size</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <layout class="QHBoxLayout" name="newMapSizeRow">
+                 <property name="spacing">
+                  <number>8</number>
+                 </property>
+                 <item>
+                  <widget class="QSpinBox" name="spinNewMapWidth">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>34</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignHCenter|Qt::AlignVCenter</set>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>250</number>
+                   </property>
+                   <property name="value">
+                    <number>100</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="labelNewMapSizeX">
+                   <property name="text">
+                    <string>x</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="spinNewMapHeight">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>34</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignHCenter|Qt::AlignVCenter</set>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>250</number>
+                   </property>
+                   <property name="value">
+                    <number>100</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <spacer name="newMapCardButtonsSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>28</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="newMapButtonsRow">
+               <property name="spacing">
+                <number>14</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="btnNewMapCancel">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>42</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Cancel</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnNewMapCreate">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>42</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Create</string>
+                 </property>
+                 <property name="primary" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnNewMapCreate">
-            <property name="text">
-             <string>Crear</string>
-            </property>
-            <property name="primary" stdset="0">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="newMapButtonsRightSpacer">
+           <spacer name="newMapCardRightSpacer">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -290,6 +451,19 @@
           </item>
          </layout>
         </item>
+        <item>
+         <spacer name="newMapBottomSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="pageEditor">
@@ -299,14 +473,14 @@
           <item>
            <widget class="QPushButton" name="btnBack">
             <property name="text">
-             <string>Salir</string>
+             <string>Exit</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="btnBackToMainMap">
             <property name="text">
-             <string>Volver al mapa</string>
+             <string>Back to map</string>
             </property>
             <property name="visible">
              <bool>false</bool>
@@ -425,7 +599,7 @@
           <item>
            <widget class="QPushButton" name="btnEnvironmentCreatures">
             <property name="text">
-             <string>Criaturas del entorno</string>
+             <string>Environment creatures</string>
             </property>
            </widget>
           </item>
@@ -455,7 +629,7 @@
                  <item>
                   <widget class="QLabel" name="labelSpawnHint">
                    <property name="text">
-                    <string>Click en el mapa para ubicar el spawn del jugador.</string>
+                    <string>Click on the map to place the player spawn.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -525,7 +699,7 @@
                  <item>
                   <widget class="QLabel" name="labelBiomeHint">
                    <property name="text">
-                    <string>Arrastrá para crear un bioma. Click sobre un bioma existente para editar criaturas.</string>
+                    <string>Drag to create a biome. Click on an existing biome to edit creatures.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -562,7 +736,7 @@
                  <item>
                   <widget class="QLabel" name="labelCityHint">
                    <property name="text">
-                    <string>Click en el mapa para colocar la ciudad seleccionada.</string>
+                    <string>Click on the map to place the selected city.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -576,7 +750,7 @@
                  <item>
                   <widget class="QLabel" name="labelEntry">
                    <property name="text">
-                    <string>Entrada</string>
+                    <string>Entry</string>
                    </property>
                   </widget>
                  </item>
@@ -586,7 +760,7 @@
                  <item>
                   <widget class="QLabel" name="labelEnvironments">
                    <property name="text">
-                    <string>Entornos</string>
+                    <string>Environments</string>
                    </property>
                   </widget>
                  </item>
@@ -806,7 +980,7 @@
                  <item>
                   <widget class="QLabel" name="labelWall">
                    <property name="text">
-                    <string>Pared</string>
+                    <string>Wall</string>
                    </property>
                   </widget>
                  </item>
@@ -820,7 +994,7 @@
                  <item>
                   <widget class="QLabel" name="labelExit">
                    <property name="text">
-                    <string>Salida</string>
+                    <string>Exit</string>
                    </property>
                   </widget>
                  </item>
@@ -857,7 +1031,7 @@
                  <item>
                   <widget class="QLabel" name="labelFloorHint">
                    <property name="text">
-                    <string>Click para colocar el modificador de piso. No bloquea el paso.</string>
+                    <string>Click to place the floor modifier. It does not block movement.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -884,7 +1058,7 @@
              <item>
               <widget class="QLabel" name="labelEditingTarget">
                <property name="text">
-                <string>Editando: mapa principal</string>
+                <string>Editing: main map</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>

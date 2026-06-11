@@ -5,6 +5,7 @@
         <file alias="background.png">assets/ui_textures/239.png</file>
         <file alias="logo_argentum.png">assets/ui_textures/243.png</file>
         <file alias="logo_map_editor.png">assets/ui_textures/logo_Map_Editor.png</file>
+        <file alias="complete_logo.png">assets/ui_textures/complete_logo.png</file>
     </qresource>
     <qresource prefix="/styles">
         <file alias="editor.qss">assets/styles/editor.qss</file>

@@ -32,7 +32,7 @@ BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template,
                                    const std::vector<CreatureSpawn>& initial_spawns,
                                    QWidget* parent):
         QDialog(parent) {
-    setWindowTitle(QStringLiteral("Criaturas del bioma"));
+    setWindowTitle(QStringLiteral("Biome creatures"));
     resize(440, 320);
 
     auto* layout = new QVBoxLayout(this);

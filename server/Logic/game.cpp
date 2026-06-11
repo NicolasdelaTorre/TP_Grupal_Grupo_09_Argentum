@@ -10,6 +10,7 @@
 #include "NPC/creature.h"
 #include "stats_definition.h"
 #include "toml.hpp"
+#include "attribute_manager.h"
 
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
@@ -94,7 +95,7 @@ bool Game::isPositionFree(Position pos) const {
 Position Game::getPlayerPosition(int playerId) const {
     auto it = players.find(playerId);
     if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return {-1, -1};
     }
     return it->second.getPosition();
 }
@@ -225,7 +226,7 @@ void Game::removePlayer(int playerId) {
     auto it = players.find(playerId);
     if (it != players.end()) {
         Position p = it->second.getPosition();
-        map.removePlayer(p.x, p.y, it->second.getMapId());
+        map.removeEntity(p.x, p.y, it->second.getMapId(), true);
     }
     updatePlayerData(playerId);
     players.erase(playerId);
@@ -276,20 +277,25 @@ void Game::checkEntry(int playerId) {
         // El jugador pisó una entrada a dungeon o una salida (si ya está en
         // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
         uint8_t currentMapId = itPlayer->second.getMapId();
-        map.removePlayer(pos.x, pos.y, currentMapId);
+        map.removeEntity(pos.x, pos.y, currentMapId, true);
 
-        std::string mapId = map.getMapId(pos.x, pos.y);
-
-        if (!mapId.empty()) {
-            // Si veníamos del overworld vamos a la dungeon; si veníamos de
-            // una dungeon, salimos al overworld.
-            if (currentMapId == 0)
-                map.placePlayerIntoTheDungeon(playerId, pos, mapId);
-            else
-                map.placePlayerIntoTheOverworld(playerId, currentMapId);
-            itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
+        // Si veníamos del overworld vamos a la dungeon; si veníamos de una
+        // dungeon, salimos al overworld.
+        if (currentMapId == 0) {
+            std::string mapId = map.getMapId(pos.x, pos.y);
+            if (mapId.empty()) {
+                return;
+            }
+            map.placePlayerIntoTheDungeon(playerId, pos, mapId);
+            itPlayer->second.changeMapId(static_cast<uint8_t>(mapId[mapId.size() - 1] - '0'));
             Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
+        } else {
+            map.removeEntity(pos.x, pos.y, currentMapId, true);
+            map.placePlayerIntoTheOverworld(playerId, currentMapId);
+            itPlayer->second.changeMapId(0);
+            Position entryPosition = map.getEntryPosition(currentMapId);
+            itPlayer->second.move({entryPosition.x, static_cast<int16_t>(entryPosition.y + 1)});
         }
     }
 }
@@ -382,6 +388,10 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
         outcome.killed = npc->isDead();
         if (outcome.killed) {
+            // Sacar la creature del mapa para que deje de bloquear celda.
+            Position npcPos = npc->getPosition();
+            map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
+
             uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
             itPlayer->second.grantExp(kill * factor);
         }
@@ -917,29 +927,6 @@ bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
     return true;
 }
 
-/*
-bool Game::processChatCommand(int playerId, const std::string& chatCommand) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-
-    if (chatCommand == "meditar") {
-        // Command: /meditar
-        itPlayer->second.switchMeditationState();
-    } else if (chatCommand == "resucitar") {
-        // Command: /resucitar
-        if (itPlayer->second.isAlive()) {
-            return false;
-        }
-
-        itPlayer->second.startTeleporting();
-    }
-
-    return true;
-}
-    */
-
 bool Game::checkIfPlayerIsMeditating(int playerId) const {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
@@ -963,7 +950,7 @@ bool Game::checkIfPlayerIsTeleporting(int playerId) const {
 void Game::finishTeleportingState(int playerId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     itPlayer->second.finishTeleporting();
@@ -972,7 +959,7 @@ void Game::finishTeleportingState(int playerId) {
 void Game::restorePlayerManaForMeditation(int playerId) {
     auto itPlayer = players.find(playerId);
     if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     itPlayer->second.restoreManaForMeditation();
@@ -996,7 +983,7 @@ bool Game::startPlayerResurrect(int playerId) {
 bool Game::lowerHealth(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return false;
     }
 
     return player->second.isAlive() && player->second.getCurrentHealth() < player->second.getMaxHealth();
@@ -1005,7 +992,7 @@ bool Game::lowerHealth(int playerId) {
 bool Game::lowerMana(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return false;
     }
 
     return player->second.isAlive() && player->second.getCurrentMana() < player->second.getMaxMana();
@@ -1014,7 +1001,7 @@ bool Game::lowerMana(int playerId) {
 void Game::restorePlayerHealth(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     player->second.restoreHealthThroughTime();
@@ -1023,7 +1010,7 @@ void Game::restorePlayerHealth(int playerId) {
 void Game::restorePlayerMana(int playerId) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     player->second.restoreManaThroughTime();
@@ -1032,7 +1019,7 @@ void Game::restorePlayerMana(int playerId) {
 void Game::fastTravel(int playerId, Position newPosition) {
     auto player = players.find(playerId);
     if (player == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
+        return;
     }
 
     player->second.move(newPosition);

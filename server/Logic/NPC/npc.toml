@@ -2,34 +2,34 @@
 type = "CREATURE"
 name = "goblin"
 maxHealth = 100
-damage = 15
+damage = 20
 
 [[npc]]
 type = "CREATURE"
 name = "skeleton"
 maxHealth = 80
-damage = 18
+damage = 23
 
 [[npc]]
 type = "CREATURE"
 name = "zombie"
 maxHealth = 130
-damage = 11
+damage = 16
 
 [[npc]]
 type = "CREATURE"
 name = "spider"
 maxHealth = 70
-damage = 13
+damage = 18
 
 [[npc]]
 type = "CREATURE"
 name = "orc"
 maxHealth = 170
-damage = 20
+damage = 25
 
 [[npc]]
 type = "CREATURE"
 name = "golem"
 maxHealth = 200
-damage = 22
+damage = 27

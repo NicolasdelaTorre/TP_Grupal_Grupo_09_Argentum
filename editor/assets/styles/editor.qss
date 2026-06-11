@@ -33,6 +33,29 @@ QLabel {
     color: #e8d8b0;
 }
 
+/* Tarjeta de "Nuevo mapa" */
+QFrame#newMapCard {
+    background-color: rgba(18, 14, 10, 220);
+    border: 1px solid #5a4a3a;
+    border-radius: 12px;
+}
+
+QFrame#newMapCard QLabel {
+    color: #cdb48a;
+}
+
+QLabel[title="true"] {
+    color: #f0c060;
+    font-size: 26px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+QLabel[subtitle="true"] {
+    color: #9a8a6a;
+    font-size: 12px;
+}
+
 
 /* Inputs */
 

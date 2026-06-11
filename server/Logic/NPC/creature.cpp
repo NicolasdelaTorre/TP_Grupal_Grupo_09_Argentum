@@ -5,8 +5,8 @@
 #include "../toml.hpp"
 #include "../stats_definition.h"
 
-Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y, mapId), isAlive(true) {
-    // Rangos de level por zona vienen del TOML.
+Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, std::string biomeType) : NPC(id, name, x, y, mapId), isAlive(true), biomeType(biomeType) {
+    // Set level
     srand(time(nullptr));
     CreatureSpawnConfig sp = StatsDefinition().getSpawnConfig();
     if (mapId == 0) {
@@ -77,4 +77,8 @@ uint8_t Creature::getLevel() const { return level; }
 
 uint8_t Creature::getMapId() const {
     return mapId;
+}
+
+std::string Creature::getBiomeType() const {
+    return biomeType;
 }

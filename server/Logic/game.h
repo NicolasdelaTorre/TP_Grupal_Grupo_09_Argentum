@@ -54,14 +54,6 @@ private:
     // True si ningún jugador está parado en pos.
     bool isPositionFree(Position pos) const;
 
-    /*
-    bool processUser(int playerId, const std::string& user);
-
-    bool turnPlayer(int playerId, const std::string& direction);
-
-    bool processHeal(int playerId);
-    */
-
     // Stub de evasión. TODO(team-gameplay): implementar fórmula real con
     // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
     bool tryEvade(int attackerId, int targetId) const;

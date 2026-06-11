@@ -117,7 +117,8 @@ public:
     const WallTemplate* find_wall(const std::string& id) const;
     const ExitTemplate* find_exit(const std::string& id) const;
     const FloorTemplate* find_floor(const std::string& id) const;
-    // Buscar tile de piso por su grid_value (para reconstruir los pisos al cargar un mapa desde el grid del biome_map).
+    // Buscar tile de piso por su grid_value (para reconstruir los 
+    // pisos al cargar un mapa desde el grid del biome_map).
     const FloorTemplate* find_floor_by_grid_value(int grid_value) const;
 
 private:

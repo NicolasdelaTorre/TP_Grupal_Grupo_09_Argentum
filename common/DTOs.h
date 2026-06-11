@@ -57,6 +57,9 @@ enum class ObstacleCode : uint8_t {
     CHURCH = 27,
     TRAINING_DUMMY = 28,
     EXIT = 29,
+    WALL_DUNGEON_RIGHT = 30,
+    WALL_DUNGEON_LEFT = 31,
+    WALL_DUNGEON_VERTICAL = 32,
 };
 
 enum class RaceCode : uint8_t { HUMAN = 0, ELF, DWARF, GNOME };

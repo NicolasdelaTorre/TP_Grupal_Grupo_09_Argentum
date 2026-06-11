@@ -150,7 +150,7 @@ EditorWindow::EditorWindow(QWidget* parent):
 
     if (!templates_.load()) {
         QMessageBox::critical(this, QStringLiteral("Error"),
-                              QStringLiteral("No se pudieron cargar los templates en %1.")
+                              QStringLiteral("Could not load the templates in %1.")
                                       .arg(QStringLiteral(TEMPLATES_PATH)));
     }
 
@@ -211,26 +211,10 @@ EditorWindow::EditorWindow(QWidget* parent):
 EditorWindow::~EditorWindow() { delete ui_; }
 
 void EditorWindow::buildLogo() {
-    QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
-    QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
-    if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
-        const QPixmap arg_scaled = logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
-        const QPixmap me_scaled = logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
-
-        const int overlap_px = 50;
-        const int total_w = std::max(arg_scaled.width(), me_scaled.width());
-        const int total_h = arg_scaled.height() + me_scaled.height() - overlap_px;
-
-        QPixmap composite(total_w, total_h);
-        composite.fill(Qt::transparent);
-        QPainter painter(&composite);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
-        painter.drawPixmap((total_w - me_scaled.width()) / 2, arg_scaled.height() - overlap_px,
-                           me_scaled);
-        painter.end();
-
-        ui_->labelLogoArgentum->setPixmap(composite);
+    QPixmap complete_logo(QStringLiteral(":/ui/complete_logo.png"));
+    if (!complete_logo.isNull()) {
+        ui_->labelLogoArgentum->setPixmap(
+                complete_logo.scaledToWidth(650, Qt::SmoothTransformation));
     }
     ui_->labelLogoMapEditor->setVisible(false);
 }
@@ -531,30 +515,26 @@ void EditorWindow::onApplyMapResize() {
     refreshEnvironmentsList();
 }
 
-void EditorWindow::setupNewMapPage() {
-    ui_->comboNewMapSize->clear();
-    ui_->comboNewMapSize->addItem(QStringLiteral("100 x 100"), QSize(100, 100));
-    ui_->comboNewMapSize->addItem(QStringLiteral("250 x 250"), QSize(250, 250));
-    ui_->comboNewMapSize->addItem(QStringLiteral("500 x 500"), QSize(500, 500));
-}
+void EditorWindow::setupNewMapPage() {}
 
 void EditorWindow::resetNewMapPage() {
-    ui_->inputNewMapId->setText(QStringLiteral("otro_mapa"));
-    ui_->inputNewMapName->setText(QStringLiteral("Otro mapa"));
-    ui_->comboNewMapSize->setCurrentIndex(0);
+    ui_->inputNewMapId->setText(QStringLiteral("other_map"));
+    ui_->inputNewMapName->setText(QStringLiteral("Other map"));
+    ui_->spinNewMapWidth->setValue(100);
+    ui_->spinNewMapHeight->setValue(100);
 }
 
 void EditorWindow::onCreateNewMap() {
     const QString map_id = ui_->inputNewMapId->text().trimmed();
     const QString map_name = ui_->inputNewMapName->text().trimmed();
     if (map_id.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Mapa inválido"),
-                             QStringLiteral("El id del mapa no puede estar vacío."));
+        QMessageBox::warning(this, QStringLiteral("Invalid map"),
+                             QStringLiteral("The map id cannot be empty."));
         return;
     }
 
-    const QSize size = ui_->comboNewMapSize->currentData().toSize();
-    startNewMainMap(map_id, map_name, size.width(), size.height());
+    startNewMainMap(map_id, map_name, ui_->spinNewMapWidth->value(),
+                    ui_->spinNewMapHeight->value());
     ui_->stackedWidget->setCurrentWidget(ui_->pageEditor);
 }
 
@@ -572,7 +552,7 @@ void EditorWindow::startNewMainMap(const QString& map_id, const QString& map_nam
 
     map_canvas_->createMap(map_id, map_name, width, height);
     refreshEnvironmentsList();
-    ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
+    ui_->labelEditingTarget->setText(QStringLiteral("Editing: main map"));
     ui_->btnBackToMainMap->setVisible(false);
     setMainOnlySectionsVisible(true);
     updateDimensionsLabel();
@@ -580,9 +560,9 @@ void EditorWindow::startNewMainMap(const QString& map_id, const QString& map_nam
 }
 
 void EditorWindow::openExistingMap() {
-    const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Abrir mapa"),
+    const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("Open map"),
                                                       QStringLiteral(SAVE_MAP),
-                                                      QStringLiteral("Mapas YAML (*.yaml *.yml)"));
+                                                      QStringLiteral("YAML maps (*.yaml *.yml)"));
     if (path.isEmpty()) {
         return;
     }
@@ -590,7 +570,7 @@ void EditorWindow::openExistingMap() {
     MapDocument loaded;
     if (!YamlMapIO::load(loaded, path.toStdString())) {
         QMessageBox::warning(this, QStringLiteral("Error"),
-                             QStringLiteral("No se pudo abrir el mapa:\n%1").arg(path));
+                             QStringLiteral("Could not open the map:\n%1").arg(path));
         return;
     }
 
@@ -621,7 +601,7 @@ void EditorWindow::openExistingMap() {
 
     map_canvas_->loadFromDocument(main_doc_, EditingMode::MainMap);
     refreshEnvironmentsList();
-    ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
+    ui_->labelEditingTarget->setText(QStringLiteral("Editing: main map"));
     ui_->btnBackToMainMap->setVisible(false);
     setMainOnlySectionsVisible(true);
     updateDimensionsLabel();
@@ -710,8 +690,8 @@ void EditorWindow::onEditEnvironmentCreatures() {
 
     const auto creatures = templates_.all_creatures();
     if (creatures.empty()) {
-        QMessageBox::information(this, QStringLiteral("Criaturas"),
-                                 QStringLiteral("No hay criaturas disponibles."));
+        QMessageBox::information(this, QStringLiteral("Creatures"),
+                                 QStringLiteral("No creatures available."));
         return;
     }
 
@@ -730,7 +710,7 @@ void EditorWindow::backToMainMap() {
     current_environment_id_.clear();
     map_canvas_->loadFromDocument(main_doc_, EditingMode::MainMap);
     refreshEnvironmentsList();
-    ui_->labelEditingTarget->setText(QStringLiteral("Editando: mapa principal"));
+    ui_->labelEditingTarget->setText(QStringLiteral("Editing: main map"));
     ui_->btnBackToMainMap->setVisible(false);
     setMainOnlySectionsVisible(true);
     updateDimensionsLabel();
@@ -782,7 +762,7 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
 
     map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);
     ui_->labelEditingTarget->setText(
-            QStringLiteral("Editando entorno: %1").arg(QString::fromStdString(env->name)));
+            QStringLiteral("Editing environment: %1").arg(QString::fromStdString(env->name)));
     ui_->btnBackToMainMap->setVisible(true);
     setMainOnlySectionsVisible(false);
     updateDimensionsLabel();
@@ -837,10 +817,10 @@ void EditorWindow::saveMap() {
             QStringLiteral("%1/%2.yaml").arg(SAVE_MAP, QString::fromStdString(main_doc_.map.id));
     if (!YamlMapIO::save(main_doc_, path.toStdString())) {
         QMessageBox::warning(this, QStringLiteral("Error"),
-                             QStringLiteral("No se pudo guardar el YAML."));
+                             QStringLiteral("Could not save the YAML."));
         return;
     }
 
-    QMessageBox::information(this, QStringLiteral("Guardado"),
-                             QStringLiteral("Mapa guardado en:\n%1").arg(path));
+    QMessageBox::information(this, QStringLiteral("Saved"),
+                             QStringLiteral("Map saved at:\n%1").arg(path));
 }

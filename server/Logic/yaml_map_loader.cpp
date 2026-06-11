@@ -12,10 +12,7 @@
 #include "../../common/DTOs.h"
 #include "../../common/common_tiles.h"
 
-namespace {
-
-// Convierte el "type" de un NPC fijo del YAML al código de ObstacleCode.
-uint8_t npcTypeFromString(const std::string& type) {
+uint8_t YamlMapLoader::npcTypeFromString(const std::string& type) {
     if (type == "priest")
         return static_cast<uint8_t>(ObstacleCode::NPC_PRIEST);
     if (type == "merchant")
@@ -25,8 +22,9 @@ uint8_t npcTypeFromString(const std::string& type) {
     return static_cast<uint8_t>(ObstacleCode::NPC);
 }
 
-// Convierte el "type" del YAML al código de ObstacleCode que va por la red.
-uint8_t obstacleTypeFromString(const std::string& type) {
+// Convierte el type del YAML al código de ObstacleCode.
+// Cambiar para que se usen las texturas que se mandan.
+uint8_t YamlMapLoader::obstacleTypeFromString(const std::string& type) {
     if (type == "roca")
         return static_cast<uint8_t>(ObstacleCode::ROCK);
     if (type == "piedra_pequenia")
@@ -71,14 +69,19 @@ uint8_t obstacleTypeFromString(const std::string& type) {
         return static_cast<uint8_t>(ObstacleCode::CHURCH);
     if (type == "munieco_entrenamiento")
         return static_cast<uint8_t>(ObstacleCode::TRAINING_DUMMY);
+    if (type == "pared_mazmorra_derecha")
+        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_RIGHT);
+    if (type == "pared_mazmorra_izquierda")
+        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_LEFT);
+    if (type == "pared_mazmorra_vertical")
+        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_VERTICAL);
     if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
-        type == "pilar" || type == "pared_mazmorra_derecha" ||
-        type == "pared_mazmorra_izquierda" || type == "pared_mazmorra_vertical")
+        type == "pilar")
         return static_cast<uint8_t>(ObstacleCode::WALL);
     return static_cast<uint8_t>(ObstacleCode::ROCK);
 }
 
-void initializeDefaultCells(std::vector<Cell>& cells) {
+void YamlMapLoader::initializeDefaultCells(std::vector<Cell>& cells) {
     for (auto& c: cells) {
         c.textureId = 0;
         c.obstacleId = 0;
@@ -89,8 +92,8 @@ void initializeDefaultCells(std::vector<Cell>& cells) {
     }
 }
 
-void applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight, int16_t x,
-                   int16_t y, int16_t w, int16_t h, uint16_t obstacleId) {
+void YamlMapLoader::applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
+                                  int16_t x, int16_t y, int16_t w, int16_t h, uint16_t obstacleId) {
     for (int16_t tileY = y; tileY < y + h; tileY++) {
         for (int16_t tileX = x; tileX < x + w; tileX++) {
             if (tileX < 0 || tileY < 0 || tileX >= static_cast<int16_t>(mapWidth) ||
@@ -103,8 +106,8 @@ void applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
     }
 }
 
-void applySafeZone(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight, int16_t x,
-                   int16_t y, int16_t w, int16_t h) {
+void YamlMapLoader::applySafeZone(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
+                                  int16_t x, int16_t y, int16_t w, int16_t h) {
     for (int16_t tileY = y; tileY < y + h; tileY++) {
         for (int16_t tileX = x; tileX < x + w; tileX++) {
             if (tileX < 0 || tileY < 0 || tileX >= static_cast<int16_t>(mapWidth) ||
@@ -115,18 +118,16 @@ void applySafeZone(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeig
     }
 }
 
-// Vuelca el grid de tiles de piso del editor en el textureId de cada celda.
-// La clave YAML sigue siendo "biome_map" por compatibilidad con mapas existentes.
-void applyFloorGrid(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
-                    const std::string& data) {
+// transforma el grid de tiles de piso del editor en el textureId de cada celda.
+void YamlMapLoader::applyFloorGrid(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
+                                   const std::string& data) {
     std::istringstream stream(data);
     std::string line;
     uint16_t y = 0;
     while (y < mapHeight && std::getline(stream, line)) {
         for (uint16_t x = 0; x < mapWidth && x < line.size(); x++) {
             const char c = line[x];
-            // Codificación base 36 (0-9 y a-z). Cada carácter es el grid_value
-            // del tile de piso, que se envía al cliente como textureId.
+            // Cada carácter es el grid_value del tile de piso, que se envía al cliente como textureId.
             if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                 cells[static_cast<size_t>(y) * mapWidth + x].textureId =
                         static_cast<uint16_t>(grid_char_to_value(c));
@@ -136,9 +137,7 @@ void applyFloorGrid(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHei
     }
 }
 
-// Lee la lista de spawns de criaturas de un nodo ("spawns": creature +
-// max_population). La usan tanto los biomas como los environments.
-std::vector<CreatureSpawn> parseSpawns(const YAML::Node& node) {
+std::vector<CreatureSpawn> YamlMapLoader::parseSpawns(const YAML::Node& node) {
     std::vector<CreatureSpawn> spawns;
     if (!node["spawns"])
         return spawns;
@@ -153,9 +152,7 @@ std::vector<CreatureSpawn> parseSpawns(const YAML::Node& node) {
     return spawns;
 }
 
-// Parsea una zona de tipo "biome": tipo (a partir del template), área
-// (posición + tamaño) y la lista de spawns de criaturas.
-Biome parseBiome(const YAML::Node& zone) {
+Biome YamlMapLoader::parseBiome(const YAML::Node& zone) {
     Biome biome;
     if (zone["template"])
         biome.type = zone["template"].as<std::string>();
@@ -174,13 +171,11 @@ Biome parseBiome(const YAML::Node& zone) {
     return biome;
 }
 
-// Aplica una lista de obstáculos/paredes del environment sobre sus celdas.
-// `typeKey` es la clave del YAML que tiene el tipo ("type" u "template"). Si
-// `out` no es nullptr, además junta cada obstáculo como entidad colocada (con su
-// footprint) para que el cliente lo pueda dibujar a tamaño nativo.
-void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16_t envHeight,
-                               const YAML::Node& nodes, const char* typeKey,
-                               std::vector<PlacedObstacle>* out = nullptr) {
+
+void YamlMapLoader::applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth,
+                                              int16_t envHeight, const YAML::Node& nodes,
+                                              const char* typeKey,
+                                              std::vector<PlacedObstacle>* out) {
     if (!nodes)
         return;
     for (const auto& node: nodes) {
@@ -205,11 +200,11 @@ void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16
     }
 }
 
-// Vuelca las salidas del environment en sus celdas: como las paredes, marcan la
-// celda con su obstáculo (ObstacleCode::EXIT) y la vuelven no transitable.
-// Devuelve la posición de cada celda ocupada por una salida.
-std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t envWidth,
-                                            int16_t envHeight, const YAML::Node& exits) {
+// Vuelca las salidas del environment en sus celda.
+std::vector<Position> YamlMapLoader::applyEnvironmentExits(std::vector<Cell>& cells,
+                                                           int16_t envWidth, int16_t envHeight,
+                                                           const YAML::Node& exits,
+                                                           std::vector<PlacedObstacle>* out) {
     std::vector<Position> positions;
     if (!exits)
         return positions;
@@ -228,6 +223,9 @@ std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t en
         }
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
                       y, w, h, static_cast<uint8_t>(ObstacleCode::EXIT));
+        if (out)
+            out->push_back({static_cast<uint8_t>(ObstacleCode::EXIT), x, y,
+                            static_cast<uint16_t>(w), static_cast<uint16_t>(h)});
         for (int16_t dy = 0; dy < h; ++dy) {
             for (int16_t dx = 0; dx < w; ++dx) {
                 const int16_t cx = static_cast<int16_t>(x + dx);
@@ -241,13 +239,10 @@ std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t en
     return positions;
 }
 
-// Resuelve el piso del environment (a partir de su `floor_texture`) y, con el
-// mismo flood-fill que detecta el exterior, estampa cada celda:
-//   - exterior (alcanzable desde el borde sin cruzar paredes): negro + bloqueada.
-//   - interior (y todo si no hay recinto cerrado): textureId del piso.
-// Es decir, el piso es el inverso exacto de las celdas exteriores negras.
-void applyEnvironmentFloorAndExterior(std::vector<Cell>& cells, int16_t envWidth, int16_t envHeight,
-                                      const YAML::Node& walls, const std::string& floorTexture) {
+// Resuelve el piso del environment con el flood-fill
+void YamlMapLoader::applyEnvironmentFloorAndExterior(std::vector<Cell>& cells, int16_t envWidth,
+                                                     int16_t envHeight, const YAML::Node& walls,
+                                                     const std::string& floorTexture) {
     if (envWidth <= 0 || envHeight <= 0 || cells.empty())
         return;
 
@@ -326,8 +321,6 @@ void applyEnvironmentFloorAndExterior(std::vector<Cell>& cells, int16_t envWidth
         }
     }
 
-    // Mismo criterio visual que el editor: las celdas exteriores solo cuentan como
-    // tales si hay un recinto cerrado por paredes; si no, todo es interior.
     const bool enclosed = hasInterior;
     for (size_t i = 0; i < cells.size(); ++i) {
         if (enclosed && exterior[i]) {
@@ -339,7 +332,7 @@ void applyEnvironmentFloorAndExterior(std::vector<Cell>& cells, int16_t envWidth
     }
 }
 
-std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
+std::vector<LoadedEnvironment> YamlMapLoader::parseEnvironments(const YAML::Node& root) {
     std::vector<LoadedEnvironment> environments;
     if (!root["environments"]) {
         return environments;
@@ -370,24 +363,29 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
         env.playerSpawn.x = spawnNode["position"][0].as<int16_t>();
         env.playerSpawn.y = spawnNode["position"][1].as<int16_t>();
 
-        // La textura de piso solo se usa acá para estampar el textureId de cada
-        // celda; no hace falta guardarla en el environment.
         const std::string floorTexture =
                 envNode["floor_texture"] ? envNode["floor_texture"].as<std::string>()
                                          : std::string();
 
-        // Obstáculos, paredes y salidas se vuelcan directamente en las celdas del
-        // environment (las paredes y salidas traen su tipo en "template" en vez de
-        // "type"). Luego, el mismo flood-fill pone el piso en las celdas interiores
-        // y el tile negro en las exteriores.
+
         if (!env.cells.empty()) {
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["obstacles"],
                                       "type", &env.obstacles);
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
-                                      "template");
-            env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"]);
+                                      "template", &env.obstacles);
+            env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"],
+                                              &env.obstacles);
             applyEnvironmentFloorAndExterior(env.cells, env.width, env.height, envNode["walls"],
                                              floorTexture);
+            // exits se ponen sobre paredes, las dejamos caminables
+            for (const auto& exitPos: env.exits) {
+                if (exitPos.x < 0 || exitPos.y < 0 || exitPos.x >= env.width ||
+                    exitPos.y >= env.height)
+                    continue;
+                Cell& exitCell = env.cells[static_cast<size_t>(exitPos.y) * env.width + exitPos.x];
+                exitCell.isWalkable = true;
+                exitCell.obstacleId = 0;
+            }
         }
 
         env.spawns = parseSpawns(envNode);
@@ -398,8 +396,8 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
     return environments;
 }
 
-const LoadedEnvironment* findEnvironmentById(const std::vector<LoadedEnvironment>& environments,
-                                             const std::string& id) {
+const LoadedEnvironment* YamlMapLoader::findEnvironmentById(
+        const std::vector<LoadedEnvironment>& environments, const std::string& id) {
     for (const auto& environment: environments) {
         if (environment.id == id)
             return &environment;
@@ -407,9 +405,7 @@ const LoadedEnvironment* findEnvironmentById(const std::vector<LoadedEnvironment
     return nullptr;
 }
 
-}  // namespace
-
-Map loadMapFromYaml(const std::string& path) {
+Map YamlMapLoader::load(const std::string& path) {
     YAML::Node root;
     try {
         root = YAML::LoadFile(path);
@@ -431,10 +427,6 @@ Map loadMapFromYaml(const std::string& path) {
         applyFloorGrid(cells, width, height, root["biome_map"]["data"].as<std::string>());
     }
 
-    // Obstáculos: cada celda del footprint guarda el código de ObstacleCode (para
-    // la colisión) y, además, guardamos el obstáculo como entidad colocada con su
-    // rectángulo (footprint) para que el cliente lo dibuje a tamaño nativo. El
-    // tamaño que bloquea es independiente del tamaño de la textura.
     std::vector<PlacedObstacle> placedObstacles;
     if (root["obstacles"]) {
         for (const auto& obs: root["obstacles"]) {
@@ -450,14 +442,10 @@ Map loadMapFromYaml(const std::string& path) {
         }
     }
 
-    // Amigos de las ciudades. Recolectamos {x,y,type,name} y los registramos
-    // en el Map después de construirlo (necesitamos sus ids para el snapshot
-    // que se manda al cliente al loguearse).
+    // npcs de las ciudades.
     struct PendingFriendly { int16_t x; int16_t y; uint8_t wireType; std::string name; };
     std::vector<PendingFriendly> pendingFriendlies;
 
-    // Zonas: las de tipo ciudad -> safe zone + fixed_npcs bloquean su celda;
-    // las de tipo bioma se cargan con su posición, tamaño y spawns de criaturas.
     std::vector<Biome> biomes;
     if (root["zones"]) {
         for (const auto& zone: root["zones"]) {
@@ -484,8 +472,6 @@ Map loadMapFromYaml(const std::string& path) {
                             npc["name"] ? npc["name"].as<std::string>() : std::string();
                     applyObstacle(cells, width, height, nx, ny, 1, 1, npcTypeFromString(npcType));
 
-                    // merchant/banker/priest → guardamos para registrarlos como
-                    // amigos con id propio en el Map.
                     uint8_t wireType = 0;
                     if (npcType == "merchant") wireType = static_cast<uint8_t>(NpcCode::MERCHANT);
                     else if (npcType == "banker") wireType = static_cast<uint8_t>(NpcCode::BANKER);
@@ -499,8 +485,7 @@ Map loadMapFromYaml(const std::string& path) {
 
     std::vector<LoadedEnvironment> environments = parseEnvironments(root);
 
-    // Entries (portales a cuevas): bloquean su rectángulo en el mapa principal
-    // y, además, guardan una copia del environment al que llevan.
+    // Entries: se dibujan como obstáculos, pero se puede caminar para entrar.
     std::vector<LoadedEntry> entries;
     if (root["entries"]) {
         for (const auto& entry: root["entries"]) {
@@ -508,8 +493,8 @@ Map loadMapFromYaml(const std::string& path) {
             int16_t ey = entry["position"][1].as<int16_t>();
             int16_t ew = entry["size"][0].as<int16_t>();
             int16_t eh = entry["size"][1].as<int16_t>();
-            applyObstacle(cells, width, height, ex, ey, ew, eh,
-                          static_cast<uint8_t>(ObstacleCode::ENTRY));
+            placedObstacles.push_back({static_cast<uint8_t>(ObstacleCode::ENTRY), ex, ey,
+                                       static_cast<uint16_t>(ew), static_cast<uint16_t>(eh)});
 
             LoadedEntry loadedEntry;
             if (entry["id"])
