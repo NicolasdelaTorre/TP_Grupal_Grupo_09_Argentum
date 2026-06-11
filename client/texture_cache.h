@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -18,7 +19,17 @@ public:
             return it->second;
 
         std::string path = basePath + "/" + filename;
-        cache.emplace(filename, SDL2pp::Texture(renderer, SDL2pp::Surface(path)));
+        // Si un PNG no se puede cargar (falta, mal exportado, formato no
+        // soportado) NO propagamos la excepción: eso reventaría el frame y, al
+        // saltarse el cleanup de los hilos, abortaría el proceso. En su lugar
+        // cacheamos un placeholder magenta visible y seguimos dibujando.
+        try {
+            cache.emplace(filename, SDL2pp::Texture(renderer, SDL2pp::Surface(path)));
+        } catch (const std::exception& e) {
+            std::cerr << "[TextureCache] no se pudo cargar '" << path << "': " << e.what()
+                      << " — usando placeholder" << std::endl;
+            cache.emplace(filename, makePlaceholder());
+        }
         return cache.at(filename);
     }
 
@@ -26,4 +37,12 @@ private:
     SDL2pp::Renderer& renderer;
     std::string basePath;
     std::unordered_map<std::string, SDL2pp::Texture> cache;
+
+    // Textura magenta 16x16 para marcar visualmente un asset que no cargó.
+    SDL2pp::Texture makePlaceholder() {
+        SDL2pp::Surface surf(0, 16, 16, 32, 0x000000FFu, 0x0000FF00u, 0x00FF0000u, 0xFF000000u);
+        Uint32 magenta = SDL_MapRGBA(surf.Get()->format, 255, 0, 255, 255);
+        surf.FillRect(SDL2pp::NullOpt, magenta);
+        return SDL2pp::Texture(renderer, surf);
+    }
 };

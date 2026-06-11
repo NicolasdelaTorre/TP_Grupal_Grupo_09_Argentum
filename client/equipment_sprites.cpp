@@ -20,8 +20,8 @@ constexpr EquipVisual kEquip[] = {
     {EquipSlot::WEAPON, 6},    // 3  Hammer         -> Martillo    [REVISAR: no hay png de martillo]
     {EquipSlot::WEAPON, 4},    // 4  Ash Staff      -> Baculo
     {EquipSlot::WEAPON, 5},    // 5  Elven Flute    -> no se viste [REVISAR: item HEAL]
-    {EquipSlot::WEAPON, 4},    // 6  Root Staff     -> Baculo
-    {EquipSlot::WEAPON, 4},    // 7  Socketed Staff -> Baculo
+    {EquipSlot::WEAPON, 7},    // 6  Root Staff     -> Baculo
+    {EquipSlot::WEAPON, 8},    // 7  Socketed Staff -> Baculo
     {EquipSlot::WEAPON, 2},    // 8  Simple Bow     -> Arco
     {EquipSlot::WEAPON, 3},    // 9  Composite Bow  -> Arco
     {EquipSlot::ARMOR, 1},     // 10 Lether Armor   -> Armadura_de_cuero
