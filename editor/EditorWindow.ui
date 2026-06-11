@@ -100,7 +100,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Nuevo mapa</string>
+               <string>New map</string>
               </property>
               <property name="primary" stdset="0">
                <bool>true</bool>
@@ -122,7 +122,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Abrir mapa</string>
+               <string>Open map</string>
               </property>
              </widget>
             </item>
@@ -221,7 +221,7 @@
              <item>
               <widget class="QLabel" name="labelNewMapTitle">
                <property name="text">
-                <string>Nuevo mapa</string>
+                <string>New map</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -234,7 +234,7 @@
              <item>
               <widget class="QLabel" name="labelNewMapSubtitle">
                <property name="text">
-                <string>Configurá los detalles de tu nuevo mapa</string>
+                <string>Set up the details of your new map</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -287,14 +287,14 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>otro_mapa</string>
+                  <string>other_map</string>
                  </property>
                 </widget>
                </item>
                <item row="1" column="0">
                 <widget class="QLabel" name="labelNewMapName">
                  <property name="text">
-                  <string>Nombre</string>
+                  <string>Name</string>
                  </property>
                 </widget>
                </item>
@@ -307,14 +307,14 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Otro mapa</string>
+                  <string>Other map</string>
                  </property>
                 </widget>
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="labelNewMapSize">
                  <property name="text">
-                  <string>Tamaño</string>
+                  <string>Size</string>
                  </property>
                 </widget>
                </item>
@@ -411,7 +411,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Cancelar</string>
+                  <string>Cancel</string>
                  </property>
                 </widget>
                </item>
@@ -424,7 +424,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Crear</string>
+                  <string>Create</string>
                  </property>
                  <property name="primary" stdset="0">
                   <bool>true</bool>
@@ -473,14 +473,14 @@
           <item>
            <widget class="QPushButton" name="btnBack">
             <property name="text">
-             <string>Salir</string>
+             <string>Exit</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="btnBackToMainMap">
             <property name="text">
-             <string>Volver al mapa</string>
+             <string>Back to map</string>
             </property>
             <property name="visible">
              <bool>false</bool>
@@ -599,7 +599,7 @@
           <item>
            <widget class="QPushButton" name="btnEnvironmentCreatures">
             <property name="text">
-             <string>Criaturas del entorno</string>
+             <string>Environment creatures</string>
             </property>
            </widget>
           </item>
@@ -629,7 +629,7 @@
                  <item>
                   <widget class="QLabel" name="labelSpawnHint">
                    <property name="text">
-                    <string>Click en el mapa para ubicar el spawn del jugador.</string>
+                    <string>Click on the map to place the player spawn.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -699,7 +699,7 @@
                  <item>
                   <widget class="QLabel" name="labelBiomeHint">
                    <property name="text">
-                    <string>Arrastrá para crear un bioma. Click sobre un bioma existente para editar criaturas.</string>
+                    <string>Drag to create a biome. Click on an existing biome to edit creatures.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -736,7 +736,7 @@
                  <item>
                   <widget class="QLabel" name="labelCityHint">
                    <property name="text">
-                    <string>Click en el mapa para colocar la ciudad seleccionada.</string>
+                    <string>Click on the map to place the selected city.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -750,7 +750,7 @@
                  <item>
                   <widget class="QLabel" name="labelEntry">
                    <property name="text">
-                    <string>Entrada</string>
+                    <string>Entry</string>
                    </property>
                   </widget>
                  </item>
@@ -760,7 +760,7 @@
                  <item>
                   <widget class="QLabel" name="labelEnvironments">
                    <property name="text">
-                    <string>Entornos</string>
+                    <string>Environments</string>
                    </property>
                   </widget>
                  </item>
@@ -980,7 +980,7 @@
                  <item>
                   <widget class="QLabel" name="labelWall">
                    <property name="text">
-                    <string>Pared</string>
+                    <string>Wall</string>
                    </property>
                   </widget>
                  </item>
@@ -994,7 +994,7 @@
                  <item>
                   <widget class="QLabel" name="labelExit">
                    <property name="text">
-                    <string>Salida</string>
+                    <string>Exit</string>
                    </property>
                   </widget>
                  </item>
@@ -1031,7 +1031,7 @@
                  <item>
                   <widget class="QLabel" name="labelFloorHint">
                    <property name="text">
-                    <string>Click para colocar el modificador de piso. No bloquea el paso.</string>
+                    <string>Click to place the floor modifier. It does not block movement.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -1058,7 +1058,7 @@
              <item>
               <widget class="QLabel" name="labelEditingTarget">
                <property name="text">
-                <string>Editando: mapa principal</string>
+                <string>Editing: main map</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>

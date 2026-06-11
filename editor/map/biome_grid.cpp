@@ -87,6 +87,7 @@ std::vector<int> computeBiomeOwners(int width, int height,
     return owner;
 }
 
+// Calcula las celdas exteriores del mapa, para los environments.
 std::vector<bool> computeExteriorCells(int width, int height,
                                        const std::vector<bool>& is_wall) {
     std::vector<bool> is_exterior(static_cast<size_t>(width) * height, false);

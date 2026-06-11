@@ -43,10 +43,12 @@ MapCanvas::MapCanvas(const TemplateRegistry& templates, QWidget* parent):
     // añadir vista al layout
     layout->addWidget(view_);
     // botones guardar, zoom in y zoom out
-    auto* save_button = new QPushButton(QStringLiteral("Guardar mapa"), this);
+    auto* save_button = new QPushButton(QStringLiteral("Save map"), this);
     save_button->setProperty("primary", true);
     auto* zoom_in_button = new QPushButton(QStringLiteral("+"), this);
     auto* zoom_out_button = new QPushButton(QStringLiteral("–"), this);
+    zoom_in_button->setMaximumWidth(85);
+    zoom_out_button->setMaximumWidth(85);
     // layout de botones
     auto* buttons = new QHBoxLayout();
     buttons->addWidget(save_button);
@@ -237,7 +239,7 @@ bool MapCanvas::placeEntryItem(const QString& entry_id, const QString& environme
                                const QString& template_id, int cell_x, int cell_y) {
     QString error;
     if (!controller_->placeEntry(entry_id, environment_id, template_id, cell_x, cell_y, error)) {
-        QMessageBox::warning(this, QStringLiteral("Entrada"), error);
+        QMessageBox::warning(this, QStringLiteral("Entry"), error);
         return false;
     }
     return true;
@@ -254,7 +256,7 @@ bool MapCanvas::fitsInMap(int cell_x, int cell_y, int w, int h, const QString& n
         return true;
     }
     QMessageBox::warning(this, name,
-                         QStringLiteral("%1 no entra en el mapa desde esa posición.").arg(name));
+                         QStringLiteral("%1 does not fit in the map from that position.").arg(name));
     return false;
 }
 
@@ -327,12 +329,12 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
 void MapCanvas::requestEntryAt(int cell_x, int cell_y) {
     const auto* entry = templates_.find_entry(active_tool_.entry_template_id.toStdString());
     if (!entry) {
-        QMessageBox::warning(this, QStringLiteral("Entrada"),
-                             QStringLiteral("Template de entrada inválido."));
+        QMessageBox::warning(this, QStringLiteral("Entry"),
+                             QStringLiteral("Invalid entry template."));
         return;
     }
 
-    if (!fitsInMap(cell_x, cell_y, entry->width, entry->height, QStringLiteral("Entrada"))) {
+    if (!fitsInMap(cell_x, cell_y, entry->width, entry->height, QStringLiteral("Entry"))) {
         return;
     }
 
@@ -405,7 +407,7 @@ void MapCanvas::handleHoverMove(const QPoint& view_pos) {
 
     const auto spawns = controller_->biomeSpawnsFor(zone_id);
     if (spawns.empty()) {
-        text += QStringLiteral("Sin spawns configurados.");
+        text += QStringLiteral("No spawns configured.");
     } else {
         for (const auto& spawn: spawns) {
             text += QStringLiteral("• %1: %2\n")
@@ -419,20 +421,20 @@ void MapCanvas::handleHoverMove(const QPoint& view_pos) {
 void MapCanvas::placeCityAt(int cell_x, int cell_y) {
     const auto* city = templates_.find_city(active_tool_.city_template_id.toStdString());
     if (!city) {
-        QMessageBox::warning(this, QStringLiteral("Ciudad"),
-                             QStringLiteral("Template de ciudad inválido."));
+        QMessageBox::warning(this, QStringLiteral("City"),
+                             QStringLiteral("Invalid city template."));
         return;
     }
 
     if (!fitsInMap(cell_x, cell_y, city->default_width, city->default_height,
-                   QStringLiteral("Ciudad"))) {
+                   QStringLiteral("City"))) {
         return;
     }
 
     QString error;
     if (!controller_->placeCityZone(active_tool_, cell_x, cell_y, city->default_width,
                                     city->default_height, error)) {
-        QMessageBox::warning(this, QStringLiteral("Ciudad"), error);
+        QMessageBox::warning(this, QStringLiteral("City"), error);
         return;
     }
 
@@ -462,19 +464,19 @@ void MapCanvas::placeObstacleAt(int cell_x, int cell_y) {
     const auto* obstacle =
             templates_.find_obstacle(active_tool_.obstacle_template_id.toStdString());
     if (!obstacle) {
-        QMessageBox::warning(this, QStringLiteral("Obstáculo"),
-                             QStringLiteral("Template de obstáculo inválido."));
+        QMessageBox::warning(this, QStringLiteral("Obstacle"),
+                             QStringLiteral("Invalid obstacle template."));
         return;
     }
 
     if (!fitsInMap(cell_x, cell_y, obstacle->width, obstacle->height,
-                   QStringLiteral("Obstáculo"))) {
+                   QStringLiteral("Obstacle"))) {
         return;
     }
 
     QString error;
     if (!controller_->placeObstacle(active_tool_, cell_x, cell_y, error)) {
-        QMessageBox::warning(this, QStringLiteral("Obstáculo"), error);
+        QMessageBox::warning(this, QStringLiteral("Obstacle"), error);
     }
 }
 
@@ -482,18 +484,18 @@ void MapCanvas::placeObstacleAt(int cell_x, int cell_y) {
 void MapCanvas::placeWallAt(int cell_x, int cell_y) {
     const auto* wall = templates_.find_wall(active_tool_.wall_template_id.toStdString());
     if (!wall) {
-        QMessageBox::warning(this, QStringLiteral("Pared"),
-                             QStringLiteral("Template de pared inválido."));
+        QMessageBox::warning(this, QStringLiteral("Wall"),
+                             QStringLiteral("Invalid wall template."));
         return;
     }
 
-    if (!fitsInMap(cell_x, cell_y, wall->width, wall->height, QStringLiteral("Pared"))) {
+    if (!fitsInMap(cell_x, cell_y, wall->width, wall->height, QStringLiteral("Wall"))) {
         return;
     }
 
     QString error;
     if (!controller_->placeWall(active_tool_, cell_x, cell_y, error)) {
-        QMessageBox::warning(this, QStringLiteral("Pared"), error);
+        QMessageBox::warning(this, QStringLiteral("Wall"), error);
         return;
     }
     rebuildEnvironmentLayers();
@@ -503,18 +505,18 @@ void MapCanvas::placeWallAt(int cell_x, int cell_y) {
 void MapCanvas::placeExitAt(int cell_x, int cell_y) {
     const auto* exit = templates_.find_exit(active_tool_.exit_template_id.toStdString());
     if (!exit) {
-        QMessageBox::warning(this, QStringLiteral("Salida"),
-                             QStringLiteral("Template de salida inválido."));
+        QMessageBox::warning(this, QStringLiteral("Exit"),
+                             QStringLiteral("Invalid exit template."));
         return;
     }
 
-    if (!fitsInMap(cell_x, cell_y, exit->width, exit->height, QStringLiteral("Salida"))) {
+    if (!fitsInMap(cell_x, cell_y, exit->width, exit->height, QStringLiteral("Exit"))) {
         return;
     }
 
     QString error;
     if (!controller_->placeExit(active_tool_, cell_x, cell_y, error)) {
-        QMessageBox::warning(this, QStringLiteral("Salida"), error);
+        QMessageBox::warning(this, QStringLiteral("Exit"), error);
         return;
     }
 }
@@ -549,14 +551,14 @@ void MapCanvas::loadFloorsFromGrid(const MapDocument& document) {
 void MapCanvas::placeFloorAt(int cell_x, int cell_y) {
     const auto* floor = templates_.find_floor(active_tool_.floor_template_id.toStdString());
     if (!floor) {
-        QMessageBox::warning(this, QStringLiteral("Piso"),
-                             QStringLiteral("Modificador de piso inválido."));
+        QMessageBox::warning(this, QStringLiteral("Floor"),
+                             QStringLiteral("Invalid floor modifier."));
         return;
     }
 
     QString error;
     if (!controller_->placeFloor(active_tool_, cell_x, cell_y, error)) {
-        QMessageBox::warning(this, QStringLiteral("Piso"), error);
+        QMessageBox::warning(this, QStringLiteral("Floor"), error);
     }
 }
 
@@ -586,7 +588,7 @@ void MapCanvas::editBiomeSpawnsAt(int cell_x, int cell_y) {
     const auto* biome = templates_.find_biome(template_id.toStdString());
     if (!biome) {
         QMessageBox::warning(this, QStringLiteral("Biome"),
-                             QStringLiteral("Template de bioma inválido."));
+                             QStringLiteral("Invalid biome template."));
         return;
     }
 
@@ -615,7 +617,7 @@ void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     const auto* biome = templates_.find_biome(active_tool_.biome_template_id.toStdString());
     if (!biome) {
         QMessageBox::warning(this, QStringLiteral("Biome"),
-                             QStringLiteral("Template de bioma inválido."));
+                             QStringLiteral("Invalid biome template."));
         return;
     }
     // si el bioma no tiene criaturas disponibles, saltear el diálogo

@@ -83,13 +83,13 @@ bool SceneController::placePlayerSpawn(int cell_x, int cell_y, QString& error) {
 
 bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error) {
     if (tool.obstacle_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de obstáculo.");
+        error = QStringLiteral("Select an obstacle template.");
         return false;
     }
 
     const auto* obstacle = templates_.find_obstacle(tool.obstacle_template_id.toStdString());
     if (!obstacle) {
-        error = QStringLiteral("Template de obstáculo inválido.");
+        error = QStringLiteral("Invalid obstacle template.");
         return false;
     }
 
@@ -106,11 +106,11 @@ bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y
 bool SceneController::placeCityZone(const ToolInfo& tool, int cell_x, int cell_y, int width,
                                     int height, QString& error, const QString& zone_id) {
     if (tool.city_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de ciudad.");
+        error = QStringLiteral("Select a city template.");
         return false;
     }
     if (width <= 0 || height <= 0) {
-        error = QStringLiteral("El área de la zona es inválida.");
+        error = QStringLiteral("The zone area is invalid.");
         return false;
     }
 
@@ -131,13 +131,13 @@ bool SceneController::placeEntry(const QString& entry_id, const QString& environ
                                  const QString& template_id, int cell_x, int cell_y,
                                  QString& error) {
     if (template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de entrada.");
+        error = QStringLiteral("Select an entry template.");
         return false;
     }
 
     const auto* tpl = templates_.find_entry(template_id.toStdString());
     if (!tpl) {
-        error = QStringLiteral("Template de entrada inválido.");
+        error = QStringLiteral("Invalid entry template.");
         return false;
     }
 
@@ -153,13 +153,13 @@ bool SceneController::placeEntry(const QString& entry_id, const QString& environ
 bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
                                 const QString& wall_id) {
     if (tool.wall_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de pared.");
+        error = QStringLiteral("Select a wall template.");
         return false;
     }
 
     const auto* wall_tpl = templates_.find_wall(tool.wall_template_id.toStdString());
     if (!wall_tpl) {
-        error = QStringLiteral("Template de pared inválido.");
+        error = QStringLiteral("Invalid wall template.");
         return false;
     }
 
@@ -177,13 +177,13 @@ bool SceneController::placeWall(const ToolInfo& tool, int cell_x, int cell_y, QS
 bool SceneController::placeExit(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
                                 const QString& exit_id) {
     if (tool.exit_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de salida.");
+        error = QStringLiteral("Select an exit template.");
         return false;
     }
 
     const auto* exit_tpl = templates_.find_exit(tool.exit_template_id.toStdString());
     if (!exit_tpl) {
-        error = QStringLiteral("Template de salida inválido.");
+        error = QStringLiteral("Invalid exit template.");
         return false;
     }
 
@@ -201,13 +201,13 @@ bool SceneController::placeExit(const ToolInfo& tool, int cell_x, int cell_y, QS
 bool SceneController::placeFloor(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
                                  const QString& floor_id) {
     if (tool.floor_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un modificador de piso.");
+        error = QStringLiteral("Select a floor modifier.");
         return false;
     }
 
     const auto* floor = templates_.find_floor(tool.floor_template_id.toStdString());
     if (!floor) {
-        error = QStringLiteral("Modificador de piso inválido.");
+        error = QStringLiteral("Invalid floor modifier.");
         return false;
     }
 
@@ -250,11 +250,11 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
                                      int height, const std::vector<CreatureSpawn>& spawns,
                                      QString& error, const QString& zone_id) {
     if (tool.biome_template_id.isEmpty()) {
-        error = QStringLiteral("Seleccioná un template de bioma.");
+        error = QStringLiteral("Select a biome template.");
         return false;
     }
     if (width <= 0 || height <= 0) {
-        error = QStringLiteral("El área de la zona es inválida.");
+        error = QStringLiteral("The zone area is invalid.");
         return false;
     }
 
