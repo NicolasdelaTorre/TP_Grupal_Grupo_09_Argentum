@@ -6,13 +6,8 @@
 #include "../stats_definition.h"
 #include <iostream>
 
-<<<<<<< HEAD
-Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y, mapId), isAlive(true) {
-    // Rangos de level por zona vienen del TOML.
-=======
 Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, std::string biomeType) : NPC(id, name, x, y, mapId), isAlive(true), biomeType(biomeType) {
     // Set level
->>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
     srand(time(nullptr));
     CreatureSpawnConfig sp = StatsDefinition().getSpawnConfig();
     if (mapId == 0) {

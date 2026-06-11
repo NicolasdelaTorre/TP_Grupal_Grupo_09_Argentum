@@ -141,11 +141,7 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             targetCell.isWalkable = false;
 
             // Save npc
-<<<<<<< HEAD
-            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, mapId, pos.x, pos.y);
-=======
             npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y, biome.type);
->>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
 
             if (spawnInfo.creature == "")
                 std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
@@ -495,9 +491,7 @@ bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int
 }
 
 void Map::removeEntity(int16_t x, int16_t y, uint8_t mapId, bool isPlayer) {
-    std::vector<Cell>* cells = &this->cells;
     if (isInBounds(x, y, mapId)) {
-<<<<<<< HEAD
         std::vector<Cell>* cells = &this->cells;
         if (mapId > 0) {
             for (auto& entry: entries) {
@@ -508,14 +502,11 @@ void Map::removeEntity(int16_t x, int16_t y, uint8_t mapId, bool isPlayer) {
             }
         }
 
-        (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].playerId = 0;
-=======
         if (isPlayer) {
             (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].playerId = 0;
         } else {
             (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].npcId = 0;
         }
->>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
     }
 }
 

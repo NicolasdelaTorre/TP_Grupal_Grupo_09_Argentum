@@ -9,6 +9,7 @@
 #include "NPC/creature.h"
 #include "stats_definition.h"
 #include "toml.hpp"
+#include "attribute_manager.h"
 
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
@@ -278,10 +279,7 @@ void Game::checkEntry(int playerId) {
         // El jugador pisó una entrada a dungeon o una salida (si ya está en
         // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
         uint8_t currentMapId = itPlayer->second.getMapId();
-<<<<<<< HEAD
-=======
         map.removeEntity(pos.x, pos.y, currentMapId, true);
->>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
 
         // Si veníamos del overworld vamos a la dungeon; si veníamos de una
         // dungeon, salimos al overworld.
@@ -295,7 +293,7 @@ void Game::checkEntry(int playerId) {
             Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
         } else {
-            map.removePlayer(pos.x, pos.y, currentMapId);
+            map.removeEntity(pos.x, pos.y, currentMapId, true);
             map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(0);
             Position entryPosition = map.getEntryPosition(currentMapId);
@@ -374,22 +372,16 @@ std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t tar
     uint8_t tgtLvl = npc->getLevel();
     uint16_t tgtMaxHp = npc->getMaxHealth();
     npc->receiveDamage(damage);
-<<<<<<< HEAD
     FormulaConstants f = StatsDefinition().getFormulas();
     int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
     itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
     if (npc->isDead()) {
+        Position npcPos = npc->getPosition();
+        map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
+        
         uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
         itPlayer->second.grantExp(kill * factor);
     }
-=======
-
-    if (npc->isDead()) {
-        Position npcPos = npc->getPosition();
-        map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
-    }
-
->>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
     return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
 }
 

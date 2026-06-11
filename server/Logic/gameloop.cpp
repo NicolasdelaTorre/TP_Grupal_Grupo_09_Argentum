@@ -277,9 +277,6 @@ void Gameloop::NPCTurns() {
     for (uint16_t npcId: npcsToRevive) {
         Creature* npc = map.getNPC(npcId);
 
-        if (npc->isDead())
-            continue;
-
         npc->resurrect();
 
         Position randomPosition = map.getRandomPosition(npc->getBiomeType(), npc->getMapId());
