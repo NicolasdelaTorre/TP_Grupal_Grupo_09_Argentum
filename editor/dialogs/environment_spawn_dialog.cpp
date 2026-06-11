@@ -30,7 +30,7 @@ EnvironmentSpawnDialog::EnvironmentSpawnDialog(const QString& environment_name,
                                                const std::vector<CreatureSpawn>& initial_spawns,
                                                QWidget* parent):
         QDialog(parent) {
-    setWindowTitle(QStringLiteral("Criaturas del entorno"));
+    setWindowTitle(QStringLiteral("Environment creatures"));
     resize(440, 360);
 
     auto* layout = new QVBoxLayout(this);
@@ -73,7 +73,7 @@ EnvironmentSpawnDialog::EnvironmentSpawnDialog(const QString& environment_name,
         ++row;
     }
 
-    // Las criaturas pueden ser muchas: envolver el grid en un área desplazable.
+    // desplazable
     auto* grid_container = new QWidget();
     grid_container->setLayout(grid);
     auto* scroll = new QScrollArea();

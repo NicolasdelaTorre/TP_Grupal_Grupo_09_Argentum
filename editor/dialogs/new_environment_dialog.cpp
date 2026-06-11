@@ -8,7 +8,7 @@
 NewEnvironmentDialog::NewEnvironmentDialog(const QString& type_display_name,
                                            const QString& suggested_name, QWidget* parent):
         QDialog(parent) {
-    setWindowTitle(QStringLiteral("Nuevo entorno"));
+    setWindowTitle(QStringLiteral("New environment"));
 
     name_input_ = new QLineEdit(suggested_name);
 
@@ -16,8 +16,8 @@ NewEnvironmentDialog::NewEnvironmentDialog(const QString& type_display_name,
     type_field->setEnabled(false);
 
     auto* form = new QFormLayout();
-    form->addRow(QStringLiteral("Tipo"), type_field);
-    form->addRow(QStringLiteral("Nombre"), name_input_);
+    form->addRow(QStringLiteral("Type"), type_field);
+    form->addRow(QStringLiteral("Name"), name_input_);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
