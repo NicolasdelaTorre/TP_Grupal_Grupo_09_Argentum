@@ -127,6 +127,8 @@ public:
         int attackerId = -1;
         int targetId = -1;       // id del player atacado o -1 si era NPC
         uint8_t targetType = 0;  // 0 = player, 1 = npc
+        // Si fair play bloqueo el ataque, mensaje listo para enviar al chat del atacante.
+        std::string blockedReason;
     };
 
     // Resuelve un ataque del playerId contra un target. La lógica de validar

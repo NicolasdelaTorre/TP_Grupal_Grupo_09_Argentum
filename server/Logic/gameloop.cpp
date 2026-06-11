@@ -497,7 +497,14 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
         return;
     }
     Game::AttackOutcome outcome = game.processAttack(playerId, targetType, targetId);
-    if (!outcome.valid) return;
+    if (!outcome.valid) {
+        if (!outcome.blockedReason.empty()) {
+            clientMonitor.sendToClient(
+                    playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(),
+                                                                   outcome.blockedReason));
+        }
+        return;
+    }
 
     clientMonitor.broadcast(outcome.event);
     notifyAttackOutcome(clientMonitor, outcome);

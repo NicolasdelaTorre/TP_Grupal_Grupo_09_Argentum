@@ -24,6 +24,8 @@ AttributeManager::AttributeManager(const std::string& filename) {
     attributes.formulas.expLevelDiffBase = toml::find<uint8_t>(config, "formula", "experience", "levelDiffBase");
     attributes.formulas.evadeThreshold = toml::find<float>(config, "formula", "combat", "evadeThreshold");
     attributes.formulas.criticalChancePct = toml::find<uint8_t>(config, "formula", "combat", "criticalChancePct");
+    attributes.formulas.fairPlayNewbieLevel = toml::find<uint8_t>(config, "formula", "fairplay", "newbieLevel");
+    attributes.formulas.fairPlayMaxLevelDiff = toml::find<uint8_t>(config, "formula", "fairplay", "maxLevelDiff");
 
     attributes.loot.nothingChance = toml::find<uint8_t>(config, "loot", "npc", "nothingChance");
     attributes.loot.goldChance = toml::find<uint8_t>(config, "loot", "npc", "goldChance");

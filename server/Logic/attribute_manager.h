@@ -35,6 +35,8 @@ struct FormulaConstants {
     uint8_t expLevelDiffBase;
     float evadeThreshold;
     uint8_t criticalChancePct;
+    uint8_t fairPlayNewbieLevel;
+    uint8_t fairPlayMaxLevelDiff;
 };
 
 // Probabilidades y rangos para el drop al matar una criatura.

@@ -77,6 +77,13 @@ evadeThreshold = 0.001
 # Crítico: chance entera en %. El crítico hace doble daño y no puede ser esquivado.
 criticalChancePct = 5
 
+# Fair play (enunciado). Aplica solo en PvP.
+[formula.fairplay]
+# Nivel maximo para ser "newbie". Newbies no pueden atacar ni ser atacados.
+newbieLevel = 2
+# Diferencia maxima de niveles permitida entre atacante y target.
+maxLevelDiff = 10
+
 # Loot al matar criaturas (probabilidades acumuladas en % sobre 100).
 [loot.npc]
 nothingChance = 80
