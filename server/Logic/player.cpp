@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <utility>
 
 Player::Player(const std::string& name, Position position, RaceCode race, ClassCode class_):
@@ -162,6 +163,26 @@ uint16_t Player::dealDamage() {
                                     equippedWeapon.getMaxDamage());
 
     return damage;
+}
+
+// Tira un rand uniforme entre min y max inclusive.
+static uint16_t randRange(uint16_t min, uint16_t max) {
+    if (max <= min) return min;
+    return min + std::rand() % (max - min + 1);
+}
+
+uint16_t Player::rollDefense() {
+    uint16_t total = 0;
+    if (!equippedArmor.emptyItem()) {
+        total += randRange(equippedArmor.getMinDefense(), equippedArmor.getMaxDefense());
+    }
+    if (!equippedHelmet.emptyItem()) {
+        total += randRange(equippedHelmet.getMinDefense(), equippedHelmet.getMaxDefense());
+    }
+    if (!equippedShield.emptyItem()) {
+        total += randRange(equippedShield.getMinDefense(), equippedShield.getMaxDefense());
+    }
+    return total;
 }
 
 bool Player::addItem(const std::string& itemName) {

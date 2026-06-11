@@ -118,6 +118,20 @@ uint16_t Item::getMaxDamage() const {
     return maxDamage;
 }
 
+uint16_t Item::getMinDefense() const {
+    if (type != ItemType::ARMOR && type != ItemType::HELMET && type != ItemType::SHIELD) {
+        throw std::runtime_error("Item Error: trying to get defense of non-defensive item");
+    }
+    return minDefense;
+}
+
+uint16_t Item::getMaxDefense() const {
+    if (type != ItemType::ARMOR && type != ItemType::HELMET && type != ItemType::SHIELD) {
+        throw std::runtime_error("Item Error: trying to get defense of non-defensive item");
+    }
+    return maxDefense;
+}
+
 ItemType Item::getType() const {
     if (id == 0) {
         throw std::runtime_error("Item Error: trying to get type of empty item");

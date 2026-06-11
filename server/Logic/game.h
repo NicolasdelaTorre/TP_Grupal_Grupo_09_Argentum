@@ -54,8 +54,7 @@ private:
     // True si ningún jugador está parado en pos.
     bool isPositionFree(Position pos) const;
 
-    // Stub de evasión. TODO(team-gameplay): implementar fórmula real con
-    // dexterity del atacante vs defensor. Hoy retorna false (nunca evade).
+
     bool tryEvade(int attackerId, int targetId) const;
 
     void checkEntry(int playerId);
@@ -227,7 +226,7 @@ public:
 
     InventorySnapshot getInventorySnapshot(int playerId) const;
 
-    bool applyNPCAttack(uint8_t playerId, uint16_t damage);
+    uint16_t applyNPCAttack(uint8_t playerId, uint16_t rawDamage);
 
     bool checkIfPlayerIsMeditating(int playerId) const;
 

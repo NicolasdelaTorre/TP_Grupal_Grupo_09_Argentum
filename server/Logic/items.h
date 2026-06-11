@@ -51,6 +51,10 @@ public:
 
     uint16_t getMaxDamage() const;
 
+    uint16_t getMinDefense() const;
+
+    uint16_t getMaxDefense() const;
+
     ItemType getType() const;
 
     uint16_t getHealthRestore() const;

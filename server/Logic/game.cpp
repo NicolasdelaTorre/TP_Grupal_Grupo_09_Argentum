@@ -359,8 +359,10 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
                                                                 0, false);
             return outcome;
         }
-        uint16_t damage = itPlayer->second.dealDamage();
-        if (isCritical) damage *= 2;
+        uint16_t rawDamage = itPlayer->second.dealDamage();
+        if (isCritical) rawDamage *= 2;
+        uint16_t def = itTarget->second.rollDefense();
+        uint16_t damage = (def >= rawDamage) ? 0 : (rawDamage - def);
         uint8_t tgtLvl = itTarget->second.getData().level;
         uint16_t tgtMaxHp = itTarget->second.getMaxHealth();
         itTarget->second.receiveDamage(damage);
@@ -918,13 +920,13 @@ Game::InventorySnapshot Game::getInventorySnapshot(int playerId) const {
     return snap;
 }
 
-bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
+uint16_t Game::applyNPCAttack(uint8_t playerId, uint16_t rawDamage) {
     auto it = players.find(playerId);
-    if (it == players.end()) {
-        return false;
-    }
-    it->second.receiveDamage(damage);
-    return true;
+    if (it == players.end()) return 0;
+    uint16_t def = it->second.rollDefense();
+    uint16_t finalDmg = (def >= rawDamage) ? 0 : (rawDamage - def);
+    it->second.receiveDamage(finalDmg);
+    return finalDmg;
 }
 
 bool Game::checkIfPlayerIsMeditating(int playerId) const {

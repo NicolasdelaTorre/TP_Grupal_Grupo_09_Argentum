@@ -105,6 +105,9 @@ public:
 
     uint16_t dealDamage();
 
+    // Tirada de defensa
+    uint16_t rollDefense();
+
     bool addItem(const std::string& itemName);
 
     // Saca el primer item del inventario con ese nombre. Devuelve el itemId
