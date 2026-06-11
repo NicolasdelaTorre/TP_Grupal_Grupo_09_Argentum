@@ -414,6 +414,7 @@ void Gameloop::handleTurn(int playerId, MoveDirection direction) {
 void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId) {
     if (!game.hasPlayer(playerId))
         return;
+
     // Un fantasma no puede atacar a nadie.
     if (game.isPlayerGhost(playerId)) {
         clientMonitor.sendToClient(
@@ -421,6 +422,7 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
                                   0, std::string(), "Estás muerto, no podés atacar"));
         return;
     }
+    
     auto ev = game.processAttack(playerId, targetType, targetId);
     if (!ev) {
         std::cout << "ATTACK from player=" << playerId << " ttype=" << (int)targetType
@@ -541,6 +543,7 @@ void Gameloop::handleDrop(int playerId, uint8_t invSlot) {
 void Gameloop::handleEquip(int playerId, uint8_t invSlot) {
     if (!game.hasPlayer(playerId))
         return;
+
     if (game.isPlayerGhost(playerId)) {
         clientMonitor.sendToClient(
                 playerId, std::make_shared<ChatBroadcastEvent>(

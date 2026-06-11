@@ -162,8 +162,20 @@ uint16_t Player::dealDamage() {
 
     isMeditating = false;
 
-    return StatsDefinition().damage(data.race, equippedWeapon.getMinDamage(),
+    if (equippedWeapon.getType() == ItemType::MAGIC) {
+        uint16_t manaCost = equippedWeapon.getManaWaste();
+        if (manaCost > data.mana && !infiniteMana) {
+            std::cout << "Player " << name << " tried to cast a spell but didn't have enough mana!" << std::endl;
+            return 0;
+        }
+
+        data.mana -= manaCost;
+    }
+
+    uint16_t damage = StatsDefinition().damage(data.race, equippedWeapon.getMinDamage(),
                                     equippedWeapon.getMaxDamage());
+
+    return damage;
 }
 
 bool Player::addItem(const std::string& itemName) {
@@ -228,6 +240,18 @@ bool Player::equipItem(int inventorySlot) {
         case ItemType::SHIELD:
             equippedShield = itemToEquip;
             data.equippedShield = equippedShield.getId();
+            break;
+        case ItemType::HEALTH_POTION:
+            data.health = std::min<uint16_t>(data.health + itemToEquip.getHealthRestore(), maxHealth);
+            data.inventory[inventorySlot] = 0;
+            inventory.erase(inventory.begin() + inventorySlot);
+            std::cout << "Player " << name << " used a health potion and restored " << itemToEquip.getHealthRestore() << " health!" << std::endl;
+            break;
+        case ItemType::MANA_POTION:
+            data.mana = std::min<uint16_t>(data.mana + itemToEquip.getManaRestore(), maxMana);
+            data.inventory[inventorySlot] = 0;
+            inventory.erase(inventory.begin() + inventorySlot);
+            std::cout << "Player " << name << " used a mana potion and restored " << itemToEquip.getManaRestore() << " mana!" << std::endl;
             break;
         default:
             throw std::runtime_error("Player Error: trying to equip an item that is not exist");

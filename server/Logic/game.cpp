@@ -851,6 +851,7 @@ bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
     if (it == players.end()) {
         return false;
     }
+    
     bool ok = it->second.equipItem(static_cast<int>(invSlot));
     std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot << " ok=" << ok
               << std::endl;
@@ -903,29 +904,6 @@ bool Game::applyNPCAttack(uint8_t playerId, uint16_t damage) {
     it->second.receiveDamage(damage);
     return true;
 }
-
-/*
-bool Game::processChatCommand(int playerId, const std::string& chatCommand) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-
-    if (chatCommand == "meditar") {
-        // Command: /meditar
-        itPlayer->second.switchMeditationState();
-    } else if (chatCommand == "resucitar") {
-        // Command: /resucitar
-        if (itPlayer->second.isAlive()) {
-            return false;
-        }
-
-        itPlayer->second.startTeleporting();
-    }
-
-    return true;
-}
-    */
 
 bool Game::checkIfPlayerIsMeditating(int playerId) const {
     auto itPlayer = players.find(playerId);
