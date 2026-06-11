@@ -22,6 +22,8 @@ public:
 
     void updatePlayerData(const std::string& name, PlayerData data);
 
+    void saveBankAccount(const BankAccount& account);
+
     BankAccount loadBankAccount(const std::string& name);
 
     bool checkBankAccountExists(const std::string& name);

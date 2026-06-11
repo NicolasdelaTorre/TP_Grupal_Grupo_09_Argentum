@@ -146,6 +146,17 @@ void BinaryParser::updatePlayerData(const std::string& name, PlayerData data) {
     }
 }
 
+void BinaryParser::saveBankAccount(const BankAccount& account) {
+    std::ofstream bankFile("server/Logic/NPC/bank_accounts.bin", std::ios::binary | std::ios::app);
+    if (!bankFile.is_open()) return;
+
+    uint16_t nameLength = account.name.size();
+    bankFile.write(reinterpret_cast<const char*>(&nameLength), sizeof(nameLength));
+    bankFile.write(account.name.c_str(), nameLength);
+    bankFile.write(reinterpret_cast<const char*>(&account.gold), sizeof(account.gold));
+    bankFile.write(reinterpret_cast<const char*>(account.items), sizeof(account.items));
+}
+
 BankAccount BinaryParser::loadBankAccount(const std::string& name) {
     std::ifstream bankFile("server/Logic/NPC/bank_accounts.bin", std::ios::binary);
     if (!bankFile.is_open()) {
@@ -212,6 +223,12 @@ bool BinaryParser::checkBankAccountExists(const std::string& name) {
         if (!bankFile.read(reinterpret_cast<char*>(&dataOffset), sizeof(dataOffset))) {
             break;
         }
+
+        int32_t dataGold = 0;
+        if (!bankFile.read(reinterpret_cast<char*>(&dataGold), sizeof(dataGold))) break;
+
+        uint8_t items[N];
+        if (!bankFile.read(reinterpret_cast<char*>(items), sizeof(items))) break;
 
         if (storedName == name) {
             return true;
