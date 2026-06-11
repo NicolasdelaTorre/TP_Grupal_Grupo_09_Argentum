@@ -190,6 +190,24 @@ bool GameScreen::handleEvents(float dt) {
         if (e.type == SDL_QUIT)
             return false;
 
+        // Rueda del mouse sobre la caja de chat → scrollear el historial.
+        // Funciona en cualquier modo (chat activo o no).
+        if (e.type == SDL_MOUSEWHEEL) {
+            int mx, my;
+            SDL_GetMouseState(&mx, &my);
+            int boxW = screenW - hudPanelW();
+            int boxH = chatBoxH();
+            if (mx >= 0 && mx < boxW && my >= 0 && my < boxH) {
+                if (e.wheel.y > 0) {
+                    chatScroll++;  // rueda hacia arriba → hacia el historial viejo.
+                } else if (e.wheel.y < 0 && chatScroll > 0) {
+                    chatScroll--;  // hacia abajo → hacia lo más nuevo.
+                }
+                clampChatScroll();
+            }
+            continue;
+        }
+
         // Modo chat: capturamos texto y volamos cualquier otro input.
         if (chatActive) {
             if (e.type == SDL_TEXTINPUT) {
@@ -758,10 +776,23 @@ int GameScreen::chatBoxH() const { return (int)(CHAT_BOX_H * uiScale()); }
 
 void GameScreen::addChatLine(const std::string& line) {
     chatHistory.push_back(line);
-    if (chatHistory.size() > MAX_CHAT_LINES) {
+    if (chatHistory.size() > MAX_CHAT_HISTORY) {
         chatHistory.erase(chatHistory.begin(),
-                          chatHistory.end() - static_cast<long>(MAX_CHAT_LINES));
+                          chatHistory.end() - static_cast<long>(MAX_CHAT_HISTORY));
     }
+    // "Stay where I am": si el usuario estaba scrolleado hacia arriba leyendo
+    // historial, corremos el offset una línea para que la nueva no le mueva la
+    // vista. Si estaba abajo (chatScroll==0) sigue viendo lo más nuevo.
+    if (chatScroll > 0)
+        chatScroll++;
+    clampChatScroll();
+}
+
+void GameScreen::clampChatScroll() {
+    size_t maxScroll =
+            chatHistory.size() > MAX_CHAT_LINES ? chatHistory.size() - MAX_CHAT_LINES : 0;
+    if (chatScroll > maxScroll)
+        chatScroll = maxScroll;
 }
 
 void GameScreen::renderInventoryPanel() {
@@ -1048,8 +1079,12 @@ void GameScreen::renderChat() {
     int lineH = (int)(CHAT_LINE_H * scale);
     int pad = (int)(CHAT_PAD * scale);
 
-    // Historial: hasta MAX_CHAT_LINES desde arriba.
-    for (size_t i = 0; i < chatHistory.size(); i++) {
+    // Ventana visible del historial: MAX_CHAT_LINES líneas, desplazada por
+    // chatScroll desde el fondo. clampChatScroll() garantiza el rango válido.
+    const size_t total = chatHistory.size();
+    const size_t end = total - chatScroll;  // índice exclusivo de la más nueva visible.
+    const size_t start = end > MAX_CHAT_LINES ? end - MAX_CHAT_LINES : 0;
+    for (size_t i = start; i < end; i++) {
         const std::string& text = chatHistory[i];
         if (text.empty()) continue;
         try {
@@ -1057,9 +1092,29 @@ void GameScreen::renderChat() {
             SDL2pp::Texture tex(renderer, surface);
             int tw = tex.GetWidth();
             int th = tex.GetHeight();
+            int row = (int)(i - start);
             renderer.Copy(tex, SDL2pp::NullOpt,
-                          SDL2pp::Rect(pad, pad + (int)i * lineH, tw, th));
+                          SDL2pp::Rect(pad, pad + row * lineH, tw, th));
         } catch (...) {}
+    }
+
+    // Scrollbar fina sobre el borde derecho del área de historial. Solo si hay
+    // más líneas de las que entran. El thumb sube al scrollear hacia el pasado.
+    if (total > MAX_CHAT_LINES) {
+        const int historyH = (int)MAX_CHAT_LINES * lineH;
+        const int sbW = std::max(3, (int)(4 * scale));
+        const int sbX = BAR_W - sbW - pad;
+        const size_t maxScroll = total - MAX_CHAT_LINES;
+        int thumbH = std::max((int)(10 * scale),
+                              (int)(historyH * (float)MAX_CHAT_LINES / (float)total));
+        float frac = maxScroll > 0 ? (float)chatScroll / (float)maxScroll : 0.0f;
+        int thumbY = pad + (int)((historyH - thumbH) * (1.0f - frac));
+        // Riel de fondo.
+        renderer.SetDrawColor(255, 255, 255, 40);
+        renderer.FillRect(SDL2pp::Rect(sbX, pad, sbW, historyH));
+        // Thumb.
+        renderer.SetDrawColor(255, 255, 255, 150);
+        renderer.FillRect(SDL2pp::Rect(sbX, thumbY, sbW, thumbH));
     }
 
     // Linea de input (solo si chat activo). Prefijo ">".
