@@ -19,10 +19,7 @@ public:
             return it->second;
 
         std::string path = basePath + "/" + filename;
-        // Si un PNG no se puede cargar (falta, mal exportado, formato no
-        // soportado) NO propagamos la excepción: eso reventaría el frame y, al
-        // saltarse el cleanup de los hilos, abortaría el proceso. En su lugar
-        // cacheamos un placeholder magenta visible y seguimos dibujando.
+        
         try {
             cache.emplace(filename, SDL2pp::Texture(renderer, SDL2pp::Surface(path)));
         } catch (const std::exception& e) {

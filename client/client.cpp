@@ -11,6 +11,7 @@
 #include "../common/Communication/events/server_events.h"
 #include "../common/Communication/message_types.h"
 
+#include "character_creation_screen.h"
 #include "GameScreen.h"
 #include "head_selection_screen.h"
 #include "login_screen.h"
@@ -38,9 +39,16 @@ void Client::run() {
         return;
 
     // Handshake sincrónico (login + mapa) antes de arrancar los hilos.
-    // Raza/clase hardcodeadas hasta que haya UI para elegirlas.
+    // Antes de avisar al server elegimos raza y clase. Para usuarios que ya
+    // existen el server ignora estos valores (carga los persistidos).
     std::string name(result.username.begin(), result.username.end());
-    protocol.send(UserArrivalEvent(name, RaceCode::ELF, ClassCode::MAGE));
+
+    CharacterCreationScreen charCreation(renderer, "AO_IMGS");
+    CharacterCreationResult cc = charCreation.run();
+    if (!cc.confirmed)
+        return;
+
+    protocol.send(UserArrivalEvent(name, cc.race, cc.class_));
 
     auto ev = protocol.receiveEvent();
     Player_ player;
