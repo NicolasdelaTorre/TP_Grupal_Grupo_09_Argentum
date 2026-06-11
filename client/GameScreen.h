@@ -183,9 +183,12 @@ private:
     // panel. Usa la misma geometría que renderInventoryPanel().
     int inventorySlotAt(int mouseX, int mouseY) const;
 
-    // Si itemId está equipado, devuelve su slotType (0=arma,1=armor,2=casco,
-    // 3=escudo); si no, -1. Sirve para resaltar y para el UnequipItemEvent.
-    int equippedSlotTypeOf(uint8_t itemId) const;
+    // Para el invSlot del inventario, devuelve su slotType equipado (0=arma,
+    // 1=armor, 2=casco, 3=escudo) si ese slot esta marcado como "el equipado",
+    // o -1 si no. Si hay items repetidos del mismo itemId solo el primer match
+    // queda marcado como equipado (limitacion: el server hoy solo trackea por
+    // itemId, no por slot del inventario — ver docs/preguntas_profesor.md).
+    int equippedSlotTypeOfInvSlot(size_t invSlot) const;
 
     // Vuelca los itemIds de equippedItems a los campos visuales del jugador local
     // (weaponId/shieldId/helmetId/skin) usando equipVisualFor(). Lo que no esté
