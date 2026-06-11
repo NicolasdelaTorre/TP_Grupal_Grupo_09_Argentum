@@ -14,9 +14,10 @@ private:
     uint16_t maxHealth;
     uint16_t damage;
     bool isAlive;
+    std::string biomeType;
 
 public:
-    Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y);
+    Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, std::string biomeType);
 
     Position stalkPlayer(Position playerPosition);
 
@@ -35,6 +36,8 @@ public:
     uint8_t getLevel() const;
 
     uint8_t getMapId() const;
+
+    std::string getBiomeType() const;
 };
 
 #endif

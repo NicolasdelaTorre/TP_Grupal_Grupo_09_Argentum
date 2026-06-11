@@ -141,7 +141,11 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             targetCell.isWalkable = false;
 
             // Save npc
+<<<<<<< HEAD
             npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, mapId, pos.x, pos.y);
+=======
+            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y, biome.type);
+>>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
 
             if (spawnInfo.creature == "")
                 std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
@@ -490,8 +494,10 @@ bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int
     return false;
 }
 
-void Map::removePlayer(int16_t x, int16_t y, uint8_t mapId) {
+void Map::removeEntity(int16_t x, int16_t y, uint8_t mapId, bool isPlayer) {
+    std::vector<Cell>* cells = &this->cells;
     if (isInBounds(x, y, mapId)) {
+<<<<<<< HEAD
         std::vector<Cell>* cells = &this->cells;
         if (mapId > 0) {
             for (auto& entry: entries) {
@@ -503,6 +509,13 @@ void Map::removePlayer(int16_t x, int16_t y, uint8_t mapId) {
         }
 
         (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].playerId = 0;
+=======
+        if (isPlayer) {
+            (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].playerId = 0;
+        } else {
+            (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].npcId = 0;
+        }
+>>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
     }
 }
 
@@ -577,7 +590,7 @@ bool Map::checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId) {
 void Map::placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId) {
     for (const auto& entry : entries) {
         if (entry.id == mapId) {
-            removePlayer(playerPosition.x, playerPosition.y, 0);  // Remove player from overworld
+            removeEntity(playerPosition.x, playerPosition.y, 0, true);  // Remove player from overworld
             placeEntity(playerId, entry.environment.playerSpawn.x, entry.environment.playerSpawn.y, true, mapId[mapId.size() - 1] - '0');
             return;
         }
@@ -665,4 +678,51 @@ Position Map::searchNearestPriest(int16_t x, int16_t y) {
     }
 
     throw std::runtime_error("Map Error: no priest found");
+}
+
+Position Map::getRandomPosition(std::string biomeType, uint8_t mapId) {
+    std::vector<Position> validCells;
+
+    if (mapId > 0) {
+        for (const auto& entry : entries) {
+            if (entry.id[entry.id.size() - 1] == '0' + mapId) {
+                for (int16_t y = 0; y < entry.height; ++y) {
+                    for (int16_t x = 0; x < entry.width; ++x) {
+                        Cell cell = entry.environment.cells[static_cast<size_t>(y) * entry.width + x];
+                        if (cell.isWalkable && 
+                            !cell.safeZone && 
+                            cell.playerId == 0 && 
+                            cell.npcId == 0) {
+                                validCells.push_back({x, y});
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        for (const auto& biome : biomes) {
+            if (biome.type == biomeType) {
+                for (int16_t y = biome.position.y; y < biome.position.y + biome.height; ++y) {
+                    for (int16_t x = biome.position.x; x < biome.position.x + biome.width; ++x) {
+                        Cell& cell = cells[static_cast<size_t>(y) * width + x];
+                        if (cell.isWalkable && 
+                            !cell.safeZone && 
+                            cell.playerId == 0 && 
+                            cell.npcId == 0) {
+                                validCells.push_back({x, y});
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (validCells.empty()) {
+        throw std::runtime_error("Map Error: no valid cells found for biome type " + biomeType);
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, validCells.size() - 1);
+    return validCells[dis(gen)];
 }

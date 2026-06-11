@@ -101,8 +101,11 @@ void Gameloop::run() {
         while (clientEvents.try_pop(ev)) {
             dispatch(*ev);
         }
+
+        turnManager.updateTimers();
         PlayerTurns();
         NPCTurns();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
@@ -209,13 +212,15 @@ void Gameloop::PlayerTurns() {
 }
 
 void Gameloop::NPCTurns() {
-    turnManager.updateTimers();
-
     // NPCs que toca mover: persiguen al jugador más cercano. Si se movieron,
     // broadcast NpcMovedEvent con dirección calculada desde el delta.
     std::vector<uint16_t> npcsToMove = turnManager.getNPCsReady(true);
     for (uint16_t npcId: npcsToMove) {
         Creature* npc = map.getNPC(npcId);
+
+        if (npc->isDead())
+            continue;
+
         Position oldPos = npc->getPosition();
         Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
         
@@ -238,6 +243,10 @@ void Gameloop::NPCTurns() {
     std::vector<uint16_t> npcsToAttack = turnManager.getNPCsReady(false);
     for (uint16_t npcId: npcsToAttack) {
         Creature* npc = map.getNPC(npcId);
+
+        if (npc->isDead())
+            continue;
+
         uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true,
                                           npc->getMapId());
         if (playerId == 0)
@@ -267,11 +276,17 @@ void Gameloop::NPCTurns() {
     std::vector<uint16_t> npcsToRevive = turnManager.reviveNPCs();
     for (uint16_t npcId: npcsToRevive) {
         Creature* npc = map.getNPC(npcId);
-        npc->resurrect();
-        if (npc->getMapId() != 0)
+
+        if (npc->isDead())
             continue;
-        Position p = npc->getPosition();
-        clientMonitor.broadcast(std::make_shared<NpcRespawnedEvent>(npcId, p.x, p.y));
+
+        npc->resurrect();
+
+        Position randomPosition = map.getRandomPosition(npc->getBiomeType(), npc->getMapId());
+        map.placeEntity(npcId, randomPosition.x, randomPosition.y, npc->getMapId(), false);
+        npc->move(randomPosition);
+
+        clientMonitor.broadcast(std::make_shared<NpcRespawnedEvent>(npcId, randomPosition.x, randomPosition.y));
     }
 }
 
@@ -422,7 +437,7 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
                                   0, std::string(), "Estás muerto, no podés atacar"));
         return;
     }
-    
+
     auto ev = game.processAttack(playerId, targetType, targetId);
     if (!ev) {
         std::cout << "ATTACK from player=" << playerId << " ttype=" << (int)targetType

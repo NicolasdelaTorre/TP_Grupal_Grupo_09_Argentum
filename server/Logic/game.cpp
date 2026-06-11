@@ -224,7 +224,7 @@ void Game::removePlayer(int playerId) {
     auto it = players.find(playerId);
     if (it != players.end()) {
         Position p = it->second.getPosition();
-        map.removePlayer(p.x, p.y, it->second.getMapId());
+        map.removeEntity(p.x, p.y, it->second.getMapId(), true);
     }
     updatePlayerData(playerId);
     players.erase(playerId);
@@ -278,6 +278,10 @@ void Game::checkEntry(int playerId) {
         // El jugador pisó una entrada a dungeon o una salida (si ya está en
         // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
         uint8_t currentMapId = itPlayer->second.getMapId();
+<<<<<<< HEAD
+=======
+        map.removeEntity(pos.x, pos.y, currentMapId, true);
+>>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
 
         // Si veníamos del overworld vamos a la dungeon; si veníamos de una
         // dungeon, salimos al overworld.
@@ -370,6 +374,7 @@ std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t tar
     uint8_t tgtLvl = npc->getLevel();
     uint16_t tgtMaxHp = npc->getMaxHealth();
     npc->receiveDamage(damage);
+<<<<<<< HEAD
     FormulaConstants f = StatsDefinition().getFormulas();
     int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
     itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
@@ -377,6 +382,14 @@ std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t tar
         uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
         itPlayer->second.grantExp(kill * factor);
     }
+=======
+
+    if (npc->isDead()) {
+        Position npcPos = npc->getPosition();
+        map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
+    }
+
+>>>>>>> ca8bd0d (fix: solución a errores de algunos npcs)
     return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
 }
 
@@ -851,7 +864,7 @@ bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
     if (it == players.end()) {
         return false;
     }
-    
+
     bool ok = it->second.equipItem(static_cast<int>(invSlot));
     std::cout << "EQUIP player=" << playerId << " slot=" << (int)invSlot << " ok=" << ok
               << std::endl;
