@@ -262,6 +262,7 @@ bool GameScreen::handleEvents(float dt) {
                 if (opTileX == clickTileX && opTileY == clickTileY) {
                     clientEvents.push(std::make_shared<AttackEvent>(
                             /*targetType=*/0, static_cast<uint16_t>(entry.first)));
+                    spawnProjectile(op.visual.x + HEAD_OFFSET, op.visual.y + CHEST_OFFSET);
                     clicked = true;
                     break;
                 }
@@ -285,6 +286,7 @@ bool GameScreen::handleEvents(float dt) {
                         } else {
                             clientEvents.push(std::make_shared<AttackEvent>(
                                     /*targetType=*/1, static_cast<uint16_t>(entry.first)));
+                            spawnProjectile(n.visual.x + HEAD_OFFSET, n.visual.y + CHEST_OFFSET);
                         }
                         break;
                     }
@@ -411,6 +413,7 @@ void GameScreen::update(float dt) {
         arrow.x += arrow.vx * dt;
         arrow.y += arrow.vy * dt;
         arrow.lifetime -= dt;
+        arrow.age += dt;
     }
     arrows.erase(std::remove_if(arrows.begin(), arrows.end(),
                                 [](const ArrowProjectile& a) { return a.lifetime <= 0.0f; }),
@@ -687,6 +690,51 @@ void GameScreen::renderBloodEffects(float camX, float camY) {
         int frame = std::min(BLOOD_FRAMES - 1, (int)(elapsed / (BLOOD_DURATION / BLOOD_FRAMES)));
         mapRenderer.renderBlood(b.x, b.y, frame, 255, camX, camY);
     }
+}
+
+void GameScreen::spawnProjectile(float targetX, float targetY) {
+    // El itemId del arma equipada decide el tipo de proyectil y su color. Ver
+    // items.toml: 4 ash staff, 6 root staff, 7 socketed staff; 8/9 arcos.
+    uint8_t weapon = equippedItems[0];
+
+    ArrowProjectile p;
+    switch (weapon) {
+        case 4:  // ash staff -> flecha mágica, tinte arcano (celeste).
+            p.kind = ProjectileKind::MAGIC_ARROW;
+            p.tintR = 120; p.tintG = 200; p.tintB = 255;
+            break;
+        case 6:  // root staff -> misil, tinte natura (verde).
+            p.kind = ProjectileKind::MISSILE;
+            p.tintR = 120; p.tintG = 230; p.tintB = 90;
+            break;
+        case 7:  // socketed staff -> explosión animada, tinte ígneo (naranja).
+            p.kind = ProjectileKind::EXPLOSION;
+            p.tintR = 255; p.tintG = 10; p.tintB = 10;
+            break;
+        case 8:  // simple bow -> flecha normal de Flechas.png
+            p.kind = ProjectileKind::ARROW;
+            p.arrowType = 0;
+            break;
+        case 9:  // composite bow -> flecha azul propia
+            p.kind = ProjectileKind::COMPOSITE_ARROW;
+            break;
+        default:
+            return;  // arma cuerpo a cuerpo o sin equipar: no hay proyectil.
+    }
+
+    // Origen: pecho del jugador local. Dirección normalizada hacia el target.
+    float ox = player.x + HEAD_OFFSET;
+    float oy = player.y + CHEST_OFFSET;
+    float dx = targetX - ox;
+    float dy = targetY - oy;
+    float dist = std::sqrt(dx * dx + dy * dy);
+    if (dist < 0.001f) return;
+    p.x = ox;
+    p.y = oy;
+    p.vx = dx / dist * ARROW_SPEED;
+    p.vy = dy / dist * ARROW_SPEED;
+    p.lifetime = dist / ARROW_SPEED;  // muere al llegar al objetivo.
+    arrows.push_back(p);
 }
 
 void GameScreen::renderStatsBar() {
