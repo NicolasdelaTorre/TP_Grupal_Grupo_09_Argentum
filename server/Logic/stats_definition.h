@@ -20,11 +20,21 @@ public:
 
     uint32_t safeGold(uint8_t playerLevel);
 
+    uint32_t goldMax(uint8_t playerLevel);
+
+    uint32_t nextLevelExp(uint8_t playerLevel);
+
     uint16_t damage(RaceCode race, uint16_t minDamage, uint16_t maxDamage);
 
     uint16_t maxMana(uint8_t playerLevel, RaceCode race, ClassCode class_);
 
     uint16_t meditationManaRestore(RaceCode race, ClassCode class_);
+
+    FormulaConstants getFormulas();
+
+    LootConfig getLootConfig();
+
+    CreatureSpawnConfig getSpawnConfig();
 };
 
 #endif

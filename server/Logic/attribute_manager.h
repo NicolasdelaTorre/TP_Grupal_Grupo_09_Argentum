@@ -23,6 +23,39 @@ struct ClassAttribute {
     float FClassMeditation;
 };
 
+// Constantes de las formulas del enunciado.
+struct FormulaConstants {
+    float goldSafeBase;
+    float goldSafeExp;
+    float goldMaxFactor;
+    float expNextBase;
+    float expNextExp;
+    uint8_t expKillBonusMaxPct;
+    uint8_t expLevelDiffBase;
+};
+
+// Probabilidades y rangos para el drop al matar una criatura.
+struct LootConfig {
+    uint8_t nothingChance;
+    uint8_t goldChance;
+    uint8_t potionChance;
+    uint8_t itemChance;
+    uint8_t goldFactorMinPct;
+    uint8_t goldFactorMaxPct;
+    uint8_t itemIdMin;
+    uint8_t itemIdMax;
+    uint8_t potionHealthId;
+    uint8_t potionManaId;
+};
+
+// Rangos de nivel cuando spawnea una criatura segun la zona.
+struct CreatureSpawnConfig {
+    uint8_t overworldLevelMin;
+    uint8_t overworldLevelMax;
+    uint8_t dungeonLevelMin;
+    uint8_t dungeonLevelMax;
+};
+
 struct GameAttributes {
     RaceAttribute human;
     RaceAttribute elf;
@@ -33,6 +66,10 @@ struct GameAttributes {
     ClassAttribute cleric;
     ClassAttribute champion;
     ClassAttribute warrior;
+
+    FormulaConstants formulas;
+    LootConfig loot;
+    CreatureSpawnConfig spawn;
 };
 
 class AttributeManager {
@@ -49,6 +86,12 @@ public:
     RaceAttribute getRaceAttribute(RaceCode race);
 
     ClassAttribute getClassAttribute(ClassCode class_);
+
+    FormulaConstants getFormulas();
+
+    LootConfig getLootConfig();
+
+    CreatureSpawnConfig getSpawnConfig();
 };
 
 #endif

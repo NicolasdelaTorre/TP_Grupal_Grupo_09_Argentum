@@ -380,11 +380,29 @@ void Player::levelUp() {
         data.level++;
     }
     data.experience = 0;
-    resetStats();
+    // Solo se actualizan los topes; vida/mana actuales se mantienen.
+    maxHealth = StatsDefinition().maxHealth(data.level, data.race, data.class_);
+    maxMana = StatsDefinition().maxMana(data.level, data.race, data.class_);
+}
+
+void Player::grantExp(uint32_t amount) {
+    if (amount == 0) return;
+    StatsDefinition stats;
+    data.experience += amount;
+    // Si supera el limite, sube de nivel. Loop por si gano mucha exp de una.
+    while (data.level < 255) {
+        uint32_t limit = stats.nextLevelExp(data.level);
+        if (data.experience < limit) break;
+        data.experience -= limit;
+        data.level++;
+        // Solo se recalculan maxHp/maxMana. Vida/mana/oro actuales no se tocan.
+        maxHealth = stats.maxHealth(data.level, data.race, data.class_);
+        maxMana = stats.maxMana(data.level, data.race, data.class_);
+    }
 }
 
 void Player::addGold(uint32_t amount) {
-    uint32_t cap = StatsDefinition().safeGold(data.level);
+    uint32_t cap = StatsDefinition().goldMax(data.level);
     if (data.gold >= cap) return;
     uint32_t room = cap - data.gold;
     data.gold += std::min(amount, room);

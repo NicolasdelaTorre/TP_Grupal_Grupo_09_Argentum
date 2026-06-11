@@ -142,6 +142,9 @@ public:
     // Sube un nivel y refresca stats al maximo segun raza/clase.
     void levelUp();
 
+    // Otorga exp y dispara auto-levelup si supera el limite del nivel actual.
+    void grantExp(uint32_t amount);
+
     // Suma oro respetando el cap = 100 * Nivel^1.1 (formula del enunciado).
     void addGold(uint32_t amount);
 

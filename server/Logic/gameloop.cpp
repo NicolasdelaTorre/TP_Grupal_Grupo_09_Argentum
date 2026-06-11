@@ -22,6 +22,15 @@ static uint8_t npcTypeFromName(const std::string& name) {
     return 0;
 }
 
+// Broadcast un ItemDroppedEvent por cada drop que generó una muerte.
+static void broadcastDrops(ClientMonitor& monitor,
+                           const std::vector<Game::DroppedItemRecord>& drops) {
+    for (const auto& d: drops) {
+        monitor.broadcast(std::make_shared<ItemDroppedEvent>(d.dropId, d.itemId, d.x, d.y,
+                                                             d.goldAmount));
+    }
+}
+
 // dx/dy → byte de dirección en formato wire (3=TOP, 4=BOTTOM, 5=LEFT, 6=RIGHT).
 static uint8_t wireDirFromDelta(int16_t dx, int16_t dy) {
     if (std::abs(dx) >= std::abs(dy)) {
@@ -195,9 +204,17 @@ void Gameloop::NPCTurns() {
                                                             npc->getDamage(), /*hit=*/true);
             clientMonitor.broadcast(atkEv);
             clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
-            // Si el NPC mató al jugador, broadcast PlayerDiedEvent.
+            // Si el NPC mató al jugador, broadcast PlayerDiedEvent + drop loot.
             if (game.isPlayerGhost(playerId)) {
                 clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
+                broadcastDrops(clientMonitor, game.dropPlayerLootOnDeath(playerId));
+                auto snap = game.getInventorySnapshot(playerId);
+                clientMonitor.sendToClient(playerId,
+                                           std::make_shared<InventoryUpdateEvent>(
+                                                   snap.items, snap.equippedWeapon,
+                                                   snap.equippedArmor, snap.equippedHelmet,
+                                                   snap.equippedShield));
+                clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
             }
         }
     }
@@ -392,19 +409,33 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
               << " tid=" << targetId << " hit=" << ev->getHit() << " dmg=" << ev->getDamage()
               << std::endl;
     clientMonitor.broadcast(ev);
+    // El atacante gano exp con processAttack
+    if (ev->getHit()) {
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
     if (ev->getHit() && ev->getTargetType() == 0 && game.hasPlayer(ev->getTargetId())) {
         clientMonitor.sendToClient(ev->getTargetId(), buildStatsEvent(ev->getTargetId()));
-        // Si el ataque mató al target, broadcast PlayerDiedEvent.
+        // Si el ataque mató al target, broadcast PlayerDiedEvent + drop loot
+        // (inventario + oro en exceso).
         if (game.isPlayerGhost(ev->getTargetId())) {
             clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(ev->getTargetId()));
+            broadcastDrops(clientMonitor, game.dropPlayerLootOnDeath(ev->getTargetId()));
+            // El inventario y el oro cambiaron: re-mandar snapshot + stats.
+            auto snap = game.getInventorySnapshot(ev->getTargetId());
+            clientMonitor.sendToClient(ev->getTargetId(),
+                                       std::make_shared<InventoryUpdateEvent>(
+                                               snap.items, snap.equippedWeapon, snap.equippedArmor,
+                                               snap.equippedHelmet, snap.equippedShield));
+            clientMonitor.sendToClient(ev->getTargetId(), buildStatsEvent(ev->getTargetId()));
         }
     }
-    // Si pegamos a un NPC y lo matamos, broadcast NpcDiedEvent para que el
-    // cliente lo saque del mapa.
+    // Si pegamos a un NPC y lo matamos, broadcast NpcDiedEvent + drop loot
+    // (probabilidades del enunciado).
     if (ev->getHit() && ev->getTargetType() == 1) {
         Creature* npc = map.getNPC(ev->getTargetId());
         if (npc && npc->isDead()) {
             clientMonitor.broadcast(std::make_shared<NpcDiedEvent>(ev->getTargetId()));
+            broadcastDrops(clientMonitor, game.dropCreatureLootOnDeath(ev->getTargetId()));
         }
     }
 }
@@ -457,6 +488,11 @@ void Gameloop::handlePickUp(int playerId) {
     clientMonitor.broadcast(std::make_shared<ItemPickedUpEvent>(r.record.dropId));
     auto after = game.getInventorySnapshot(playerId);
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+    // Si era oro, el inventory snapshot no cambia → mandamos stats para que
+    // el HUD del dueño refresque la cantidad de oro.
+    if (r.record.itemId == Game::GOLD_ITEM_ID) {
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
 }
 
 void Gameloop::handleDrop(int playerId, uint8_t invSlot) {
@@ -687,8 +723,10 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
         if (game.cheatSuicide(playerId)) {
             reply = "Te suicidaste";
             refreshStats = true;
+            refreshInventory = true;
             if (game.isPlayerGhost(playerId)) {
                 clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
+                broadcastDrops(clientMonitor, game.dropPlayerLootOnDeath(playerId));
             }
         } else reply = "Error";
     } else if (cmd == "/levelup") {

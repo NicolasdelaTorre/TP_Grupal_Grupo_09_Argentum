@@ -14,6 +14,30 @@ AttributeManager::AttributeManager(const std::string& filename) {
     attributes.cleric = readClass(config, "cleric");
     attributes.champion = readClass(config, "champion");
     attributes.warrior = readClass(config, "warrior");
+
+    attributes.formulas.goldSafeBase = toml::find<float>(config, "formula", "gold", "safeBase");
+    attributes.formulas.goldSafeExp = toml::find<float>(config, "formula", "gold", "safeExp");
+    attributes.formulas.goldMaxFactor = toml::find<float>(config, "formula", "gold", "maxFactor");
+    attributes.formulas.expNextBase = toml::find<float>(config, "formula", "experience", "nextBase");
+    attributes.formulas.expNextExp = toml::find<float>(config, "formula", "experience", "nextExp");
+    attributes.formulas.expKillBonusMaxPct = toml::find<uint8_t>(config, "formula", "experience", "killBonusMaxPct");
+    attributes.formulas.expLevelDiffBase = toml::find<uint8_t>(config, "formula", "experience", "levelDiffBase");
+
+    attributes.loot.nothingChance = toml::find<uint8_t>(config, "loot", "npc", "nothingChance");
+    attributes.loot.goldChance = toml::find<uint8_t>(config, "loot", "npc", "goldChance");
+    attributes.loot.potionChance = toml::find<uint8_t>(config, "loot", "npc", "potionChance");
+    attributes.loot.itemChance = toml::find<uint8_t>(config, "loot", "npc", "itemChance");
+    attributes.loot.goldFactorMinPct = toml::find<uint8_t>(config, "loot", "npc", "goldFactorMinPct");
+    attributes.loot.goldFactorMaxPct = toml::find<uint8_t>(config, "loot", "npc", "goldFactorMaxPct");
+    attributes.loot.itemIdMin = toml::find<uint8_t>(config, "loot", "npc", "itemIdMin");
+    attributes.loot.itemIdMax = toml::find<uint8_t>(config, "loot", "npc", "itemIdMax");
+    attributes.loot.potionHealthId = toml::find<uint8_t>(config, "loot", "npc", "potionHealthId");
+    attributes.loot.potionManaId = toml::find<uint8_t>(config, "loot", "npc", "potionManaId");
+
+    attributes.spawn.overworldLevelMin = toml::find<uint8_t>(config, "creature", "spawn", "overworldLevelMin");
+    attributes.spawn.overworldLevelMax = toml::find<uint8_t>(config, "creature", "spawn", "overworldLevelMax");
+    attributes.spawn.dungeonLevelMin = toml::find<uint8_t>(config, "creature", "spawn", "dungeonLevelMin");
+    attributes.spawn.dungeonLevelMax = toml::find<uint8_t>(config, "creature", "spawn", "dungeonLevelMax");
 }
 
 RaceAttribute AttributeManager::readRace(const toml::value& config, const std::string& raceName) {
@@ -59,3 +83,9 @@ ClassAttribute AttributeManager::getClassAttribute(ClassCode class_) {
         default: throw std::runtime_error("Unknown class");
     }
 }
+
+FormulaConstants AttributeManager::getFormulas() { return attributes.formulas; }
+
+LootConfig AttributeManager::getLootConfig() { return attributes.loot; }
+
+CreatureSpawnConfig AttributeManager::getSpawnConfig() { return attributes.spawn; }
