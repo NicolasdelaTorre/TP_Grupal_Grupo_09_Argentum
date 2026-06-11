@@ -277,7 +277,7 @@ void Gameloop::NPCTurns() {
             continue;
 
         Position oldPos = npc->getPosition();
-        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId()));
+        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId(), npc->getBiomeType()));
         
         if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
             continue;
@@ -497,7 +497,14 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
         return;
     }
     Game::AttackOutcome outcome = game.processAttack(playerId, targetType, targetId);
-    if (!outcome.valid) return;
+    if (!outcome.valid) {
+        if (!outcome.blockedReason.empty()) {
+            clientMonitor.sendToClient(
+                    playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(),
+                                                                   outcome.blockedReason));
+        }
+        return;
+    }
 
     clientMonitor.broadcast(outcome.event);
     notifyAttackOutcome(clientMonitor, outcome);

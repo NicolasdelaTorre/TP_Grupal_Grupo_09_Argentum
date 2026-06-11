@@ -438,7 +438,7 @@ void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t
     }
 }
 
-Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId) {
+Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId, std::string biomeType) {
     for (int16_t dy = -3; dy <= 3; ++dy) {
         for (int16_t dx = -3; dx <= 3; ++dx) {
             if (dx == 0 && dy == 0) {
@@ -454,7 +454,7 @@ Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId) {
             uint16_t currentWidth = getWidth(mapId);
 
             Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
-            if (cell.playerId != 0) {
+            if (cell.playerId != 0 && positionInBiome({checkX, checkY}, biomeType)) {
                 return Position{checkX, checkY};
             }
         }
@@ -720,4 +720,16 @@ Position Map::getRandomPosition(std::string biomeType, uint8_t mapId) {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, validCells.size() - 1);
     return validCells[dis(gen)];
+}
+
+bool Map::positionInBiome(Position pos, std::string biomeType) {
+    for (const auto& biome : biomes) {
+        if (biome.type == biomeType) {
+            if (pos.x >= biome.position.x && pos.y >= biome.position.y &&
+                pos.x < biome.position.x + biome.width && pos.y < biome.position.y + biome.height) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

@@ -144,6 +144,12 @@ void Player::receiveDamage(uint16_t damage) {
 
 bool Player::isEquipped() { return !equippedWeapon.emptyItem(); }
 
+bool Player::isItemEquipped(uint8_t itemId) const {
+    if (itemId == 0) return false;
+    return data.equippedWeapon == itemId || data.equippedArmor == itemId ||
+           data.equippedHelmet == itemId || data.equippedShield == itemId;
+}
+
 bool Player::isAlive() { return !data.isGhost; }
 
 uint16_t Player::dealDamage() {

@@ -351,6 +351,19 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         }
         outcome.targetName = itTarget->second.getName();
         outcome.targetId = static_cast<int>(targetId);
+        // Fair play: newbies (lvl <= newbieLevel) no participan en PvP y la
+        // diferencia de niveles no puede pasar maxLevelDiff.
+        uint8_t tgtLvlFP = itTarget->second.getData().level;
+        if (atkLvl <= f.fairPlayNewbieLevel || tgtLvlFP <= f.fairPlayNewbieLevel) {
+            outcome.blockedReason = "Los newbies no pueden participar en PvP";
+            return outcome;
+        }
+        uint8_t diff = (atkLvl > tgtLvlFP) ? (atkLvl - tgtLvlFP) : (tgtLvlFP - atkLvl);
+        if (diff > f.fairPlayMaxLevelDiff) {
+            outcome.blockedReason =
+                    "Diferencia de niveles demasiado grande para atacar a " + outcome.targetName;
+            return outcome;
+        }
         // Solo se intenta esquivar si NO es crítico.
         if (!isCritical && tryEvade(playerId, static_cast<int>(targetId))) {
             outcome.valid = true;
@@ -633,6 +646,9 @@ Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
     if (buyPrice == 0) return {false, "No compra " + canonical};
     uint32_t sellPrice = buyPrice / 2;
 
+    if (it->second.isItemEquipped(itemId)) {
+        return {false, "Tenes " + canonical + " equipado, desequipalo primero"};
+    }
     if (it->second.removeItemByName(canonical) == 0) {
         return {false, "No tenes " + canonical + " en el inventario"};
     }
@@ -646,6 +662,9 @@ Game::InteractionResult Game::depositItemToBank(int playerId, const std::string&
     uint8_t itemId = itemIdByName(itemName);
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
     std::string canonical = itemNameById(itemId);
+    if (it->second.isItemEquipped(itemId)) {
+        return {false, "Tenes " + canonical + " equipado, desequipalo primero"};
+    }
     if (it->second.removeItemByName(canonical) == 0) {
         return {false, "No tenes " + canonical + " en el inventario"};
     }
@@ -782,6 +801,9 @@ Game::DropResult Game::dropItem(int playerId, uint8_t invSlot) {
     Position pos = it->second.getPosition();
     uint8_t itemId = inv[invSlot].getId();
     std::string itemName = inv[invSlot].getName();
+    if (it->second.isItemEquipped(itemId)) {
+        return {false, "Tenes " + itemName + " equipado, desequipalo primero", {}};
+    }
     // Sacamos el item del inventario para que no quede duplicado.
     if (it->second.removeItemByName(itemName) == 0) {
         return {false, "No se pudo tirar (no estaba en inventario)", {}};
