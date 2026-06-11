@@ -115,6 +115,9 @@ private:
     std::string chatBuffer;
     // Historial visible en la caja de chat: comandos tipeados + broadcasts.
     std::vector<std::string> chatHistory;
+    // Cuántas líneas scrolleamos hacia arriba desde el fondo. 0 = mostrando las
+    // más nuevas (abajo). La rueda del mouse lo mueve; ver clampChatScroll().
+    size_t chatScroll = 0;
 
     // True si el jugador local está muerto (fantasma). Lo activa
     // PlayerDiedEvent dirigido a nuestro id (no está en otherPlayers).
@@ -133,7 +136,8 @@ private:
     // ── UI / chat ─────────────────────────────────────────────
     // Constantes de la caja de chat y del panel derecho del HUD. La geometria
     // se escala dinamicamente con uiScale() (ver implementacion).
-    static constexpr size_t MAX_CHAT_LINES = 5;
+    static constexpr size_t MAX_CHAT_LINES = 5;       // líneas visibles a la vez
+    static constexpr size_t MAX_CHAT_HISTORY = 200;   // líneas retenidas para scroll
     static constexpr int CHAT_LINE_H = 18;
     static constexpr int CHAT_PAD = 4;
     static constexpr int CHAT_BOX_H = CHAT_PAD * 2 + CHAT_LINE_H * (int)(MAX_CHAT_LINES + 1);
@@ -146,6 +150,9 @@ private:
 
     // Agrega una linea al historial del chat, recortando las viejas si pasa el limite.
     void addChatLine(const std::string& line);
+
+    // Acota chatScroll al rango válido [0, total - visibles].
+    void clampChatScroll();
 
     // ── Input ─────────────────────────────────────────────────
     bool handleEvents(float dt);

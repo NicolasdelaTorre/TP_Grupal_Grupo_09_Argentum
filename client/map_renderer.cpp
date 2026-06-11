@@ -418,7 +418,8 @@ void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float
         double extraAngle = 0.0;  // corrección si el sprite no apunta al norte
 
         switch (arrow.kind) {
-            case ProjectileKind::ARROW: extraAngle = -45.0; break;
+            case ProjectileKind::ARROW: extraAngle = -45.0;
+             break;
             case ProjectileKind::COMPOSITE_ARROW:
                 texPath = "/Armas/Flechas_composite_bow.png";
                 extraAngle = -45.0;  // apunta al noreste, como las flechas normales
