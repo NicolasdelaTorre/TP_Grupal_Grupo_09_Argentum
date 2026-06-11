@@ -211,26 +211,10 @@ EditorWindow::EditorWindow(QWidget* parent):
 EditorWindow::~EditorWindow() { delete ui_; }
 
 void EditorWindow::buildLogo() {
-    QPixmap logo_argentum(QStringLiteral(":/ui/logo_argentum.png"));
-    QPixmap logo_map_editor(QStringLiteral(":/ui/logo_map_editor.png"));
-    if (!logo_argentum.isNull() && !logo_map_editor.isNull()) {
-        const QPixmap arg_scaled = logo_argentum.scaledToWidth(500, Qt::SmoothTransformation);
-        const QPixmap me_scaled = logo_map_editor.scaledToWidth(380, Qt::SmoothTransformation);
-
-        const int overlap_px = 50;
-        const int total_w = std::max(arg_scaled.width(), me_scaled.width());
-        const int total_h = arg_scaled.height() + me_scaled.height() - overlap_px;
-
-        QPixmap composite(total_w, total_h);
-        composite.fill(Qt::transparent);
-        QPainter painter(&composite);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        painter.drawPixmap((total_w - arg_scaled.width()) / 2, 0, arg_scaled);
-        painter.drawPixmap((total_w - me_scaled.width()) / 2, arg_scaled.height() - overlap_px,
-                           me_scaled);
-        painter.end();
-
-        ui_->labelLogoArgentum->setPixmap(composite);
+    QPixmap complete_logo(QStringLiteral(":/ui/complete_logo.png"));
+    if (!complete_logo.isNull()) {
+        ui_->labelLogoArgentum->setPixmap(
+                complete_logo.scaledToWidth(650, Qt::SmoothTransformation));
     }
     ui_->labelLogoMapEditor->setVisible(false);
 }
@@ -531,17 +515,13 @@ void EditorWindow::onApplyMapResize() {
     refreshEnvironmentsList();
 }
 
-void EditorWindow::setupNewMapPage() {
-    ui_->comboNewMapSize->clear();
-    ui_->comboNewMapSize->addItem(QStringLiteral("100 x 100"), QSize(100, 100));
-    ui_->comboNewMapSize->addItem(QStringLiteral("250 x 250"), QSize(250, 250));
-    ui_->comboNewMapSize->addItem(QStringLiteral("500 x 500"), QSize(500, 500));
-}
+void EditorWindow::setupNewMapPage() {}
 
 void EditorWindow::resetNewMapPage() {
     ui_->inputNewMapId->setText(QStringLiteral("otro_mapa"));
     ui_->inputNewMapName->setText(QStringLiteral("Otro mapa"));
-    ui_->comboNewMapSize->setCurrentIndex(0);
+    ui_->spinNewMapWidth->setValue(100);
+    ui_->spinNewMapHeight->setValue(100);
 }
 
 void EditorWindow::onCreateNewMap() {
@@ -553,8 +533,8 @@ void EditorWindow::onCreateNewMap() {
         return;
     }
 
-    const QSize size = ui_->comboNewMapSize->currentData().toSize();
-    startNewMainMap(map_id, map_name, size.width(), size.height());
+    startNewMainMap(map_id, map_name, ui_->spinNewMapWidth->value(),
+                    ui_->spinNewMapHeight->value());
     ui_->stackedWidget->setCurrentWidget(ui_->pageEditor);
 }
 

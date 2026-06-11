@@ -511,7 +511,14 @@ bool GameScreen::isOccupiedByOther(int tileX, int tileY) const {
 void GameScreen::consumeServerEvents() {
     std::shared_ptr<ServerEvent> ev;
     while (serverEvents.try_pop(ev)) {
-        if (auto* np = dynamic_cast<NewPlayerEvent*>(ev.get())) {
+        if (auto* mapEvent = dynamic_cast<MapEvent*>(ev.get())) {
+            map = convertToGameMap(*mapEvent);
+            otherPlayers.clear();
+            npcs.clear();
+            droppedItems.clear();
+            bloodEffects.clear();
+            arrows.clear();
+        } else if (auto* np = dynamic_cast<NewPlayerEvent*>(ev.get())) {
             OtherPlayer op;
             tileToPlayerCoords(np->getX(), np->getY(), op.visual);
             op.targetX = static_cast<float>(np->getX());

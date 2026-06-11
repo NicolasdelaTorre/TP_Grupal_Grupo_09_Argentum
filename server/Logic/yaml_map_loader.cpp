@@ -71,9 +71,14 @@ uint8_t obstacleTypeFromString(const std::string& type) {
         return static_cast<uint8_t>(ObstacleCode::CHURCH);
     if (type == "munieco_entrenamiento")
         return static_cast<uint8_t>(ObstacleCode::TRAINING_DUMMY);
+    if (type == "pared_mazmorra_derecha")
+        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_RIGHT);
+    if (type == "pared_mazmorra_izquierda")
+        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_LEFT);
+    if (type == "pared_mazmorra_vertical")
+        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_VERTICAL);
     if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
-        type == "pilar" || type == "pared_mazmorra_derecha" ||
-        type == "pared_mazmorra_izquierda" || type == "pared_mazmorra_vertical")
+        type == "pilar")
         return static_cast<uint8_t>(ObstacleCode::WALL);
     return static_cast<uint8_t>(ObstacleCode::ROCK);
 }
@@ -209,7 +214,8 @@ void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth, int16
 // celda con su obstáculo (ObstacleCode::EXIT) y la vuelven no transitable.
 // Devuelve la posición de cada celda ocupada por una salida.
 std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t envWidth,
-                                            int16_t envHeight, const YAML::Node& exits) {
+                                            int16_t envHeight, const YAML::Node& exits,
+                                            std::vector<PlacedObstacle>* out = nullptr) {
     std::vector<Position> positions;
     if (!exits)
         return positions;
@@ -228,6 +234,9 @@ std::vector<Position> applyEnvironmentExits(std::vector<Cell>& cells, int16_t en
         }
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
                       y, w, h, static_cast<uint8_t>(ObstacleCode::EXIT));
+        if (out)
+            out->push_back({static_cast<uint8_t>(ObstacleCode::EXIT), x, y,
+                            static_cast<uint16_t>(w), static_cast<uint16_t>(h)});
         for (int16_t dy = 0; dy < h; ++dy) {
             for (int16_t dx = 0; dx < w; ++dx) {
                 const int16_t cx = static_cast<int16_t>(x + dx);
@@ -384,10 +393,25 @@ std::vector<LoadedEnvironment> parseEnvironments(const YAML::Node& root) {
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["obstacles"],
                                       "type", &env.obstacles);
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
-                                      "template");
-            env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"]);
+                                      "template", &env.obstacles);
+            env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"],
+                                              &env.obstacles);
             applyEnvironmentFloorAndExterior(env.cells, env.width, env.height, envNode["walls"],
                                              floorTexture);
+            // Las exits suelen colocarse sobre paredes (o terminan marcadas como
+            // exterior por el flood-fill), así que las dejamos caminables al final
+            // para que el jugador pueda pisarlas y salir de la mazmorra. Además
+            // limpiamos su obstacleId: el cliente bloquea cualquier celda con
+            // obstacleId != 0, y la exit ya se dibuja como obstáculo colocado y se
+            // detecta vía env.exits, así que no debe quedar marcada en la celda.
+            for (const auto& exitPos: env.exits) {
+                if (exitPos.x < 0 || exitPos.y < 0 || exitPos.x >= env.width ||
+                    exitPos.y >= env.height)
+                    continue;
+                Cell& exitCell = env.cells[static_cast<size_t>(exitPos.y) * env.width + exitPos.x];
+                exitCell.isWalkable = true;
+                exitCell.obstacleId = 0;
+            }
         }
 
         env.spawns = parseSpawns(envNode);
@@ -499,8 +523,8 @@ Map loadMapFromYaml(const std::string& path) {
 
     std::vector<LoadedEnvironment> environments = parseEnvironments(root);
 
-    // Entries (portales a cuevas): bloquean su rectángulo en el mapa principal
-    // y, además, guardan una copia del environment al que llevan.
+    // Entries (portales a cuevas): se dibujan como obstáculos colocados, pero
+    // sus celdas siguen caminables para que el jugador pueda pisarlas y entrar.
     std::vector<LoadedEntry> entries;
     if (root["entries"]) {
         for (const auto& entry: root["entries"]) {
@@ -508,8 +532,8 @@ Map loadMapFromYaml(const std::string& path) {
             int16_t ey = entry["position"][1].as<int16_t>();
             int16_t ew = entry["size"][0].as<int16_t>();
             int16_t eh = entry["size"][1].as<int16_t>();
-            applyObstacle(cells, width, height, ex, ey, ew, eh,
-                          static_cast<uint8_t>(ObstacleCode::ENTRY));
+            placedObstacles.push_back({static_cast<uint8_t>(ObstacleCode::ENTRY), ex, ey,
+                                       static_cast<uint16_t>(ew), static_cast<uint16_t>(eh)});
 
             LoadedEntry loadedEntry;
             if (entry["id"])

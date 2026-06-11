@@ -80,8 +80,8 @@ void Map::setNPC() {
         Biome biome;
         biome.type = entry.environment.type;
         biome.position = {0, 0};
-        biome.width = entry.width;
-        biome.height = entry.height;
+        biome.width = entry.environment.width;
+        biome.height = entry.environment.height;
         biome.spawns = entry.environment.spawns;
 
         spawnNPC(biome, entry.environment.cells, static_cast<uint8_t>(entry.id[entry.id.size() - 1] - '0'));
@@ -141,7 +141,7 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             targetCell.isWalkable = false;
 
             // Save npc
-            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y);
+            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, mapId, pos.x, pos.y);
 
             if (spawnInfo.creature == "")
                 std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
@@ -153,7 +153,7 @@ uint16_t Map::getWidth(uint8_t mapId) const {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                return static_cast<uint16_t>(entry.width);
+                return static_cast<uint16_t>(entry.environment.width);
             }
         }
 
@@ -167,7 +167,7 @@ uint16_t Map::getHeight(uint8_t mapId) const {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                return static_cast<uint16_t>(entry.height);
+                return static_cast<uint16_t>(entry.environment.height);
             }
         }
 
@@ -181,7 +181,7 @@ uint16_t Map::getCellCount(uint8_t mapId) const {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                return static_cast<uint16_t>(entry.width * entry.height);
+                return static_cast<uint16_t>(entry.environment.width * entry.environment.height);
             }
         }
 
@@ -258,7 +258,8 @@ Creature* Map::getNPC(uint16_t npcId) {
 
 std::string Map::getMapId(uint16_t x, uint16_t y) {
     for (const auto& entry : entries) {
-        if (entry.x == x && entry.y == y) {
+        if (x >= entry.x && y >= entry.y && x < entry.x + entry.width &&
+            y < entry.y + entry.height) {
             return entry.id;
         }
     }
@@ -290,7 +291,8 @@ bool Map::isInBounds(int16_t x, int16_t y, uint8_t mapId) const {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                return x >= 0 && y >= 0 && x < static_cast<int16_t>(entry.width) && y < static_cast<int16_t>(entry.height);
+                return x >= 0 && y >= 0 && x < static_cast<int16_t>(entry.environment.width) &&
+                       y < static_cast<int16_t>(entry.environment.height);
             }
         }
     }
@@ -305,7 +307,7 @@ bool Map::isWalkable(int16_t x, int16_t y, uint8_t mapId) const {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                return entry.environment.cells[static_cast<size_t>(y) * entry.width + x].isWalkable;
+                return entry.environment.cells[static_cast<size_t>(y) * entry.environment.width + x].isWalkable;
             }
         }
 
@@ -322,8 +324,8 @@ bool Map::occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                return entry.environment.cells[static_cast<size_t>(y) * entry.width + x].playerId != 0 ||
-                       entry.environment.cells[static_cast<size_t>(y) * entry.width + x].npcId != 0;
+                return entry.environment.cells[static_cast<size_t>(y) * entry.environment.width + x].playerId != 0 ||
+                       entry.environment.cells[static_cast<size_t>(y) * entry.environment.width + x].npcId != 0;
             }
         }
 
@@ -490,7 +492,17 @@ bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int
 
 void Map::removePlayer(int16_t x, int16_t y, uint8_t mapId) {
     if (isInBounds(x, y, mapId)) {
-        cells[static_cast<size_t>(y) * getWidth(mapId) + x].playerId = 0;
+        std::vector<Cell>* cells = &this->cells;
+        if (mapId > 0) {
+            for (auto& entry: entries) {
+                if (entry.id.back() == '0' + mapId) {
+                    cells = &entry.environment.cells;
+                    break;
+                }
+            }
+        }
+
+        (*cells)[static_cast<size_t>(y) * getWidth(mapId) + x].playerId = 0;
     }
 }
 
@@ -553,7 +565,8 @@ bool Map::checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId) {
 
     // If the player in in the overworld
     for (const auto& entry : entries) {
-        if (entry.x == x && entry.y == y) {
+        if (x >= entry.x && y >= entry.y && x < entry.x + entry.width &&
+            y < entry.y + entry.height) {
             return true;
         }
     }

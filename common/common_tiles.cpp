@@ -16,7 +16,7 @@ const std::vector<FloorTile> FLOOR_TILES = {
         {11, "madera", "tiles/madera.png", "#7A4B25"},
         {12, "cueva", "tiles/cueva.png", "#3A2A20"},
         {13, "mazmorra", "tiles/mazmorra.png", "#2A2A2A"},
-        {EXTERIOR_TILE_VALUE, "exterior", "", "#000000"},
+        {EXTERIOR_TILE_VALUE, "exterior", "tiles/black.png", "#000000"},
 };
 
 }  // namespace

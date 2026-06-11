@@ -278,20 +278,24 @@ void Game::checkEntry(int playerId) {
         // El jugador pisó una entrada a dungeon o una salida (si ya está en
         // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
         uint8_t currentMapId = itPlayer->second.getMapId();
-        map.removePlayer(pos.x, pos.y, currentMapId);
 
-        std::string mapId = map.getMapId(pos.x, pos.y);
-
-        if (!mapId.empty()) {
-            // Si veníamos del overworld vamos a la dungeon; si veníamos de
-            // una dungeon, salimos al overworld.
-            if (currentMapId == 0)
-                map.placePlayerIntoTheDungeon(playerId, pos, mapId);
-            else
-                map.placePlayerIntoTheOverworld(playerId, currentMapId);
-            itPlayer->second.changeMapId(static_cast<uint8_t>((mapId[mapId.size() - 1])) - '0');
+        // Si veníamos del overworld vamos a la dungeon; si veníamos de una
+        // dungeon, salimos al overworld.
+        if (currentMapId == 0) {
+            std::string mapId = map.getMapId(pos.x, pos.y);
+            if (mapId.empty()) {
+                return;
+            }
+            map.placePlayerIntoTheDungeon(playerId, pos, mapId);
+            itPlayer->second.changeMapId(static_cast<uint8_t>(mapId[mapId.size() - 1] - '0'));
             Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
+        } else {
+            map.removePlayer(pos.x, pos.y, currentMapId);
+            map.placePlayerIntoTheOverworld(playerId, currentMapId);
+            itPlayer->second.changeMapId(0);
+            Position entryPosition = map.getEntryPosition(currentMapId);
+            itPlayer->second.move({entryPosition.x, static_cast<int16_t>(entryPosition.y + 1)});
         }
     }
 }
