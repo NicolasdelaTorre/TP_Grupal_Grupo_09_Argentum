@@ -541,8 +541,22 @@ void GameScreen::consumeServerEvents() {
                           << ") disconnected" << std::endl;
             }
             otherPlayers.erase(pd->getId());
-        } else if (dynamic_cast<AttackResultEvent*>(ev.get())) {
-            // TODO(team-ui): mostrar feedback visual.
+        } else if (auto* ar = dynamic_cast<AttackResultEvent*>(ev.get())) {
+            // Solo hay sangre si el golpe conectó. Buscamos la posición visual
+            // del target (player u NPC) por su id y soltamos un splatter ahí.
+            if (ar->getHit()) {
+                if (ar->getTargetType() == 0) {
+                    auto it = otherPlayers.find(ar->getTargetId());
+                    if (it != otherPlayers.end())
+                        bloodEffects.push_back({it->second.visual.x, it->second.visual.y,
+                                                BLOOD_DURATION});
+                } else {
+                    auto it = npcs.find(ar->getTargetId());
+                    if (it != npcs.end() && it->second.alive)
+                        bloodEffects.push_back({it->second.visual.x, it->second.visual.y,
+                                                BLOOD_DURATION});
+                }
+            }
         } else if (auto* eq = dynamic_cast<PlayerEquippedEvent*>(ev.get())) {
             // Otro jugador equipo/desequipo algo (itemId=0 → desequipo).
             // Actualizamos su slot y re-volcamos visuales.
