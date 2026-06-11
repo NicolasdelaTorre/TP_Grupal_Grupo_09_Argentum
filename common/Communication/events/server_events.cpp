@@ -469,8 +469,9 @@ std::unique_ptr<PlayerRevivedEvent> PlayerRevivedEvent::deserialize(CommonProtoc
 
 // ── ItemDroppedEvent ─────────────────────────────────────────────────────
 
-ItemDroppedEvent::ItemDroppedEvent(uint16_t dropId, uint8_t itemId, int16_t x, int16_t y):
-        dropId(dropId), itemId(itemId), x(x), y(y) {}
+ItemDroppedEvent::ItemDroppedEvent(uint16_t dropId, uint8_t itemId, int16_t x, int16_t y,
+                                   uint32_t goldAmount):
+        dropId(dropId), itemId(itemId), x(x), y(y), goldAmount(goldAmount) {}
 
 void ItemDroppedEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(static_cast<uint8_t>(ServerMsg::ITEM_DROPPED));
@@ -478,6 +479,7 @@ void ItemDroppedEvent::serialize(CommonProtocol& proto) const {
     proto.sendByte(itemId);
     proto.send_two_bytes_number(static_cast<uint16_t>(x));
     proto.send_two_bytes_number(static_cast<uint16_t>(y));
+    proto.send_four_bytes_number(goldAmount);
 }
 
 std::unique_ptr<ItemDroppedEvent> ItemDroppedEvent::deserialize(CommonProtocol& proto) {
@@ -485,7 +487,8 @@ std::unique_ptr<ItemDroppedEvent> ItemDroppedEvent::deserialize(CommonProtocol& 
     uint8_t itemId = proto.receive_byte();
     int16_t x = static_cast<int16_t>(proto.receive_two_bytes_number());
     int16_t y = static_cast<int16_t>(proto.receive_two_bytes_number());
-    return std::make_unique<ItemDroppedEvent>(dropId, itemId, x, y);
+    uint32_t goldAmount = proto.receive_four_bytes_number();
+    return std::make_unique<ItemDroppedEvent>(dropId, itemId, x, y, goldAmount);
 }
 
 // ── ItemPickedUpEvent ────────────────────────────────────────────────────

@@ -234,7 +234,7 @@ bool GameScreen::handleEvents(float dt) {
                 // Si el item ya está equipado, el slotType es el índice en
                 // equippedItems (0=arma,1=armor,2=casco,3=escudo) → desequipar.
                 // Si no, equipar por inventory slot.
-                int slotType = equippedSlotTypeOf(itemId);
+                int slotType = equippedSlotTypeOfInvSlot(slot);
                 if (slotType >= 0) {
                     std::cout << "[inv] doble click slot=" << slot << " itemId=" << (int)itemId
                               << " → UNEQUIP slotType=" << slotType << std::endl;
@@ -633,16 +633,28 @@ void GameScreen::consumeServerEvents() {
             auto it = otherPlayers.find(pd->getId());
             if (it != otherPlayers.end()) {
                 it->second.ghost = true;
+                it->second.visual.killed = true;  // dispara render del fantasma.
+                // Al morir se dropea todo (server: dropPlayerLootOnDeath), asi
+                // que limpiamos el equipamiento visual: nada de seguir viendo
+                // armor/arma/escudo/casco que el player ya no tiene.
+                it->second.equippedItems.fill(0);
+                applyEquipmentToVisual(it->second.visual, it->second.equippedItems,
+                                       it->second.baseSkin);
                 std::cout << "[muerte] " << it->second.name << " murió" << std::endl;
             } else {
                 // id no está entre los otros → soy yo.
                 localGhost = true;
+                player.killed = true;
+                // Dropeamos todo al morir → limpiamos el equip visual local.
+                equippedItems.fill(0);
+                applyEquippedVisuals();
                 std::cout << "[muerte] moriste — usá /resucitar" << std::endl;
             }
         } else if (auto* pr = dynamic_cast<PlayerRevivedEvent*>(ev.get())) {
             auto it = otherPlayers.find(pr->getId());
             if (it != otherPlayers.end()) {
                 it->second.ghost = false;
+                it->second.visual.killed = false;  // saca el sprite de fantasma.
                 it->second.targetX = static_cast<float>(pr->getX());
                 it->second.targetY = static_cast<float>(pr->getY());
                 it->second.visual.x = it->second.targetX;
@@ -650,6 +662,7 @@ void GameScreen::consumeServerEvents() {
                 std::cout << "[revivió] " << it->second.name << std::endl;
             } else {
                 localGhost = false;
+                player.killed = false;
                 player.x = static_cast<float>(pr->getX());
                 player.y = static_cast<float>(pr->getY());
                 lastTileX = pr->getX();
@@ -745,7 +758,7 @@ void GameScreen::renderInventoryPanel() {
         int dstH = (int)ch - 2 * pad;
 
         // Slot equipado: fondo verde semitransparente + borde, debajo del item.
-        if (equippedSlotTypeOf(itemId) >= 0) {
+        if (equippedSlotTypeOfInvSlot(i) >= 0) {
             SDL2pp::Rect cell(dstX, dstY, dstW, dstH);
             renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
             renderer.SetDrawColor(60, 220, 90, 90);
@@ -786,10 +799,23 @@ void GameScreen::applyEquippedVisuals() {
     applyEquipmentToVisual(player, equippedItems, baseSkin);
 }
 
-int GameScreen::equippedSlotTypeOf(uint8_t itemId) const {
-    if (itemId == 0) return -1;  // slot vacío, nunca "equipado".
+int GameScreen::equippedSlotTypeOfInvSlot(size_t invSlot) const {
+    if (invSlot >= inventoryItems.size()) return -1;
+    uint8_t itemId = inventoryItems[invSlot];
+    if (itemId == 0) return -1;
+
+    // Buscamos para cada slot equipado (0=arma..3=escudo) el primer invSlot
+    // del inventario con ese itemId. Si ese primer match coincide con el que
+    // nos preguntan, este slot esta "equipado". Asi evitamos marcar dos copias
+    // del mismo itemId cuando solo una esta en uso.
     for (size_t t = 0; t < equippedItems.size(); t++) {
-        if (equippedItems[t] == itemId) return (int)t;
+        if (equippedItems[t] == 0) continue;
+        for (size_t i = 0; i < inventoryItems.size(); i++) {
+            if (inventoryItems[i] == equippedItems[t]) {
+                if (i == invSlot) return (int)t;
+                break;  // primer match ya tomado por otro invSlot del mismo id.
+            }
+        }
     }
     return -1;
 }

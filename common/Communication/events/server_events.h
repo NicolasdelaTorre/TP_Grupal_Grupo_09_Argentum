@@ -295,23 +295,28 @@ public:
     static std::unique_ptr<NpcRespawnedEvent> deserialize(CommonProtocol& proto);
 };
 
-// ITEM_DROPPED: [opcode][drop_id:2][item_id:1][x:2][y:2]. Aparece un item en
-// el piso. dropId es la clave que después se usa para sacarlo del piso con
-// ItemPickedUpEvent. Tanto un /tirar como el drop de un NPC muerto disparan
-// este evento.
+// ITEM_DROPPED: [opcode][drop_id:2][item_id:1][x:2][y:2][gold_amount:4].
+// Aparece un item en el piso. dropId es la clave que despues se usa para
+// sacarlo del piso con ItemPickedUpEvent. Tanto /tirar, NPC muerto, o player
+// muerto disparan este evento.
+// itemId=254 (GOLD_ITEM_ID) es un caso especial: el drop es oro y el monto
+// viaja en goldAmount. Para items normales goldAmount=0.
 class ItemDroppedEvent: public ServerEvent {
 private:
     uint16_t dropId;
     uint8_t itemId;
     int16_t x;
     int16_t y;
+    uint32_t goldAmount;
 
 public:
-    ItemDroppedEvent(uint16_t dropId, uint8_t itemId, int16_t x, int16_t y);
+    ItemDroppedEvent(uint16_t dropId, uint8_t itemId, int16_t x, int16_t y,
+                     uint32_t goldAmount = 0);
     uint16_t getDropId() const { return dropId; }
     uint8_t getItemId() const { return itemId; }
     int16_t getX() const { return x; }
     int16_t getY() const { return y; }
+    uint32_t getGoldAmount() const { return goldAmount; }
     void serialize(CommonProtocol& proto) const override;
     static std::unique_ptr<ItemDroppedEvent> deserialize(CommonProtocol& proto);
 };

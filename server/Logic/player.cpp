@@ -364,10 +364,14 @@ void Player::levelUp() {
 }
 
 void Player::addGold(uint32_t amount) {
-    uint32_t cap = StatsDefinition().safeGold(data.level);
-    if (data.gold >= cap) return;
-    uint32_t room = cap - data.gold;
-    data.gold += std::min(amount, room);
+    // No topeamos: el jugador puede acumular oro por encima de safeGold. Ese
+    // excedente lo lleva "encima" y se pierde al morir (ver dropPlayerLootOnDeath).
+    // safeGold es el umbral, no un cap rigido.
+    if (amount > UINT32_MAX - data.gold) {
+        data.gold = UINT32_MAX;
+    } else {
+        data.gold += amount;
+    }
 }
 
 bool Player::removeGold(uint32_t amount) {

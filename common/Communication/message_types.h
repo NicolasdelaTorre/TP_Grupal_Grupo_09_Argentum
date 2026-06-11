@@ -43,6 +43,6 @@ enum class ServerMsg : uint8_t {
     NPC_RESPAWNED = 0x94,     // [opcode][id:2][x:2][y:2]
     PLAYER_DIED = 0x95,       // [opcode][id:2] — jugador queda como fantasma
     PLAYER_REVIVED = 0x96,    // [opcode][id:2][x:2][y:2] — vuelve a la vida (puede teletransportarse)
-    ITEM_DROPPED = 0x97,      // [opcode][drop_id:2][item_id:1][x:2][y:2] — aparece un item en el piso
+    ITEM_DROPPED = 0x97,      // [opcode][drop_id:2][item_id:1][x:2][y:2][gold_amount:4] — aparece un item en el piso. item_id=254 (GOLD) usa gold_amount
     ITEM_PICKED_UP = 0x98,    // [opcode][drop_id:2] — el item desaparece del piso
 };

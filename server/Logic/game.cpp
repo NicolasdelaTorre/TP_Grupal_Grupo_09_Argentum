@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 #include "NPC/creature.h"
+#include "stats_definition.h"
 #include "toml.hpp"
 
 Game::Game(Map& world):
@@ -686,12 +687,27 @@ Game::DropResult Game::pickUpItemAt(int playerId) {
         if (droppedItems[i].x == pos.x && droppedItems[i].y == pos.y) {
             DroppedItemRecord rec = droppedItems[i];
             droppedItems.erase(droppedItems.begin() + i);
-            // TODO(team-gameplay): mapear itemId → itemName y llamar
-            // it->second.addItem(name). Hoy solo sacamos el drop del piso.
+
+            // Drop de oro: se suma al gold del jugador (respetando cap).
+            if (rec.itemId == GOLD_ITEM_ID) {
+                it->second.addGold(rec.goldAmount);
+                std::cout << "PICKUP gold player=" << playerId << " amount=" << rec.goldAmount
+                          << " at (" << rec.x << "," << rec.y << ")" << std::endl;
+                return {true, "Levantaste " + std::to_string(rec.goldAmount) + " de oro", rec};
+            }
+
+            // Item normal: addItem por nombre canonico.
+            const char* name = itemNameById(rec.itemId);
+            if (!name) return {false, "Item desconocido", {}};
+            if (!it->second.addItem(name)) {
+                // Inventario lleno: lo devolvemos al piso para no perderlo.
+                droppedItems.insert(droppedItems.begin() + i, rec);
+                return {false, "Tu inventario esta lleno", {}};
+            }
             std::cout << "PICKUP player=" << playerId << " dropId=" << rec.dropId
-                      << " itemId=" << (int)rec.itemId << " at (" << rec.x << "," << rec.y << ")"
-                      << std::endl;
-            return {true, "Levantaste el item (stub)", rec};
+                      << " itemId=" << (int)rec.itemId << " (" << name << ") at (" << rec.x << ","
+                      << rec.y << ")" << std::endl;
+            return {true, std::string("Levantaste ") + name, rec};
         }
     }
     return {false, "No hay nada para levantar acá", {}};
@@ -705,14 +721,87 @@ Game::DropResult Game::dropItem(int playerId, uint8_t invSlot) {
     Position pos = it->second.getPosition();
     uint8_t itemId = inv[invSlot].getId();
     std::string itemName = inv[invSlot].getName();
-    // TODO(team-gameplay): remover el item del inventario del jugador
-    // (player.removeFromSlot(slot)). Hoy el item se queda duplicado.
-    DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y};
+    // Sacamos el item del inventario para que no quede duplicado.
+    if (it->second.removeItemByName(itemName) == 0) {
+        return {false, "No se pudo tirar (no estaba en inventario)", {}};
+    }
+    DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y, 0};
     droppedItems.push_back(rec);
     std::cout << "DROP player=" << playerId << " slot=" << (int)invSlot
               << " name=" << itemName << " dropId=" << rec.dropId << " at (" << rec.x
               << "," << rec.y << ")" << std::endl;
     return {true, "Tiraste " + itemName, rec};
+}
+
+std::vector<Game::DroppedItemRecord> Game::dropPlayerLootOnDeath(int playerId) {
+    std::vector<DroppedItemRecord> drops;
+    auto it = players.find(playerId);
+    if (it == players.end()) return drops;
+    Player& p = it->second;
+    Position pos = p.getPosition();
+
+    // Iteramos el inventario y tiramos cada item. Usamos getInventory() una
+    // vez y vamos sacando uno a uno con removeItemByName: cada llamada baja el
+    // tamaño, asi que iteramos sobre la copia inicial.
+    auto inv = p.getInventory();
+    for (const Item& item: inv) {
+        std::string name = item.getName();
+        uint8_t id = item.getId();
+        if (p.removeItemByName(name) == 0) continue;
+        DroppedItemRecord rec{nextDropId++, id, pos.x, pos.y, 0};
+        droppedItems.push_back(rec);
+        drops.push_back(rec);
+    }
+
+    // Oro en exceso del cap (= 100 * Nivel^1.1). Se queda con safeGold y tira
+    // el resto.
+    uint32_t cap = StatsDefinition().safeGold(p.getData().level);
+    uint32_t gold = p.getData().gold;
+    if (gold > cap) {
+        uint32_t excess = gold - cap;
+        p.removeGold(excess);
+        DroppedItemRecord rec{nextDropId++, GOLD_ITEM_ID, pos.x, pos.y, excess};
+        droppedItems.push_back(rec);
+        drops.push_back(rec);
+        std::cout << "DEATH-DROP gold player=" << playerId << " excess=" << excess << std::endl;
+    }
+    return drops;
+}
+
+std::vector<Game::DroppedItemRecord> Game::dropCreatureLootOnDeath(uint16_t npcId) {
+    std::vector<DroppedItemRecord> drops;
+    Creature* npc = map.getNPC(npcId);
+    if (!npc) return drops;
+    Position pos = npc->getPosition();
+
+    // Probabilidades del enunciado: 80% nada, 8% oro, 1% pocion, 1% objeto.
+    // El 10% restante queda como "nada" (efectivo 90% nada).
+    int roll = std::rand() % 100;
+    if (roll < 80) {
+        // nada
+    } else if (roll < 88) {
+        // Oro: monto random entre 10 y 100 (placeholder hasta tener fórmula).
+        uint32_t amount = 10 + (std::rand() % 91);
+        DroppedItemRecord rec{nextDropId++, GOLD_ITEM_ID, pos.x, pos.y, amount};
+        droppedItems.push_back(rec);
+        drops.push_back(rec);
+    } else if (roll < 89) {
+        // Pocion: 50/50 health o mana.
+        uint8_t potionId = (std::rand() & 1) ? 18 : 19;
+        DroppedItemRecord rec{nextDropId++, potionId, pos.x, pos.y, 0};
+        droppedItems.push_back(rec);
+        drops.push_back(rec);
+    } else if (roll < 90) {
+        // Objeto random del 1..17 (armas/armor/casco/escudo).
+        uint8_t itemId = 1 + (std::rand() % 17);
+        DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y, 0};
+        droppedItems.push_back(rec);
+        drops.push_back(rec);
+    }
+    if (!drops.empty()) {
+        std::cout << "CREATURE-DROP npc=" << npcId << " drops=" << drops.size() << std::endl;
+    }
+    return drops;
 }
 
 bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {

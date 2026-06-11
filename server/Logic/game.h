@@ -18,6 +18,11 @@
 
 class Game {
 public:
+    // itemId reservado para "drop de oro" (no es un item real). El drop lleva el
+    // monto en DroppedItemRecord::goldAmount, y al levantarlo se suma al gold
+    // del jugador (no entra al inventario).
+    static constexpr uint8_t GOLD_ITEM_ID = 254;
+
     // Definido acá arriba porque lo usan tanto miembros privados como métodos
     // públicos (pickUp/drop devuelven DropResult que lo contiene).
     struct DroppedItemRecord {
@@ -25,6 +30,7 @@ public:
         uint8_t itemId;
         int16_t x;
         int16_t y;
+        uint32_t goldAmount = 0;  // 0 para items normales, >0 si itemId == GOLD_ITEM_ID
     };
 
 private:
@@ -183,6 +189,15 @@ public:
 
     // /tirar <slot>: saca el item del inventario y lo deja en la celda del jugador.
     DropResult dropItem(int playerId, uint8_t invSlot);
+
+    // Al morir un jugador: tira al piso todo el inventario + el oro en exceso
+    // (data.gold - safeGold(level)). Devuelve los DroppedItemRecord creados
+    // para que gameloop pueda broadcastear ItemDroppedEvent por cada uno.
+    std::vector<DroppedItemRecord> dropPlayerLootOnDeath(int playerId);
+
+    // Al morir una creature: tira los dados segun el enunciado (80% nada, 8%
+    // oro, 1% pocion, 1% objeto). Devuelve los DroppedItemRecord creados.
+    std::vector<DroppedItemRecord> dropCreatureLootOnDeath(uint16_t npcId);
 
     // Equipa o usa el item del slot según su tipo (ver ADR-002).
     // TODO(team-gameplay): si arma/armor/casco/escudo → player.equipItem(slot).
