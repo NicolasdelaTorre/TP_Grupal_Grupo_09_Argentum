@@ -409,6 +409,10 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
               << " tid=" << targetId << " hit=" << ev->getHit() << " dmg=" << ev->getDamage()
               << std::endl;
     clientMonitor.broadcast(ev);
+    // El atacante gano exp con processAttack
+    if (ev->getHit()) {
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
     if (ev->getHit() && ev->getTargetType() == 0 && game.hasPlayer(ev->getTargetId())) {
         clientMonitor.sendToClient(ev->getTargetId(), buildStatsEvent(ev->getTargetId()));
         // Si el ataque mató al target, broadcast PlayerDiedEvent + drop loot
@@ -484,6 +488,11 @@ void Gameloop::handlePickUp(int playerId) {
     clientMonitor.broadcast(std::make_shared<ItemPickedUpEvent>(r.record.dropId));
     auto after = game.getInventorySnapshot(playerId);
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+    // Si era oro, el inventory snapshot no cambia → mandamos stats para que
+    // el HUD del dueño refresque la cantidad de oro.
+    if (r.record.itemId == Game::GOLD_ITEM_ID) {
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+    }
 }
 
 void Gameloop::handleDrop(int playerId, uint8_t invSlot) {

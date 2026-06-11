@@ -3,17 +3,19 @@
 #include <ctime>
 
 #include "../toml.hpp"
+#include "../stats_definition.h"
 #include <iostream>
 
 Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y) : NPC(id, name, x, y, mapId), isAlive(true) {
-    // Set level
+    // Rangos de level por zona vienen del TOML.
     srand(time(nullptr));
+    CreatureSpawnConfig sp = StatsDefinition().getSpawnConfig();
     if (mapId == 0) {
-        // Overworld
-        level = 1 + rand() % 5;
+        uint8_t span = sp.overworldLevelMax - sp.overworldLevelMin + 1;
+        level = sp.overworldLevelMin + rand() % span;
     } else {
-        // Dungeons
-        level = 5 + rand() % 6;
+        uint8_t span = sp.dungeonLevelMax - sp.dungeonLevelMin + 1;
+        level = sp.dungeonLevelMin + rand() % span;
     }
 
     const toml::value config = toml::parse("server/Logic/NPC/npc.toml");
@@ -74,6 +76,10 @@ uint16_t Creature::getDamage() const {
     std::cout << "Creature " << name << " attacks with " << damage << " damage!" << std::endl;
     return damage;
 }
+
+uint16_t Creature::getMaxHealth() const { return maxHealth; }
+
+uint8_t Creature::getLevel() const { return level; }
 
 uint8_t Creature::getMapId() const {
     return mapId;

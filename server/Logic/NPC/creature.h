@@ -30,6 +30,10 @@ public:
 
     uint16_t getDamage() const;
 
+    uint16_t getMaxHealth() const;
+
+    uint8_t getLevel() const;
+
     uint8_t getMapId() const;
 };
 

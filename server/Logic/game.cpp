@@ -183,9 +183,7 @@ uint32_t Game::getPlayerNextLevelExp(int playerId) const {
     if (it == players.end()) {
         throw std::runtime_error("Game Error: player not found");
     }
-    // TODO(team-gameplay): devolver el límite de exp para el próximo nivel.
-    // Fórmula del enunciado: 1000 * Nivel^1.8 (o como lo decida StatsDefinition).
-    return 0;
+    return StatsDefinition().nextLevelExp(it->second.getData().level);
 }
 
 uint8_t Game::getPlayerMapId(int playerId) const {
@@ -329,6 +327,11 @@ std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t tar
 
     uint16_t attackerId = static_cast<uint16_t>(playerId);
 
+    // Exp por ataque: Daño * max(NivelOtro - NivelAtacante + 10, 0). Si la
+    // diferencia es < -10 (target mucho mas debil) no da exp. Si target murio
+    // por este golpe, exp adicional: rand(0, 0.1) * VidaMaxDelOtro * mismo factor.
+    uint8_t atkLvl = itPlayer->second.getData().level;
+
     if (targetType == 0) {
         // target = player
         auto itTarget = players.find(entityId);
@@ -342,14 +345,34 @@ std::shared_ptr<AttackResultEvent> Game::processAttack(int playerId, uint8_t tar
             return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, 0, false);
         }
         uint16_t damage = itPlayer->second.dealDamage();
+        uint8_t tgtLvl = itTarget->second.getData().level;
+        uint16_t tgtMaxHp = itTarget->second.getMaxHealth();
         itTarget->second.receiveDamage(damage);
+        // Exp.
+        FormulaConstants f = StatsDefinition().getFormulas();
+        int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
+        itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
+        if (!itTarget->second.isAlive()) {
+            // rand(0, killBonusMaxPct%) * VidaMaxOtro.
+            uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
+            itPlayer->second.grantExp(kill * factor);
+        }
         return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
     }
 
     // target = npc
     uint16_t damage = itPlayer->second.dealDamage();
     Creature* npc = map.getNPC(targetId);
+    uint8_t tgtLvl = npc->getLevel();
+    uint16_t tgtMaxHp = npc->getMaxHealth();
     npc->receiveDamage(damage);
+    FormulaConstants f = StatsDefinition().getFormulas();
+    int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
+    itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
+    if (npc->isDead()) {
+        uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
+        itPlayer->second.grantExp(kill * factor);
+    }
     return std::make_shared<AttackResultEvent>(attackerId, targetType, targetId, damage, true);
 }
 
@@ -752,6 +775,13 @@ std::vector<Game::DroppedItemRecord> Game::dropPlayerLootOnDeath(int playerId) {
         droppedItems.push_back(rec);
         drops.push_back(rec);
     }
+    // Desequipar todo: equipItem solo copia al slot equipado sin sacar del
+    // inventario, asi que removeItemByName arriba no toca los equipped slots.
+    // Al revivir el player no puede atacar/defender sin volver a equipar.
+    p.unequipItem(ItemType::WEAPON);
+    p.unequipItem(ItemType::ARMOR);
+    p.unequipItem(ItemType::HELMET);
+    p.unequipItem(ItemType::SHIELD);
 
     // Oro en exceso del cap (= 100 * Nivel^1.1). Se queda con safeGold y tira
     // el resto.
@@ -774,26 +804,34 @@ std::vector<Game::DroppedItemRecord> Game::dropCreatureLootOnDeath(uint16_t npcI
     if (!npc) return drops;
     Position pos = npc->getPosition();
 
-    // Probabilidades del enunciado: 80% nada, 8% oro, 1% pocion, 1% objeto.
-    // El 10% restante queda como "nada" (efectivo 90% nada).
+    // Probabilidades acumuladas: nothing, gold, potion, item. Lo que sobre
+    // hasta 100 cae como "nada" (efectivo).
+    LootConfig L = StatsDefinition().getLootConfig();
     int roll = std::rand() % 100;
-    if (roll < 80) {
+    int goldCut = L.nothingChance + L.goldChance;
+    int potionCut = goldCut + L.potionChance;
+    int itemCut = potionCut + L.itemChance;
+    if (roll < L.nothingChance) {
         // nada
-    } else if (roll < 88) {
-        // Oro: monto random entre 10 y 100 (placeholder hasta tener fórmula).
-        uint32_t amount = 10 + (std::rand() % 91);
+    } else if (roll < goldCut) {
+        // Oro = rand(min, max) / 100 * VidaMaxNPC. Min = 1 para asegurar
+        // que el monto nunca sea 0.
+        uint16_t vidaMax = npc->getMaxHealth();
+        uint8_t span = L.goldFactorMaxPct - L.goldFactorMinPct + 1;
+        uint32_t factorPct = L.goldFactorMinPct + std::rand() % span;
+        uint32_t amount = (vidaMax * factorPct) / 100;
+        if (amount == 0) amount = 1;
         DroppedItemRecord rec{nextDropId++, GOLD_ITEM_ID, pos.x, pos.y, amount};
         droppedItems.push_back(rec);
         drops.push_back(rec);
-    } else if (roll < 89) {
-        // Pocion: 50/50 health o mana.
-        uint8_t potionId = (std::rand() & 1) ? 18 : 19;
+    } else if (roll < potionCut) {
+        uint8_t potionId = (std::rand() & 1) ? L.potionHealthId : L.potionManaId;
         DroppedItemRecord rec{nextDropId++, potionId, pos.x, pos.y, 0};
         droppedItems.push_back(rec);
         drops.push_back(rec);
-    } else if (roll < 90) {
-        // Objeto random del 1..17 (armas/armor/casco/escudo).
-        uint8_t itemId = 1 + (std::rand() % 17);
+    } else if (roll < itemCut) {
+        uint8_t poolSize = L.itemIdMax - L.itemIdMin + 1;
+        uint8_t itemId = L.itemIdMin + (std::rand() % poolSize);
         DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y, 0};
         droppedItems.push_back(rec);
         drops.push_back(rec);

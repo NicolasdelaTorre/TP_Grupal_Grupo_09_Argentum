@@ -17,7 +17,19 @@ uint32_t StatsDefinition::recoveryStatThroughTime(RaceCode race) {
 }
 
 uint32_t StatsDefinition::safeGold(uint8_t playerLevel) {
-    return 100 * std::pow(playerLevel, 1.1);
+    FormulaConstants f = attributes.getFormulas();
+    return static_cast<uint32_t>(f.goldSafeBase * std::pow(playerLevel, f.goldSafeExp));
+}
+
+uint32_t StatsDefinition::goldMax(uint8_t playerLevel) {
+    // safeGold * factor: el jugador puede llevar un excedente sobre el umbral seguro.
+    FormulaConstants f = attributes.getFormulas();
+    return static_cast<uint32_t>(safeGold(playerLevel) * f.goldMaxFactor);
+}
+
+uint32_t StatsDefinition::nextLevelExp(uint8_t playerLevel) {
+    FormulaConstants f = attributes.getFormulas();
+    return static_cast<uint32_t>(f.expNextBase * std::pow(playerLevel, f.expNextExp));
 }
 
 uint16_t StatsDefinition::damage(RaceCode race, uint16_t minDamage, uint16_t maxDamage) {
@@ -37,3 +49,9 @@ uint16_t StatsDefinition::meditationManaRestore(RaceCode race, ClassCode class_)
     ClassAttribute c = attributes.getClassAttribute(class_);
     return c.FClassMeditation * r.intelligence;
 }
+
+FormulaConstants StatsDefinition::getFormulas() { return attributes.getFormulas(); }
+
+LootConfig StatsDefinition::getLootConfig() { return attributes.getLootConfig(); }
+
+CreatureSpawnConfig StatsDefinition::getSpawnConfig() { return attributes.getSpawnConfig(); }
