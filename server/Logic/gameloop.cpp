@@ -43,6 +43,49 @@ Gameloop::Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Ma
         protocol(protocol),
         turnManager(game.getPlayerIds(), map.getAllNPCIds(), map, game) {}
 
+void Gameloop::sendMapSnapshot(int playerId, uint8_t mapId) {
+    std::vector<MapCellData> cells;
+    cells.reserve(map.getCellCount(mapId));
+    for (size_t i = 0; i < map.getCellCount(mapId); i++) {
+        Cell c = map.getCell(i, mapId);
+        cells.push_back({c.textureId, c.obstacleId, c.safeZone});
+    }
+
+    std::vector<MapObstacleData> obstacles;
+    const auto& placed = map.getObstacles(mapId);
+    obstacles.reserve(placed.size());
+    for (const auto& o: placed) {
+        obstacles.push_back({o.type, o.x, o.y, o.w, o.h});
+    }
+
+    clientMonitor.sendToClient(playerId,
+                               std::make_shared<MapEvent>(map.getWidth(mapId), map.getHeight(mapId),
+                                                          std::move(cells), std::move(obstacles)));
+}
+
+void Gameloop::sendNpcSnapshot(int playerId, uint8_t mapId) {
+    // Criaturas (hostiles) que viven en el mapId pedido. Le mandamos también los
+    // muertos (alive=false) para que el id quede registrado de cara a respawns.
+    for (uint16_t npcId: map.getAllNPCIds()) {
+        Creature* npc = map.getNPC(npcId);
+        if (!npc || npc->getMapId() != mapId)
+            continue;
+        Position np = npc->getPosition();
+        uint8_t type = npcTypeFromName(npc->getName());
+        bool alive = !npc->isDead();
+        clientMonitor.sendToClient(
+                playerId, std::make_shared<NewNpcEvent>(npcId, np.x, np.y, type, alive));
+    }
+
+    // NPCs amigos (merchant/banker/priest): solo viven en las ciudades del overworld.
+    if (mapId == 0) {
+        for (const auto& f: map.getFriendlyNpcs()) {
+            clientMonitor.sendToClient(
+                    playerId, std::make_shared<NewNpcEvent>(f.id, f.x, f.y, f.type, /*alive=*/true));
+        }
+    }
+}
+
 void Gameloop::run() {
     while (!gameFinished) {
         std::shared_ptr<ClientEvent> ev;
@@ -246,23 +289,7 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
     game.setSkin(playerId, skinId);
     clientMonitor.sendToClient(playerId, std::make_shared<LoginOkEvent>(p.x, p.y));
 
-    // MAP del overworld (mapId=0): copiamos las celdas que viajan por el wire.
-    std::vector<MapCellData> cells;
-    cells.reserve(map.getCellCount(0));
-    for (size_t i = 0; i < map.getCellCount(0); i++) {
-        Cell c = map.getCell(i, 0);
-        cells.push_back({c.textureId, c.obstacleId, c.safeZone});
-    }
-    // Obstáculos colocados
-    std::vector<MapObstacleData> obstacles;
-    const auto& placed = map.getObstacles(0);
-    obstacles.reserve(placed.size());
-    for (const auto& o: placed) {
-        obstacles.push_back({o.type, o.x, o.y, o.w, o.h});
-    }
-    clientMonitor.sendToClient(playerId,
-                               std::make_shared<MapEvent>(map.getWidth(0), map.getHeight(0),
-                                                          std::move(cells), std::move(obstacles)));
+    sendMapSnapshot(playerId, 0);
 
     // Stats iniciales.
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
@@ -313,25 +340,9 @@ void Gameloop::handleSkinSelected(int playerId, uint8_t skinId) {
                 playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(playerId)));
     }
 
-    // Snapshot de NPCs del overworld (mapId=0): el cliente los renderiza. Le
-    // mandamos también los muertos (alive=false) para que cuando reciba un
-    // NpcRespawnedEvent ya tenga el id registrado.
-    for (uint16_t npcId: map.getAllNPCIds()) {
-        Creature* npc = map.getNPC(npcId);
-        if (!npc || npc->getMapId() != 0)
-            continue;
-        Position np = npc->getPosition();
-        uint8_t type = npcTypeFromName(npc->getName());
-        bool alive = !npc->isDead();
-        clientMonitor.sendToClient(
-                playerId, std::make_shared<NewNpcEvent>(npcId, np.x, np.y, type, alive));
-    }
-
-    // Snapshot de NPCs amigos (merchant/banker/priest): ids ≥ 10000, no se mueven ni mueren. Vienen del YAML como fixed_npcs de las zonas city.
-    for (const auto& f : map.getFriendlyNpcs()) {
-        clientMonitor.sendToClient(
-                playerId, std::make_shared<NewNpcEvent>(f.id, f.x, f.y, f.type, /*alive=*/true));
-    }
+    // Snapshot de NPCs del overworld (mapId=0): el cliente los renderiza. Incluye
+    // hostiles (vivos y muertos) y amigos (merchant/banker/priest).
+    sendNpcSnapshot(playerId, 0);
 
     // Snapshot de items en el piso. Mandamos un ItemDroppedEvent por cada uno;
     // así el cliente unifica el code path con los drops que llegan en vivo.
@@ -347,9 +358,20 @@ void Gameloop::handleHeadSelected(int /*playerId*/, uint8_t /*headId*/) {
 }
 
 void Gameloop::handleMovement(int playerId, MoveDirection direction) {
+    const uint8_t previousMapId = game.getPlayerMapId(playerId);
     if (game.movePlayer(playerId, direction)) {
         Position p = game.getPlayerPosition(playerId);
         uint8_t pdir = game.getPlayerDirection(playerId);
+        const uint8_t currentMapId = game.getPlayerMapId(playerId);
+        if (currentMapId != previousMapId) {
+            // El cliente, al recibir el MapEvent, limpia jugadores/NPCs/items, así
+            // que después le reenviamos los NPCs del nuevo mapa.
+            sendMapSnapshot(playerId, currentMapId);
+            sendNpcSnapshot(playerId, currentMapId);
+            clientMonitor.sendToClient(playerId,
+                                       std::make_shared<MoveRejectedEvent>(p.x, p.y));
+            return;
+        }
         clientMonitor.broadcastExcept(playerId,
                                       std::make_shared<PlayerMovedEvent>(
                                               static_cast<uint16_t>(playerId), p.x, p.y, pdir));

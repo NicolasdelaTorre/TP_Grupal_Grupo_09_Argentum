@@ -38,6 +38,13 @@ private:
     // recipientId == -1 → broadcast a todos menos a él. Sino, sólo a ese cliente.
     void sendEquipmentSnapshot(int idPlayer, int recipientId);
 
+    // Manda el snapshot completo del mapa actual (overworld o environment).
+    void sendMapSnapshot(int playerId, uint8_t mapId);
+
+    // Manda los NewNpcEvent de los NPCs que viven en ese mapId. En el overworld
+    // (mapId == 0) incluye además los NPCs amigos (merchant/banker/priest).
+    void sendNpcSnapshot(int playerId, uint8_t mapId);
+
     // Avanza el turno de cada NPC vivo; si alguno ataca, dispara los eventos al cliente.
     void NPCTurns();
 
