@@ -827,12 +827,7 @@ void GameScreen::renderInventoryPanel() {
     float ch = INV_H / (float)GRID_ROWS;
     int pad = (int)(4 * scale);
 
-    for (size_t i = 0; i < inventoryItems.size() && i < GRID_COLS * GRID_ROWS; i++) {
-        uint8_t itemId = inventoryItems[i];
-        if (itemId == 0) continue;
-        ItemSpriteRef ref = itemSpriteFor(itemId);
-        SDL2pp::Texture& itemsTex = cache.get(ref.sheetPath);
-
+    for (size_t i = 0; i < GRID_COLS * GRID_ROWS; i++) {
         int col = i % GRID_COLS;
         int row = i / GRID_COLS;
         int dstX = invX + (int)(col * cw) + pad;
@@ -850,8 +845,27 @@ void GameScreen::renderInventoryPanel() {
             renderer.DrawRect(cell);
         }
 
-        renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
-                      SDL2pp::Rect(dstX, dstY, dstW, dstH));
+        // Item del slot (si lo hay).
+        if (i < inventoryItems.size() && inventoryItems[i] != 0) {
+            ItemSpriteRef ref = itemSpriteFor(inventoryItems[i]);
+            SDL2pp::Texture& itemsTex = cache.get(ref.sheetPath);
+            renderer.Copy(itemsTex, SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH),
+                          SDL2pp::Rect(dstX, dstY, dstW, dstH));
+        }
+
+        // Número del slot (0-19) en la esquina superior izquierda de la celda.
+        try {
+            SDL_Color numColor = {255, 235, 150, 255};
+            auto surface = chatFont.RenderUTF8_Blended(std::to_string(i), numColor);
+            SDL2pp::Texture tex(renderer, surface);
+            int tw = tex.GetWidth();
+            int th = tex.GetHeight();
+            SDL2pp::Rect numRect(dstX + 1, dstY + 1, tw, th);
+            renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+            renderer.SetDrawColor(0, 0, 0, 150);
+            renderer.FillRect(numRect);
+            renderer.Copy(tex, SDL2pp::NullOpt, numRect);
+        } catch (...) {}
     }
 
     // Barras de vida/mana justo debajo del grid del inventario.

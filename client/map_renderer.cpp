@@ -361,18 +361,30 @@ void MapRenderer::renderCityNpcs(const GameMap& map, float camX, float camY) {
 
 void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, float camX,
                                      float camY) {
+    // itemId reservado para drops de oro (server: Game::GOLD_ITEM_ID). No es un
+    // item real, así que usa el mismo sprite (pila de monedas) que el HUD.
+    static constexpr uint8_t GOLD_ITEM_ID = 254;
+
     for (const auto& item: items) {
         // Mismo mapeo que el inventario: el id del item (items.toml) define de
         // qué sheet y celda sale el dibujo. Así el item en el piso coincide.
-        ItemSpriteRef ref = itemSpriteFor(item.itemId);
-        SDL2pp::Rect src(ref.srcX, ref.srcY, ref.srcW, ref.srcH);
+        std::string sheetPath;
+        SDL2pp::Rect src(0, 0, 0, 0);
+        if (item.itemId == GOLD_ITEM_ID) {
+            sheetPath = "/Pantallas/Items_recolectables.png";
+            src = SDL2pp::Rect(0, 320, 32, 32);
+        } else {
+            ItemSpriteRef ref = itemSpriteFor(item.itemId);
+            sheetPath = ref.sheetPath;
+            src = SDL2pp::Rect(ref.srcX, ref.srcY, ref.srcW, ref.srcH);
+        }
 
         int screenX = (int)(item.x * TILE_SIZE - camX) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
         int screenY = (int)(item.y * TILE_SIZE - camY) + TILE_SIZE / 2 - ITEM_DRAW_SIZE / 2;
         SDL2pp::Rect dst(screenX, screenY, ITEM_DRAW_SIZE, ITEM_DRAW_SIZE);
 
         try {
-            renderer.Copy(cache.get(ref.sheetPath), src, dst);
+            renderer.Copy(cache.get(sheetPath), src, dst);
         } catch (...) {}
     }
 }
