@@ -99,6 +99,16 @@ const char* obstacleTexturePath(ObstacleCode type) {
             return "../common/assets/images/church.png";
         case ObstacleCode::TRAINING_DUMMY:
             return "../common/assets/images/training_dummy.png";
+        case ObstacleCode::ENTRY:
+            return "../common/assets/images/entries/snake.png";
+        case ObstacleCode::EXIT:
+            return "../common/assets/images/exits/exit_mazmorra.png";
+        case ObstacleCode::WALL_DUNGEON_RIGHT:
+            return "../common/assets/images/walls/right_mazmorra.png";
+        case ObstacleCode::WALL_DUNGEON_LEFT:
+            return "../common/assets/images/walls/left_mazmorra.png";
+        case ObstacleCode::WALL_DUNGEON_VERTICAL:
+            return "../common/assets/images/walls/mazmorra.png";
         default:
             return nullptr;
     }

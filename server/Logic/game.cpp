@@ -294,7 +294,6 @@ void Game::checkEntry(int playerId) {
             Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
         } else {
-            map.removeEntity(pos.x, pos.y, currentMapId, true);
             map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(0);
             Position entryPosition = map.getEntryPosition(currentMapId);

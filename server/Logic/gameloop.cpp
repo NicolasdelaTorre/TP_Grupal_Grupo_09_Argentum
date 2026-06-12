@@ -285,9 +285,8 @@ void Gameloop::NPCTurns() {
         if (map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId())) {
             npc->move(newPos);
 
-            // Solo el overworld viaja al cliente (mapId=0).
-            if (npc->getMapId() != 0)
-                continue;
+            // Broadcast a todos: los ids de NPC son únicos por mapa, así que el
+            // cliente solo reacciona si tiene cargado ese NPC (mismo mapa).
             uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
                                         static_cast<int16_t>(newPos.y - oldPos.y));
             clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
@@ -410,8 +409,9 @@ void Gameloop::sendPostLoginSnapshots(int playerId) {
     Position p = game.getPlayerPosition(playerId);
     uint8_t skin = game.getPlayerSkin(playerId);
     uint8_t head = game.getPlayerHead(playerId);
+    const uint8_t mapId = game.getPlayerMapId(playerId);
     clientMonitor.sendToClient(playerId, std::make_shared<LoginOkEvent>(p.x, p.y, skin, head));
-    sendMapSnapshot(playerId, 0);
+    sendMapSnapshot(playerId, mapId);
     clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
 
     {
@@ -457,9 +457,9 @@ void Gameloop::sendPostLoginSnapshots(int playerId) {
                 playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(playerId)));
     }
 
-    // Snapshot de NPCs del overworld (mapId=0): el cliente los renderiza. Incluye
-    // hostiles (vivos y muertos) y amigos (merchant/banker/priest).
-    sendNpcSnapshot(playerId, 0);
+    // Snapshot de NPCs del mapa donde está el jugador: el cliente los renderiza.
+    // En el overworld (mapId=0) incluye amigos (merchant/banker/priest).
+    sendNpcSnapshot(playerId, mapId);
 
     // Snapshot de items en el piso. Mandamos un ItemDroppedEvent por cada uno;
     // así el cliente unifica el code path con los drops que llegan en vivo.
