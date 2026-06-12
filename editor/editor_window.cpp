@@ -438,7 +438,7 @@ void EditorWindow::onApplyMapResize() {
         return;
     }
 
-    constexpr int MAX_DIM = 2000;
+    constexpr int MAX_DIM = 250;
     constexpr int MIN_DIM = 1;
     saveCurrentToDocument();
 
