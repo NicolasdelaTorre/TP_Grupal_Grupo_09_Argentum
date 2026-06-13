@@ -141,7 +141,7 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             targetCell.isWalkable = false;
 
             // Save npc
-            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, 0, pos.x, pos.y, biome.type);
+            npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, mapId, pos.x, pos.y, biome.type);
 
             if (spawnInfo.creature == "")
                 std::cout << "El error es en el NPC numero: " << newNpcId << std::endl;
@@ -467,7 +467,10 @@ Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId, std::string biom
             uint16_t currentWidth = getWidth(mapId);
 
             Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
-            if (cell.playerId != 0 && positionInBiome({checkX, checkY}, biomeType)) {
+            // En el overworld las criaturas solo persiguen dentro de su bioma; en
+            // las mazmorras (mapId > 0) no hay biomas, así que persiguen sin filtro.
+            if (cell.playerId != 0 &&
+                (mapId > 0 || positionInBiome({checkX, checkY}, biomeType))) {
                 return Position{checkX, checkY};
             }
         }
