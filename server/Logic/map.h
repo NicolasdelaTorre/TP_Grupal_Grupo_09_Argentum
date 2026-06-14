@@ -23,13 +23,16 @@ struct Cell {
     bool safeZone;
 };
 
-// Obstáculo colocado en el mapa.
+// Obstáculo colocado en el mapa (solo para que el cliente lo dibuje). El tipo
+// lógico (ObstacleCode) vive en la celda (Cell::obstacleId); el render se
+// resuelve por la textura, así que acá no hace falta.
 struct PlacedObstacle {
-    uint8_t type;  // ObstacleCode
     int16_t x;
     int16_t y;
     uint16_t w;
     uint16_t h;
+    // Ruta del sprite relativa a common/assets/images/subcarpeta
+    std::string texture;
 };
 
 // Spawn de criaturas: qué criatura y cuántas como máximo.

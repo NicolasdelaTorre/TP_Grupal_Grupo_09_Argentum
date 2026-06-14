@@ -111,204 +111,204 @@ biome_map:
 player_spawn:
   position: [77, 21]
 obstacles:
+  - id: obstacle_41
+    type: fuente
+    position: [71, 49]
+    size: [3, 3]
+    texture: water_fountain.png
   - id: obstacle_40
     type: fardo_heno
-    position: [102, 14]
+    position: [66, 62]
     size: [1, 1]
     texture: haybale.png
   - id: obstacle_39
-    type: lampara_ciudad
-    position: [96, 11]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_38
-    type: cactus
-    position: [86, 8]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_37
-    type: piedra_pequenia
-    position: [106, 9]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_36
-    type: munieco_entrenamiento
-    position: [100, 3]
-    size: [1, 1]
-    texture: training_dummy.png
-  - id: obstacle_35
-    type: herrero
-    position: [94, 3]
-    size: [3, 2]
-    texture: blacksmith.png
-  - id: obstacle_34
-    type: piedra_grande
-    position: [39, 52]
-    size: [6, 4]
-    texture: rock_big.png
-  - id: obstacle_33
-    type: lampara_ciudad
-    position: [55, 45]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_32
-    type: lampara_ciudad
-    position: [64, 45]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_31
-    type: lampara_ciudad
-    position: [69, 45]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_30
-    type: lampara_ciudad
-    position: [75, 45]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_29
-    type: lampara_ciudad
-    position: [80, 46]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_28
-    type: lampara_ciudad
-    position: [80, 49]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_27
-    type: lampara_ciudad
-    position: [90, 49]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_26
-    type: lampara_ciudad
-    position: [56, 52]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_25
-    type: lampara_ciudad
-    position: [61, 52]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_24
-    type: lampara_ciudad
-    position: [69, 56]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_23
-    type: lampara_ciudad
-    position: [75, 56]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_22
-    type: lampara_ciudad
-    position: [86, 56]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_21
-    type: banco
-    position: [55, 41]
-    size: [8, 4]
-    texture: bank.png
-  - id: obstacle_20
-    type: iglesia
-    position: [68, 35]
-    size: [9, 10]
-    texture: church.png
-  - id: obstacle_19
-    type: hotel
-    position: [81, 43]
-    size: [7, 6]
-    texture: hotel.png
-  - id: obstacle_18
-    type: fuente
-    position: [71, 48]
-    size: [3, 3]
-    texture: water_fountain.png
-  - id: obstacle_17
-    type: casa_madera_azul
-    position: [52, 49]
-    size: [4, 3]
-    texture: wooden_house_blue.png
-  - id: obstacle_16
-    type: casa_madera_azul
-    position: [57, 49]
-    size: [4, 3]
-    texture: wooden_house_blue.png
-  - id: obstacle_15
-    type: casa_madera_roja
-    position: [62, 49]
-    size: [4, 3]
-    texture: wooden_house_red.png
-  - id: obstacle_14
-    type: casa_madera_azul
-    position: [82, 53]
-    size: [4, 3]
-    texture: wooden_house_blue.png
-  - id: obstacle_13
-    type: casa_madera_roja
-    position: [87, 53]
-    size: [4, 3]
-    texture: wooden_house_red.png
-  - id: obstacle_12
-    type: cerca_madera
-    position: [53, 56]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_11
-    type: cerca_madera
-    position: [55, 56]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_10
-    type: cerca_madera
-    position: [57, 56]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_9
-    type: cerca_madera
-    position: [59, 56]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_8
-    type: cerca_madera
-    position: [61, 56]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_7
-    type: cerca_madera
-    position: [63, 56]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_6
-    type: diana
-    position: [54, 57]
-    size: [1, 1]
-    texture: target.png
-  - id: obstacle_5
-    type: diana
-    position: [55, 57]
-    size: [1, 1]
-    texture: target.png
-  - id: obstacle_4
-    type: diana
-    position: [56, 57]
-    size: [1, 1]
-    texture: target.png
-  - id: obstacle_3
-    type: munieco_entrenamiento
-    position: [58, 58]
-    size: [1, 1]
-    texture: training_dummy.png
-  - id: obstacle_2
     type: herrero
     position: [60, 57]
     size: [3, 2]
     texture: blacksmith.png
+  - id: obstacle_38
+    type: munieco_entrenamiento
+    position: [58, 58]
+    size: [1, 1]
+    texture: training_dummy.png
+  - id: obstacle_37
+    type: diana
+    position: [56, 57]
+    size: [1, 1]
+    texture: target.png
+  - id: obstacle_36
+    type: diana
+    position: [55, 57]
+    size: [1, 1]
+    texture: target.png
+  - id: obstacle_35
+    type: diana
+    position: [54, 57]
+    size: [1, 1]
+    texture: target.png
+  - id: obstacle_34
+    type: cerca_madera
+    position: [63, 56]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_33
+    type: cerca_madera
+    position: [61, 56]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_32
+    type: cerca_madera
+    position: [59, 56]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_31
+    type: cerca_madera
+    position: [57, 56]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_30
+    type: cerca_madera
+    position: [55, 56]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_29
+    type: cerca_madera
+    position: [53, 56]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_28
+    type: casa_madera_roja
+    position: [87, 53]
+    size: [4, 3]
+    texture: wooden_house_red.png
+  - id: obstacle_27
+    type: casa_madera_azul
+    position: [82, 53]
+    size: [4, 3]
+    texture: wooden_house_blue.png
+  - id: obstacle_26
+    type: casa_madera_roja
+    position: [62, 49]
+    size: [4, 3]
+    texture: wooden_house_red.png
+  - id: obstacle_25
+    type: casa_madera_azul
+    position: [57, 49]
+    size: [4, 3]
+    texture: wooden_house_blue.png
+  - id: obstacle_24
+    type: casa_madera_azul
+    position: [52, 49]
+    size: [4, 3]
+    texture: wooden_house_blue.png
+  - id: obstacle_22
+    type: hotel
+    position: [81, 43]
+    size: [7, 6]
+    texture: hotel.png
+  - id: obstacle_21
+    type: iglesia
+    position: [68, 35]
+    size: [9, 10]
+    texture: church.png
+  - id: obstacle_20
+    type: banco
+    position: [55, 41]
+    size: [8, 4]
+    texture: bank.png
+  - id: obstacle_19
+    type: lampara_ciudad
+    position: [86, 56]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_18
+    type: lampara_ciudad
+    position: [75, 56]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_17
+    type: lampara_ciudad
+    position: [69, 56]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_16
+    type: lampara_ciudad
+    position: [61, 52]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_15
+    type: lampara_ciudad
+    position: [56, 52]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_14
+    type: lampara_ciudad
+    position: [90, 49]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_13
+    type: lampara_ciudad
+    position: [80, 49]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_12
+    type: lampara_ciudad
+    position: [80, 46]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_11
+    type: lampara_ciudad
+    position: [75, 45]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_10
+    type: lampara_ciudad
+    position: [69, 45]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_9
+    type: lampara_ciudad
+    position: [64, 45]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_8
+    type: lampara_ciudad
+    position: [55, 45]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_7
+    type: piedra_grande
+    position: [39, 52]
+    size: [6, 4]
+    texture: rock_big.png
+  - id: obstacle_6
+    type: herrero
+    position: [94, 3]
+    size: [3, 2]
+    texture: blacksmith.png
+  - id: obstacle_5
+    type: munieco_entrenamiento
+    position: [100, 3]
+    size: [1, 1]
+    texture: training_dummy.png
+  - id: obstacle_4
+    type: piedra_pequenia
+    position: [106, 9]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_3
+    type: cactus
+    position: [86, 8]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_2
+    type: lampara_ciudad
+    position: [96, 11]
+    size: [1, 1]
+    texture: street_lamp.png
   - id: obstacle_1
     type: fardo_heno
-    position: [66, 62]
+    position: [102, 14]
     size: [1, 1]
     texture: haybale.png
 zones:
@@ -330,84 +330,6 @@ zones:
       - type: banker
         name: Banquero
         position: [59, 45]
-  - id: zone_1
-    type: biome
-    template: rocosas
-    area:
-      x: 4
-      y: 4
-      width: 19
-      height: 12
-    texture: rocosa.png
-    spawns:
-      - creature: golem
-        max_population: 4
-  - id: zone_2
-    type: biome
-    template: explanada
-    area:
-      x: 90
-      y: 19
-      width: 23
-      height: 62
-    texture: explanada.png
-  - id: zone_3
-    type: biome
-    template: bosque_aranas
-    area:
-      x: 6
-      y: 76
-      width: 28
-      height: 21
-    texture: bosque.png
-    spawns:
-      - creature: spider
-        max_population: 9
-  - id: zone_4
-    type: biome
-    template: pantano_embrujado
-    area:
-      x: 49
-      y: 4
-      width: 7
-      height: 21
-    texture: pantano.png
-    spawns:
-      - creature: goblin
-        max_population: 4
-  - id: zone_5
-    type: biome
-    template: pantano_embrujado
-    area:
-      x: 36
-      y: 28
-      width: 10
-      height: 8
-    texture: pantano.png
-    spawns:
-      - creature: zombie
-        max_population: 3
-  - id: zone_7
-    type: biome
-    template: desierto
-    area:
-      x: 50
-      y: 81
-      width: 29
-      height: 15
-    texture: desierto.png
-    spawns:
-      - creature: skeleton
-        max_population: 5
-  - id: zone_8
-    type: biome
-    template: nieve
-    area:
-      x: 1
-      y: 27
-      width: 21
-      height: 12
-    texture: nieve.png
   - id: zone_11
     type: biome
     template: pantano_embrujado
@@ -424,17 +346,95 @@ zones:
         max_population: 4
       - creature: goblin
         max_population: 3
+  - id: zone_8
+    type: biome
+    template: nieve
+    area:
+      x: 1
+      y: 27
+      width: 21
+      height: 12
+    texture: nieve.png
+  - id: zone_7
+    type: biome
+    template: desierto
+    area:
+      x: 50
+      y: 81
+      width: 29
+      height: 15
+    texture: desierto.png
+    spawns:
+      - creature: skeleton
+        max_population: 5
+  - id: zone_5
+    type: biome
+    template: pantano_embrujado
+    area:
+      x: 36
+      y: 28
+      width: 10
+      height: 8
+    texture: pantano.png
+    spawns:
+      - creature: zombie
+        max_population: 3
+  - id: zone_4
+    type: biome
+    template: pantano_embrujado
+    area:
+      x: 49
+      y: 4
+      width: 7
+      height: 21
+    texture: pantano.png
+    spawns:
+      - creature: goblin
+        max_population: 4
+  - id: zone_3
+    type: biome
+    template: bosque_aranas
+    area:
+      x: 6
+      y: 76
+      width: 28
+      height: 21
+    texture: bosque.png
+    spawns:
+      - creature: spider
+        max_population: 9
+  - id: zone_2
+    type: biome
+    template: explanada
+    area:
+      x: 90
+      y: 19
+      width: 23
+      height: 62
+    texture: explanada.png
+  - id: zone_1
+    type: biome
+    template: rocosas
+    area:
+      x: 4
+      y: 4
+      width: 19
+      height: 12
+    texture: rocosa.png
+    spawns:
+      - creature: golem
+        max_population: 4
 entries:
-  - id: entry_2
-    type: mazmorra
-    environment: env_2
-    position: [85, 14]
-    size: [3, 3]
-    texture: snake.png
   - id: entry_1
     type: mazmorra
     environment: env_1
     position: [74, 8]
+    size: [3, 3]
+    texture: snake.png
+  - id: entry_2
+    type: mazmorra
+    environment: env_2
+    position: [85, 14]
     size: [3, 3]
     texture: snake.png
 environments:
@@ -449,7 +449,7 @@ environments:
         type: fuente
         position: [30, 29]
         size: [3, 3]
-        texture: fuente.png
+        texture: water_fountain.png
     walls:
       - id: wall_41
         template: pared_mazmorra_derecha

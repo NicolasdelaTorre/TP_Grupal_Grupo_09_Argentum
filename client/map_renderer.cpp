@@ -57,64 +57,6 @@ const char* npcEntityTexturePath(NpcCode type) {
     }
 }
 
-// Texturas de obstáculos a tamaño nativo. Viven en common/assets/images; el
-// cache del cliente tiene base AO_IMGS, así que se referencian relativo a ella.
-const char* obstacleTexturePath(ObstacleCode type) {
-    switch (type) {
-        case ObstacleCode::ROCK:
-            return "../common/assets/images/rock_big.png";
-        case ObstacleCode::ROCK_SMALL:
-            return "../common/assets/images/rock_medium.png";
-        case ObstacleCode::ROCK_LARGE:
-            return "../common/assets/images/rock_big.png";
-        case ObstacleCode::LAMP:
-            return "../common/assets/images/street_lamp.png";
-        case ObstacleCode::WOOD:
-            return "../common/assets/images/stacked_logs.png";
-        case ObstacleCode::CART:
-            return "../common/assets/images/cart.png";
-        case ObstacleCode::MILL:
-            return "/Obstaculos/molino_recortado.png";  // sin etextura
-        case ObstacleCode::CACTUS:
-            return "../common/assets/images/cactus_big.png";
-        case ObstacleCode::BANK:
-            return "../common/assets/images/bank.png";
-        case ObstacleCode::HOUSE_BLUE:
-            return "../common/assets/images/wooden_house_blue.png";
-        case ObstacleCode::HOUSE_RED:
-            return "../common/assets/images/wooden_house_red.png";
-        case ObstacleCode::FENCE:
-            return "../common/assets/images/wooden_fence.png";
-        case ObstacleCode::TARGET:
-            return "../common/assets/images/target.png";
-        case ObstacleCode::HAYBALE:
-            return "../common/assets/images/haybale.png";
-        case ObstacleCode::FOUNTAIN:
-            return "../common/assets/images/water_fountain.png";
-        case ObstacleCode::BLACKSMITH:
-            return "../common/assets/images/blacksmith.png";
-        case ObstacleCode::HOTEL:
-            return "../common/assets/images/hotel.png";
-        case ObstacleCode::CHURCH:
-            return "../common/assets/images/church.png";
-        case ObstacleCode::TRAINING_DUMMY:
-            return "../common/assets/images/training_dummy.png";
-        case ObstacleCode::ENTRY:
-            return "../common/assets/images/entries/snake.png";
-        case ObstacleCode::EXIT:
-            return "../common/assets/images/exits/exit_mazmorra.png";
-        case ObstacleCode::WALL_DUNGEON_RIGHT:
-            return "../common/assets/images/walls/right_mazmorra.png";
-        case ObstacleCode::WALL_DUNGEON_LEFT:
-            return "../common/assets/images/walls/left_mazmorra.png";
-        case ObstacleCode::WALL_DUNGEON_VERTICAL:
-            return "../common/assets/images/walls/mazmorra.png";
-        default:
-            return nullptr;
-    }
-}
-
-
 }  // namespace
 
 
@@ -137,35 +79,34 @@ void MapRenderer::render(const GameMap& map, float camX, float camY) {
             drawTile(map.at(x, y), screenX, screenY);
         }
     }
-
-    renderObstacles(map, camX, camY);
 }
 
-
-// Dibuja cada obstáculo a tamaño nativo de su textura, anclado a la esquina
-// inferior izquierda de su footprint (el rectángulo que bloquea). El tamaño que
-// bloquea es independiente del de la textura: la imagen se coloca tal cual se
-// carga (incluida la sombra/voladizo, que sobresale del footprint).
 void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
     for (const auto& obs: map.obstacles) {
-        const char* texPath = obstacleTexturePath(obs.type);
-        if (!texPath)
-            continue;
+        renderObstacle(obs, camX, camY);
+    }
+}
 
-        try {
-            SDL2pp::Texture& tex = cache.get(texPath);
-            const int texW = tex.GetWidth();
-            const int texH = tex.GetHeight();
+// Dibuja un obstáculo a tamaño nativo de su textura, anclado a la esquina
+// inferior izquierda del rectangulo que bloquea. 
+void MapRenderer::renderObstacle(const MapObstacle& obs, float camX, float camY) {
+    // El server manda la textura por nombre, relativa a common/assets/images/.
+    if (obs.texture.empty())
+        return;
 
-            // Esquina inferior izquierda del footprint, en coords de pantalla.
-            const int leftX = (int)(obs.x * TILE_SIZE - camX);
-            const int bottomY = (int)((obs.y + obs.h) * TILE_SIZE - camY);
+    try {
+        SDL2pp::Texture& tex = cache.get(std::string(COMMON_ASSET_PATH) + obs.texture);
+        const int texW = tex.GetWidth();
+        const int texH = tex.GetHeight();
 
-            SDL2pp::Rect dst(leftX, bottomY - texH, texW, texH);
-            renderer.Copy(tex, SDL2pp::NullOpt, dst);
-        } catch (...) {
-            // Textura no disponible — se ignora silenciosamente.
-        }
+        // Esquina inferior izquierda del footprint, en coords de pantalla.
+        const int leftX = (int)(obs.x * TILE_SIZE - camX);
+        const int bottomY = (int)((obs.y + obs.h) * TILE_SIZE - camY);
+
+        SDL2pp::Rect dst(leftX, bottomY - texH, texW, texH);
+        renderer.Copy(tex, SDL2pp::NullOpt, dst);
+    } catch (...) {
+        // Textura no disponible — se ignora silenciosamente.
     }
 }
 
