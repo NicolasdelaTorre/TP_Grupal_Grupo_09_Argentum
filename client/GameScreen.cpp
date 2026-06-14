@@ -35,7 +35,7 @@ GameMap convertToGameMap(const MapEvent& m) {
     const auto& obstacles = m.getObstacles();
     gm.obstacles.reserve(obstacles.size());
     for (const auto& o: obstacles) {
-        gm.obstacles.push_back({static_cast<ObstacleCode>(o.type), o.x, o.y, o.w, o.h});
+        gm.obstacles.push_back({o.x, o.y, o.w, o.h, o.texture});
     }
     return gm;
 }
@@ -135,33 +135,63 @@ void GameScreen::render() {
     renderer.SetDrawColor(0, 0, 0, 255);
     renderer.Clear();
 
+    // piso primero y decals sobre el piso.
     mapRenderer.render(map, camX, camY);
     mapRenderer.renderDroppedItems(droppedItems, camX, camY);
 
-    // NPCs vivos (debajo de los jugadores).
+    // ordenamiento y renderizado de las entidades
+    // segun su profundidad en el eje Y.
+    enum class DrawKind { Obstacle, Npc, Player };
+    struct Drawable {
+        float depth; // eje y
+        DrawKind kind;
+        const MapObstacle* obs = nullptr;
+        const NpcEntity* npc = nullptr;
+        const Player_* ply = nullptr;
+    };
+
+    std::vector<Drawable> drawables;
+    drawables.reserve(map.obstacles.size() + npcs.size() + otherPlayers.size() + 1);
+
+    for (const auto& obs: map.obstacles) {
+        // base del obstáculo.
+        drawables.push_back({(float)(obs.y + obs.h), DrawKind::Obstacle, &obs, nullptr, nullptr});
+    }
     for (const auto& npcEntry: npcs) {
         if (!npcEntry.second.alive)
             continue;
-        mapRenderer.renderNpcEntity(npcEntry.second.visual, camX, camY);
+        const NpcEntity& v = npcEntry.second.visual;
+        // base ≈ los pies.
+        drawables.push_back({v.y + 1.0f, DrawKind::Npc, nullptr, &v, nullptr});
     }
-
-    // Otros jugadores primero, el local queda visualmente encima.
-    // for (const auto& [id, op: otherPlayers]) {(void)id .....}
     for (const auto& playerEntry: otherPlayers) {
-        const auto& op = playerEntry.second;
-        mapRenderer.renderPlayer(op.visual, camX, camY);
-        mapRenderer.renderWeapon(op.visual, camX, camY);
-        mapRenderer.renderShield(op.visual, camX, camY);
-        mapRenderer.renderHead(op.visual, camX, camY);
-        mapRenderer.renderHelmet(op.visual, camX, camY);
+        const Player_& v = playerEntry.second.visual;
+        drawables.push_back({v.y + 1.0f, DrawKind::Player, nullptr, nullptr, &v});
+    }
+    drawables.push_back({player.y + 1.0f, DrawKind::Player, nullptr, nullptr, &player});
+
+    std::stable_sort(drawables.begin(), drawables.end(),
+                     [](const Drawable& a, const Drawable& b) { return a.depth < b.depth; });
+
+    for (const auto& d: drawables) {
+        switch (d.kind) {
+            case DrawKind::Obstacle:
+                mapRenderer.renderObstacle(*d.obs, camX, camY);
+                break;
+            case DrawKind::Npc:
+                mapRenderer.renderNpcEntity(*d.npc, camX, camY);
+                break;
+            case DrawKind::Player:
+                mapRenderer.renderPlayer(*d.ply, camX, camY);
+                mapRenderer.renderWeapon(*d.ply, camX, camY);
+                mapRenderer.renderShield(*d.ply, camX, camY);
+                mapRenderer.renderHead(*d.ply, camX, camY);
+                mapRenderer.renderHelmet(*d.ply, camX, camY);
+                break;
+        }
     }
 
-    mapRenderer.renderPlayer(player, camX, camY);
-    mapRenderer.renderWeapon(player, camX, camY);
-    mapRenderer.renderShield(player, camX, camY);
-    mapRenderer.renderHead(player, camX, camY);
-    mapRenderer.renderHelmet(player, camX, camY);
-
+    // las flechas/proyectiles vuelan por encima de todo.
     mapRenderer.renderArrows(arrows, camX, camY);
 
     renderBloodEffects(camX, camY);

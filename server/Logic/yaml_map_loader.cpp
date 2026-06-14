@@ -12,6 +12,15 @@
 #include "../../common/DTOs.h"
 #include "../../common/common_tiles.h"
 
+std::string YamlMapLoader::textureRelPath(const YAML::Node& node, const char* subfolder) {
+    if (!node["texture"])
+        return std::string();
+    const std::string name = node["texture"].as<std::string>();
+    if (name.empty())
+        return std::string();
+    return std::string(subfolder) + name;
+}
+
 uint8_t YamlMapLoader::npcTypeFromString(const std::string& type) {
     if (type == "priest")
         return static_cast<uint8_t>(ObstacleCode::NPC_PRIEST);
@@ -20,65 +29,6 @@ uint8_t YamlMapLoader::npcTypeFromString(const std::string& type) {
     if (type == "banker")
         return static_cast<uint8_t>(ObstacleCode::NPC_BANKER);
     return static_cast<uint8_t>(ObstacleCode::NPC);
-}
-
-// Convierte el type del YAML al código de ObstacleCode.
-// Cambiar para que se usen las texturas que se mandan.
-uint8_t YamlMapLoader::obstacleTypeFromString(const std::string& type) {
-    if (type == "roca")
-        return static_cast<uint8_t>(ObstacleCode::ROCK);
-    if (type == "piedra_pequenia")
-        return static_cast<uint8_t>(ObstacleCode::ROCK_SMALL);
-    if (type == "piedra_grande")
-        return static_cast<uint8_t>(ObstacleCode::ROCK_LARGE);
-    if (type == "arbol" || type == "arbol_grande" || type == "tronco")
-        return static_cast<uint8_t>(ObstacleCode::TREE);
-    if (type == "arbusto")
-        return static_cast<uint8_t>(ObstacleCode::BUSH);
-    if (type == "cactus")
-        return static_cast<uint8_t>(ObstacleCode::CACTUS);
-    if (type == "lampara_ciudad")
-        return static_cast<uint8_t>(ObstacleCode::LAMP);
-    if (type == "pila_maderas")
-        return static_cast<uint8_t>(ObstacleCode::WOOD);
-    if (type == "carretilla_de_madera")
-        return static_cast<uint8_t>(ObstacleCode::CART);
-    if (type == "molino")
-        return static_cast<uint8_t>(ObstacleCode::MILL);
-    if (type == "banco")
-        return static_cast<uint8_t>(ObstacleCode::BANK);
-    if (type == "casa_madera_azul")
-        return static_cast<uint8_t>(ObstacleCode::HOUSE_BLUE);
-    if (type == "casa_madera_roja")
-        return static_cast<uint8_t>(ObstacleCode::HOUSE_RED);
-    if (type == "casa_nevada")
-        return static_cast<uint8_t>(ObstacleCode::HOUSE_SNOW);
-    if (type == "cerca_madera")
-        return static_cast<uint8_t>(ObstacleCode::FENCE);
-    if (type == "diana")
-        return static_cast<uint8_t>(ObstacleCode::TARGET);
-    if (type == "fardo_heno")
-        return static_cast<uint8_t>(ObstacleCode::HAYBALE);
-    if (type == "fuente")
-        return static_cast<uint8_t>(ObstacleCode::FOUNTAIN);
-    if (type == "herrero")
-        return static_cast<uint8_t>(ObstacleCode::BLACKSMITH);
-    if (type == "hotel")
-        return static_cast<uint8_t>(ObstacleCode::HOTEL);
-    if (type == "iglesia")
-        return static_cast<uint8_t>(ObstacleCode::CHURCH);
-    if (type == "munieco_entrenamiento")
-        return static_cast<uint8_t>(ObstacleCode::TRAINING_DUMMY);
-    if (type == "pared_mazmorra_derecha")
-        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_RIGHT);
-    if (type == "pared_mazmorra_izquierda")
-        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_LEFT);
-    if (type == "pared_mazmorra_vertical")
-        return static_cast<uint8_t>(ObstacleCode::WALL_DUNGEON_VERTICAL);
-    if (type == "pared_clara" || type == "pared_oscura" || type == "pared_piedra" ||
-        type == "pilar")
-        return static_cast<uint8_t>(ObstacleCode::WALL);
-    return static_cast<uint8_t>(ObstacleCode::ROCK);
 }
 
 void YamlMapLoader::initializeDefaultCells(std::vector<Cell>& cells) {
@@ -174,12 +124,11 @@ Biome YamlMapLoader::parseBiome(const YAML::Node& zone) {
 
 void YamlMapLoader::applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth,
                                               int16_t envHeight, const YAML::Node& nodes,
-                                              const char* typeKey,
+                                              const char* subfolder,
                                               std::vector<PlacedObstacle>* out) {
     if (!nodes)
         return;
     for (const auto& node: nodes) {
-        const std::string type = node[typeKey] ? node[typeKey].as<std::string>() : std::string();
         int16_t x = 0;
         int16_t y = 0;
         int16_t w = 1;
@@ -192,11 +141,11 @@ void YamlMapLoader::applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t 
             w = node["size"][0].as<int16_t>();
             h = node["size"][1].as<int16_t>();
         }
-        const uint8_t typeCode = obstacleTypeFromString(type);
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
-                      y, w, h, typeCode);
+                      y, w, h, static_cast<uint8_t>(ObstacleCode::GENERIC));
         if (out)
-            out->push_back({typeCode, x, y, static_cast<uint16_t>(w), static_cast<uint16_t>(h)});
+            out->push_back({x, y, static_cast<uint16_t>(w), static_cast<uint16_t>(h),
+                            textureRelPath(node, subfolder)});
     }
 }
 
@@ -222,10 +171,10 @@ std::vector<Position> YamlMapLoader::applyEnvironmentExits(std::vector<Cell>& ce
             h = node["size"][1].as<int16_t>();
         }
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
-                      y, w, h, static_cast<uint8_t>(ObstacleCode::EXIT));
+                      y, w, h, static_cast<uint8_t>(ObstacleCode::GENERIC));
         if (out)
-            out->push_back({static_cast<uint8_t>(ObstacleCode::EXIT), x, y,
-                            static_cast<uint16_t>(w), static_cast<uint16_t>(h)});
+            out->push_back({x, y, static_cast<uint16_t>(w), static_cast<uint16_t>(h),
+                            textureRelPath(node, "exits/")});
         for (int16_t dy = 0; dy < h; ++dy) {
             for (int16_t dx = 0; dx < w; ++dx) {
                 const int16_t cx = static_cast<int16_t>(x + dx);
@@ -370,9 +319,9 @@ std::vector<LoadedEnvironment> YamlMapLoader::parseEnvironments(const YAML::Node
 
         if (!env.cells.empty()) {
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["obstacles"],
-                                      "type", &env.obstacles);
+                                      "", &env.obstacles);
             applyEnvironmentObstacles(env.cells, env.width, env.height, envNode["walls"],
-                                      "template", &env.obstacles);
+                                      "walls/", &env.obstacles);
             env.exits = applyEnvironmentExits(env.cells, env.width, env.height, envNode["exits"],
                                               &env.obstacles);
             applyEnvironmentFloorAndExterior(env.cells, env.width, env.height, envNode["walls"],
@@ -430,15 +379,15 @@ Map YamlMapLoader::load(const std::string& path) {
     std::vector<PlacedObstacle> placedObstacles;
     if (root["obstacles"]) {
         for (const auto& obs: root["obstacles"]) {
-            std::string type = obs["type"].as<std::string>();
-            uint8_t typeCode = obstacleTypeFromString(type);
             int16_t ox = obs["position"][0].as<int16_t>();
             int16_t oy = obs["position"][1].as<int16_t>();
             int16_t ow = obs["size"][0].as<int16_t>();
             int16_t oh = obs["size"][1].as<int16_t>();
-            applyObstacle(cells, width, height, ox, oy, ow, oh, typeCode);
-            placedObstacles.push_back({typeCode, ox, oy, static_cast<uint16_t>(ow),
-                                       static_cast<uint16_t>(oh)});
+            // El tipo concreto ya no importa: el sprite lo decide la textura.
+            applyObstacle(cells, width, height, ox, oy, ow, oh,
+                          static_cast<uint8_t>(ObstacleCode::GENERIC));
+            placedObstacles.push_back({ox, oy, static_cast<uint16_t>(ow),
+                                       static_cast<uint16_t>(oh), textureRelPath(obs, "")});
         }
     }
 
@@ -493,8 +442,9 @@ Map YamlMapLoader::load(const std::string& path) {
             int16_t ey = entry["position"][1].as<int16_t>();
             int16_t ew = entry["size"][0].as<int16_t>();
             int16_t eh = entry["size"][1].as<int16_t>();
-            placedObstacles.push_back({static_cast<uint8_t>(ObstacleCode::ENTRY), ex, ey,
-                                       static_cast<uint16_t>(ew), static_cast<uint16_t>(eh)});
+            placedObstacles.push_back({ex, ey, static_cast<uint16_t>(ew),
+                                       static_cast<uint16_t>(eh),
+                                       textureRelPath(entry, "entries/")});
 
             LoadedEntry loadedEntry;
             if (entry["id"])

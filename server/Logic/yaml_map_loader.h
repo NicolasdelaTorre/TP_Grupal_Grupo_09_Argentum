@@ -21,9 +21,6 @@ public:
 private:
     static uint8_t npcTypeFromString(const std::string& type);
 
-    // Convierte el type del YAML al código de ObstacleCode.
-    static uint8_t obstacleTypeFromString(const std::string& type);
-
     static void initializeDefaultCells(std::vector<Cell>& cells);
 
     static void applyObstacle(std::vector<Cell>& cells, uint16_t mapWidth, uint16_t mapHeight,
@@ -40,9 +37,12 @@ private:
 
     static Biome parseBiome(const YAML::Node& zone);
 
+    // Arma la ruta de textura a partir del nombre  y la subcarpeta.
+    static std::string textureRelPath(const YAML::Node& node, const char* subfolder);
+
     static void applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t envWidth,
                                           int16_t envHeight, const YAML::Node& nodes,
-                                          const char* typeKey,
+                                          const char* subfolder = "",
                                           std::vector<PlacedObstacle>* out = nullptr);
 
     // Vuelca las salidas del environment en sus celda.

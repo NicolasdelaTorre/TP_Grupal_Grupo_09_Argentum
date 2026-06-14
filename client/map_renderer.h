@@ -51,11 +51,13 @@ struct TileData {
 // se dibuja a tamaño nativo anclada a la esquina inferior izquierda del
 // footprint, sin importar el tamaño que bloquea.
 struct MapObstacle {
-    ObstacleCode type = ObstacleCode::NONE;
     int x = 0;
     int y = 0;
     int w = 1;
     int h = 1;
+    // Ruta del sprite relativa a common/assets/images/ (la manda el server).
+    // Determina qué sprite se dibuja; el tipo de obstáculo ya no hace falta acá.
+    std::string texture;
 };
 
 // ── Mapa ──────────────────────────────────────────────────────
@@ -77,8 +79,14 @@ public:
     MapRenderer(SDL2pp::Renderer& renderer, TextureCache& cache);
 
 
+    // Dibuja sólo el piso (tiles). Los obstáculos se dibujan aparte, en el
+    // pase ordenado por profundidad (ver renderObstacle / GameScreen::render).
     void render(const GameMap& map, float camX, float camY);
     void renderObstacles(const GameMap& map, float camX, float camY);
+
+    // Dibuja un único obstáculo. Se usa en el pase ordenado por eje Y para
+    // intercalar obstáculos con jugadores y NPCs según su profundidad.
+    void renderObstacle(const MapObstacle& obs, float camX, float camY);
 
 
     void renderPlayer(const Player_& player, float camX, float camY);

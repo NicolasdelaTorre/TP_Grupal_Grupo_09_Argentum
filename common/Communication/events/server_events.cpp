@@ -103,11 +103,12 @@ void MapEvent::serialize(CommonProtocol& proto) const {
     }
     proto.send_two_bytes_number(static_cast<uint16_t>(obstacles.size()));
     for (const auto& o: obstacles) {
-        proto.sendByte(o.type);
         proto.send_two_bytes_number(static_cast<uint16_t>(o.x));
         proto.send_two_bytes_number(static_cast<uint16_t>(o.y));
         proto.send_two_bytes_number(o.w);
         proto.send_two_bytes_number(o.h);
+        proto.send_two_bytes_number(static_cast<uint16_t>(o.texture.size()));
+        proto.send_message(std::vector<char>(o.texture.begin(), o.texture.end()));
     }
 }
 
@@ -129,12 +130,13 @@ std::unique_ptr<MapEvent> MapEvent::deserialize(CommonProtocol& proto) {
     obstacles.reserve(obstacleCount);
     for (uint16_t i = 0; i < obstacleCount; i++) {
         MapObstacleData o;
-        o.type = proto.receive_byte();
         o.x = static_cast<int16_t>(proto.receive_two_bytes_number());
         o.y = static_cast<int16_t>(proto.receive_two_bytes_number());
         o.w = proto.receive_two_bytes_number();
         o.h = proto.receive_two_bytes_number();
-        obstacles.push_back(o);
+        uint16_t texLen = proto.receive_two_bytes_number();
+        o.texture = texLen ? proto.receive_message(texLen) : "";
+        obstacles.push_back(std::move(o));
     }
     return std::make_unique<MapEvent>(w, h, std::move(cells), std::move(obstacles));
 }

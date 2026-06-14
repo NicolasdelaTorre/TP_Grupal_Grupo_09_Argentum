@@ -23,7 +23,7 @@ enum class ServerMsg : uint8_t {
     POSICION_JUGADORES = 0x80,   // [opcode][cant:2][[id:1][x:2][y:2]...]
     STATS_JUGADOR = 0x81,        // [opcode][hp:2][maxHp:2][mana:2][maxMana:2][gold:4][exp:4][nextLevelExp:4][level:1]
     CHAT_MSG = 0x82,             // [opcode][author_id:2][name_len:2][name][msg_len:2][msg] — author_id=0 si es msg del sistema
-    MAP = 0x83,                  // [opcode][width:2][height:2][CellCount:2][[textureId:2][obstacleId:2][safeZone:1]]...[obstacleCount:2][[type:1][x:2][y:2][w:2][h:2]]...
+    MAP = 0x83,                  // [opcode][width:2][height:2][CellCount:2][[textureId:2][obstacleId:2][safeZone:1]]...[obstacleCount:2][[x:2][y:2][w:2][h:2][texLen:2][tex:n]]...
     LOGIN_OK = 0x84,             // [opcode][spawn_x:2][spawn_y:2][skin:1][head:1]
     LOGIN_FAIL = 0x85,           // [opcode]
     MOVE_REJECTED = 0x87,        // [opcode][x:2][y:2] — el server rechazó el movimiento y manda la posición autoritativa para que el cliente reconcilie su predicción.

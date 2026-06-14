@@ -25,41 +25,18 @@ enum class TileCode : uint8_t {
     INTERIOR  // piso de ciudad / interior
 };
 
-// Tipos de obstaculo. Viaja como obstacleId en cada Cell del mapa.
+// Tipo lógico de una celda con obstáculo. Viaja como obstacleId en cada Cell.
+// El sprite de cada obstáculo lo decide su textura (MapObstacleData::texture),
+// así que acá NO se enumeran los obstáculos concretos: solo quedan las
+// categorías que tienen lógica (bloqueo genérico, entradas y NPCs de ciudad).
 enum class ObstacleCode : uint8_t {
     NONE = 0,
-    ROCK = 1,
-    TREE = 2,
-    NPC = 3,
-    ENTRY = 4,
-    WALL = 5,
-    ROCK_SMALL = 6,
-    ROCK_LARGE = 7,
-    LAMP = 8,
-    WOOD = 9,
-    CART = 10,
-    MILL = 11,
-    CACTUS = 12,
-    BUSH = 13,
-    NPC_PRIEST = 14,
-    NPC_MERCHANT = 15,
-    NPC_BANKER = 16,
-    BANK = 17,
-    HOUSE_BLUE = 18,
-    HOUSE_RED = 19,
-    HOUSE_SNOW = 20,
-    FENCE = 21,
-    TARGET = 22,
-    HAYBALE = 23,
-    FOUNTAIN = 24,
-    BLACKSMITH = 25,
-    HOTEL = 26,
-    CHURCH = 27,
-    TRAINING_DUMMY = 28,
-    EXIT = 29,
-    WALL_DUNGEON_RIGHT = 30,
-    WALL_DUNGEON_LEFT = 31,
-    WALL_DUNGEON_VERTICAL = 32,
+    GENERIC = 1,   // obstáculo sólido común: bloquea el paso, sin lógica especial
+    ENTRY = 2,     // entrada a una dungeon (se camina sobre ella para entrar)
+    NPC = 3,       // NPC fijo de ciudad genérico
+    NPC_PRIEST = 4,
+    NPC_MERCHANT = 5,
+    NPC_BANKER = 6,
 };
 
 enum class RaceCode : uint8_t { HUMAN = 0, ELF, DWARF, GNOME };
