@@ -58,6 +58,9 @@ struct NpcEntity {
     int animFrame = 0;
     float animTimer = 0.0f;
     NpcCode type = NpcCode::SPIDER;
+    bool friendly = false;
 };
+
+
 
 #endif

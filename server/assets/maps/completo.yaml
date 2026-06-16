@@ -344,18 +344,7 @@ zones:
         max_population: 6
       - creature: skeleton
         max_population: 4
-      - creature: goblin
-        max_population: 3
-  - id: zone_8
-    type: biome
-    template: nieve
-    area:
-      x: 1
-      y: 27
-      width: 21
-      height: 12
-    texture: nieve.png
-  - id: zone_7
+  - id: zone_2
     type: biome
     template: desierto
     area:
