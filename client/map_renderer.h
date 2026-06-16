@@ -58,6 +58,13 @@ struct MapObstacle {
     int h = 1;
 };
 
+struct HumanoidLook {
+    std::string skin;
+    int headId;       // columna en Cabezas.png
+    int headYAdjust;  // px extra hacia abajo (+) para calzar la cabeza al cuerpo
+};
+
+
 // ── Mapa ──────────────────────────────────────────────────────
 struct GameMap {
     int width = 0;
@@ -87,8 +94,6 @@ public:
     void renderHead(const Player_& player, float camX, float camY);
     void renderHelmet(const Player_& player, float camX, float camY);
 
-    // Renderiza los NPCs estáticos de ciudad (tiles con ObstacleCode::NPC_*)
-    void renderCityNpcs(const GameMap& map, float camX, float camY);
 
     // Renderiza una criatura NPC dinámica (araña, esqueleto, etc.)
     void renderNpcEntity(const NpcEntity& npc, float camX, float camY);
@@ -109,6 +114,10 @@ private:
     TextureCache& cache;
 
     void drawTile(const TileData& tile, int screenX, int screenY);
+
+    bool isFriendlyNpc(NpcCode type);
+
+    void renderFriendlyNPC(const NpcEntity& npc, float camX, float camY);
 
     std::string get_path(int skin);
 };

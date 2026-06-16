@@ -312,6 +312,8 @@ zones:
     spawns:
       - creature: golem
         max_population: 4
+      - creature: orc
+        max_population: 3
   - id: zone_2
     type: biome
     template: explanada

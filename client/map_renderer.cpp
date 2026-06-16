@@ -13,6 +13,15 @@ namespace {
 static constexpr int ITEM_DRAW_SIZE = 40;  // render size on screen (scaled up from 32px)
 static constexpr const char* COMMON_ASSET_PATH = "../common/assets/images/";
 
+// Las hojas de NPC tienen siempre NPC_DIRECTIONS filas (una por dirección) y un
+// número variable de columnas (frames de animación). Asumimos celdas cuadradas:
+// el lado sale de la altura (alto/filas) y la cantidad de columnas del ancho.
+// Así cada NPC puede traer dimensiones y frames propios sin tocar el código.
+// NPC_SCALE convierte px de celda a px de pantalla: a 0.5, una celda de 128 se
+// dibuja a 64 (un tile) y una de 64 a 32, conservando el tamaño relativo.
+static constexpr int NPC_DIRECTIONS = 4;
+static constexpr float NPC_SCALE = 0.5f;
+
 SDL_Color colorFromHex(const char* hex) {
     unsigned int r = 0;
     unsigned int g = 0;
@@ -21,20 +30,6 @@ SDL_Color colorFromHex(const char* hex) {
         return {0, 0, 0, 255};
     }
     return {static_cast<Uint8>(r), static_cast<Uint8>(g), static_cast<Uint8>(b), 255};
-}
-
-// Devuelve el path del sprite para NPCs de ciudad (obstáculos fijos en el mapa).
-// Retorna nullptr si el tipo no es un NPC de ciudad.
-const char* cityNpcTexturePath(ObstacleCode type) {
-    switch (type) {
-        case ObstacleCode::NPC:
-        case ObstacleCode::NPC_PRIEST:
-        case ObstacleCode::NPC_MERCHANT:
-        case ObstacleCode::NPC_BANKER:
-            return "/Skins/NPC/Sacerdote.png";
-        default:
-            return nullptr;
-    }
 }
 
 // Devuelve el path del sprite para criaturas NPC dinámicas.
@@ -52,10 +47,56 @@ const char* npcEntityTexturePath(NpcCode type) {
             return "/Skins/NPC/Orc.png";
         case NpcCode::GOLEM:
             return "/Skins/NPC/Golem.png";
+        case NpcCode::MERCHANT:
+            return "/Skins/NPC/Comerciante.png";
+        case NpcCode::BANKER:
+            return "/Skins/NPC/Banquero.png";
+        case NpcCode::PRIEST:
+            return "/Skins/NPC/Sacerdote.png";
         default:
             return "/Skins/NPC/araña.png";
     }
 }
+
+// Layout de la hoja de un NPC: columnas (frames de animación) y tamaño de cada
+// sprite en la hoja. NPC_DIRECTIONS filas siempre. Si cols/cellW/cellH son 0 se
+// derivan de la textura asumiendo celdas cuadradas (alto/filas). drawScale
+// convierte px de celda a px de pantalla. Agregar un case por cada NPC con una
+// hoja que no siga la convención cuadrada.
+struct NpcSpriteLayout {
+    int cols;          // frames de animación (0 = derivar de la textura)
+    int cellW;         // ancho del sprite en la hoja (0 = derivar)
+    int cellH;         // alto del sprite en la hoja (0 = derivar)
+    float drawScale;   // px de celda -> px de pantalla
+};
+
+NpcSpriteLayout npcSpriteLayout(NpcCode type) {
+    switch (type) {
+        case NpcCode::GOBLIN:
+        case NpcCode::ZOMBIE:  // comparte la hoja Goblin.png
+            return {/*cols=*/8, /*cellW=*/25, /*cellH=*/33, /*drawScale=*/1.6f};
+        case NpcCode::SKELETON:
+                return {/*cols=*/6, /*cellW=*/68, /*cellH=*/95, /*drawScale=*/1.0f};
+        case NpcCode::GOLEM:
+                return {/*cols=*/5, /*cellW=*/80, /*cellH=*/135, /*drawScale=*/1.0f};
+        case NpcCode::SPIDER:
+                return {/*cols=*/8, /*cellW=*/65, /*cellH=*/70, /*drawScale=*/1.0f};
+        case NpcCode::ORC:
+                return {/*cols=*/5, /*cellW=*/24, /*cellH=*/50, /*drawScale=*/1.8f};
+        default:
+            return {0, 0, 0, NPC_SCALE};  // celda cuadrada derivada de la textura
+    }
+}
+
+HumanoidLook friendlyNpcLook(NpcCode type) {
+    switch (type) {
+        case NpcCode::MERCHANT: return {/*skin=*/"/Skins/NPC/Comerciante.png", /*headId=*/4, /*headYAdjust=*/6};
+        case NpcCode::BANKER:   return {/*skin=*/"/Skins/NPC/Banquero.png", /*headId=*/2, /*headYAdjust=*/0};
+        case NpcCode::PRIEST:   return {/*skin=*/"/Skins/NPC/Sacerdote.png", /*headId=*/6, /*headYAdjust=*/8};
+        default:                return {/*skin=*/"/Skins/skin_default.png", /*headId=*/6, /*headYAdjust=*/0};
+    }
+}
+
 
 // Texturas de obstáculos a tamaño nativo. Viven en common/assets/images; el
 // cache del cliente tiene base AO_IMGS, así que se referencian relativo a ella.
@@ -185,6 +226,8 @@ void MapRenderer::renderPlayer(const Player_& player, float camX, float camY) {
 
     renderer.Copy(cache.get(get_path(player.skin)), src, dst);
 }
+
+
 
 std::string MapRenderer::get_path(int skin) {
     switch (skin % 5) {
@@ -332,37 +375,9 @@ void MapRenderer::renderHelmet(const Player_& player, float camX, float camY) {
     } catch (...) {}
 }
 
-void MapRenderer::renderCityNpcs(const GameMap& map, float camX, float camY) {
-    int screenW, screenH;
-    SDL_GetRendererOutputSize(renderer.Get(), &screenW, &screenH);
-
-    int startX = std::max(0, (int)(camX / TILE_SIZE));
-    int startY = std::max(0, (int)(camY / TILE_SIZE));
-    int endX = std::min(map.width, startX + screenW / TILE_SIZE + 2);
-    int endY = std::min(map.height, startY + screenH / TILE_SIZE + 2);
-
-    for (int y = startY; y < endY; y++) {
-        for (int x = startX; x < endX; x++) {
-            const char* tex = cityNpcTexturePath(map.at(x, y).obstacleType);
-            if (!tex)
-                continue;
-
-            // Centrado en el tile, sprite hacia abajo (row 0), frame idle (col 0)
-            int screenX = (int)(x * TILE_SIZE - camX) + TILE_SIZE / 2 - PHANTOM_SPRITE_W / 2;
-            int screenY = (int)(y * TILE_SIZE - camY) + TILE_SIZE / 2 - PHANTOM_SPRITE_H / 2;
-            SDL2pp::Rect src(0, 0, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
-            SDL2pp::Rect dst(screenX, screenY, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
-            try {
-                renderer.Copy(cache.get(tex), src, dst);
-            } catch (...) {}
-        }
-    }
-}
-
 void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, float camX,
                                      float camY) {
-    // itemId reservado para drops de oro (server: Game::GOLD_ITEM_ID). No es un
-    // item real, así que usa el mismo sprite (pila de monedas) que el HUD.
+    
     static constexpr uint8_t GOLD_ITEM_ID = 254;
 
     for (const auto& item: items) {
@@ -424,13 +439,16 @@ void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float
 
     for (const auto& arrow: arrows) {
         // Parámetros que dependen del tipo de proyectil.
-        const char* texPath = "/Armas/Flechas.png";
+        const char* texPath;
         int drawW = ARROW_DRAW_SIZE, drawH = ARROW_DRAW_SIZE;
         bool rotate = true;       // alinear el sprite con la dirección de vuelo
         double extraAngle = 0.0;  // corrección si el sprite no apunta al norte
 
         switch (arrow.kind) {
-            case ProjectileKind::ARROW: extraAngle = -45.0;
+            case ProjectileKind::ARROW: 
+                texPath = "/Armas/Flechas.png";
+                extraAngle = -45.0;
+
              break;
             case ProjectileKind::COMPOSITE_ARROW:
                 texPath = "/Armas/Flechas_composite_bow.png";
@@ -486,20 +504,85 @@ void MapRenderer::renderArrows(const std::vector<ArrowProjectile>& arrows, float
 }
 
 void MapRenderer::renderNpcEntity(const NpcEntity& npc, float camX, float camY) {
-    const char* tex = npcEntityTexturePath(npc.type);
-    if (!tex)
+    // Merchant/banker/priest se dibujan como un jugador (cuerpo + cabeza) pero
+    // con su propia hoja de skin, así que tienen su función dedicada.
+    if (isFriendlyNpc(npc.type)) {
+        renderFriendlyNPC(npc, camX, camY);
+        return;
+    }
+
+    const char* path = npcEntityTexturePath(npc.type);
+
+    if (!path)
         return;
 
-    int screenX = (int)(npc.x * TILE_SIZE - camX) + TILE_SIZE / 2 - PHANTOM_SPRITE_W / 2;
-    int screenY = (int)(npc.y * TILE_SIZE - camY) + TILE_SIZE / 2 - PHANTOM_SPRITE_H / 2;
-
-    int row = static_cast<int>(npc.dir);
-    int col = npc.moving ? npc.animFrame : 0;
-
-    SDL2pp::Rect src(col * PHANTOM_SPRITE_W, row * PHANTOM_SPRITE_H, PHANTOM_SPRITE_W,
-                     PHANTOM_SPRITE_H);
-    SDL2pp::Rect dst(screenX, screenY, PHANTOM_SPRITE_W, PHANTOM_SPRITE_H);
     try {
-        renderer.Copy(cache.get(tex), src, dst);
+        SDL2pp::Texture& tex = cache.get(path);
+
+        // Layout de la hoja: explícito por tipo, o derivado de la textura
+        // (celda cuadrada = alto/filas, columnas = ancho/lado) si viene en 0.
+        NpcSpriteLayout layout = npcSpriteLayout(npc.type);
+        int cellW = layout.cellW;
+        int cellH = layout.cellH;
+        if (cellW <= 0 || cellH <= 0) {
+            cellH = tex.GetHeight() / NPC_DIRECTIONS;
+            cellW = cellH;
+        }
+        const int cols = layout.cols > 0 ? layout.cols : std::max(1, tex.GetWidth() / cellW);
+
+        const int row = static_cast<int>(npc.dir);
+        const int col = npc.moving ? (npc.animFrame % cols) : 0;
+        SDL2pp::Rect src(col * cellW, row * cellH, cellW, cellH);
+
+        // Tamaño en pantalla proporcional al de la celda, anclado al centro del tile.
+        const int drawW = (int)(cellW * layout.drawScale);
+        const int drawH = (int)(cellH * layout.drawScale);
+        const int screenX = (int)(npc.x * TILE_SIZE - camX) + TILE_SIZE / 2 - drawW / 2;
+        const int screenY = (int)(npc.y * TILE_SIZE - camY) + TILE_SIZE / 2 - drawH / 2;
+        SDL2pp::Rect dst(screenX, screenY, drawW, drawH);
+
+        renderer.Copy(tex, src, dst);
     } catch (...) {}
+}
+
+// Misma lógica que renderPlayer + renderHead, pero con la hoja de skin propia
+// del NPC (friendlyNpcLook), sin tocar get_path para no mezclar con el jugador.
+void MapRenderer::renderFriendlyNPC(const NpcEntity& npc, float camX, float camY) {
+    HumanoidLook look = friendlyNpcLook(npc.type);
+
+    const int screenX = (int)(npc.x * TILE_SIZE - camX) + TILE_SIZE / 2 - SPRITE_W / 2;
+    const int screenY = (int)(npc.y * TILE_SIZE - camY) + TILE_SIZE / 2 - SPRITE_H / 2;
+
+    const int row = static_cast<int>(npc.dir);     // dirección = fila
+    const int col = npc.moving ? npc.animFrame : 0;  // frame de animación = columna
+
+    // Cuerpo: hoja propia del NPC (misma celda 27x48 que los skins de jugador).
+    SDL2pp::Rect bodySrc(col * SPRITE_W, row * SPRITE_H, SPRITE_W, SPRITE_H);
+    SDL2pp::Rect bodyDst(screenX, screenY, SPRITE_W, SPRITE_H);
+    try {
+        renderer.Copy(cache.get(look.skin), bodySrc, bodyDst);
+    } catch (...) {}
+
+    // Cabeza: la misma Cabezas.png que el jugador. Columna = headId, fila = dir.
+    static constexpr int HEAD_CELL_W = 27;
+    static constexpr int HEAD_CELL_H = 64;
+    SDL2pp::Rect headSrc(look.headId * HEAD_CELL_W, row * HEAD_CELL_H, HEAD_CELL_W, HEAD_CELL_H);
+    const int headX = screenX + SPRITE_W / 2 - HEAD_CELL_W / 2;  // centrada sobre el cuerpo
+    // calzada arriba del cuerpo; headYAdjust la baja según el skin del NPC.
+    const int headY = screenY - HEAD_CELL_H / 4 - 3 + look.headYAdjust;
+    SDL2pp::Rect headDst(headX, headY, HEAD_CELL_W, HEAD_CELL_H);
+    try {
+        renderer.Copy(cache.get("/Skins/Cabezas.png"), headSrc, headDst);
+    } catch (...) {}
+}
+
+bool MapRenderer::isFriendlyNpc(NpcCode type) {
+    switch (type) {
+        case NpcCode::MERCHANT:
+        case NpcCode::BANKER:
+        case NpcCode::PRIEST:
+            return true;
+        default:
+            return false;
+    }
 }
