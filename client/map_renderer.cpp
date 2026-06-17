@@ -98,54 +98,6 @@ HumanoidLook friendlyNpcLook(NpcCode type) {
 }
 
 
-// Texturas de obstáculos a tamaño nativo. Viven en common/assets/images; el
-// cache del cliente tiene base AO_IMGS, así que se referencian relativo a ella.
-const char* obstacleTexturePath(ObstacleCode type) {
-    switch (type) {
-        case ObstacleCode::ROCK:
-            return "../common/assets/images/rock_big.png";
-        case ObstacleCode::ROCK_SMALL:
-            return "../common/assets/images/rock_medium.png";
-        case ObstacleCode::ROCK_LARGE:
-            return "../common/assets/images/rock_big.png";
-        case ObstacleCode::LAMP:
-            return "../common/assets/images/street_lamp.png";
-        case ObstacleCode::WOOD:
-            return "../common/assets/images/stacked_logs.png";
-        case ObstacleCode::CART:
-            return "../common/assets/images/cart.png";
-        case ObstacleCode::MILL:
-            return "/Obstaculos/molino_recortado.png";  // sin etextura
-        case ObstacleCode::CACTUS:
-            return "../common/assets/images/cactus_big.png";
-        case ObstacleCode::BANK:
-            return "../common/assets/images/bank.png";
-        case ObstacleCode::HOUSE_BLUE:
-            return "../common/assets/images/wooden_house_blue.png";
-        case ObstacleCode::HOUSE_RED:
-            return "../common/assets/images/wooden_house_red.png";
-        case ObstacleCode::FENCE:
-            return "../common/assets/images/wooden_fence.png";
-        case ObstacleCode::TARGET:
-            return "../common/assets/images/target.png";
-        case ObstacleCode::HAYBALE:
-            return "../common/assets/images/haybale.png";
-        case ObstacleCode::FOUNTAIN:
-            return "../common/assets/images/water_fountain.png";
-        case ObstacleCode::BLACKSMITH:
-            return "../common/assets/images/blacksmith.png";
-        case ObstacleCode::HOTEL:
-            return "../common/assets/images/hotel.png";
-        case ObstacleCode::CHURCH:
-            return "../common/assets/images/church.png";
-        case ObstacleCode::TRAINING_DUMMY:
-            return "../common/assets/images/training_dummy.png";
-        default:
-            return nullptr;
-    }
-}
-
-
 }  // namespace
 
 
