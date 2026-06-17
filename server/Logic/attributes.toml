@@ -106,3 +106,12 @@ overworldLevelMin = 1
 overworldLevelMax = 5
 dungeonLevelMin = 5
 dungeonLevelMax = 10
+
+# Clanes (seccion "Clanes" del enunciado).
+[clan]
+maxMembers = 16
+foundLevel = 6
+# Radio en tiles (Manhattan) para considerar a un miembro "cercano" al calcular bonus.
+bonusRadius = 8
+# Bonus de ataque y defensa por miembro cercano: 0.05 = +5% por miembro.
+bonusPctPerMember = 0.05

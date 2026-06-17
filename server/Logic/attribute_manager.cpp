@@ -42,6 +42,11 @@ AttributeManager::AttributeManager(const std::string& filename) {
     attributes.spawn.overworldLevelMax = toml::find<uint8_t>(config, "creature", "spawn", "overworldLevelMax");
     attributes.spawn.dungeonLevelMin = toml::find<uint8_t>(config, "creature", "spawn", "dungeonLevelMin");
     attributes.spawn.dungeonLevelMax = toml::find<uint8_t>(config, "creature", "spawn", "dungeonLevelMax");
+
+    attributes.clan.maxMembers = toml::find<uint8_t>(config, "clan", "maxMembers");
+    attributes.clan.foundLevel = toml::find<uint8_t>(config, "clan", "foundLevel");
+    attributes.clan.bonusRadius = toml::find<uint8_t>(config, "clan", "bonusRadius");
+    attributes.clan.bonusPctPerMember = toml::find<float>(config, "clan", "bonusPctPerMember");
 }
 
 RaceAttribute AttributeManager::readRace(const toml::value& config, const std::string& raceName) {
@@ -94,3 +99,5 @@ FormulaConstants AttributeManager::getFormulas() { return attributes.formulas; }
 LootConfig AttributeManager::getLootConfig() { return attributes.loot; }
 
 CreatureSpawnConfig AttributeManager::getSpawnConfig() { return attributes.spawn; }
+
+ClanConfig AttributeManager::getClanConfig() { return attributes.clan; }

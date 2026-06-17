@@ -61,6 +61,14 @@ struct CreatureSpawnConfig {
     uint8_t dungeonLevelMax;
 };
 
+// Parametros de clanes
+struct ClanConfig {
+    uint8_t maxMembers;
+    uint8_t foundLevel;
+    uint8_t bonusRadius;
+    float bonusPctPerMember;
+};
+
 struct GameAttributes {
     RaceAttribute human;
     RaceAttribute elf;
@@ -75,6 +83,7 @@ struct GameAttributes {
     FormulaConstants formulas;
     LootConfig loot;
     CreatureSpawnConfig spawn;
+    ClanConfig clan;
 };
 
 class AttributeManager {
@@ -97,6 +106,8 @@ public:
     LootConfig getLootConfig();
 
     CreatureSpawnConfig getSpawnConfig();
+
+    ClanConfig getClanConfig();
 };
 
 #endif

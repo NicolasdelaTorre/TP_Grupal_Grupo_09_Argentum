@@ -15,6 +15,10 @@
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
         bank(0, "global", 0, 0) {
+    {
+        ClanConfig cc = StatsDefinition().getClanConfig();
+        clans.configure(cc.maxMembers, cc.foundLevel);
+    }
     // Catalogos de merchant/priest desde TOML.
     try {
         const toml::value cfg = toml::parse("server/Logic/merchants.toml");
@@ -374,6 +378,11 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
                     "Diferencia de niveles demasiado grande para atacar a " + outcome.targetName;
             return outcome;
         }
+        // Mismo clan: no se pueden atacar entre si.
+        if (areInSameClan(playerId, static_cast<int>(targetId))) {
+            outcome.blockedReason = "No podés atacar a un miembro de tu clan";
+            return outcome;
+        }
         // Solo se intenta esquivar si NO es crítico.
         if (!isCritical && tryEvade(playerId, static_cast<int>(targetId))) {
             outcome.valid = true;
@@ -384,7 +393,15 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         }
         uint16_t rawDamage = itPlayer->second.dealDamage();
         if (isCritical) rawDamage *= 2;
+        // Bonus de clan
+        ClanConfig cc = StatsDefinition().getClanConfig();
+        int nearAtk = countNearbyClanMates(playerId);
+        int nearTgt = countNearbyClanMates(static_cast<int>(targetId));
+        if (nearAtk > 0)
+            rawDamage = static_cast<uint16_t>(rawDamage * (1.0f + cc.bonusPctPerMember * nearAtk));
         uint16_t def = itTarget->second.rollDefense();
+        if (nearTgt > 0)
+            def = static_cast<uint16_t>(def * (1.0f + cc.bonusPctPerMember * nearTgt));
         uint16_t damage = (def >= rawDamage) ? 0 : (rawDamage - def);
         uint8_t tgtLvl = itTarget->second.getData().level;
         uint16_t tgtMaxHp = itTarget->second.getMaxHealth();
@@ -404,6 +421,13 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     } else {
         uint16_t damage = itPlayer->second.dealDamage();
         if (isCritical) damage *= 2;
+        // Bonus de clan al atacar NPCs
+        {
+            ClanConfig cc = StatsDefinition().getClanConfig();
+            int near = countNearbyClanMates(playerId);
+            if (near > 0)
+                damage = static_cast<uint16_t>(damage * (1.0f + cc.bonusPctPerMember * near));
+        }
         Creature* npc = map.getNPC(targetId);
         uint8_t tgtLvl = npc->getLevel();
         uint16_t tgtMaxHp = npc->getMaxHealth();
@@ -1063,6 +1087,130 @@ void Game::fastTravel(int playerId, Position newPosition) {
     }
 
     player->second.move(newPosition);
+}
+
+// ── Clanes ──────────────────────────────────────────────────────────────
+
+ClanOutcome Game::tryFoundClan(int playerId, const std::string& clanName) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryFound(clanName, it->second.getName(), it->second.getData().level);
+}
+
+ClanOutcome Game::tryRequestJoinClan(int playerId, const std::string& clanName) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryRequestJoin(clanName, it->second.getName());
+}
+
+ClanOutcome Game::tryAcceptClanRequest(int playerId, const std::string& applicantNick) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryAccept(it->second.getName(), applicantNick);
+}
+
+ClanOutcome Game::tryRejectClanRequest(int playerId, const std::string& applicantNick) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryReject(it->second.getName(), applicantNick);
+}
+
+ClanOutcome Game::tryBanFromClan(int playerId, const std::string& targetNick) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryBan(it->second.getName(), targetNick);
+}
+
+ClanOutcome Game::tryKickFromClan(int playerId, const std::string& targetNick) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryKick(it->second.getName(), targetNick);
+}
+
+ClanOutcome Game::tryLeaveClan(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {false, "Jugador no encontrado"};
+    return clans.tryLeave(it->second.getName());
+}
+
+std::vector<std::string> Game::reviewClan(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return {};
+    const std::string& nick = it->second.getName();
+    auto clanName = clans.getClanOf(nick);
+    if (!clanName)
+        return {"No estás en ningún clan"};
+    if (!clans.isFounder(nick))
+        return {"Solo el fundador puede revisar el clan"};
+    std::vector<std::string> lines;
+    lines.push_back("Clan " + *clanName + ":");
+    auto members = clans.getMembersOf(*clanName);
+    lines.push_back("Miembros (" + std::to_string(members.size()) + "):");
+    for (const auto& m: members)
+        lines.push_back("  - " + m);
+    auto pending = clans.getPendingOf(*clanName);
+    lines.push_back("Pedidos pendientes (" + std::to_string(pending.size()) + "):");
+    for (const auto& p: pending)
+        lines.push_back("  - " + p);
+    return lines;
+}
+
+std::string Game::getClanOf(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return "";
+    auto c = clans.getClanOf(it->second.getName());
+    return c.value_or("");
+}
+
+std::vector<std::string> Game::getClanMembers(const std::string& clanName) const {
+    return clans.getMembersOf(clanName);
+}
+
+bool Game::areInSameClan(int playerA, int playerB) const {
+    auto itA = players.find(playerA);
+    auto itB = players.find(playerB);
+    if (itA == players.end() || itB == players.end())
+        return false;
+    return clans.areInSameClan(itA->second.getName(), itB->second.getName());
+}
+
+int Game::countNearbyClanMates(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end())
+        return 0;
+    auto myClan = clans.getClanOf(it->second.getName());
+    if (!myClan)
+        return 0;
+    ClanConfig cc = StatsDefinition().getClanConfig();
+    Position myPos = it->second.getPosition();
+    uint8_t myMap = it->second.getMapId();
+    auto mates = clans.getMembersOf(*myClan);
+    int count = 0;
+    for (const auto& mateNick: mates) {
+        if (mateNick == it->second.getName())
+            continue;
+        for (const auto& [otherId, other]: players) {
+            if (other.getName() != mateNick)
+                continue;
+            if (other.getMapId() != myMap)
+                break;
+            Position op = other.getPosition();
+            int dist = std::abs(op.x - myPos.x) + std::abs(op.y - myPos.y);
+            if (dist <= cc.bonusRadius)
+                count++;
+            break;
+        }
+    }
+    return count;
 }
 
 Game::~Game() {

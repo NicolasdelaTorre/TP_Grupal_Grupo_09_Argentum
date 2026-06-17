@@ -11,6 +11,8 @@
 #include "../../common/position.h"
 
 #include "binary_parser.h"
+#include "clan.h"
+#include "clan_registry.h"
 #include "map.h"
 #include "NPC/banker.h"
 #include "player.h"
@@ -40,6 +42,8 @@ private:
     BinaryParser parser;
     // Singleton del banco
     Banker bank;
+    // Registro central de clanes
+    ClanRegistry clans;
     // Catalogos compartidos por tipo de comerciante ("trader" o "priest").
     // Cargados de server/Logic/merchants.toml al inicio. Pair = (itemId, precio).
     std::unordered_map<std::string, std::vector<std::pair<uint8_t, uint32_t>>> merchantCatalog;
@@ -259,6 +263,27 @@ public:
     void fastTravel(int playerId, Position newPosition);
 
     void removePlayer(int playerId);
+
+    // ── Clanes ──────────────────────────────────────────────────────────
+    // Cada try* delega en ClanRegistry y devuelve un mensaje listo para chat.
+    ClanOutcome tryFoundClan(int playerId, const std::string& clanName);
+    ClanOutcome tryRequestJoinClan(int playerId, const std::string& clanName);
+    ClanOutcome tryAcceptClanRequest(int playerId, const std::string& applicantNick);
+    ClanOutcome tryRejectClanRequest(int playerId, const std::string& applicantNick);
+    ClanOutcome tryBanFromClan(int playerId, const std::string& targetNick);
+    ClanOutcome tryKickFromClan(int playerId, const std::string& targetNick);
+    ClanOutcome tryLeaveClan(int playerId);
+
+    // Lineas para mostrar en /revisar-clan. Vacio si el jugador no es fundador.
+    std::vector<std::string> reviewClan(int playerId) const;
+
+    // Devuelve el nombre del clan del jugador, vacio si no esta en ninguno.
+    std::string getClanOf(int playerId) const;
+    // Lista de miembros del clan (nicks).
+    std::vector<std::string> getClanMembers(const std::string& clanName) const;
+    bool areInSameClan(int playerA, int playerB) const;
+    // Cuenta miembros del mismo clan conectados dentro del radio (excluyendo al propio).
+    int countNearbyClanMates(int playerId) const;
 
     ~Game();
 };
