@@ -138,7 +138,6 @@ void Map::spawnNPC(const Biome& biome, std::vector<Cell>& cells, uint8_t mapId) 
             // Ocuppy cell
             Cell& targetCell = cells[static_cast<size_t>(pos.y) * getWidth(mapId) + pos.x];
             targetCell.npcId = newNpcId;
-            targetCell.isWalkable = false;
 
             // Save npc
             npcs[newNpcId] = std::make_unique<Creature>(newNpcId, spawnInfo.creature, mapId, pos.x, pos.y, biome.type);

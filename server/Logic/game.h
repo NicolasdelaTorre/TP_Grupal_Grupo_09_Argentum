@@ -115,6 +115,9 @@ public:
     // True si el jugador está muerto (fantasma).
     bool isPlayerGhost(int playerId) const;
 
+    // Devuelve el playerId que está en (x, y, mapId), o -1 si no hay player.
+    int getPlayerIdAt(int16_t x, int16_t y, uint8_t mapId) const;
+
     std::vector<int> getPlayerIds() const;
 
     void updatePlayerData(int playerId);

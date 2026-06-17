@@ -106,6 +106,8 @@ public:
 
     bool isAlive();
 
+    bool hasEnoughManaForAttack();
+
     uint16_t dealDamage();
 
     // Tirada de defensa

@@ -211,6 +211,15 @@ bool Game::isPlayerGhost(int playerId) const {
     return it->second.getData().isGhost;
 }
 
+int Game::getPlayerIdAt(int16_t x, int16_t y, uint8_t mapId) const {
+    for (const auto& [id, player]: players) {
+        if (player.getMapId() == mapId && player.getX() == x && player.getY() == y) {
+            return id;
+        }
+    }
+    return -1;
+}
+
 std::vector<int> Game::getPlayerIds() const {
     std::vector<int> ids;
     ids.reserve(players.size());
@@ -257,12 +266,21 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
     }
 
     uint8_t mapId = player.getMapId();
-    if (!map.isWalkable(next.x, next.y, mapId)) return false;
-
     Position old = player.getPosition();
+    if (!map.isWalkable(next.x, next.y, mapId)) {
+        std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
+                  << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
+                  << " reason=not_walkable" << std::endl;
+        return false;
+    }
     // moveEntity valida internamente que la celda destino no este ocupada por
     // NPC ni por player y devuelve false si lo esta.
-    if (!map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId)) return false;
+    if (!map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId)) {
+        std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
+                  << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
+                  << " reason=occupied" << std::endl;
+        return false;
+    }
 
     player.move(next);
     player.setDirection(static_cast<uint8_t>(direction));
@@ -327,6 +345,12 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
 
     outcome.attackerName = itPlayer->second.getName();
 
+    // Sin mana suficiente para el hechizo
+    if (!itPlayer->second.hasEnoughManaForAttack()) {
+        outcome.blockedReason = "No tenés maná suficiente para lanzar el hechizo";
+        return outcome;
+    }
+
     bool targetPlayer = (targetType == 0);
     uint8_t mapId = itPlayer->second.getMapId();
     uint8_t entityId;
@@ -337,8 +361,12 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer,
                                   mapId);
 
-    if (entityId != targetId)
+    if (entityId != targetId) {
+        // Antes se rebotaba silencioso: el cliente ya mostró la animación pero
+        // el server no avisa nada. Ahora avisamos para que el jugador entienda.
+        outcome.blockedReason = "Estás demasiado lejos del objetivo";
         return outcome;
+    }
 
     uint16_t attackerId = static_cast<uint16_t>(playerId);
     uint8_t atkLvl = itPlayer->second.getData().level;
@@ -383,6 +411,9 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
             outcome.blockedReason = "No podés atacar a un miembro de tu clan";
             return outcome;
         }
+        // dealDamage primero: gasta el mana del hechizo aunque después esquive
+        uint16_t rawDamage = itPlayer->second.dealDamage();
+        if (isCritical) rawDamage *= 2;
         // Solo se intenta esquivar si NO es crítico.
         if (!isCritical && tryEvade(playerId, static_cast<int>(targetId))) {
             outcome.valid = true;
@@ -391,8 +422,6 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
                                                                 0, false);
             return outcome;
         }
-        uint16_t rawDamage = itPlayer->second.dealDamage();
-        if (isCritical) rawDamage *= 2;
         // Bonus de clan
         ClanConfig cc = StatsDefinition().getClanConfig();
         int nearAtk = countNearbyClanMates(playerId);
