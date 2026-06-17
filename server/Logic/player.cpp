@@ -152,6 +152,14 @@ bool Player::isItemEquipped(uint8_t itemId) const {
 
 bool Player::isAlive() { return !data.isGhost; }
 
+bool Player::hasEnoughManaForAttack() {
+    if (equippedWeapon.emptyItem() || equippedWeapon.getType() != ItemType::MAGIC)
+        return true;
+    if (infiniteMana)
+        return true;
+    return equippedWeapon.getManaWaste() <= data.mana;
+}
+
 uint16_t Player::dealDamage() {
     if (teleporting || equippedWeapon.emptyItem() || !equippedWeapon.isOffensiveWeapon()) {
         return 0;

@@ -303,7 +303,15 @@ void Gameloop::NPCTurns() {
             continue;
 
         Position oldPos = npc->getPosition();
-        Position newPos = npc->stalkPlayer(map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId(), npc->getBiomeType()));
+        Position target = map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId(), npc->getBiomeType());
+        // Si el player es fantasma no se persigue
+        if (target.x != -1) {
+            int pid = game.getPlayerIdAt(target.x, target.y, npc->getMapId());
+            if (pid != -1 && game.isPlayerGhost(pid)) {
+                target = {-1, -1};
+            }
+        }
+        Position newPos = npc->stalkPlayer(target);
 
         if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
             continue;
@@ -334,7 +342,9 @@ void Gameloop::NPCTurns() {
                                           npc->getMapId());
         if (playerId == 0)
             continue;
-        if (!game.hasPlayer(playerId)) continue;
+        if (!game.hasPlayer(playerId)) continue;: ya están muertos.
+        // No pegar a fantasmas
+        if (game.isPlayerGhost(playerId)) continue;
         uint16_t finalDmg = game.applyNPCAttack(playerId, npc->getDamage());
         auto atkEv = std::make_shared<AttackResultEvent>(npcId, 0, playerId, finalDmg, true);
         clientMonitor.broadcast(atkEv);

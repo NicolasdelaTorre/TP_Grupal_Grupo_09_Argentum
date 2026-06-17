@@ -95,7 +95,9 @@ bool Item::emptyItem() {
     return false;
 }
 
-bool Item::longDistance() { return type == ItemType::WEAPON && distance; }
+bool Item::longDistance() {
+    return (type == ItemType::WEAPON && distance) || type == ItemType::MAGIC;
+}
 
 uint8_t Item::getId() const {
     if (id == 0) {
