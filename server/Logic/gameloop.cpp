@@ -31,8 +31,29 @@ static void broadcastDrops(ClientMonitor& monitor,
     }
 }
 
+// Notifica a todos los miembros conectados del clan, salvo a exceptId si != -1.
+static void notifyClanMembers(ClientMonitor& monitor, Game& game, const std::string& clanName,
+                              const std::string& msg, int exceptId = -1) {
+    if (clanName.empty())
+        return;
+    auto members = game.getClanMembers(clanName);
+    for (int pid: game.getPlayerIds()) {
+        if (pid == exceptId)
+            continue;
+        const std::string& name = game.getPlayerName(pid);
+        for (const auto& m: members) {
+            if (m == name) {
+                monitor.sendToClient(pid, std::make_shared<ChatBroadcastEvent>(
+                                                  0, std::string(), msg));
+                break;
+            }
+        }
+    }
+}
+
 // Manda las notificaciones de combate
-static void notifyAttackOutcome(ClientMonitor& monitor, const Game::AttackOutcome& o) {
+static void notifyAttackOutcome(ClientMonitor& monitor, Game& game,
+                                const Game::AttackOutcome& o) {
     if (!o.valid) return;
 
     // Atacante: qué le hizo al target.
@@ -76,6 +97,13 @@ static void notifyAttackOutcome(ClientMonitor& monitor, const Game::AttackOutcom
         monitor.sendToClient(o.targetId,
                              std::make_shared<ChatBroadcastEvent>(
                                      0, std::string(), "Fuiste asesinado por " + o.attackerName));
+    }
+
+    // Aviso al clan del target: "tu compañero esta siendo atacado".
+    std::string clanOfTarget = game.getClanOf(o.targetId);
+    if (!clanOfTarget.empty()) {
+        std::string msg = "Tu compañero " + o.targetName + " está siendo atacado";
+        notifyClanMembers(monitor, game, clanOfTarget, msg, o.targetId);
     }
 }
 
@@ -316,6 +344,15 @@ void Gameloop::NPCTurns() {
                                            0, std::string(),
                                            npc->getName() + " te atacó por " +
                                                    std::to_string(finalDmg)));
+        // Aviso al clan del jugador atacado.
+        {
+            std::string clanOfTarget = game.getClanOf(playerId);
+            if (!clanOfTarget.empty()) {
+                std::string msg = "Tu compañero " + game.getPlayerName(playerId) +
+                                  " está siendo atacado";
+                notifyClanMembers(clientMonitor, game, clanOfTarget, msg, playerId);
+            }
+        }
         if (game.isPlayerGhost(playerId)) {
             clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
             broadcastDrops(clientMonitor, game.dropPlayerLootOnDeath(playerId));
@@ -358,10 +395,18 @@ void Gameloop::handleDisconnect(int playerId) {
         return;
     std::cout << "Player " << game.getPlayerName(playerId) << " (id=" << playerId
               << ") disconnected" << std::endl;
+    // Aviso al clan antes de remover al jugador
+    std::string clanName = game.getClanOf(playerId);
+    std::string playerName = game.getPlayerName(playerId);
     selectedNpc.erase(playerId);
+    pendingNewPlayers.erase(playerId);
     game.removePlayer(playerId);
     clientMonitor.broadcastExcept(
             playerId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)));
+    if (!clanName.empty()) {
+        notifyClanMembers(clientMonitor, game, clanName,
+                          playerName + " salió de Argentum", playerId);
+    }
 }
 
 void Gameloop::handleUserArrival(int playerId, const std::string& name) {
@@ -461,6 +506,15 @@ void Gameloop::sendPostLoginSnapshots(int playerId) {
     // En el overworld (mapId=0) incluye amigos (merchant/banker/priest).
     sendNpcSnapshot(playerId, mapId);
 
+    // Aviso a los miembros del clan que entró a Argentum.
+    {
+        std::string clanName = game.getClanOf(playerId);
+        if (!clanName.empty()) {
+            notifyClanMembers(clientMonitor, game, clanName,
+                              myName + " entró a Argentum", playerId);
+        }
+    }
+
     // Snapshot de items en el piso. Mandamos un ItemDroppedEvent por cada uno;
     // así el cliente unifica el code path con los drops que llegan en vivo.
     for (const auto& d : game.getDroppedItems()) {
@@ -528,7 +582,7 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
     }
 
     clientMonitor.broadcast(outcome.event);
-    notifyAttackOutcome(clientMonitor, outcome);
+    notifyAttackOutcome(clientMonitor, game, outcome);
 
     bool hit = outcome.event->getHit();
     if (hit) {
@@ -906,6 +960,146 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
                 handleEquip(playerId, slot);
                 return;
             } catch (...) { reply = "Uso: /equipar <slot>"; }
+        }
+    } else if (cmd == "/fundar-clan" || cmd == "/unirse" || cmd == "/revisar-clan" ||
+               cmd == "/clan-aceptar" || cmd == "/clan-rechazar" || cmd == "/clan-ban" ||
+               cmd == "/clan-kick" || cmd == "/dejar-clan") {
+        // Helper local para juntar partes (nombre de clan o de nick puede tener espacios).
+        auto joinFrom = [&](size_t from) -> std::string {
+            std::string out;
+            for (size_t i = from; i < parts.size(); i++) {
+                if (i > from) out += ' ';
+                out += parts[i];
+            }
+            return out;
+        };
+        const std::string& callerName = game.getPlayerName(playerId);
+        if (cmd == "/fundar-clan") {
+            if (parts.size() < 2) { reply = "Uso: /fundar-clan <nombre>"; }
+            else {
+                auto r = game.tryFoundClan(playerId, joinFrom(1));
+                reply = r.message;
+            }
+        } else if (cmd == "/unirse") {
+            if (parts.size() < 2) { reply = "Uso: /unirse <nombre del clan>"; }
+            else {
+                std::string clanName = joinFrom(1);
+                auto r = game.tryRequestJoinClan(playerId, clanName);
+                reply = r.message;
+                // Si el pedido fue aceptado entrar a la cola, avisarle al fundador conectado.
+                if (r.ok) {
+                    auto members = game.getClanMembers(clanName);
+                    if (!members.empty()) {
+                        const std::string& founder = members[0];
+                        for (int pid : game.getPlayerIds()) {
+                            if (game.getPlayerName(pid) == founder) {
+                                clientMonitor.sendToClient(
+                                        pid, std::make_shared<ChatBroadcastEvent>(
+                                                     0, std::string(),
+                                                     callerName + " pidió unirse a tu clan"));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (cmd == "/revisar-clan") {
+            auto lines = game.reviewClan(playerId);
+            for (const auto& l : lines) {
+                clientMonitor.sendToClient(
+                        playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), l));
+            }
+            return;
+        } else if (cmd == "/clan-aceptar") {
+            if (parts.size() < 2) { reply = "Uso: /clan-aceptar <nick>"; }
+            else {
+                std::string applicant = joinFrom(1);
+                std::string clanName = game.getClanOf(playerId);
+                auto r = game.tryAcceptClanRequest(playerId, applicant);
+                reply = r.message;
+                if (r.ok && !clanName.empty()) {
+                    // Aviso al aceptado (si está conectado).
+                    for (int pid : game.getPlayerIds()) {
+                        if (game.getPlayerName(pid) == applicant) {
+                            clientMonitor.sendToClient(
+                                    pid, std::make_shared<ChatBroadcastEvent>(
+                                                 0, std::string(),
+                                                 "Te aceptaron en el clan " + clanName));
+                            break;
+                        }
+                    }
+                    // Aviso al resto del clan.
+                    notifyClanMembers(clientMonitor, game, clanName,
+                                      applicant + " entró al clan", playerId);
+                }
+            }
+        } else if (cmd == "/clan-rechazar") {
+            if (parts.size() < 2) { reply = "Uso: /clan-rechazar <nick>"; }
+            else {
+                std::string applicant = joinFrom(1);
+                auto r = game.tryRejectClanRequest(playerId, applicant);
+                reply = r.message;
+                if (r.ok) {
+                    for (int pid : game.getPlayerIds()) {
+                        if (game.getPlayerName(pid) == applicant) {
+                            clientMonitor.sendToClient(
+                                    pid, std::make_shared<ChatBroadcastEvent>(
+                                                 0, std::string(),
+                                                 "Tu pedido al clan fue rechazado"));
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if (cmd == "/clan-ban") {
+            if (parts.size() < 2) { reply = "Uso: /clan-ban <nick>"; }
+            else {
+                std::string target = joinFrom(1);
+                std::string clanName = game.getClanOf(playerId);
+                auto r = game.tryBanFromClan(playerId, target);
+                reply = r.message;
+                if (r.ok) {
+                    for (int pid : game.getPlayerIds()) {
+                        if (game.getPlayerName(pid) == target) {
+                            clientMonitor.sendToClient(
+                                    pid, std::make_shared<ChatBroadcastEvent>(
+                                                 0, std::string(),
+                                                 "Fuiste baneado del clan " + clanName));
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if (cmd == "/clan-kick") {
+            if (parts.size() < 2) { reply = "Uso: /clan-kick <nick>"; }
+            else {
+                std::string target = joinFrom(1);
+                std::string clanName = game.getClanOf(playerId);
+                auto r = game.tryKickFromClan(playerId, target);
+                reply = r.message;
+                if (r.ok) {
+                    // Aviso al echado y al resto del clan.
+                    for (int pid : game.getPlayerIds()) {
+                        if (game.getPlayerName(pid) == target) {
+                            clientMonitor.sendToClient(
+                                    pid, std::make_shared<ChatBroadcastEvent>(
+                                                 0, std::string(),
+                                                 "Te echaron del clan " + clanName));
+                            break;
+                        }
+                    }
+                    notifyClanMembers(clientMonitor, game, clanName,
+                                      target + " fue echado del clan", playerId);
+                }
+            }
+        } else if (cmd == "/dejar-clan") {
+            std::string clanName = game.getClanOf(playerId);
+            auto r = game.tryLeaveClan(playerId);
+            reply = r.message;
+            if (r.ok && !clanName.empty()) {
+                notifyClanMembers(clientMonitor, game, clanName,
+                                  callerName + " dejó el clan", playerId);
+            }
         }
     } else if (cmd == "/desequipar") {
         if (parts.size() < 2) {

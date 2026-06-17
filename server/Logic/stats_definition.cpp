@@ -56,4 +56,6 @@ LootConfig StatsDefinition::getLootConfig() { return attributes.getLootConfig();
 
 CreatureSpawnConfig StatsDefinition::getSpawnConfig() { return attributes.getSpawnConfig(); }
 
+ClanConfig StatsDefinition::getClanConfig() { return attributes.getClanConfig(); }
+
 RaceAttribute StatsDefinition::getRace(RaceCode race) { return attributes.getRaceAttribute(race); }

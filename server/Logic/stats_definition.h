@@ -36,6 +36,8 @@ public:
 
     CreatureSpawnConfig getSpawnConfig();
 
+    ClanConfig getClanConfig();
+
     RaceAttribute getRace(RaceCode race);
 };
 
