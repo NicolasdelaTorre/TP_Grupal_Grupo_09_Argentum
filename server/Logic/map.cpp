@@ -663,7 +663,7 @@ int Map::calculateTeleportingTime(Position playerPosition, uint8_t mapId) {
     Position nearestPriestPos = searchNearestPriest(x, y);
 
     if (nearestPriestPos.x != -1 && nearestPriestPos.y != -1)
-        return std::abs(nearestPriestPos.x - x) + std::abs(nearestPriestPos.y - y);
+        return (std::abs(nearestPriestPos.x - x) + std::abs(nearestPriestPos.y - y)) * 1000;
 
     throw std::runtime_error("Map Error: no priest found");
 }
