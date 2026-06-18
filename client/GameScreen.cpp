@@ -24,6 +24,7 @@ GameMap convertToGameMap(const MapEvent& m) {
     for (size_t i = 0; i < cells.size(); i++) {
         const auto& cell = cells[i];
         gm.tiles[i].textureId = cell.textureId;
+        gm.tiles[i].safeZone = cell.safeZone;
         if (cell.obstacleId != 0) {
             gm.tiles[i].blocked = true;
             gm.tiles[i].obstacleType = static_cast<ObstacleCode>(cell.obstacleId);
@@ -199,8 +200,36 @@ void GameScreen::render() {
     renderStatsBar();
     renderInventoryPanel();
     renderChat();
+    renderSafeZoneIndicator();
 
     renderer.Present();
+}
+
+void GameScreen::renderSafeZoneIndicator() {
+    // Tile donde está parado el jugador (misma convención que el movimiento).
+    int tx = (int)(player.x + HEAD_OFFSET);
+    int ty = (int)(player.y + FEET_OFFSET);
+    if (!map.inBounds(tx, ty) || !map.at(tx, ty).safeZone)
+        return;
+
+    try {
+        SDL_Color color = {80, 230, 120, 255};  // verde
+        auto surface = chatFont.RenderUTF8_Blended("Safe Zone", color);
+        SDL2pp::Texture tex(renderer, surface);
+        const int tw = tex.GetWidth();
+        const int th = tex.GetHeight();
+
+        // Esquina superior izquierda, justo debajo de la caja de chat.
+        const int x = 8;
+        const int y = chatBoxH() + 8;
+
+        // Fondo oscuro semitransparente para que el texto se lea sobre el mapa.
+        renderer.SetDrawBlendMode(SDL_BLENDMODE_BLEND);
+        renderer.SetDrawColor(0, 0, 0, 140);
+        renderer.FillRect(SDL2pp::Rect(x - 4, y - 2, tw + 8, th + 4));
+
+        renderer.Copy(tex, SDL2pp::NullOpt, SDL2pp::Rect(x, y, tw, th));
+    } catch (...) {}
 }
 
 bool GameScreen::handleEvents(float dt) {

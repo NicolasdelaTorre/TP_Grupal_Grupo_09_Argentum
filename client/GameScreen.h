@@ -205,6 +205,10 @@ private:
     // Dibuja la caja de chat arriba con historial e input actual.
     void renderChat();
 
+    // Muestra "Safe Zone" arriba a la izquierda mientras el jugador está parado
+    // sobre un tile de zona segura.
+    void renderSafeZoneIndicator();
+
     // Dibuja todos los efectos de sangre activos.
     void renderBloodEffects(float camX, float camY);
 
