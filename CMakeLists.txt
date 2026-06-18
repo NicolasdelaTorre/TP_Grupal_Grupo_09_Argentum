@@ -24,13 +24,12 @@ option(TALLER_MAKE_WARNINGS_AS_ERRORS "Enable / disable warnings as errors." ON)
 
 message(CMAKE_CXX_COMPILER_ID="${CMAKE_CXX_COMPILER_ID}")
 
-# Raíz del proyecto horneada en tiempo de configuración. project_root.cpp la usa
-# para hacer chdir() ahí al arrancar, así el cliente y el server encuentran sus
-# assets/datos sin importar desde qué carpeta se los lance. Se re-genera en cada
-# `cmake`, por lo que apunta al checkout de quien compila (no a una máquina fija).
-# Va en alcance de directorio (antes de crear cualquier target) porque el cliente
-# compila common/*.cpp dentro de su propio target vía GLOB, no sólo vía la lib
-# taller_common; así la definición llega a todas las compilaciones del archivo.
+# Raíz del proyecto horneada en tiempo de configuración. El main del cliente y
+# del server hacen chdir() ahí al arrancar (ver chdirToRoot en cada main.cpp),
+# así encuentran sus assets/datos sin importar desde qué carpeta se los lance.
+# Se re-genera en cada `cmake`, por lo que apunta al checkout de quien compila
+# (no a una máquina fija). Va en alcance de directorio para que la definición
+# llegue a todos los targets que compilen los main.
 add_compile_definitions(PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 # Define target: lib common between client, server and editor programs

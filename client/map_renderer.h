@@ -44,6 +44,7 @@ struct TileData {
     bool blocked = false;
     uint8_t variant = 0;  // 0, 1 o 2 para grass
     ObstacleCode obstacleType = ObstacleCode::NONE;
+    bool safeZone = false;  // zona segura (no se puede atacar/ser atacado)
 };
 
 // ── Obstáculo colocado ────────────────────────────────────────

@@ -1,10 +1,10 @@
 #include <exception>
 #include <iostream>
 
+#include <unistd.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
-
-#include "../common/project_root.h"
 
 #include "client.h"
 
@@ -14,15 +14,21 @@ using SDL2pp::Renderer;
 using SDL2pp::SDL;
 using SDL2pp::Window;
 
+#ifndef PROJECT_ROOT
+// Respaldo por si se compila sin la definición de CMake (no debería pasar).
+#define PROJECT_ROOT "."
+#endif
+
+
+static bool chdirToRoot() { return chdir(PROJECT_ROOT) == 0; }
+
 int main(int argc, char* argv[]) {
 
     try {
 
-        // Posicionarse en la raíz del proyecto para que los paths a assets
-        // funcionen sin importar desde dónde se lance el binario.
-        if (!project_root::chdirToRoot()) {
-            std::cerr << "WARN: no encontré config.toml; los assets podrían no cargar."
-                      << std::endl;
+        if (!chdirToRoot()) {
+            std::cerr << "WARN: no pude posicionarme en la raíz del proyecto ("
+                      << PROJECT_ROOT << "); los assets podrían no cargar." << std::endl;
         }
 
         if (argc < 3) {
