@@ -786,8 +786,10 @@ Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
 Game::InteractionResult Game::depositItemToBank(int playerId, const std::string& itemName) {
     auto it = players.find(playerId);
     if (it == players.end()) return {false, "Jugador no existe"};
+
     uint8_t itemId = itemIdByName(itemName);
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
+
     std::string canonical = itemNameById(itemId);
     if (it->second.isItemEquipped(itemId)) {
         return {false, "Tenes " + canonical + " equipado, desequipalo primero"};
@@ -795,6 +797,7 @@ Game::InteractionResult Game::depositItemToBank(int playerId, const std::string&
     if (it->second.removeItemByName(canonical) == 0) {
         return {false, "No tenes " + canonical + " en el inventario"};
     }
+    
     if (!bank.depositItem(it->second.getName(), itemId)) {
         // cuenta llena: lo devolvemos al inventario para no perderlo.
         it->second.addItem(canonical);

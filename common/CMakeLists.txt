@@ -11,6 +11,7 @@ target_sources(taller_common
     Communication/events/client_events.cpp
     # Compartido (no estrictamente comunicación).
     common_tiles.cpp
+    project_root.cpp
     PUBLIC
     Communication/common_protocol.h
     Communication/liberror.h
@@ -25,6 +26,7 @@ target_sources(taller_common
     Communication/events/client_events.h
     common_tiles.h
     position.h
+    project_root.h
     queue.h
     thread.h
     )
