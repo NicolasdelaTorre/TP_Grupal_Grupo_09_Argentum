@@ -437,7 +437,7 @@ bool YamlMapIO::load(MapDocument& document, const std::string& path) {
         document.map.height = map["height"].as<int>();
 
         // El grid de tiles de piso se recalcula al guardar a partir de los biomas, 
-        // pero se lee al cargar para reconstruir los tiles independientes
+        // pero se lee al cargar para obtener los tiles independientes
         if (root["biome_map"] && root["biome_map"]["data"]) {
             const int width = document.map.width;
             const int height = document.map.height;

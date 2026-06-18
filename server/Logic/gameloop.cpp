@@ -342,7 +342,7 @@ void Gameloop::NPCTurns() {
                                           npc->getMapId());
         if (playerId == 0)
             continue;
-        if (!game.hasPlayer(playerId)) continue;: ya están muertos.
+        if (!game.hasPlayer(playerId)) continue;
         // No pegar a fantasmas
         if (game.isPlayerGhost(playerId)) continue;
         uint16_t finalDmg = game.applyNPCAttack(playerId, npc->getDamage());
