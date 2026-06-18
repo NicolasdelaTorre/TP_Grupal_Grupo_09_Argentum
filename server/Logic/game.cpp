@@ -56,7 +56,7 @@ bool Game::loadExistingPlayer(int playerId, const std::string& name) {
     players.emplace(playerId, Player(parser.loadPlayerData(name), name));
     Position spawn = players.at(playerId).getPosition();
     bank.addPlayer(name);
-    map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    map.placeEntity(playerId, spawn.x, spawn.y, true, players.at(playerId).getMapId());
     std::cout << "Welcome back " << name << " at (" << spawn.x << ", " << spawn.y << ")"
               << std::endl;
     return true;
