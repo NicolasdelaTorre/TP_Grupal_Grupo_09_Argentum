@@ -383,7 +383,6 @@ Map YamlMapLoader::load(const std::string& path) {
             int16_t oy = obs["position"][1].as<int16_t>();
             int16_t ow = obs["size"][0].as<int16_t>();
             int16_t oh = obs["size"][1].as<int16_t>();
-            // El tipo concreto ya no importa: el sprite lo decide la textura.
             applyObstacle(cells, width, height, ox, oy, ow, oh,
                           static_cast<uint8_t>(ObstacleCode::GENERIC));
             placedObstacles.push_back({ox, oy, static_cast<uint16_t>(ow),
