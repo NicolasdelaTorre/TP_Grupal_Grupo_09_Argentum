@@ -41,9 +41,9 @@ public:
 
     void createItemById(uint8_t itemId);
 
-    bool emptyItem();
+    bool emptyItem() const;
 
-    bool longDistance();
+    bool longDistance() const;
 
     uint8_t getId() const;
 

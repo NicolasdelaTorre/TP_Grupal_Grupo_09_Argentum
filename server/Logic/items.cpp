@@ -87,7 +87,7 @@ void Item::createItemById(uint8_t itemId) {
     throw std::runtime_error("Unknown item id");
 }
 
-bool Item::emptyItem() {
+bool Item::emptyItem() const {
     if (id == 0) {
         return true;
     }
@@ -95,7 +95,7 @@ bool Item::emptyItem() {
     return false;
 }
 
-bool Item::longDistance() {
+bool Item::longDistance() const {
     return (type == ItemType::WEAPON && distance) || type == ItemType::MAGIC;
 }
 
