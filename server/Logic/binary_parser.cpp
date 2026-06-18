@@ -219,11 +219,6 @@ bool BinaryParser::checkBankAccountExists(const std::string& name) {
             break;
         }
 
-        uint32_t dataOffset = 0;
-        if (!bankFile.read(reinterpret_cast<char*>(&dataOffset), sizeof(dataOffset))) {
-            break;
-        }
-
         int32_t dataGold = 0;
         if (!bankFile.read(reinterpret_cast<char*>(&dataGold), sizeof(dataGold))) break;
 
