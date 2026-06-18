@@ -151,6 +151,23 @@ public:
     // targetType: 0 = player, 1 = npc.
     AttackOutcome processAttack(int playerId, uint8_t targetType, uint16_t targetId);
 
+    bool hasHealWeaponEquipped(int playerId) const;
+
+    // Resumen del cast de curacion para que gameloop arme chats y stats updates.
+    struct HealOutcome {
+        bool valid = false;
+        uint16_t healAmount = 0;
+        std::string casterName;
+        std::string targetName;
+        int casterId = -1;
+        int targetId = -1;
+        // Si el cast no se ejecuto (out of range / sin mana), mensaje para el caster.
+        std::string blockedReason;
+    };
+
+    // Lanza el hechizo de curacion del playerId sobre targetId
+    HealOutcome processHealCast(int casterId, uint16_t targetId);
+
     // ── Cheats invocables desde el chat (/vidainf, /gold, etc.)
     bool cheatToggleInfiniteHealth(int playerId);
     bool cheatToggleInfiniteMana(int playerId);

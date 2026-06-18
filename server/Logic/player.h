@@ -108,6 +108,11 @@ public:
 
     bool hasEnoughManaForAttack();
 
+    bool hasHealWeapon() const;
+
+    // Lanza el hechizo de curacion sobre target. Devuelve la vida curada o 0 si no pudo lanzarse
+    uint16_t castHealOn(Player& target);
+
     uint16_t dealDamage();
 
     // Tirada de defensa

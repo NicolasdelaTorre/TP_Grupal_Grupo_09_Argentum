@@ -160,6 +160,29 @@ bool Player::hasEnoughManaForAttack() {
     return equippedWeapon.getManaWaste() <= data.mana;
 }
 
+bool Player::hasHealWeapon() const {
+    if (equippedWeapon.emptyItem()) return false;
+    return equippedWeapon.getType() == ItemType::HEAL;
+}
+
+uint16_t Player::castHealOn(Player& target) {
+    if (teleporting) return 0;
+    if (equippedWeapon.emptyItem() || equippedWeapon.getType() != ItemType::HEAL) return 0;
+    if (target.data.isGhost) return 0;
+
+    uint16_t manaCost = equippedWeapon.getManaWaste();
+    if (manaCost > data.mana && !infiniteMana) return 0;
+    if (!infiniteMana) data.mana -= manaCost;
+    isMeditating = false;
+
+    uint16_t healAmount = equippedWeapon.getHealthRestore();
+    if (target.data.health + healAmount > target.maxHealth) {
+        healAmount = target.maxHealth - target.data.health;
+    }
+    target.data.health += healAmount;
+    return healAmount;
+}
+
 uint16_t Player::dealDamage() {
     if (teleporting || equippedWeapon.emptyItem() || !equippedWeapon.isOffensiveWeapon()) {
         return 0;

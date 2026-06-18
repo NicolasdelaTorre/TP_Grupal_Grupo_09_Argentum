@@ -342,7 +342,7 @@ void Gameloop::NPCTurns() {
                                           npc->getMapId());
         if (playerId == 0)
             continue;
-        if (!game.hasPlayer(playerId)) continue;: ya están muertos.
+        if (!game.hasPlayer(playerId)) continue;  // ya están muertos
         // No pegar a fantasmas
         if (game.isPlayerGhost(playerId)) continue;
         uint16_t finalDmg = game.applyNPCAttack(playerId, npc->getDamage());
@@ -581,6 +581,43 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
                                   0, std::string(), "Estás muerto, no podés atacar"));
         return;
     }
+
+    // Si tiene arma de curacion equipada, el click se interpreta como cast de heal. El cliente manda AttackEvent de todas formas.
+    if (game.hasHealWeaponEquipped(playerId)) {
+        if (targetType == 1) {
+            clientMonitor.sendToClient(playerId,
+                                       std::make_shared<ChatBroadcastEvent>(
+                                               0, std::string(),
+                                               "No podés atacar con un hechizo de curación"));
+            return;
+        }
+        Game::HealOutcome h = game.processHealCast(playerId, targetId);
+        if (!h.valid) {
+            if (!h.blockedReason.empty()) {
+                clientMonitor.sendToClient(playerId,
+                                           std::make_shared<ChatBroadcastEvent>(
+                                                   0, std::string(), h.blockedReason));
+            }
+            return;
+        }
+        // Chat del caster y del target.
+        clientMonitor.sendToClient(playerId,
+                                   std::make_shared<ChatBroadcastEvent>(
+                                           0, std::string(),
+                                           "Curaste a " + h.targetName + " por " +
+                                                   std::to_string(h.healAmount) + " de vida"));
+        if (h.targetId != playerId && game.hasPlayer(h.targetId)) {
+            clientMonitor.sendToClient(h.targetId,
+                                       std::make_shared<ChatBroadcastEvent>(
+                                               0, std::string(),
+                                               h.casterName + " te curó por " +
+                                                       std::to_string(h.healAmount) + " de vida"));
+            clientMonitor.sendToClient(h.targetId, buildStatsEvent(h.targetId));
+        }
+        clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+        return;
+    }
+
     Game::AttackOutcome outcome = game.processAttack(playerId, targetType, targetId);
     if (!outcome.valid) {
         if (!outcome.blockedReason.empty()) {

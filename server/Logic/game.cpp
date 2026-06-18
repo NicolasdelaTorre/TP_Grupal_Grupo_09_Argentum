@@ -488,6 +488,64 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     return outcome;
 }
 
+bool Game::hasHealWeaponEquipped(int playerId) const {
+    auto it = players.find(playerId);
+    if (it == players.end()) return false;
+    return it->second.hasHealWeapon();
+}
+
+Game::HealOutcome Game::processHealCast(int casterId, uint16_t targetId) {
+    HealOutcome outcome;
+    outcome.casterId = casterId;
+
+    auto itCaster = players.find(casterId);
+    if (itCaster == players.end()) return outcome;
+    if (!itCaster->second.isAlive()) return outcome;
+    if (!itCaster->second.hasHealWeapon()) return outcome;
+    outcome.casterName = itCaster->second.getName();
+
+    // Auto-curarse: el cliente no manda clicks sobre uno mismo, pero por las dudas.
+    if (static_cast<int>(targetId) == casterId) {
+        uint16_t healed = itCaster->second.castHealOn(itCaster->second);
+        if (healed == 0) {
+            outcome.blockedReason = "No tenés maná suficiente para curar";
+            return outcome;
+        }
+        outcome.valid = true;
+        outcome.healAmount = healed;
+        outcome.targetName = outcome.casterName;
+        outcome.targetId = casterId;
+        return outcome;
+    }
+
+    // Chequeo de rango: la Flauta es a distancia, asi que uso entityInDistance.
+    uint8_t mapId = itCaster->second.getMapId();
+    uint16_t entityId = map.entityInDistance(itCaster->second.getX(), itCaster->second.getY(),
+                                             true, mapId);
+    if (entityId != targetId) {
+        outcome.blockedReason = "Estás demasiado lejos del objetivo";
+        return outcome;
+    }
+
+    auto itTarget = players.find(static_cast<int>(targetId));
+    if (itTarget == players.end()) return outcome;
+    if (!itTarget->second.isAlive()) {
+        outcome.blockedReason = "No podés curar a un jugador muerto";
+        return outcome;
+    }
+    outcome.targetName = itTarget->second.getName();
+    outcome.targetId = static_cast<int>(targetId);
+
+    uint16_t healed = itCaster->second.castHealOn(itTarget->second);
+    if (healed == 0) {
+        outcome.blockedReason = "No tenés maná suficiente para curar";
+        return outcome;
+    }
+    outcome.valid = true;
+    outcome.healAmount = healed;
+    return outcome;
+}
+
 bool Game::tryEvade(int /*attackerId*/, int targetId) const {
     // Formula del enunciado: rand(0,1)^Agilidad < evadeThreshold.
     auto it = players.find(targetId);

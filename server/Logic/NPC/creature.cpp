@@ -32,8 +32,7 @@ Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t
 
 }
 
-Position Creature::stalkPlayer(Position playerPosition) {
-    // No player in sight
+Position Creature::stalkPlayer(Position playerPosition) const {
     if (playerPosition.x == -1) {
         return {-1, -1};
     }
@@ -41,10 +40,8 @@ Position Creature::stalkPlayer(Position playerPosition) {
     int16_t dx = playerPosition.x - position.x;
     int16_t dy = playerPosition.y - position.y;
 
-    position.x += (dx > 0) - (dx < 0);
-    position.y += (dy > 0) - (dy < 0);
-
-    return position;
+    return {static_cast<int16_t>(position.x + (dx > 0) - (dx < 0)),
+            static_cast<int16_t>(position.y + (dy > 0) - (dy < 0))};
 }
 
 void Creature::receiveDamage(uint16_t damage) {
