@@ -4,6 +4,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2pp/SDL2pp.hh>
 
+#include "../common/project_root.h"
+
 #include "client.h"
 
 // Esta comentado para que no se queje el pre commit
@@ -15,6 +17,13 @@ using SDL2pp::Window;
 int main(int argc, char* argv[]) {
 
     try {
+
+        // Posicionarse en la raíz del proyecto para que los paths a assets
+        // funcionen sin importar desde dónde se lance el binario.
+        if (!project_root::chdirToRoot()) {
+            std::cerr << "WARN: no encontré config.toml; los assets podrían no cargar."
+                      << std::endl;
+        }
 
         if (argc < 3) {
             std::cerr << "Usage: " << argv[0] << " <hostname or IP> <servicename or port>"
