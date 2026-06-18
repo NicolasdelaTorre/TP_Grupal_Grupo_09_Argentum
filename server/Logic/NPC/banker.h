@@ -8,7 +8,7 @@
 #include "../binary_parser.h"
 #include "npc.h"
 
-#define N 9
+#define N 20
 
 struct BankAccount {
     std::string name;

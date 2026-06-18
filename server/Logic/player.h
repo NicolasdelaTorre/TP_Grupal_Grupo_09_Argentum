@@ -14,7 +14,7 @@
 #include "race.h"
 #include "stats_definition.h"
 
-#define N 9
+#define N 20
 
 struct PlayerData {
     uint32_t experience;
