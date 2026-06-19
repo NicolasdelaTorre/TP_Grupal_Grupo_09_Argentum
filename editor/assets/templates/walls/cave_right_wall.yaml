@@ -1,0 +1,7 @@
+template_id: pared_cueva_derecha
+name: "Right Cave Wall"
+size:
+  width: 1
+  height: 1
+texture: "walls/cave_right.png"
+environment_type: cueva

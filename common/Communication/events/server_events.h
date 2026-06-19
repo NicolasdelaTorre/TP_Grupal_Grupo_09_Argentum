@@ -17,8 +17,8 @@ struct MapCellData {
 
 // Obstáculo colocado en el mapa. (x, y) es la esquina superior-izquierda del
 // rectángulo que bloquea (footprint), y (w, h) su tamaño en tiles. El cliente
-// dibuja la textura a tamaño nativo anclada a la esquina inferior izquierda, es
-// independiente del tamaño que bloquea.
+// dibuja la textura a tamaño nativo anclada al borde inferior del footprint;
+// texture_anchor define el punto horizontal (0=izq, 1=centro, 2=der).
 // texture es la ruta del sprite relativa a common/assets/images/ (incluye la
 // subcarpeta si corresponde: walls/, entries/, exits/). El render se resuelve
 // solo por la textura, así que no viaja el tipo de obstáculo.
@@ -28,6 +28,7 @@ struct MapObstacleData {
     uint16_t w;
     uint16_t h;
     std::string texture;
+    uint8_t texture_anchor = 0;
 };
 
 // Eventos sin payload (solo el opcode). Sirve para LOGIN_FAIL, FIRST_LOGIN.

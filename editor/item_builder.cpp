@@ -35,19 +35,31 @@ QGraphicsRectItem* ItemBuilder::buildPlayerSpawn(const QString& id) {
 }
 
 QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& type, int width,
-                                              int height, const QString& texturePath) {
+                                              int height, const QString& texturePath,
+                                              int texture_anchor) {
     const int pixel_w = width * CELL_DISPLAY_SIZE;
     const int pixel_h = height * CELL_DISPLAY_SIZE;
     auto* rect = new QGraphicsRectItem(0, 0, pixel_w, pixel_h);
     rect->setBrush(Qt::NoBrush);
     rect->setPen(Qt::NoPen);
 
-    // dibuja a tamaño nativo, ancla esquina inferior izquierda a esquina inferior izquierda del rect
+    // dibuja a tamaño nativo, ancla al borde inferior del footprint (0=izq, 1=centro, 2=der)
     QPixmap pixmap;
     if (!texturePath.isEmpty() && pixmap.load(texturePath)) {
+        int tex_x = 0;
+        switch (texture_anchor) {
+            case 1:
+                tex_x = (pixel_w - pixmap.width()) / 2;
+                break;
+            case 2:
+                tex_x = pixel_w - pixmap.width();
+                break;
+            default:
+                break;
+        }
         auto* texture_item = new QGraphicsPixmapItem(pixmap, rect);
         texture_item->setTransformationMode(Qt::SmoothTransformation);
-        texture_item->setPos(0, pixel_h - pixmap.height());
+        texture_item->setPos(tex_x, pixel_h - pixmap.height());
     }
 
     rect->setData(DATA_TYPE, OBSTACLE_TYPE);
@@ -55,6 +67,7 @@ QGraphicsRectItem* ItemBuilder::buildObstacle(const QString& id, const QString& 
     rect->setData(DATA_SUBTYPE, type);
     rect->setData(DATA_WIDTH, width);
     rect->setData(DATA_HEIGHT, height);
+    rect->setData(DATA_TEXTURE_ANCHOR, texture_anchor);
     return rect;
 }
 

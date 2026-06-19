@@ -261,13 +261,6 @@ void EditorWindow::setupTemplates() {
                                       .arg(entry.height);
         ui_->comboEntryTemplate->addItem(label, QString::fromStdString(entry.id));
     }
-    for (const auto& wall: templates_.walls()) {
-        const QString label = QStringLiteral("%1 (%2x%3)")
-                                      .arg(QString::fromStdString(wall.name))
-                                      .arg(wall.width)
-                                      .arg(wall.height);
-        ui_->comboWallTemplate->addItem(label, QString::fromStdString(wall.id));
-    }
     for (const auto& exit: templates_.exits()) {
         const QString label = QStringLiteral("%1 (%2x%3)")
                                       .arg(QString::fromStdString(exit.name))
@@ -761,6 +754,7 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
     }
 
     map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);
+    refreshWallTemplates(QString::fromStdString(env->type));
     ui_->labelEditingTarget->setText(
             QStringLiteral("Editing environment: %1").arg(QString::fromStdString(env->name)));
     ui_->btnBackToMainMap->setVisible(true);
@@ -778,6 +772,22 @@ void EditorWindow::setMainOnlySectionsVisible(bool visible) {
                                                 QStringLiteral("Walls"));
     ui_->btnModeExits->setVisible(!visible);
     ui_->btnEnvironmentCreatures->setVisible(!visible);
+}
+
+void EditorWindow::refreshWallTemplates(const QString& environment_type) {
+    ui_->comboWallTemplate->clear();
+    const std::string env_type = environment_type.toStdString();
+    for (const auto& wall: templates_.walls()) {
+        if (wall.environment_type != env_type) {
+            continue;
+        }
+        const QString label = QStringLiteral("%1 (%2x%3)")
+                                      .arg(QString::fromStdString(wall.name))
+                                      .arg(wall.width)
+                                      .arg(wall.height);
+        ui_->comboWallTemplate->addItem(label, QString::fromStdString(wall.id));
+    }
+    applyActiveTool();
 }
 
 void EditorWindow::refreshEnvironmentsList() {

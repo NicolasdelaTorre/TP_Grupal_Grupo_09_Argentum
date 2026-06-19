@@ -190,7 +190,7 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
         ToolInfo tool;
         tool.tool = EditorTool::Obstacle;
         tool.obstacle_template_id = QString::fromStdString(obstacle.type);
-        controller_->placeObstacle(tool, obstacle.x, obstacle.y, error);
+        controller_->placeObstacle(tool, obstacle.x, obstacle.y, error, obstacle.texture_anchor);
     }
 
     for (const auto& zone: document.zones) {

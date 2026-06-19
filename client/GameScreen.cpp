@@ -36,7 +36,7 @@ GameMap convertToGameMap(const MapEvent& m) {
     const auto& obstacles = m.getObstacles();
     gm.obstacles.reserve(obstacles.size());
     for (const auto& o: obstacles) {
-        gm.obstacles.push_back({o.x, o.y, o.w, o.h, o.texture});
+        gm.obstacles.push_back({o.x, o.y, o.w, o.h, o.texture, o.texture_anchor});
     }
     return gm;
 }

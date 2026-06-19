@@ -1,0 +1,7 @@
+template_id: tree_red
+name: "Red Tree"
+size:
+  width: 1
+  height: 1
+texture: "tree_red.png"
+texture_anchor: 1

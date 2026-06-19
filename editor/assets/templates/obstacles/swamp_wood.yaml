@@ -1,0 +1,7 @@
+template_id: swamp_wood
+name: "Swamp Wood"
+size:
+  width: 2
+  height: 1
+texture: "swamp_wood.png"
+texture_anchor: 0

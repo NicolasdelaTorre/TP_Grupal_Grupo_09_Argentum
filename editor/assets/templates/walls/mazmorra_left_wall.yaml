@@ -4,3 +4,4 @@ size:
   width: 1
   height: 2
 texture: "walls/left_mazmorra.png"
+environment_type: mazmorra

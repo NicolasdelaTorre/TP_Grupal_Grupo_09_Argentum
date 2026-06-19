@@ -11,7 +11,7 @@ class ItemBuilder {
 public:
     QGraphicsRectItem* buildPlayerSpawn(const QString& id);
     QGraphicsRectItem* buildObstacle(const QString& id, const QString& type, int width, int height,
-                                     const QString& texturePath);
+                                     const QString& texturePath, int texture_anchor = 0);
     QGraphicsRectItem* buildZone(const QString& id, const QString& zoneType,
                                  const QString& templateId, int width, int height,
                                  const QColor& fill);

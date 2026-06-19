@@ -66,6 +66,7 @@
 #define DATA_SUBTYPE (Qt::UserRole + 3)
 #define DATA_WIDTH (Qt::UserRole + 4)
 #define DATA_HEIGHT (Qt::UserRole + 5)
+#define DATA_TEXTURE_ANCHOR (Qt::UserRole + 7)
 
 #define PLAYER_SPAWN_TYPE "player_spawn"
 #define OBSTACLE_TYPE "obstacle"

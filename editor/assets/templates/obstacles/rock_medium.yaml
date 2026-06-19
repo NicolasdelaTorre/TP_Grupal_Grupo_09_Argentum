@@ -4,3 +4,4 @@ size:
   width: 2
   height: 2
 texture: "rock_medium.png"
+texture_anchor: 0

@@ -1,0 +1,7 @@
+template_id: arbol_alto
+name: "Tall Tree"
+size:
+  width: 1
+  height: 1
+texture: "tree_tall.png"
+texture_anchor: 1

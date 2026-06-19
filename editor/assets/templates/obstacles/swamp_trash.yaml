@@ -1,0 +1,7 @@
+template_id: swamp_trash
+name: "Swamp Trash"
+size:
+  width: 2
+  height: 2
+texture: "swamp_trash.png"
+texture_anchor: 0

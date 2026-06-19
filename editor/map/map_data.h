@@ -26,6 +26,8 @@ struct Obstacle {
     int width = 1;
     int height = 1;
     std::string texture;
+    // 0 = abajo-izq, 1 = abajo-centro, 2 = abajo-der.
+    int texture_anchor = 0;
 };
 
 struct CreatureSpawn {

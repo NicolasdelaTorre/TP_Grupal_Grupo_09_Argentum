@@ -81,7 +81,8 @@ bool SceneController::placePlayerSpawn(int cell_x, int cell_y, QString& error) {
     return true;
 }
 
-bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error) {
+bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
+                                    int texture_anchor_override) {
     if (tool.obstacle_template_id.isEmpty()) {
         error = QStringLiteral("Select an obstacle template.");
         return false;
@@ -93,10 +94,14 @@ bool SceneController::placeObstacle(const ToolInfo& tool, int cell_x, int cell_y
         return false;
     }
 
+    const int texture_anchor =
+            texture_anchor_override >= 0 ? texture_anchor_override : obstacle->texture_anchor;
+
     const QString id = nextObstacleId();
     auto* item = item_builder_.buildObstacle(id, QString::fromStdString(obstacle->id),
                                              obstacle->width, obstacle->height,
-                                             QString::fromStdString(obstacle->texture));
+                                             QString::fromStdString(obstacle->texture),
+                                             texture_anchor);
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_OBSTACLE);
     scene_->addItem(item);
@@ -390,6 +395,7 @@ MapDocument SceneController::buildDocument(const QString& map_id, const QString&
             obstacle.y = cell_y;
             obstacle.width = item->data(DATA_WIDTH).toInt();
             obstacle.height = item->data(DATA_HEIGHT).toInt();
+            obstacle.texture_anchor = item->data(DATA_TEXTURE_ANCHOR).toInt();
             // resolver textura via template
             if (const auto* tpl = templates_.find_obstacle(obstacle.type)) {
                 if (!tpl->texture.empty()) {

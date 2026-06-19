@@ -4,3 +4,4 @@ size:
   width: 4
   height: 3
 texture: "wooden_house_blue.png"
+texture_anchor: 0

@@ -51,6 +51,8 @@ struct ObstacleTemplate {
     int width = 1;
     int height = 1;
     std::string texture;
+    // 0 = abajo-izq, 1 = abajo-centro, 2 = abajo-der (anclaje del PNG al footprint).
+    int texture_anchor = 0;
 };
 
 // Entry a una cueva/mazmorra
@@ -77,6 +79,7 @@ struct WallTemplate {
     int width = 1;
     int height = 1;
     std::string texture;
+    std::string environment_type;  // "cueva" o "mazmorra".
 };
 
 struct ExitTemplate {

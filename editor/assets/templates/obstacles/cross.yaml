@@ -1,0 +1,7 @@
+template_id: cross
+name: "Cross"
+size:
+  width: 1
+  height: 1
+texture: "cross.png"
+texture_anchor: 0

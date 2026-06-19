@@ -1,0 +1,7 @@
+template_id: fallen_minecart
+name: "Fallen Minecart"
+size:
+  width: 1
+  height: 1
+texture: "fallen_minecart.png"
+texture_anchor: 0

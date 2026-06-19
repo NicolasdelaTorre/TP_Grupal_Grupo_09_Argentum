@@ -4,3 +4,4 @@ size:
   width: 2
   height: 2
 texture: "cart.png"
+texture_anchor: 0

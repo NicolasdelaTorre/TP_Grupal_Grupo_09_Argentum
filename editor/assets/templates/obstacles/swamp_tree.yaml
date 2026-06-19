@@ -1,0 +1,7 @@
+template_id: swamp_tree
+name: "Swamp Tree"
+size:
+  width: 1
+  height: 1
+texture: "swamp_tree.png"
+texture_anchor: 1

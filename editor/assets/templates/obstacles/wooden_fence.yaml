@@ -4,3 +4,4 @@ size:
   width: 2
   height: 1
 texture: "wooden_fence.png"
+texture_anchor: 0

@@ -1,0 +1,7 @@
+template_id: swamp_skeleton
+name: "Swamp Skeleton"
+size:
+  width: 1
+  height: 1
+texture: "swamp_skeleton.png"
+texture_anchor: 0
