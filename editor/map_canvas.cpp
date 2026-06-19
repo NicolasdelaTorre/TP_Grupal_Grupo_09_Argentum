@@ -190,7 +190,7 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
         ToolInfo tool;
         tool.tool = EditorTool::Obstacle;
         tool.obstacle_template_id = QString::fromStdString(obstacle.type);
-        controller_->placeObstacle(tool, obstacle.x, obstacle.y, error);
+        controller_->placeObstacle(tool, obstacle.x, obstacle.y, error, obstacle.texture_anchor);
     }
 
     for (const auto& zone: document.zones) {
@@ -804,7 +804,17 @@ void MapCanvas::rebuildEnvironmentLayers() {
     if (has_interior) {
         for (int y = 0; y < H; ++y) {
             for (int x = 0; x < W; ++x) {
-                if (is_exterior[static_cast<size_t>(y) * W + x]) {
+                const size_t idx = static_cast<size_t>(y) * W + x;
+                if (is_exterior[idx] || is_wall[idx]) {
+                    overlay.setPixelColor(x, y, QColor(0, 0, 0, 255));
+                }
+            }
+        }
+    } else {
+        for (int y = 0; y < H; ++y) {
+            for (int x = 0; x < W; ++x) {
+                const size_t idx = static_cast<size_t>(y) * W + x;
+                if (is_wall[idx]) {
                     overlay.setPixelColor(x, y, QColor(0, 0, 0, 255));
                 }
             }

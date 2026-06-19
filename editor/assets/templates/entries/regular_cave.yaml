@@ -1,0 +1,7 @@
+template_id: regular_cave
+name: "Regular Cave"
+size:
+  width: 3
+  height: 3
+texture: "entries/cave.png"
+environment_type: cueva

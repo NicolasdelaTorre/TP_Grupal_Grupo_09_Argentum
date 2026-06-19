@@ -1,0 +1,7 @@
+template_id: pared_cueva_izquierda
+name: "Left Wall"
+size:
+  width: 1
+  height: 2
+texture: "walls/cave_left.png"
+environment_type: cueva

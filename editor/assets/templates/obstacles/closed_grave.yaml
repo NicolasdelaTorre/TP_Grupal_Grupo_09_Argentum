@@ -1,0 +1,7 @@
+template_id: closed_grave
+name: "Closed Grave"
+size:
+  width: 1
+  height: 1
+texture: "closed_grave.png"
+texture_anchor: 0

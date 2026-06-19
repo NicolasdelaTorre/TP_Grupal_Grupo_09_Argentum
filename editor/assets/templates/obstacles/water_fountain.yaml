@@ -4,3 +4,4 @@ size:
   width: 3
   height: 3
 texture: "water_fountain.png"
+texture_anchor: 0

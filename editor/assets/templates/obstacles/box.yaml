@@ -1,0 +1,7 @@
+template_id: box
+name: "Box"
+size:
+  width: 1
+  height: 1
+texture: "box.png"
+texture_anchor: 0

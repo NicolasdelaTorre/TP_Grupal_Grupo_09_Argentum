@@ -1,0 +1,7 @@
+template_id: grave
+name: "Grave"
+size:
+  width: 1
+  height: 1
+texture: "grave.png"
+texture_anchor: 0

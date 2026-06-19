@@ -1,0 +1,7 @@
+template_id: water_pit
+name: "Water Pit"
+size:
+  width: 1
+  height: 1
+texture: "water_pit.png"
+texture_anchor: 0

@@ -27,7 +27,8 @@ public:
     SceneController(QGraphicsScene* scene, const TemplateRegistry& templates);
 
     bool placePlayerSpawn(int cell_x, int cell_y, QString& error);
-    bool placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error);
+    bool placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
+                       int texture_anchor_override = -1);
     bool placeCityZone(const ToolInfo& tool, int cell_x, int cell_y, int width, int height,
                        QString& error, const QString& zone_id = QString());
     bool placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_y, int width, int height,

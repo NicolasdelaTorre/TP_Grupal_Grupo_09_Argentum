@@ -1,0 +1,7 @@
+template_id: palm_tree
+name: "Palm Tree"
+size:
+  width: 1
+  height: 1
+texture: "palm_tree.png"
+texture_anchor: 1

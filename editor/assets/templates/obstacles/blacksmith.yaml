@@ -4,3 +4,4 @@ size:
   width: 3
   height: 2
 texture: "blacksmith.png"
+texture_anchor: 0

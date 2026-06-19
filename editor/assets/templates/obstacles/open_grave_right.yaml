@@ -1,0 +1,7 @@
+template_id: open_grave_right
+name: "Open Grave Right"
+size:
+  width: 1
+  height: 1
+texture: "open_grave_right.png"
+texture_anchor: 0

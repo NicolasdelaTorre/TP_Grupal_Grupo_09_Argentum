@@ -1,0 +1,7 @@
+template_id: angel_statue
+name: "Angel Statue"
+size:
+  width: 1
+  height: 1
+texture: "angel_statue.png"
+texture_anchor: 1

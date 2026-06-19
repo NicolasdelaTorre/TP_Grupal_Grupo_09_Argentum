@@ -4,3 +4,4 @@ size:
   width: 9
   height: 10
 texture: "church.png"
+texture_anchor: 0

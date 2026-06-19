@@ -1,0 +1,7 @@
+template_id: pared_cueva_vertical
+name: "Vertical Wall"
+size:
+  width: 1
+  height: 1
+texture: "walls/cave_vertical.png"
+environment_type: cueva

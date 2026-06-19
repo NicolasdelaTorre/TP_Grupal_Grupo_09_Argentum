@@ -1,0 +1,7 @@
+template_id: salida_cueva
+name: Cave Exit
+size:
+  width: 1
+  height: 1
+texture: "exits/exit_cueva.png"
+environment_type: cueva

@@ -140,7 +140,7 @@ void Gameloop::sendMapSnapshot(int playerId, uint8_t mapId) {
     const auto& placed = map.getObstacles(mapId);
     obstacles.reserve(placed.size());
     for (const auto& o: placed) {
-        obstacles.push_back({o.x, o.y, o.w, o.h, o.texture});
+        obstacles.push_back({o.x, o.y, o.w, o.h, o.texture, o.texture_anchor});
     }
 
     clientMonitor.sendToClient(playerId,

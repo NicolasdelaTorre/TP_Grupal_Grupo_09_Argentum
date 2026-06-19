@@ -33,6 +33,8 @@ struct PlacedObstacle {
     uint16_t h;
     // Ruta del sprite relativa a common/assets/images/subcarpeta
     std::string texture;
+    // 0 = abajo-izq, 1 = abajo-centro, 2 = abajo-der.
+    uint8_t texture_anchor = 0;
 };
 
 // Spawn de criaturas: qué criatura y cuántas como máximo.

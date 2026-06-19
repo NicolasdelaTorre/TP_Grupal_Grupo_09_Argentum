@@ -1,0 +1,7 @@
+template_id: hole
+name: "Hole"
+size:
+  width: 1
+  height: 1
+texture: "hole.png"
+texture_anchor: 0

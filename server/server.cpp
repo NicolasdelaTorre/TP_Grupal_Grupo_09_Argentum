@@ -4,7 +4,7 @@ Server::Server(const char* port):
         protocol(port),
         clientEvents(),
         clientMonitor(),
-        map(YamlMapLoader::load("server/assets/maps/completo.yaml")),
+        map(YamlMapLoader::load("server/assets/maps/other_map.yaml")),
         gameloop(clientEvents, clientMonitor, map, protocol),
         acceptor(protocol, clientEvents, clientMonitor) {}
 

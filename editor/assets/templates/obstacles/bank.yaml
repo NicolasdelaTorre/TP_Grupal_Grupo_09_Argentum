@@ -4,3 +4,4 @@ size:
   width: 8
   height: 4
 texture: "bank.png"
+texture_anchor: 0

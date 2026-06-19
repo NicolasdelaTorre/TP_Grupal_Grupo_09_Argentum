@@ -1,0 +1,7 @@
+template_id: big_church
+name: "Big Church"
+size:
+  width: 9
+  height: 9
+texture: "big_church.png"
+texture_anchor: 0

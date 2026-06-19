@@ -1,0 +1,7 @@
+template_id: boxes
+name: "Boxes"
+size:
+  width: 1
+  height: 1
+texture: "boxes.png"
+texture_anchor: 0

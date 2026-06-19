@@ -73,6 +73,9 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                 if (!obstacle.texture.empty()) {
                     out << YAML::Key << "texture" << YAML::Value << obstacle.texture;
                 }
+                if (obstacle.texture_anchor != 0) {
+                    out << YAML::Key << "texture_anchor" << YAML::Value << obstacle.texture_anchor;
+                }
                 out << YAML::EndMap;
             }
             out << YAML::EndSeq;
@@ -177,6 +180,10 @@ bool YamlMapIO::save(const MapDocument& document, const std::string& path) {
                         if (!obstacle.texture.empty()) {
                             out << YAML::Key << "texture" << YAML::Value << obstacle.texture;
                         }
+                        if (obstacle.texture_anchor != 0) {
+                            out << YAML::Key << "texture_anchor" << YAML::Value
+                                << obstacle.texture_anchor;
+                        }
                         out << YAML::EndMap;
                     }
                     out << YAML::EndSeq;
@@ -277,6 +284,9 @@ Obstacle YamlMapIO::read_obstacle(const YAML::Node& node) {
     }
     if (node["texture"]) {
         obstacle.texture = node["texture"].as<std::string>();
+    }
+    if (node["texture_anchor"]) {
+        obstacle.texture_anchor = node["texture_anchor"].as<int>();
     }
     return obstacle;
 }

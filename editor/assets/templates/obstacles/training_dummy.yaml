@@ -4,3 +4,4 @@ size:
   width: 1
   height: 1
 texture: "training_dummy.png"
+texture_anchor: 0

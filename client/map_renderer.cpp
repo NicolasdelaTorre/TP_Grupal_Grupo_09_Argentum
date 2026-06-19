@@ -130,8 +130,8 @@ void MapRenderer::renderObstacles(const GameMap& map, float camX, float camY) {
     }
 }
 
-// Dibuja un obstáculo a tamaño nativo de su textura, anclado a la esquina
-// inferior izquierda del rectangulo que bloquea. 
+// Dibuja un obstáculo a tamaño nativo de su textura, anclado al borde
+// inferior del footprint (texture_anchor: 0=izq, 1=centro, 2=der).
 void MapRenderer::renderObstacle(const MapObstacle& obs, float camX, float camY) {
     // El server manda la textura por nombre, relativa a common/assets/images/.
     if (obs.texture.empty())
@@ -142,9 +142,21 @@ void MapRenderer::renderObstacle(const MapObstacle& obs, float camX, float camY)
         const int texW = tex.GetWidth();
         const int texH = tex.GetHeight();
 
-        // Esquina inferior izquierda del footprint, en coords de pantalla.
-        const int leftX = (int)(obs.x * TILE_SIZE - camX);
+        const int footprintLeft = (int)(obs.x * TILE_SIZE - camX);
+        const int footprintW = obs.w * TILE_SIZE;
         const int bottomY = (int)((obs.y + obs.h) * TILE_SIZE - camY);
+
+        int leftX = footprintLeft;
+        switch (obs.texture_anchor) {
+            case 1:
+                leftX = footprintLeft + (footprintW - texW) / 2;
+                break;
+            case 2:
+                leftX = footprintLeft + footprintW - texW;
+                break;
+            default:
+                break;
+        }
 
         SDL2pp::Rect dst(leftX, bottomY - texH, texW, texH);
         renderer.Copy(tex, SDL2pp::NullOpt, dst);

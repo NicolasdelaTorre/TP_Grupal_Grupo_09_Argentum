@@ -301,6 +301,10 @@ bool TemplateRegistry::load_obstacle_file(const std::string& path) {
             }
         }
 
+        if (const auto anchorNode = root["texture_anchor"]) {
+            obstacle.texture_anchor = anchorNode.as<int>();
+        }
+
         obstacles_.push_back(obstacle);
         return true;
     } catch (const YAML::Exception&) {
@@ -363,6 +367,10 @@ bool TemplateRegistry::load_wall_file(const std::string& path) {
             }
         }
 
+        if (const auto envTypeNode = root["environment_type"]) {
+            wall.environment_type = envTypeNode.as<std::string>();
+        }
+
         walls_.push_back(wall);
         return true;
     } catch (const YAML::Exception&) {
@@ -390,6 +398,10 @@ bool TemplateRegistry::load_exit_file(const std::string& path) {
                         std::filesystem::path(ASSETS_IMAGES_PATH) / filename;
                 exit.texture = resolved.string();
             }
+        }
+
+        if (const auto envTypeNode = root["environment_type"]) {
+            exit.environment_type = envTypeNode.as<std::string>();
         }
 
         exits_.push_back(exit);

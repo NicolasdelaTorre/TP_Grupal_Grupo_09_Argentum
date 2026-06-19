@@ -1,0 +1,7 @@
+template_id: tree_wide
+name: "Wide Tree"
+size:
+  width: 1
+  height: 1
+texture: "tree_wide.png"
+texture_anchor: 1

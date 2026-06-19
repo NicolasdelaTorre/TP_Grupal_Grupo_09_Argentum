@@ -4,3 +4,4 @@ size:
   width: 1
   height: 1
 texture: "street_lamp.png"
+texture_anchor: 0

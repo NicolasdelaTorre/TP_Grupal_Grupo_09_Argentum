@@ -1,0 +1,7 @@
+template_id: small_apple_tree
+name: "Small Apple Tree"
+size:
+  width: 1
+  height: 1
+texture: "small_apple_tree.png"
+texture_anchor: 0

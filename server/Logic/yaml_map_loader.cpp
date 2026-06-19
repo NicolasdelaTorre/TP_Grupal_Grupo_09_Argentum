@@ -143,9 +143,14 @@ void YamlMapLoader::applyEnvironmentObstacles(std::vector<Cell>& cells, int16_t 
         }
         applyObstacle(cells, static_cast<uint16_t>(envWidth), static_cast<uint16_t>(envHeight), x,
                       y, w, h, static_cast<uint8_t>(ObstacleCode::GENERIC));
-        if (out)
+        if (out) {
+            uint8_t anchor = 0;
+            if (node["texture_anchor"]) {
+                anchor = node["texture_anchor"].as<uint8_t>();
+            }
             out->push_back({x, y, static_cast<uint16_t>(w), static_cast<uint16_t>(h),
-                            textureRelPath(node, subfolder)});
+                            textureRelPath(node, subfolder), anchor});
+        }
     }
 }
 
@@ -383,10 +388,14 @@ Map YamlMapLoader::load(const std::string& path) {
             int16_t oy = obs["position"][1].as<int16_t>();
             int16_t ow = obs["size"][0].as<int16_t>();
             int16_t oh = obs["size"][1].as<int16_t>();
+            uint8_t anchor = 0;
+            if (obs["texture_anchor"]) {
+                anchor = obs["texture_anchor"].as<uint8_t>();
+            }
             applyObstacle(cells, width, height, ox, oy, ow, oh,
                           static_cast<uint8_t>(ObstacleCode::GENERIC));
             placedObstacles.push_back({ox, oy, static_cast<uint16_t>(ow),
-                                       static_cast<uint16_t>(oh), textureRelPath(obs, "")});
+                                       static_cast<uint16_t>(oh), textureRelPath(obs, ""), anchor});
         }
     }
 

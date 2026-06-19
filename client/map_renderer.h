@@ -49,8 +49,8 @@ struct TileData {
 
 // ── Obstáculo colocado ────────────────────────────────────────
 // (x, y, w, h) es el rectángulo (footprint) que bloquea, en tiles. La textura
-// se dibuja a tamaño nativo anclada a la esquina inferior izquierda del
-// footprint, sin importar el tamaño que bloquea.
+// se dibuja a tamaño nativo anclada al borde inferior del footprint;
+// texture_anchor: 0=izq, 1=centro, 2=der.
 struct MapObstacle {
     int x = 0;
     int y = 0;
@@ -59,6 +59,7 @@ struct MapObstacle {
     // Ruta del sprite relativa a common/assets/images/ (la manda el server).
     // Determina qué sprite se dibuja; el tipo de obstáculo ya no hace falta acá.
     std::string texture;
+    uint8_t texture_anchor = 0;
 };
 
 struct HumanoidLook {

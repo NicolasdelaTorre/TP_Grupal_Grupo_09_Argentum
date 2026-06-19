@@ -1,0 +1,7 @@
+template_id: minecart
+name: "Minecart"
+size:
+  width: 1
+  height: 1
+texture: "minecart.png"
+texture_anchor: 0

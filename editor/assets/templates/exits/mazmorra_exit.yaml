@@ -1,6 +1,7 @@
-template_id: salida
+template_id: salida_mazmorra
 name: Stone Exit
 size:
   width: 1
   height: 1
 texture: "exits/exit_mazmorra.png"
+environment_type: mazmorra
