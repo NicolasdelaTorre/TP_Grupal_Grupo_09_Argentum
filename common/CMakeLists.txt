@@ -24,6 +24,8 @@ target_sources(taller_common
     Communication/events/client_event.h
     Communication/events/client_events.h
     common_tiles.h
+    DTOs.h
+    game_constants.h
     position.h
     queue.h
     thread.h

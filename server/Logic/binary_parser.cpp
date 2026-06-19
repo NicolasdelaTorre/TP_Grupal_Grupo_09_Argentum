@@ -1,5 +1,7 @@
 #include "binary_parser.h"
 
+#include "../../common/game_constants.h"
+
 #include "NPC/banker.h"
 
 #include <cstdint>
@@ -222,7 +224,7 @@ bool BinaryParser::checkBankAccountExists(const std::string& name) {
         int32_t dataGold = 0;
         if (!bankFile.read(reinterpret_cast<char*>(&dataGold), sizeof(dataGold))) break;
 
-        uint8_t items[N];
+        uint8_t items[INVENTORY_SIZE];
         if (!bankFile.read(reinterpret_cast<char*>(items), sizeof(items))) break;
 
         if (storedName == name) {
@@ -262,7 +264,7 @@ void BinaryParser::updateBankAccount(BankAccount account) {
             break;
         }
 
-        uint8_t items[N];
+        uint8_t items[INVENTORY_SIZE];
         if (!bankFile.read(reinterpret_cast<char*>(items), sizeof(items))) {
             break;
         }

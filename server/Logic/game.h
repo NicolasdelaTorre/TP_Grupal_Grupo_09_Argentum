@@ -8,6 +8,7 @@
 
 #include "../../common/Communication/events/server_events.h"
 #include "../../common/DTOs.h"
+#include "../../common/game_constants.h"
 #include "../../common/position.h"
 
 #include "binary_parser.h"
@@ -20,11 +21,6 @@
 
 class Game {
 public:
-    // itemId reservado para "drop de oro" (no es un item real). El drop lleva el
-    // monto en DroppedItemRecord::goldAmount, y al levantarlo se suma al gold
-    // del jugador (no entra al inventario).
-    static constexpr uint8_t GOLD_ITEM_ID = 254;
-
     // Definido acá arriba porque lo usan tanto miembros privados como métodos
     // públicos (pickUp/drop devuelven DropResult que lo contiene).
     struct DroppedItemRecord {
@@ -32,7 +28,7 @@ public:
         uint8_t itemId;
         int16_t x;
         int16_t y;
-        uint32_t goldAmount = 0;  // 0 para items normales, >0 si itemId == GOLD_ITEM_ID
+        uint32_t goldAmount = 0;  // 0 para items normales, >0 si es drop de oro
     };
 
 private:
@@ -44,9 +40,6 @@ private:
     Banker bank;
     // Registro central de clanes
     ClanRegistry clans;
-    // Catalogos compartidos por tipo de comerciante ("trader" o "priest").
-    // Cargados de server/Logic/merchants.toml al inicio. Pair = (itemId, precio).
-    std::unordered_map<std::string, std::vector<std::pair<uint8_t, uint32_t>>> merchantCatalog;
     // Items tirados al piso (de /tirar o drops de NPC muerto). El id es
     // auto-incremental y nunca se reusa para que el cliente pueda referirse
     // a un drop específico al levantarlo.

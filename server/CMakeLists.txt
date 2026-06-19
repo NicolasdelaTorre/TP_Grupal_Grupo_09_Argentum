@@ -14,9 +14,13 @@ target_sources(taller_server
         Logic/game.cpp
         Logic/gameloop.cpp
         Logic/yaml_map_loader.cpp
-        Logic/attribute_manager.cpp
         Logic/binary_parser.cpp
         Logic/items.cpp
+        Logic/catalog/attribute_catalog.cpp
+        Logic/catalog/formula_catalog.cpp
+        Logic/catalog/item_catalog.cpp
+        Logic/catalog/creature_catalog.cpp
+        Logic/catalog/merchant_catalog.cpp
         Logic/turn_manager.cpp
         Logic/clan_registry.cpp
         Logic/NPC/creature.cpp
@@ -37,11 +41,15 @@ target_sources(taller_server
         Logic/game.h
         Logic/gameloop.h
         Logic/yaml_map_loader.h
-        Logic/attribute_manager.h
         Logic/race.h
         Logic/class_.h
         Logic/binary_parser.h
         Logic/items.h
+        Logic/catalog/attribute_catalog.h
+        Logic/catalog/formula_catalog.h
+        Logic/catalog/item_catalog.h
+        Logic/catalog/creature_catalog.h
+        Logic/catalog/merchant_catalog.h
         Logic/turn_manager.h
         Logic/clan.h
         Logic/clan_registry.h

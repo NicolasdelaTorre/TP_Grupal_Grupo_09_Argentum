@@ -2,60 +2,48 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <ctime>
 
-StatsDefinition::StatsDefinition(): attributes("server/Logic/attributes.toml") {}
+#include "catalog/attribute_catalog.h"
+#include "catalog/formula_catalog.h"
 
-uint16_t StatsDefinition::maxHealth(uint8_t playerLevel, RaceCode race, ClassCode class_) {
-    RaceAttribute r = attributes.getRaceAttribute(race);
-    ClassAttribute c = attributes.getClassAttribute(class_);
+uint16_t StatsDefinition::maxHealth(uint8_t playerLevel, RaceCode race, ClassCode class_) const {
+    const auto& r = AttributeCatalog::instance().getRace(race);
+    const auto& c = AttributeCatalog::instance().getClass(class_);
     return r.constitution * c.FClassHealth * r.FRaceHealth * playerLevel;
 }
 
-uint32_t StatsDefinition::recoveryStatThroughTime(RaceCode race) {
-    return attributes.getRaceAttribute(race).FRaceRecovery;
-}
-
-uint32_t StatsDefinition::safeGold(uint8_t playerLevel) {
-    FormulaConstants f = attributes.getFormulas();
-    return static_cast<uint32_t>(f.goldSafeBase * std::pow(playerLevel, f.goldSafeExp));
-}
-
-uint32_t StatsDefinition::goldMax(uint8_t playerLevel) {
-    // safeGold * factor: el jugador puede llevar un excedente sobre el umbral seguro.
-    FormulaConstants f = attributes.getFormulas();
-    return static_cast<uint32_t>(safeGold(playerLevel) * f.goldMaxFactor);
-}
-
-uint32_t StatsDefinition::nextLevelExp(uint8_t playerLevel) {
-    FormulaConstants f = attributes.getFormulas();
-    return static_cast<uint32_t>(f.expNextBase * std::pow(playerLevel, f.expNextExp));
-}
-
-uint16_t StatsDefinition::damage(RaceCode race, uint16_t minDamage, uint16_t maxDamage) {
-    RaceAttribute r = attributes.getRaceAttribute(race);
-    srand(time(nullptr));
-    return r.force * (minDamage + rand() % (maxDamage - minDamage + 1));
-}
-
-uint16_t StatsDefinition::maxMana(uint8_t playerLevel, RaceCode race, ClassCode class_) {
-    RaceAttribute r = attributes.getRaceAttribute(race);
-    ClassAttribute c = attributes.getClassAttribute(class_);
+uint16_t StatsDefinition::maxMana(uint8_t playerLevel, RaceCode race, ClassCode class_) const {
+    const auto& r = AttributeCatalog::instance().getRace(race);
+    const auto& c = AttributeCatalog::instance().getClass(class_);
     return r.intelligence * c.FClassMana * r.FRaceMana * playerLevel;
 }
 
-uint16_t StatsDefinition::meditationManaRestore(RaceCode race, ClassCode class_) {
-    RaceAttribute r = attributes.getRaceAttribute(race);
-    ClassAttribute c = attributes.getClassAttribute(class_);
-    return c.FClassMeditation * r.intelligence;
+uint32_t StatsDefinition::safeGold(uint8_t playerLevel) const {
+    const auto& f = FormulaCatalog::instance().getFormulas();
+    return static_cast<uint32_t>(f.goldSafeBase * std::pow(playerLevel, f.goldSafeExp));
 }
 
-FormulaConstants StatsDefinition::getFormulas() { return attributes.getFormulas(); }
+uint32_t StatsDefinition::goldMax(uint8_t playerLevel) const {
+    const auto& f = FormulaCatalog::instance().getFormulas();
+    return static_cast<uint32_t>(safeGold(playerLevel) * f.goldMaxFactor);
+}
 
-LootConfig StatsDefinition::getLootConfig() { return attributes.getLootConfig(); }
+uint32_t StatsDefinition::nextLevelExp(uint8_t playerLevel) const {
+    const auto& f = FormulaCatalog::instance().getFormulas();
+    return static_cast<uint32_t>(f.expNextBase * std::pow(playerLevel, f.expNextExp));
+}
 
-CreatureSpawnConfig StatsDefinition::getSpawnConfig() { return attributes.getSpawnConfig(); }
+uint32_t StatsDefinition::recoveryStatThroughTime(RaceCode race) const {
+    return AttributeCatalog::instance().getRace(race).FRaceRecovery;
+}
 
-ClanConfig StatsDefinition::getClanConfig() { return attributes.getClanConfig(); }
+uint16_t StatsDefinition::damage(RaceCode race, uint16_t minDamage, uint16_t maxDamage) const {
+    const auto& r = AttributeCatalog::instance().getRace(race);
+    return r.force * (minDamage + std::rand() % (maxDamage - minDamage + 1));
+}
 
-RaceAttribute StatsDefinition::getRace(RaceCode race) { return attributes.getRaceAttribute(race); }
+uint16_t StatsDefinition::meditationManaRestore(RaceCode race, ClassCode class_) const {
+    const auto& r = AttributeCatalog::instance().getRace(race);
+    const auto& c = AttributeCatalog::instance().getClass(class_);
+    return c.FClassMeditation * r.intelligence;
+}

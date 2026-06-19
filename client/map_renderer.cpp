@@ -5,8 +5,10 @@
 #include <cstdio>
 
 #include "../common/common_tiles.h"
+#include "../common/game_constants.h"
 
 #include "item_sprites.h"
+#include "render_constants.h"
 
 namespace {
 
@@ -340,12 +342,8 @@ void MapRenderer::renderHelmet(const Player_& player, float camX, float camY) {
 
 void MapRenderer::renderDroppedItems(const std::vector<DroppedItem>& items, float camX,
                                      float camY) {
-    
-    static constexpr uint8_t GOLD_ITEM_ID = 254;
-
     for (const auto& item: items) {
-        // Mismo mapeo que el inventario: el id del item (items.toml) define de
-        // qué sheet y celda sale el dibujo. Así el item en el piso coincide.
+        // Mismo mapeo que el inventario: el id del item define de qué sheet y celda sale el dibujo. Así el item en el piso coincide.
         std::string sheetPath;
         SDL2pp::Rect src(0, 0, 0, 0);
         if (item.itemId == GOLD_ITEM_ID) {

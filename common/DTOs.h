@@ -45,6 +45,18 @@ enum class ClassCode : uint8_t { MAGE = 0, CLERIC, CHAMPION, WARRIOR };
 
 enum class WeaponCode : uint8_t { MELEE = 0, RANGED };
 
+// Tipo de target en un AttackEvent
+enum class TargetType : uint8_t { PLAYER = 0, NPC = 1 };
+
+// Slot de equipamiento
+enum class EquipmentSlot : uint8_t {
+    WEAPON = 0,
+    ARMOR = 1,
+    HELMET = 2,
+    SHIELD = 3
+};
+constexpr uint8_t EQUIPMENT_SLOT_COUNT = 4;
+
 // Tipo de criatura NPC. SPIDER..GOLEM son hostiles, el resto amigos de ciudad.
 enum class NpcCode : uint8_t {
     SPIDER = 0,
