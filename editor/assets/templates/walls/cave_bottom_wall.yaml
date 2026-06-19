@@ -1,7 +1,0 @@
-template_id: pared_cueva_inferior
-name: "Bottom Cave Wall"
-size:
-  width: 1
-  height: 1
-texture: "walls/cave_bottom.png"
-environment_type: cueva

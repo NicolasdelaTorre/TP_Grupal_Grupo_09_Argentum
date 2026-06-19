@@ -88,6 +88,7 @@ struct ExitTemplate {
     int width = 1;
     int height = 1;
     std::string texture;
+    std::string environment_type;  // "cueva" o "mazmorra".
 };
 
 struct FloorTemplate {

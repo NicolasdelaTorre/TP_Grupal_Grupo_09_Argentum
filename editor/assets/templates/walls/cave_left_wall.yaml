@@ -1,7 +1,7 @@
 template_id: pared_cueva_izquierda
-name: "Left Cave Wall"
+name: "Left Wall"
 size:
   width: 1
-  height: 1
+  height: 2
 texture: "walls/cave_left.png"
 environment_type: cueva

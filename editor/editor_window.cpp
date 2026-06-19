@@ -261,13 +261,6 @@ void EditorWindow::setupTemplates() {
                                       .arg(entry.height);
         ui_->comboEntryTemplate->addItem(label, QString::fromStdString(entry.id));
     }
-    for (const auto& exit: templates_.exits()) {
-        const QString label = QStringLiteral("%1 (%2x%3)")
-                                      .arg(QString::fromStdString(exit.name))
-                                      .arg(exit.width)
-                                      .arg(exit.height);
-        ui_->comboExitTemplate->addItem(label, QString::fromStdString(exit.id));
-    }
 }
 
 void EditorWindow::setupTools() {
@@ -754,7 +747,7 @@ void EditorWindow::enterEnvironment(const QString& environment_id) {
     }
 
     map_canvas_->loadFromDocument(env_doc, EditingMode::Environment);
-    refreshWallTemplates(QString::fromStdString(env->type));
+    refreshEnvironmentTemplates(QString::fromStdString(env->type));
     ui_->labelEditingTarget->setText(
             QStringLiteral("Editing environment: %1").arg(QString::fromStdString(env->name)));
     ui_->btnBackToMainMap->setVisible(true);
@@ -774,9 +767,10 @@ void EditorWindow::setMainOnlySectionsVisible(bool visible) {
     ui_->btnEnvironmentCreatures->setVisible(!visible);
 }
 
-void EditorWindow::refreshWallTemplates(const QString& environment_type) {
-    ui_->comboWallTemplate->clear();
+void EditorWindow::refreshEnvironmentTemplates(const QString& environment_type) {
     const std::string env_type = environment_type.toStdString();
+
+    ui_->comboWallTemplate->clear();
     for (const auto& wall: templates_.walls()) {
         if (wall.environment_type != env_type) {
             continue;
@@ -787,6 +781,19 @@ void EditorWindow::refreshWallTemplates(const QString& environment_type) {
                                       .arg(wall.height);
         ui_->comboWallTemplate->addItem(label, QString::fromStdString(wall.id));
     }
+
+    ui_->comboExitTemplate->clear();
+    for (const auto& exit: templates_.exits()) {
+        if (exit.environment_type != env_type) {
+            continue;
+        }
+        const QString label = QStringLiteral("%1 (%2x%3)")
+                                      .arg(QString::fromStdString(exit.name))
+                                      .arg(exit.width)
+                                      .arg(exit.height);
+        ui_->comboExitTemplate->addItem(label, QString::fromStdString(exit.id));
+    }
+
     applyActiveTool();
 }
 

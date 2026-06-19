@@ -400,6 +400,10 @@ bool TemplateRegistry::load_exit_file(const std::string& path) {
             }
         }
 
+        if (const auto envTypeNode = root["environment_type"]) {
+            exit.environment_type = envTypeNode.as<std::string>();
+        }
+
         exits_.push_back(exit);
         return true;
     } catch (const YAML::Exception&) {

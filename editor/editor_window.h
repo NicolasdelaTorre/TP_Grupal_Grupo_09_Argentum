@@ -81,7 +81,7 @@ private:
     void saveCurrentToDocument();
     void enterEnvironment(const QString& environment_id);
     void refreshEnvironmentsList();
-    void refreshWallTemplates(const QString& environment_type);
+    void refreshEnvironmentTemplates(const QString& environment_type);
     void saveMap();
     void setMainOnlySectionsVisible(bool visible);
 
