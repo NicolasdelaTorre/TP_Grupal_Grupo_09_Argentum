@@ -5,6 +5,31 @@ default_size:
   height: 20
 color: "#5BC0EB"
 fixed_npcs:
-  - { type: priest, name: "Sacerdote", position: [5, 5] }
-  - { type: merchant, name: "Comerciante", position: [10, 5] }
-  - { type: banker, name: "Banquero", position: [15, 5] }
+  - { type: priest, name: "Sacerdote", position: [12, 8] }
+  - { type: banker, name: "Banquero", position: [5, 8] }
+  - { type: merchant, name: "Comerciante", position: [9, 16] }
+fixed_obstacles:
+  - { type: elf_bank, position: [5, 5] }
+  - { type: iglesia_elf, position: [16, 5] }
+  - { type: merchant_elf, position: [16, 11] }
+  - { type: merchant_elf, position: [20, 11] }
+  - { type: elf_house, position: [1, 9] }
+  - { type: elf_house, position: [1, 13] }
+  - { type: elf_house, position: [1, 17] }
+  - { type: lampara_ciudad, position: [4, 5] }
+  - { type: lampara_ciudad, position: [13, 5] }
+  - { type: lampara_ciudad, position: [24, 5] }
+  - { type: lampara_ciudad, position: [13, 11] }
+  - { type: lampara_ciudad, position: [24, 11] }
+  - { type: lampara_ciudad, position: [13, 18] }
+  - { type: lampara_ciudad, position: [3, 18] }
+  - { type: lampara_ciudad, position: [24, 18] }
+  - { type: fuente, position: [8, 9] }
+  - { type: red_tree, position: [1, 10] }
+  - { type: red_tree, position: [1, 18] }
+  - { type: red_tree, position: [8, 22] }
+  - { type: water_pit, position: [19, 20] }
+
+fixed_floors:
+  - { type: wood_planks, position: [0, 12] }
+

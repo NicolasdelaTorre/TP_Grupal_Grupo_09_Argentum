@@ -1,0 +1,7 @@
+template_id: elf_house
+name: "Elf House"
+size:
+  width: 3
+  height: 3
+texture: "elf_house.png"
+texture_anchor: 0
