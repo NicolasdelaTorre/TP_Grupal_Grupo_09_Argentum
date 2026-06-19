@@ -11,6 +11,7 @@
 #include "NPC/merchant.h"
 #include "NPC/banker.h"
 #include "../../common/DTOs.h"
+#include "../../common/game_constants.h"
 #include <iostream>
 
 Map::Map(uint16_t width, uint16_t height, std::vector<Cell> cells, Position spawn, std::vector<LoadedEntry> entries, std::vector<Biome> biomes, std::vector<PlacedObstacle> obstacles):
@@ -389,8 +390,8 @@ uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
 }
 
 uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
-    for (int16_t dy = -3; dy <= 3; ++dy) {
-        for (int16_t dx = -3; dx <= 3; ++dx) {
+    for (int16_t dy = -COMBAT_RANGE; dy <= COMBAT_RANGE; ++dy) {
+        for (int16_t dx = -COMBAT_RANGE; dx <= COMBAT_RANGE; ++dx) {
             if (dx == 0 && dy == 0) {
                 continue;
             }
@@ -451,8 +452,8 @@ void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t
 }
 
 Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId, std::string biomeType) {
-    for (int16_t dy = -3; dy <= 3; ++dy) {
-        for (int16_t dx = -3; dx <= 3; ++dx) {
+    for (int16_t dy = -COMBAT_RANGE; dy <= COMBAT_RANGE; ++dy) {
+        for (int16_t dx = -COMBAT_RANGE; dx <= COMBAT_RANGE; ++dx) {
             if (dx == 0 && dy == 0) {
                 continue;
             }

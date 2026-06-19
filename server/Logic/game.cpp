@@ -7,33 +7,26 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <ctime>
+
 #include "NPC/creature.h"
+#include "catalog/attribute_catalog.h"
+#include "catalog/creature_catalog.h"
+#include "catalog/formula_catalog.h"
+#include "catalog/merchant_catalog.h"
 #include "stats_definition.h"
-#include "toml.hpp"
-#include "attribute_manager.h"
 
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
         bank(0, "global", 0, 0) {
-    {
-        ClanConfig cc = StatsDefinition().getClanConfig();
-        clans.configure(cc.maxMembers, cc.foundLevel);
-    }
-    // Catalogos de merchant/priest desde TOML.
-    try {
-        const toml::value cfg = toml::parse("server/Logic/merchants.toml");
-        for (const char* type : {"trader", "priest"}) {
-            const auto& arr = toml::find<std::vector<toml::value>>(cfg, type, "items");
-            auto& vec = merchantCatalog[type];
-            for (const auto& entry : arr) {
-                auto id = toml::find<uint8_t>(entry, "itemId");
-                auto price = toml::find<uint32_t>(entry, "price");
-                vec.emplace_back(id, price);
-            }
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "WARN: no pude cargar merchants.toml: " << e.what() << std::endl;
-    }
+    // Seedeamos el rand() del server una sola vez aca asi todas las corridas arrancan con una secuencia random distinta.
+    std::srand(static_cast<unsigned>(std::time(nullptr)));
+
+    const auto& cc = FormulaCatalog::instance().getClan();
+    clans.configure(cc.maxMembers, cc.foundLevel);
+
+    // Fuerzo la carga ahora asi no la dispara el primer jugador.
+    MerchantCatalog::instance();
 }
 
 bool Game::playerExistsInRecords(const std::string& name) {
@@ -338,7 +331,8 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         return outcome;
     }
 
-    if (targetType != 0 && targetType != 1) {
+    if (targetType != static_cast<uint8_t>(TargetType::PLAYER) &&
+        targetType != static_cast<uint8_t>(TargetType::NPC)) {
         throw std::runtime_error(
                 "Game Error: malformed attack command (expected player.id or npc.id)");
     }
@@ -351,7 +345,7 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         return outcome;
     }
 
-    bool targetPlayer = (targetType == 0);
+    bool targetPlayer = (targetType == static_cast<uint8_t>(TargetType::PLAYER));
     uint8_t mapId = itPlayer->second.getMapId();
     uint8_t entityId;
     if (itPlayer->second.hasLongDistanceWeapon())
@@ -372,10 +366,10 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     uint8_t atkLvl = itPlayer->second.getData().level;
     uint8_t atkLvlBefore = atkLvl;
 
-    FormulaConstants f = StatsDefinition().getFormulas();
+    const auto& f = FormulaCatalog::instance().getFormulas();
     bool isCritical = (std::rand() % 100) < f.criticalChancePct;
 
-    if (targetType == 0) {
+    if (targetType == static_cast<uint8_t>(TargetType::PLAYER)) {
         auto itTarget = players.find(entityId);
         if (itTarget == players.end()) {
             throw std::runtime_error("Game Error: player in sight not found");
@@ -423,7 +417,7 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
             return outcome;
         }
         // Bonus de clan
-        ClanConfig cc = StatsDefinition().getClanConfig();
+        const auto& cc = FormulaCatalog::instance().getClan();
         int nearAtk = countNearbyClanMates(playerId);
         int nearTgt = countNearbyClanMates(static_cast<int>(targetId));
         if (nearAtk > 0)
@@ -452,7 +446,7 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         if (isCritical) damage *= 2;
         // Bonus de clan al atacar NPCs
         {
-            ClanConfig cc = StatsDefinition().getClanConfig();
+            const auto& cc = FormulaCatalog::instance().getClan();
             int near = countNearbyClanMates(playerId);
             if (near > 0)
                 damage = static_cast<uint16_t>(damage * (1.0f + cc.bonusPctPerMember * near));
@@ -550,10 +544,9 @@ bool Game::tryEvade(int /*attackerId*/, int targetId) const {
     // Formula del enunciado: rand(0,1)^Agilidad < evadeThreshold.
     auto it = players.find(targetId);
     if (it == players.end()) return false;
-    StatsDefinition stats;
-    RaceAttribute r = stats.getRace(it->second.getData().race);
+    const auto& r = AttributeCatalog::instance().getRace(it->second.getData().race);
     if (r.agility == 0) return false;
-    float thr = stats.getFormulas().evadeThreshold;
+    float thr = FormulaCatalog::instance().getFormulas().evadeThreshold;
     float roll = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
     return std::pow(roll, static_cast<float>(r.agility)) < thr;
 }
@@ -681,12 +674,12 @@ std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
     else if (npcType == static_cast<uint8_t>(NpcCode::PRIEST)) type = "priest";
     else return {"Este NPC no vende nada"};
 
-    auto it = merchantCatalog.find(type);
-    if (it == merchantCatalog.end() || it->second.empty()) {
+    const auto* items = MerchantCatalog::instance().getItems(type);
+    if (!items || items->empty()) {
         return {"Sin items en venta"};
     }
     std::vector<std::string> lines;
-    for (const auto& [id, price] : it->second) {
+    for (const auto& [id, price]: *items) {
         const char* name = itemNameById(id);
         if (!name) continue;
         lines.push_back(std::string("- ") + name + " ($" + std::to_string(price) + ")");
@@ -713,15 +706,12 @@ std::vector<std::string> Game::listBankAccount(int playerId, uint8_t /*npcType*/
 }
 
 // Devuelve el catalogo correspondiente al tipo de NPC, o nullptr si no vende.
-static const std::vector<std::pair<uint8_t, uint32_t>>* catalogFor(
-        const std::unordered_map<std::string, std::vector<std::pair<uint8_t, uint32_t>>>& cat,
-        uint8_t npcType) {
-    std::string type;
-    if (npcType == static_cast<uint8_t>(NpcCode::MERCHANT)) type = "trader";
-    else if (npcType == static_cast<uint8_t>(NpcCode::PRIEST)) type = "priest";
-    else return nullptr;
-    auto it = cat.find(type);
-    return it == cat.end() ? nullptr : &it->second;
+static const std::vector<MerchantCatalog::ItemPrice>* catalogFor(uint8_t npcType) {
+    if (npcType == static_cast<uint8_t>(NpcCode::MERCHANT))
+        return MerchantCatalog::instance().getItems("trader");
+    if (npcType == static_cast<uint8_t>(NpcCode::PRIEST))
+        return MerchantCatalog::instance().getItems("priest");
+    return nullptr;
 }
 
 Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
@@ -732,7 +722,7 @@ Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
     std::string canonical = itemNameById(itemId);
 
-    const auto* catalog = catalogFor(merchantCatalog, npcType);
+    const auto* catalog = catalogFor(npcType);
     if (!catalog) return {false, "Este NPC no vende nada"};
 
     uint32_t price = 0;
@@ -764,7 +754,7 @@ Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
     std::string canonical = itemNameById(itemId);
 
     // El precio de venta es la mitad del precio de compra del trader.
-    const auto* catalog = catalogFor(merchantCatalog, npcType);
+    const auto* catalog = catalogFor(npcType);
     if (!catalog) return {false, "Este NPC no compra"};
     uint32_t buyPrice = 0;
     for (const auto& [id, p] : *catalog) {
@@ -993,7 +983,7 @@ std::vector<Game::DroppedItemRecord> Game::dropCreatureLootOnDeath(uint16_t npcI
 
     // Probabilidades acumuladas: nothing, gold, potion, item. Lo que sobre
     // hasta 100 cae como "nada" (efectivo).
-    LootConfig L = StatsDefinition().getLootConfig();
+    const auto& L = CreatureCatalog::instance().getLoot();
     int roll = std::rand() % 100;
     int goldCut = L.nothingChance + L.goldChance;
     int potionCut = goldCut + L.potionChance;
@@ -1043,11 +1033,11 @@ bool Game::unequipSlot(int playerId, uint8_t slotType) {
         return false;
     }
     ItemType type;
-    switch (slotType) {
-        case 0: type = ItemType::WEAPON; break;
-        case 1: type = ItemType::ARMOR; break;
-        case 2: type = ItemType::HELMET; break;
-        case 3: type = ItemType::SHIELD; break;
+    switch (static_cast<EquipmentSlot>(slotType)) {
+        case EquipmentSlot::WEAPON: type = ItemType::WEAPON; break;
+        case EquipmentSlot::ARMOR:  type = ItemType::ARMOR; break;
+        case EquipmentSlot::HELMET: type = ItemType::HELMET; break;
+        case EquipmentSlot::SHIELD: type = ItemType::SHIELD; break;
         default: return false;
     }
     return it->second.unequipItem(type);
@@ -1280,7 +1270,7 @@ int Game::countNearbyClanMates(int playerId) const {
     auto myClan = clans.getClanOf(it->second.getName());
     if (!myClan)
         return 0;
-    ClanConfig cc = StatsDefinition().getClanConfig();
+    const auto& cc = FormulaCatalog::instance().getClan();
     Position myPos = it->second.getPosition();
     uint8_t myMap = it->second.getMapId();
     auto mates = clans.getMembersOf(*myClan);

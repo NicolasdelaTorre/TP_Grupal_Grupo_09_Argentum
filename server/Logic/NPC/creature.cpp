@@ -1,14 +1,12 @@
 #include "creature.h"
 
-#include <ctime>
+#include <cstdlib>
+#include <stdexcept>
 
-#include "../toml.hpp"
-#include "../stats_definition.h"
+#include "../catalog/creature_catalog.h"
 
 Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t x, uint16_t y, std::string biomeType) : NPC(id, name, x, y, mapId), isAlive(true), biomeType(biomeType) {
-    // Set level
-    srand(time(nullptr));
-    CreatureSpawnConfig sp = StatsDefinition().getSpawnConfig();
+    const auto& sp = CreatureCatalog::instance().getSpawn();
     if (mapId == 0) {
         uint8_t span = sp.overworldLevelMax - sp.overworldLevelMin + 1;
         level = sp.overworldLevelMin + rand() % span;
@@ -17,19 +15,10 @@ Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t
         level = sp.dungeonLevelMin + rand() % span;
     }
 
-    const toml::value config = toml::parse("server/Logic/NPC/npc.toml");
-
-    const auto npcs = toml::find<std::vector<toml::value>>(config, "npc");
-
-    for (const auto& npc: npcs) {
-        if (toml::find<std::string>(npc, "name") == name) {
-            maxHealth = toml::find<uint16_t>(npc, "maxHealth") * level;
-            health = maxHealth;
-            damage = toml::find<uint16_t>(npc, "damage") * level;
-            break;
-        }
-    }
-
+    const CreatureAttributes& attrs = CreatureCatalog::instance().findByName(name);
+    maxHealth = attrs.maxHealth * level;
+    health = maxHealth;
+    damage = attrs.damage * level;
 }
 
 Position Creature::stalkPlayer(Position playerPosition) const {

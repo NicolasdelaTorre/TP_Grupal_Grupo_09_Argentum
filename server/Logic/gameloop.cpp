@@ -7,19 +7,19 @@
 #include "../../common/Communication/events/client_events.h"
 #include "../../common/Communication/events/server_events.h"
 #include "../../common/Communication/message_types.h"
+#include "../../common/game_constants.h"
 
 #include "NPC/creature.h"
 
-// Mapea el nombre del NPC (del toml) al byte de NpcCode que espera el cliente
-// (enum NpcCode en common/DTOs.h). Si no matchea, devuelve 0 (SPIDER) como fallback.
+// Mapea el nombre del NPC (del toml) al byte de NpcCode que espera el cliente. Si no matchea, SPIDER como fallback.
 static uint8_t npcTypeFromName(const std::string& name) {
-    if (name == "spider") return 0;
-    if (name == "skeleton") return 1;
-    if (name == "zombie") return 2;
-    if (name == "goblin") return 3;
-    if (name == "orc") return 4;
-    if (name == "golem") return 5;
-    return 0;
+    if (name == "spider") return static_cast<uint8_t>(NpcCode::SPIDER);
+    if (name == "skeleton") return static_cast<uint8_t>(NpcCode::SKELETON);
+    if (name == "zombie") return static_cast<uint8_t>(NpcCode::ZOMBIE);
+    if (name == "goblin") return static_cast<uint8_t>(NpcCode::GOBLIN);
+    if (name == "orc") return static_cast<uint8_t>(NpcCode::ORC);
+    if (name == "golem") return static_cast<uint8_t>(NpcCode::GOLEM);
+    return static_cast<uint8_t>(NpcCode::SPIDER);
 }
 
 // Broadcast un ItemDroppedEvent por cada drop que generó una muerte.
@@ -584,7 +584,7 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
 
     // Si tiene arma de curacion equipada, el click se interpreta como cast de heal. El cliente manda AttackEvent de todas formas.
     if (game.hasHealWeaponEquipped(playerId)) {
-        if (targetType == 1) {
+        if (targetType == static_cast<uint8_t>(TargetType::NPC)) {
             clientMonitor.sendToClient(playerId,
                                        std::make_shared<ChatBroadcastEvent>(
                                                0, std::string(),
@@ -635,7 +635,8 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
     if (hit) {
         clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
     }
-    if (hit && outcome.targetType == 0 && game.hasPlayer(outcome.event->getTargetId())) {
+    if (hit && outcome.targetType == static_cast<uint8_t>(TargetType::PLAYER) &&
+        game.hasPlayer(outcome.event->getTargetId())) {
         clientMonitor.sendToClient(outcome.event->getTargetId(),
                                    buildStatsEvent(outcome.event->getTargetId()));
         // Si el ataque mató al target, broadcast PlayerDiedEvent + drop loot
@@ -653,7 +654,7 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
                                        buildStatsEvent(outcome.event->getTargetId()));
         }
     }
-    if (hit && outcome.targetType == 1) {
+    if (hit && outcome.targetType == static_cast<uint8_t>(TargetType::NPC)) {
         Creature* npc = map.getNPC(outcome.event->getTargetId());
         if (npc && npc->isDead()) {
             clientMonitor.broadcast(std::make_shared<NpcDiedEvent>(outcome.event->getTargetId()));
@@ -713,7 +714,7 @@ void Gameloop::handlePickUp(int playerId) {
     broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
     // Si era oro, el inventory snapshot no cambia → mandamos stats para que
     // el HUD del dueño refresque la cantidad de oro.
-    if (r.record.itemId == Game::GOLD_ITEM_ID) {
+    if (r.record.itemId == GOLD_ITEM_ID) {
         clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
     }
 }

@@ -1,90 +1,17 @@
 #include "items.h"
 
-#include <vector>
+#include <stdexcept>
 
-#include "toml.hpp"
+#include "catalog/item_catalog.h"
 
 Item::Item(): id(0) {}
 
 void Item::createItem(const std::string& itemName) {
-    name = itemName;
-    const toml::value config = toml::parse("server/Logic/items.toml");
-
-    const auto items = toml::find<std::vector<toml::value>>(config, "item");
-
-    for (const auto& item: items) {
-        if (toml::find<std::string>(item, "name") == itemName) {
-            id = toml::find<uint8_t>(item, "id");
-            const auto itemType = toml::find<std::string>(item, "type");
-
-            if (itemType == "WEAPON") {
-                type = ItemType::WEAPON;
-            } else if (itemType == "MAGIC") {
-                type = ItemType::MAGIC;
-            } else if (itemType == "HEAL") {
-                type = ItemType::HEAL;
-            } else if (itemType == "ARMOR") {
-                type = ItemType::ARMOR;
-            } else if (itemType == "HELMET") {
-                type = ItemType::HELMET;
-            } else if (itemType == "SHIELD") {
-                type = ItemType::SHIELD;
-            } else if (itemType == "HEALTH_POTION") {
-                type = ItemType::HEALTH_POTION;
-            } else if (itemType == "MANA_POTION") {
-                type = ItemType::MANA_POTION;
-            } else {
-                throw std::runtime_error("Unknown item type");
-            }
-
-            switch (type) {
-                case ItemType::MAGIC:
-                    manaCost = toml::find<uint16_t>(item, "manaCost");
-                    [[fallthrough]];
-                case ItemType::WEAPON:
-                    distance = toml::find<bool>(item, "distance");
-                    minDamage = toml::find<uint16_t>(item, "minDamage");
-                    maxDamage = toml::find<uint16_t>(item, "maxDamage");
-                    break;
-                case ItemType::HEAL:
-                    distance = toml::find<bool>(item, "distance");
-                    healthRestore = toml::find<uint16_t>(item, "healthRestore");
-                    manaCost = toml::find<uint16_t>(item, "manaCost");
-                    break;
-                case ItemType::ARMOR:
-                case ItemType::HELMET:
-                case ItemType::SHIELD:
-                    minDefense = toml::find<uint16_t>(item, "minDefense");
-                    maxDefense = toml::find<uint16_t>(item, "maxDefense");
-                    break;
-                case ItemType::HEALTH_POTION:
-                    healthRestore = toml::find<uint16_t>(item, "healthRestore");
-                    break;
-                case ItemType::MANA_POTION:
-                    manaRestore = toml::find<uint16_t>(item, "manaRestore");
-                    break;
-                default:
-                    throw std::runtime_error("Unknown item type");
-            }
-
-            break;
-        }
-    }
+    *this = ItemCatalog::instance().findByName(itemName);
 }
 
 void Item::createItemById(uint8_t itemId) {
-    const toml::value config = toml::parse("server/Logic/items.toml");
-
-    const auto items = toml::find<std::vector<toml::value>>(config, "item");
-
-    for (const auto& item: items) {
-        if (toml::find<uint8_t>(item, "id") == itemId) {
-            createItem(toml::find<std::string>(item, "name"));
-            return;
-        }
-    }
-
-    throw std::runtime_error("Unknown item id");
+    *this = ItemCatalog::instance().findById(itemId);
 }
 
 bool Item::emptyItem() const {

@@ -4,17 +4,20 @@
 #include <cstdlib>
 #include <utility>
 
+#include "stats_definition.h"
+
 Player::Player(const std::string& name, Position position, RaceCode race, ClassCode class_):
         name(name), isMeditating(false) {
-    inventory.reserve(N);
+    StatsDefinition stats;
+    inventory.reserve(INVENTORY_SIZE);
     data.level = 1;
     data.experience = 0;
-    data.gold = StatsDefinition().safeGold(data.level);
+    data.gold = stats.safeGold(data.level);
 
     data.position = position;
-    data.health = StatsDefinition().maxHealth(data.level, race, class_);
+    data.health = stats.maxHealth(data.level, race, class_);
     maxHealth = data.health;
-    data.mana = StatsDefinition().maxMana(data.level, race, class_);
+    data.mana = stats.maxMana(data.level, race, class_);
     maxMana = data.mana;
 
     data.race = race;
@@ -28,17 +31,18 @@ Player::Player(const std::string& name, Position position, RaceCode race, ClassC
     data.bodySkinId = 0;
     data.isGhost = false;
 
-    for (int i = 0; i < N; ++i) {
+    for (size_t i = 0; i < INVENTORY_SIZE; ++i) {
         data.inventory[i] = 0;
     }
 }
 
 Player::Player(PlayerData data, const std::string& name): data(std::move(data)), name(name), isMeditating(false) {
-    inventory.reserve(N);
-    maxHealth = StatsDefinition().maxHealth(this->data.level, this->data.race, this->data.class_);
-    maxMana = StatsDefinition().maxMana(this->data.level, this->data.race, this->data.class_);
+    StatsDefinition stats;
+    inventory.reserve(INVENTORY_SIZE);
+    maxHealth = stats.maxHealth(this->data.level, this->data.race, this->data.class_);
+    maxMana = stats.maxMana(this->data.level, this->data.race, this->data.class_);
 
-    for (size_t slot = 0; slot < N; ++slot) {
+    for (size_t slot = 0; slot < INVENTORY_SIZE; ++slot) {
         uint8_t itemId = this->data.inventory[slot];
         if (itemId == 0) {
             continue;
@@ -227,7 +231,7 @@ bool Player::addItem(const std::string& itemName) {
 
     Item newItem;
     newItem.createItem(itemName);
-    if (inventory.size() < N) {
+    if (inventory.size() < INVENTORY_SIZE) {
         inventory.push_back(newItem);
         data.inventory[inventory.size() - 1] = newItem.getId();
         return true;
@@ -242,7 +246,7 @@ uint8_t Player::removeItemByName(const std::string& itemName) {
             uint8_t id = inventory[i].getId();
             inventory.erase(inventory.begin() + i);
             // Recompactar data.inventory para que matchee el vector.
-            for (size_t j = 0; j < N; j++) {
+            for (size_t j = 0; j < INVENTORY_SIZE; j++) {
                 data.inventory[j] = j < inventory.size() ? inventory[j].getId() : 0;
             }
             return id;
@@ -411,8 +415,9 @@ void Player::revive() {
 }
 
 void Player::resetStats() {
-    maxHealth = StatsDefinition().maxHealth(data.level, data.race, data.class_);
-    maxMana = StatsDefinition().maxMana(data.level, data.race, data.class_);
+    StatsDefinition stats;
+    maxHealth = stats.maxHealth(data.level, data.race, data.class_);
+    maxMana = stats.maxMana(data.level, data.race, data.class_);
     data.health = maxHealth;
     data.mana = maxMana;
     data.isGhost = false;
@@ -442,13 +447,14 @@ bool Player::toggleInfiniteMana() {
 }
 
 void Player::levelUp() {
+    StatsDefinition stats;
     if (data.level < 255) {
         data.level++;
     }
     data.experience = 0;
     // Solo se actualizan los topes; vida/mana actuales se mantienen.
-    maxHealth = StatsDefinition().maxHealth(data.level, data.race, data.class_);
-    maxMana = StatsDefinition().maxMana(data.level, data.race, data.class_);
+    maxHealth = stats.maxHealth(data.level, data.race, data.class_);
+    maxMana = stats.maxMana(data.level, data.race, data.class_);
 }
 
 void Player::grantExp(uint32_t amount) {

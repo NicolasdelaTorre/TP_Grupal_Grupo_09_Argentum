@@ -1,5 +1,7 @@
 #include "turn_manager.h"
 
+#include <algorithm>
+
 TurnManager::TurnManager(std::vector<int> players, std::vector<uint16_t> npcIds, Map& map, Game& game) : map(map), game(game) {
     for (const auto& playerId : players) {
         playerTimers[playerId] = {0, 0, 0, 0, 0};

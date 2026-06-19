@@ -34,6 +34,9 @@ private:
     uint16_t healthRestore;
     uint16_t manaRestore;
 
+    // El catalog construye los Items leyendo el config.toml y los cachea.
+    friend class ItemCatalog;
+
 public:
     Item();
 
