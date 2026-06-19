@@ -1,0 +1,355 @@
+# Configuración unificada del server. Este archivo se parsea una sola vez al arrancar.
+
+# ============================================================================
+# Razas
+# ============================================================================
+
+[race.human]
+constitution = 10
+force = 8
+intelligence = 6
+agility = 8
+FRaceHealth = 15.0
+FRaceRecovery = 5.0
+FRaceMana = 10.0
+
+[race.elf]
+constitution = 5
+force = 5
+intelligence = 10
+agility = 12
+FRaceHealth = 8.0
+FRaceRecovery = 10.0
+FRaceMana = 15.0
+
+[race.dwarf]
+constitution = 14
+force = 12
+intelligence = 4
+agility = 4
+FRaceHealth = 20.0
+FRaceRecovery = 2.0
+FRaceMana = 5.0
+
+[race.gnome]
+constitution = 5
+force = 5
+intelligence = 8
+agility = 7
+FRaceHealth = 6.0
+FRaceRecovery = 8.0
+FRaceMana = 13.0
+
+# ============================================================================
+# Clases (multiplicadores de stats por clase)
+# ============================================================================
+
+[class.mage]
+FClassHealth = 13.0
+FClassMana = 15.0
+FClassMeditation = 20.0
+
+[class.cleric]
+FClassHealth = 10.0
+FClassMana = 13.0
+FClassMeditation = 15.0
+
+[class.champion]
+FClassHealth = 18.0
+FClassMana = 11.0
+FClassMeditation = 10.0
+
+[class.warrior]
+FClassHealth = 20.0
+FClassMana = 0.0
+FClassMeditation = 0.0
+
+# ============================================================================
+# Fórmulas
+# ============================================================================
+
+[formula.gold]
+# OroSeguro(Nivel) = safeBase * Nivel^safeExp
+safeBase = 100.0
+safeExp = 1.1
+# OroMax(Nivel) = OroSeguro * maxFactor
+maxFactor = 1.5
+
+[formula.experience]
+# ExpProxNivel(Nivel) = nextBase * Nivel^nextExp
+nextBase = 1000.0
+nextExp = 1.8
+# Bonus por matar al objetivo: rand(0, killBonusMaxPct/100) * VidaMaxOtro
+killBonusMaxPct = 10
+# Factor por golpe: max(0, NivelOtro - NivelAtacante + levelDiffBase)
+levelDiffBase = 10
+
+[formula.combat]
+# Evasion (enunciado): rand(0,1)^Agilidad < evadeThreshold => esquiva.
+evadeThreshold = 0.001
+# Crítico: chance entera en %. El crítico hace doble daño y no puede ser esquivado.
+criticalChancePct = 5
+
+[formula.fairplay]
+# Nivel maximo para ser "newbie". Newbies no pueden atacar ni ser atacados.
+newbieLevel = 2
+# Diferencia maxima de niveles permitida entre atacante y target.
+maxLevelDiff = 10
+
+# ============================================================================
+# Loot de criaturas
+# ============================================================================
+
+[loot.npc]
+nothingChance = 80
+goldChance = 8
+potionChance = 1
+itemChance = 1
+goldFactorMinPct = 1
+goldFactorMaxPct = 20
+itemIdMin = 1
+itemIdMax = 17
+potionHealthId = 18
+potionManaId = 19
+
+# ============================================================================
+# Spawn de criaturas
+# ============================================================================
+
+[creature.spawn]
+overworldLevelMin = 1
+overworldLevelMax = 5
+dungeonLevelMin = 5
+dungeonLevelMax = 10
+
+# ============================================================================
+# Clanes (seccion "Clanes" del enunciado)
+# ============================================================================
+
+[clan]
+maxMembers = 16
+foundLevel = 6
+bonusRadius = 8
+bonusPctPerMember = 0.05
+
+# ============================================================================
+# Items del juego
+# ============================================================================
+
+[[item]]
+id = 1
+name = "sword"
+type = "WEAPON"
+distance = false
+minDamage = 2
+maxDamage = 5
+
+[[item]]
+id = 2
+name = "axe"
+type = "WEAPON"
+distance = false
+minDamage = 4
+maxDamage = 5
+
+[[item]]
+id = 3
+name = "hammer"
+type = "WEAPON"
+distance = true
+minDamage = 1
+maxDamage = 9
+
+[[item]]
+id = 4
+name = "ash staff"
+type = "MAGIC"
+distance = true
+minDamage = 2
+maxDamage = 4
+manaCost = 50
+
+[[item]]
+id = 5
+name = "elven flute"
+type = "HEAL"
+distance = true
+healthRestore = 50
+manaCost = 200
+
+[[item]]
+id = 6
+name = "root staff"
+type = "MAGIC"
+distance = true
+minDamage = 4
+maxDamage = 8
+manaCost = 150
+
+[[item]]
+id = 7
+name = "socketed staff"
+type = "MAGIC"
+distance = true
+minDamage = 8
+maxDamage = 20
+manaCost = 250
+
+[[item]]
+id = 8
+name = "simple bow"
+type = "WEAPON"
+distance = true
+minDamage = 1
+maxDamage = 4
+
+[[item]]
+id = 9
+name = "composite bow"
+type = "WEAPON"
+distance = true
+minDamage = 4
+maxDamage = 16
+
+[[item]]
+id = 10
+name = "leather armor"
+type = "ARMOR"
+minDefense = 2
+maxDefense = 6
+
+[[item]]
+id = 11
+name = "plate armor"
+type = "ARMOR"
+minDefense = 15
+maxDefense = 30
+
+[[item]]
+id = 12
+name = "blue tunic"
+type = "ARMOR"
+minDefense = 6
+maxDefense = 10
+
+[[item]]
+id = 13
+name = "hood"
+type = "HELMET"
+minDefense = 1
+maxDefense = 4
+
+[[item]]
+id = 14
+name = "iron helmet"
+type = "HELMET"
+minDefense = 4
+maxDefense = 8
+
+[[item]]
+id = 15
+name = "turtle shield"
+type = "SHIELD"
+minDefense = 1
+maxDefense = 2
+
+[[item]]
+id = 16
+name = "iron shield"
+type = "SHIELD"
+minDefense = 1
+maxDefense = 4
+
+[[item]]
+id = 17
+name = "wizard hat"
+type = "HELMET"
+minDefense = 4
+maxDefense = 12
+
+[[item]]
+id = 18
+name = "health potion"
+type = "HEALTH_POTION"
+healthRestore = 50
+
+[[item]]
+id = 19
+name = "mana potion"
+type = "MANA_POTION"
+manaRestore = 50
+
+# ============================================================================
+# Criaturas (NPCs hostiles)
+# ============================================================================
+
+[[npc]]
+type = "CREATURE"
+name = "goblin"
+maxHealth = 100
+damage = 20
+
+[[npc]]
+type = "CREATURE"
+name = "skeleton"
+maxHealth = 80
+damage = 23
+
+[[npc]]
+type = "CREATURE"
+name = "zombie"
+maxHealth = 130
+damage = 16
+
+[[npc]]
+type = "CREATURE"
+name = "spider"
+maxHealth = 70
+damage = 18
+
+[[npc]]
+type = "CREATURE"
+name = "orc"
+maxHealth = 170
+damage = 25
+
+[[npc]]
+type = "CREATURE"
+name = "golem"
+maxHealth = 200
+damage = 27
+
+# ============================================================================
+# Catálogo de comerciantes y sacerdotes.
+# itemId mapea a la lista [[item]] de este mismo archivo.
+# El precio es lo que paga el jugador al comprar. Al vender recibe la mitad.
+# ============================================================================
+
+[merchant.trader]
+items = [
+    { itemId = 1, price = 50 },     # sword
+    { itemId = 2, price = 80 },     # axe
+    { itemId = 3, price = 120 },    # hammer
+    { itemId = 8, price = 60 },     # simple bow
+    { itemId = 9, price = 180 },    # composite bow
+    { itemId = 10, price = 70 },    # leather armor
+    { itemId = 11, price = 200 },   # plate armor
+    { itemId = 12, price = 90 },    # blue tunic
+    { itemId = 13, price = 30 },    # hood
+    { itemId = 14, price = 90 },    # iron helmet
+    { itemId = 15, price = 25 },    # turtle shield
+    { itemId = 16, price = 75 },    # iron shield
+    { itemId = 18, price = 40 },    # health potion
+    { itemId = 19, price = 40 },    # mana potion
+]
+
+[merchant.priest]
+items = [
+    { itemId = 4, price = 100 },    # ash staff
+    { itemId = 5, price = 150 },    # elven flute
+    { itemId = 6, price = 220 },    # root staff
+    { itemId = 7, price = 320 },    # socketed staff
+    { itemId = 17, price = 110 },   # wizard hat
+    { itemId = 18, price = 40 },    # health potion
+    { itemId = 19, price = 40 },    # mana potion
+]

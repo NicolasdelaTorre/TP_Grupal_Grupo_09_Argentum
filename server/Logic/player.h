@@ -8,13 +8,11 @@
 
 #include "../../common/position.h"
 #include "../../common/DTOs.h"
+#include "../../common/game_constants.h"
 
 #include "class_.h"
 #include "items.h"
 #include "race.h"
-#include "stats_definition.h"
-
-#define N 20
 
 struct PlayerData {
     uint32_t experience;
@@ -36,7 +34,7 @@ struct PlayerData {
     uint8_t bodySkinId;
     bool isGhost;
 
-    uint8_t inventory[N];
+    uint8_t inventory[INVENTORY_SIZE];
 };
 
 class Player {

@@ -5,15 +5,15 @@
 #include <string>
 #include <vector>
 
+#include "../../../common/game_constants.h"
+
 #include "../binary_parser.h"
 #include "npc.h"
-
-#define N 20
 
 struct BankAccount {
     std::string name;
     uint32_t gold;
-    uint8_t items[N];
+    uint8_t items[INVENTORY_SIZE];
 };
 
 class Banker : public NPC {
