@@ -16,6 +16,6 @@ static constexpr uint16_t SYSTEM_AUTHOR_ID = 0;
 static constexpr int16_t COMBAT_RANGE = 3;
 
 // Tamaño del inventario de un jugador.
-static constexpr std::size_t INVENTORY_SIZE = 9;
+static constexpr std::size_t INVENTORY_SIZE = 20;
 
 #endif
