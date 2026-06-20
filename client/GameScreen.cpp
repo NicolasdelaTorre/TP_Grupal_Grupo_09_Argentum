@@ -334,7 +334,7 @@ bool GameScreen::handleEvents(float dt) {
                 if (opTileX == clickTileX && opTileY == clickTileY) {
                     clientEvents.push(std::make_shared<AttackEvent>(
                             /*targetType=*/0, static_cast<uint16_t>(entry.first)));
-                    spawnProjectile(op.visual.x + HEAD_OFFSET, op.visual.y + CHEST_OFFSET);
+                    //spawnProjectile(op.visual.x + HEAD_OFFSET, op.visual.y + CHEST_OFFSET);
                     clicked = true;
                     break;
                 }
@@ -358,7 +358,7 @@ bool GameScreen::handleEvents(float dt) {
                         } else {
                             clientEvents.push(std::make_shared<AttackEvent>(
                                     /*targetType=*/1, static_cast<uint16_t>(entry.first)));
-                            spawnProjectile(n.visual.x + HEAD_OFFSET, n.visual.y + CHEST_OFFSET);
+                            //spawnProjectile(n.visual.x + HEAD_OFFSET, n.visual.y + CHEST_OFFSET);
                         }
                         break;
                     }
@@ -629,14 +629,16 @@ void GameScreen::consumeServerEvents() {
                     if (it != otherPlayers.end()){
                         bloodEffects.push_back({it->second.visual.x, it->second.visual.y,
                                                 BLOOD_DURATION});
-                                      
+                                                spawnProjectile( it->second.visual.x + HEAD_OFFSET, it->second.visual.y + CHEST_OFFSET);             
                                             
                         }
                 } else {
                     auto it = npcs.find(ar->getTargetId());
-                    if (it != npcs.end() && it->second.alive)
+                    if (it != npcs.end() && it->second.alive){
                         bloodEffects.push_back({it->second.visual.x, it->second.visual.y,
                                                 BLOOD_DURATION});
+                        spawnProjectile( it->second.visual.x + HEAD_OFFSET, it->second.visual.y + CHEST_OFFSET);          
+                             } 
                 }
 
                 // Sonido según el arma del atacante. Si el atacante es otro
