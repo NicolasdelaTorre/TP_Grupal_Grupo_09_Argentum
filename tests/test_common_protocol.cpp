@@ -13,45 +13,45 @@ TEST(CommonProtocolTest, byteRoundTrip) {
     EXPECT_EQ(link.b->receive_byte(), 0xAB);
 }
 
-TEST(CommonProtocolTest, dosBytesRoundTripRespetaNetworkOrder) {
+TEST(CommonProtocolTest, twoBytesRoundTripRespectsNetworkOrder) {
     ProtocolLoopback link;
     link.a->send_two_bytes_number(0x1234);
     EXPECT_EQ(link.b->receive_two_bytes_number(), 0x1234);
 }
 
-TEST(CommonProtocolTest, cuatroBytesRoundTripRespetaNetworkOrder) {
+TEST(CommonProtocolTest, fourBytesRoundTripRespectsNetworkOrder) {
     ProtocolLoopback link;
     link.a->send_four_bytes_number(0xDEADBEEF);
     EXPECT_EQ(link.b->receive_four_bytes_number(), 0xDEADBEEF);
 }
 
-TEST(CommonProtocolTest, dosBytesValorMaximo) {
+TEST(CommonProtocolTest, twoBytesMaxValue) {
     ProtocolLoopback link;
     link.a->send_two_bytes_number(0xFFFF);
     EXPECT_EQ(link.b->receive_two_bytes_number(), 0xFFFF);
 }
 
-TEST(CommonProtocolTest, dosBytesCero) {
+TEST(CommonProtocolTest, twoBytesZero) {
     ProtocolLoopback link;
     link.a->send_two_bytes_number(0);
     EXPECT_EQ(link.b->receive_two_bytes_number(), 0);
 }
 
-TEST(CommonProtocolTest, mensajeRoundTrip) {
+TEST(CommonProtocolTest, messageRoundTrip) {
     ProtocolLoopback link;
     std::string s = "hola mundo";
     link.a->send_message(std::vector<char>(s.begin(), s.end()));
     EXPECT_EQ(link.b->receive_message(s.size()), s);
 }
 
-TEST(CommonProtocolTest, mensajeConCaracteresEspeciales) {
+TEST(CommonProtocolTest, messageWithSpecialCharacters) {
     ProtocolLoopback link;
     std::string s = "\x00ho\xFFla\x01";
     link.a->send_message(std::vector<char>(s.begin(), s.end()));
     EXPECT_EQ(link.b->receive_message(s.size()), s);
 }
 
-TEST(CommonProtocolTest, secuenciaDeCamposMixtos) {
+TEST(CommonProtocolTest, mixedFieldsSequence) {
     ProtocolLoopback link;
     link.a->sendByte(0x42);
     link.a->send_two_bytes_number(1024);

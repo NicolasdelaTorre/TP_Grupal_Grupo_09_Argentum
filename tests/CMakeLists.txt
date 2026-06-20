@@ -1,11 +1,9 @@
 target_sources(taller_tests
     PRIVATE
-    test_queue.cpp
-    test_protocol_util.cpp
     test_common_protocol.cpp
     test_client_events.cpp
     test_server_events.cpp
-    test_common_tiles.cpp
+    protocol_loopback.cpp
     PUBLIC
     protocol_loopback.h
     )
