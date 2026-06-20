@@ -288,36 +288,78 @@ type = "CREATURE"
 name = "goblin"
 maxHealth = 100
 damage = 20
+agility = 8
+minArmor = 0
+maxArmor = 2
+minShield = 0
+maxShield = 3
+minHelmet = 2
+maxHelmet = 4
 
 [[npc]]
 type = "CREATURE"
 name = "skeleton"
 maxHealth = 80
 damage = 23
+agility = 3
+minArmor = 0
+maxArmor = 0
+minShield = 0
+maxShield = 1
+minHelmet = 0
+maxHelmet = 2
 
 [[npc]]
 type = "CREATURE"
 name = "zombie"
 maxHealth = 130
 damage = 16
+agility = 0
+minArmor = 5
+maxArmor = 9
+minShield = 0
+maxShield = 0
+minHelmet = 0
+maxHelmet = 0
 
 [[npc]]
 type = "CREATURE"
 name = "spider"
 maxHealth = 70
 damage = 18
+agility = 10
+minArmor = 0
+maxArmor = 1
+minShield = 0
+maxShield = 0
+minHelmet = 0
+maxHelmet = 0
 
 [[npc]]
 type = "CREATURE"
 name = "orc"
 maxHealth = 170
 damage = 25
+agility = 5
+minArmor = 2
+maxArmor = 7
+minShield = 0
+maxShield = 2
+minHelmet = 4
+maxHelmet = 9
 
 [[npc]]
 type = "CREATURE"
 name = "golem"
 maxHealth = 200
 damage = 27
+agility = 0
+minArmor = 7
+maxArmor = 12
+minShield = 0
+maxShield = 0
+minHelmet = 2
+maxHelmet = 9
 
 # ============================================================================
 # Catálogo de comerciantes y sacerdotes.

@@ -14,6 +14,13 @@ CreatureCatalog::CreatureCatalog() {
         c.name = toml::find<std::string>(npc, "name");
         c.maxHealth = toml::find<uint16_t>(npc, "maxHealth");
         c.damage = toml::find<uint16_t>(npc, "damage");
+        c.agility = toml::find<uint8_t>(npc, "agility");
+        c.minArmor = toml::find<uint8_t>(npc, "minArmor");
+        c.maxArmor = toml::find<uint8_t>(npc, "maxArmor");
+        c.minShield = toml::find<uint8_t>(npc, "minShield");
+        c.maxShield = toml::find<uint8_t>(npc, "maxShield");
+        c.minHelmet = toml::find<uint8_t>(npc, "minHelmet");
+        c.maxHelmet = toml::find<uint8_t>(npc, "maxHelmet");
         byName[c.name] = c;
     }
 

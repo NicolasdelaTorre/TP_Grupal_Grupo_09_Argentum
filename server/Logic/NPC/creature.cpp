@@ -19,6 +19,13 @@ Creature::Creature(uint16_t id, const std::string& name, uint8_t mapId, uint16_t
     maxHealth = attrs.maxHealth * level;
     health = maxHealth;
     damage = attrs.damage * level;
+    agility = attrs.agility;
+    minArmor = attrs.minArmor;
+    maxArmor = attrs.maxArmor;
+    minShield = attrs.minShield;
+    maxShield = attrs.maxShield;
+    minHelmet = attrs.minHelmet;
+    maxHelmet = attrs.maxHelmet;
 }
 
 Position Creature::stalkPlayer(Position playerPosition) const {
@@ -33,13 +40,38 @@ Position Creature::stalkPlayer(Position playerPosition) const {
             static_cast<int16_t>(position.y + (dy > 0) - (dy < 0))};
 }
 
-void Creature::receiveDamage(uint16_t damage) {
-    if (damage >= health) {
+uint16_t Creature::receiveDamage(uint16_t damage) {
+    // Try to Evade
+    std::random_device rd;  
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dis(0.0, 1.0);
+
+    if (std::pow(dis(gen), static_cast<double>(agility)) < 0.001) {
+        return 0;
+    }
+
+    // Calculate Creature Defense
+    std::uniform_int_distribution<int> dis1(minArmor, maxArmor);
+    uint16_t armorDefense = static_cast<uint16_t>(dis1(gen));
+    std::uniform_int_distribution<int> dis2(minShield, maxShield);
+    uint16_t shieldDefense = static_cast<uint16_t>(dis2(gen));
+    std::uniform_int_distribution<int> dis3(minHelmet, maxHelmet);
+    uint16_t helmetDefense = static_cast<uint16_t>(dis3(gen));
+    uint16_t defense = armorDefense + shieldDefense + helmetDefense;
+
+    // Decrease health
+    if (defense >= damage) {
+        return 0;
+    }
+
+    if ((damage - defense) >= health) {
         health = 0;
         isAlive = false;
-    } else {
-        health -= damage;
+        return health;
     }
+
+    health -= (damage - defense);
+    return (damage - defense);
 }
 
 void Creature::resurrect() {

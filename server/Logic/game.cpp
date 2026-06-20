@@ -455,9 +455,9 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         uint8_t tgtLvl = npc->getLevel();
         uint16_t tgtMaxHp = npc->getMaxHealth();
         outcome.targetName = npc->getName();
-        npc->receiveDamage(damage);
+        uint16_t damageReceived = npc->receiveDamage(damage);
         int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
-        itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
+        itPlayer->second.grantExp(static_cast<uint32_t>(damageReceived) * factor);
         outcome.killed = npc->isDead();
         if (outcome.killed) {
             // Sacar la creature del mapa para que deje de bloquear celda.
@@ -469,9 +469,9 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         }
         outcome.valid = true;
         outcome.critical = isCritical;
-        outcome.damage = damage;
+        outcome.damage = damageReceived;
         outcome.event = std::make_shared<AttackResultEvent>(attackerId, targetType, targetId,
-                                                            damage, true);
+                                                            damageReceived, true);
     }
 
     uint8_t atkLvlAfter = itPlayer->second.getData().level;
