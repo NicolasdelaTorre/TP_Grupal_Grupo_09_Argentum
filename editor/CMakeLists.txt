@@ -13,9 +13,8 @@ target_sources(taller_editor
         map/yaml_map_io.cpp
         common_biome.cpp
         assets/templates/template_registry.cpp
-        dialogs/biome_spawn_dialog.cpp
+        dialogs/creature_spawn_dialog.cpp
         dialogs/new_environment_dialog.cpp
-        dialogs/environment_spawn_dialog.cpp
     PUBLIC
     # .h files
         editor_window.h
@@ -30,9 +29,8 @@ target_sources(taller_editor
         map/yaml_map_io.h
         common_biome.h
         assets/templates/template_registry.h
-        dialogs/biome_spawn_dialog.h
+        dialogs/creature_spawn_dialog.h
         dialogs/new_environment_dialog.h
-        dialogs/environment_spawn_dialog.h
     )
 
 target_include_directories(taller_editor

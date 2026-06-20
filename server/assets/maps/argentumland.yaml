@@ -126,1270 +126,1252 @@ biome_map:
 player_spawn:
   position: [19, 35]
 obstacles:
-  - id: obstacle_230
-    type: tree_red
-    position: [22, 37]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_227
-    type: small_apple_tree
-    position: [60, 19]
-    size: [1, 1]
-    texture: small_apple_tree.png
-  - id: obstacle_226
-    type: small_apple_tree
-    position: [65, 19]
-    size: [1, 1]
-    texture: small_apple_tree.png
-  - id: obstacle_225
-    type: fardo_heno
-    position: [72, 38]
-    size: [1, 1]
-    texture: haybale.png
-  - id: obstacle_224
-    type: angel_statue
-    position: [79, 27]
-    size: [1, 1]
-    texture: angel_statue.png
-    texture_anchor: 1
-  - id: obstacle_223
-    type: angel_statue
-    position: [73, 27]
-    size: [1, 1]
-    texture: angel_statue.png
-    texture_anchor: 1
-  - id: obstacle_222
-    type: pila_maderas
-    position: [66, 36]
-    size: [1, 1]
-    texture: stacked_logs.png
-  - id: obstacle_221
-    type: tree_red
-    position: [69, 17]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_220
-    type: tree_red
-    position: [96, 64]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_219
-    type: tree_red
-    position: [73, 67]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_218
-    type: tree_red
-    position: [59, 61]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_217
-    type: tree_red
-    position: [62, 49]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_216
-    type: tree_red
-    position: [66, 5]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_215
-    type: tree_red
-    position: [89, 11]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_214
-    type: tree_red
-    position: [69, 41]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_213
-    type: tree_red
-    position: [88, 55]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_212
-    type: tree_red
-    position: [79, 41]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_211
-    type: water_pit
-    position: [69, 33]
-    size: [1, 1]
-    texture: water_pit.png
-  - id: obstacle_210
-    type: tree_wide
-    position: [93, 36]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_209
-    type: tree_wide
-    position: [95, 21]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_208
-    type: tree_wide
-    position: [83, 28]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_207
-    type: tree_wide
-    position: [63, 38]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_206
-    type: tree_wide
-    position: [85, 14]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_205
-    type: tree_wide
-    position: [64, 11]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_204
-    type: boxes
-    position: [83, 36]
-    size: [1, 1]
-    texture: boxes.png
-  - id: obstacle_203
-    type: boxes
-    position: [86, 34]
-    size: [1, 1]
-    texture: boxes.png
-  - id: obstacle_202
-    type: box
-    position: [85, 36]
-    size: [1, 1]
-    texture: box.png
-  - id: obstacle_201
-    type: box
-    position: [83, 34]
-    size: [1, 1]
-    texture: box.png
-  - id: obstacle_200
-    type: tree_wide
-    position: [38, 40]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_199
-    type: tree_wide
-    position: [51, 48]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_198
-    type: tree_wide
-    position: [44, 40]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_197
-    type: arbol_alto
-    position: [39, 49]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_196
-    type: arbol_alto
-    position: [67, 1]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_195
-    type: arbol_alto
-    position: [85, 4]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_194
-    type: arbol_alto
-    position: [42, 85]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_193
-    type: arbol_alto
-    position: [54, 77]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_192
-    type: arbol_alto
-    position: [44, 69]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_191
-    type: arbol_alto
-    position: [39, 79]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_190
-    type: arbol_alto
-    position: [31, 70]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_189
-    type: arbol_alto
-    position: [20, 84]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_188
-    type: arbol_alto
-    position: [31, 81]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_187
-    type: arbol_alto
-    position: [13, 72]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_186
-    type: arbol_alto
-    position: [6, 78]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_185
-    type: tree_wide
-    position: [50, 82]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_184
-    type: tree_wide
-    position: [18, 79]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_183
-    type: tree_wide
-    position: [27, 70]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_182
-    type: tree_wide
-    position: [33, 77]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_181
-    type: tree_wide
-    position: [50, 69]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_180
-    type: tree_wide
-    position: [44, 79]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_179
-    type: tree_wide
-    position: [42, 66]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_178
-    type: tree_wide
-    position: [1, 86]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_177
-    type: tree_wide
-    position: [11, 79]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_176
-    type: tree_wide
-    position: [8, 71]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_175
-    type: tree_wide
-    position: [26, 76]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_174
-    type: tree_wide
-    position: [15, 87]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_173
-    type: tree_wide
-    position: [37, 84]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_172
-    type: tree_wide
-    position: [18, 72]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_171
-    type: tree_wide
-    position: [37, 73]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_170
-    type: tree_wide
-    position: [26, 85]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_169
-    type: tree_wide
-    position: [6, 83]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_168
-    type: tree_wide
-    position: [3, 72]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_167
-    type: piedra_pequenia
-    position: [49, 74]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_166
-    type: piedra_pequenia
-    position: [62, 72]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_165
-    type: piedra_pequenia
-    position: [47, 60]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_164
-    type: piedra_pequenia
-    position: [80, 43]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_163
-    type: piedra_pequenia
-    position: [57, 54]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_162
-    type: piedra_pequenia
-    position: [66, 44]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_161
-    type: piedra_grande
-    position: [85, 46]
-    size: [6, 4]
-    texture: rock_big.png
-  - id: obstacle_160
-    type: piedra_grande
-    position: [71, 54]
-    size: [6, 4]
-    texture: rock_big.png
-  - id: obstacle_159
-    type: arbol_alto
-    position: [79, 57]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_158
-    type: arbol_alto
-    position: [84, 68]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_157
-    type: arbol_alto
-    position: [61, 67]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_156
-    type: arbol_alto
-    position: [66, 54]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_155
-    type: arbol_alto
-    position: [96, 12]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_154
-    type: arbol_alto
-    position: [86, 42]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_153
-    type: arbol_alto
-    position: [90, 60]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_152
-    type: arbol_alto
-    position: [95, 51]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_151
-    type: arbol_alto
-    position: [74, 48]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_150
-    type: arbol_alto
-    position: [69, 64]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_149
-    type: arbol_alto
-    position: [54, 57]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_148
-    type: arbol_alto
-    position: [37, 37]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_147
-    type: arbol_alto
-    position: [37, 30]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_146
-    type: arbol_alto
-    position: [59, 42]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_145
-    type: arbol_alto
-    position: [53, 35]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_144
-    type: arbol_alto
-    position: [56, 7]
-    size: [1, 1]
-    texture: tree_tall.png
-    texture_anchor: 1
-  - id: obstacle_143
-    type: tree_wide
-    position: [53, 18]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_142
-    type: tree_wide
-    position: [53, 2]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_141
-    type: tree_wide
-    position: [28, 21]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_140
-    type: tree_wide
-    position: [46, 15]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_139
-    type: tree_wide
-    position: [35, 12]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_138
-    type: tree_wide
-    position: [47, 22]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_137
-    type: tree_wide
-    position: [39, 26]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_136
-    type: tree_wide
-    position: [33, 22]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_135
-    type: tree_wide
-    position: [41, 9]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_134
-    type: tree_wide
-    position: [48, 10]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_133
-    type: tree_wide
-    position: [43, 2]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_132
-    type: tree_wide
-    position: [34, 8]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_131
-    type: tree_wide
-    position: [38, 18]
-    size: [1, 1]
-    texture: tree_wide.png
-    texture_anchor: 1
-  - id: obstacle_130
-    type: piedra_pequenia
-    position: [8, 13]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_129
-    type: piedra_pequenia
-    position: [0, 10]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_128
-    type: piedra_grande
-    position: [12, 1]
-    size: [6, 4]
-    texture: rock_big.png
-  - id: obstacle_127
-    type: piedra_grande
-    position: [2, 24]
-    size: [6, 4]
-    texture: rock_big.png
-  - id: obstacle_126
-    type: piedra_pequenia
-    position: [29, 2]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_125
-    type: piedra_pequenia
-    position: [26, 11]
-    size: [2, 2]
-    texture: rock_medium.png
-  - id: obstacle_124
-    type: palm_tree
-    position: [83, 107]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_123
-    type: palm_tree
-    position: [26, 97]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_122
-    type: palm_tree
-    position: [60, 111]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_121
-    type: palm_tree
-    position: [55, 97]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_120
-    type: palm_tree
-    position: [63, 104]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_119
-    type: palm_tree
-    position: [45, 103]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_118
-    type: palm_tree
-    position: [51, 90]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_117
-    type: palm_tree
-    position: [30, 111]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_116
-    type: palm_tree
-    position: [8, 103]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_115
-    type: palm_tree
-    position: [19, 93]
-    size: [1, 1]
-    texture: palm_tree.png
-    texture_anchor: 1
-  - id: obstacle_114
-    type: cactus
-    position: [3, 94]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_113
-    type: cactus
-    position: [48, 113]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_112
-    type: cactus
-    position: [34, 101]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_111
-    type: cactus
-    position: [40, 91]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_110
-    type: cactus
-    position: [63, 98]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_109
-    type: cactus
-    position: [69, 111]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_108
-    type: cactus
-    position: [47, 97]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_107
-    type: cactus
-    position: [17, 112]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_106
-    type: cactus
-    position: [19, 98]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_105
-    type: cactus
-    position: [5, 108]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_104
-    type: cactus
-    position: [38, 108]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_103
-    type: cactus
-    position: [30, 93]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_102
-    type: cactus
-    position: [55, 91]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_101
-    type: cactus
-    position: [53, 106]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_100
-    type: cactus
-    position: [10, 91]
-    size: [1, 1]
-    texture: cactus_big.png
-  - id: obstacle_99
-    type: swamp_skeleton
-    position: [18, 56]
-    size: [1, 1]
-    texture: swamp_skeleton.png
-  - id: obstacle_98
-    type: swamp_skeleton
-    position: [30, 59]
-    size: [1, 1]
-    texture: swamp_skeleton.png
-  - id: obstacle_97
-    type: swamp_skeleton
-    position: [7, 59]
-    size: [1, 1]
-    texture: swamp_skeleton.png
-  - id: obstacle_96
-    type: swamp_wood
-    position: [38, 58]
-    size: [2, 1]
-    texture: swamp_wood.png
-  - id: obstacle_95
-    type: swamp_wood
-    position: [28, 56]
-    size: [2, 1]
-    texture: swamp_wood.png
-  - id: obstacle_94
-    type: swamp_wood
-    position: [10, 63]
-    size: [2, 1]
-    texture: swamp_wood.png
-  - id: obstacle_93
-    type: swamp_tree
-    position: [34, 64]
-    size: [1, 1]
-    texture: swamp_tree.png
-    texture_anchor: 1
-  - id: obstacle_92
-    type: swamp_tree
-    position: [23, 56]
-    size: [1, 1]
-    texture: swamp_tree.png
-    texture_anchor: 1
-  - id: obstacle_91
-    type: swamp_tree
-    position: [33, 56]
-    size: [1, 1]
-    texture: swamp_tree.png
-    texture_anchor: 1
-  - id: obstacle_90
-    type: swamp_tree
-    position: [10, 56]
-    size: [1, 1]
-    texture: swamp_tree.png
-    texture_anchor: 1
-  - id: obstacle_89
-    type: swamp_tree
-    position: [5, 65]
-    size: [1, 1]
-    texture: swamp_tree.png
-    texture_anchor: 1
-  - id: obstacle_88
-    type: swamp_trash
-    position: [13, 56]
-    size: [2, 2]
-    texture: swamp_trash.png
-  - id: obstacle_87
-    type: swamp_trash
-    position: [26, 61]
-    size: [2, 2]
-    texture: swamp_trash.png
-  - id: obstacle_86
-    type: swamp_trash
-    position: [2, 56]
-    size: [2, 2]
-    texture: swamp_trash.png
-  - id: obstacle_85
-    type: piedra_grande
-    position: [92, 71]
-    size: [6, 4]
-    texture: rock_big.png
-  - id: obstacle_84
-    type: angel_statue
-    position: [89, 80]
-    size: [1, 1]
-    texture: angel_statue.png
-    texture_anchor: 1
-  - id: obstacle_83
-    type: cross
-    position: [85, 82]
-    size: [1, 1]
-    texture: cross.png
-  - id: obstacle_82
-    type: cross
-    position: [77, 83]
-    size: [1, 1]
-    texture: cross.png
-  - id: obstacle_81
-    type: cross
-    position: [87, 77]
-    size: [1, 1]
-    texture: cross.png
-  - id: obstacle_80
-    type: cross
-    position: [70, 77]
-    size: [1, 1]
-    texture: cross.png
-  - id: obstacle_79
-    type: grave
-    position: [85, 75]
-    size: [1, 1]
-    texture: grave.png
-  - id: obstacle_78
-    type: angel_statue
-    position: [76, 79]
-    size: [1, 1]
-    texture: angel_statue.png
-    texture_anchor: 1
-  - id: obstacle_77
-    type: open_grave_left
-    position: [84, 79]
-    size: [1, 1]
-    texture: open_grave_leftr.png
-  - id: obstacle_76
-    type: open_grave_left
-    position: [79, 82]
-    size: [1, 1]
-    texture: open_grave_leftr.png
-  - id: obstacle_75
-    type: open_grave_right
-    position: [75, 82]
-    size: [1, 1]
-    texture: open_grave_right.png
-  - id: obstacle_74
-    type: open_grave_right
-    position: [82, 77]
-    size: [1, 1]
-    texture: open_grave_right.png
-  - id: obstacle_73
-    type: grave
-    position: [80, 79]
-    size: [1, 1]
-    texture: grave.png
-  - id: obstacle_72
-    type: grave
-    position: [80, 74]
-    size: [1, 1]
-    texture: grave.png
-  - id: obstacle_71
-    type: grave
-    position: [72, 82]
-    size: [1, 1]
-    texture: grave.png
-  - id: obstacle_70
-    type: closed_grave
-    position: [81, 81]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_69
-    type: closed_grave
-    position: [78, 80]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_68
-    type: closed_grave
-    position: [74, 80]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_67
-    type: closed_grave
-    position: [72, 79]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_66
-    type: closed_grave
-    position: [73, 77]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_65
-    type: closed_grave
-    position: [79, 77]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_64
-    type: closed_grave
-    position: [76, 77]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_63
-    type: closed_grave
-    position: [82, 75]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_62
-    type: closed_grave
-    position: [80, 75]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_61
-    type: closed_grave
-    position: [78, 75]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_60
-    type: closed_grave
-    position: [76, 75]
-    size: [1, 1]
-    texture: closed_grave.png
-  - id: obstacle_59
-    type: hole
-    position: [74, 75]
-    size: [1, 1]
-    texture: hole.png
-  - id: obstacle_58
-    type: open_grave_right
-    position: [72, 75]
-    size: [1, 1]
-    texture: open_grave_right.png
-  - id: obstacle_57
-    type: lampara_ciudad
-    position: [59, 20]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_56
-    type: lampara_ciudad
-    position: [68, 20]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_55
-    type: lampara_ciudad
-    position: [73, 20]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_54
-    type: lampara_ciudad
-    position: [79, 20]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_53
-    type: lampara_ciudad
-    position: [83, 21]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_52
-    type: lampara_ciudad
-    position: [83, 24]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_51
-    type: lampara_ciudad
-    position: [92, 24]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_50
-    type: lampara_ciudad
-    position: [60, 27]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_49
-    type: lampara_ciudad
-    position: [65, 27]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_48
-    type: lampara_ciudad
-    position: [73, 31]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_47
-    type: lampara_ciudad
-    position: [79, 31]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_46
-    type: lampara_ciudad
-    position: [90, 31]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_45
-    type: banco
-    position: [59, 16]
-    size: [8, 4]
-    texture: bank.png
-  - id: obstacle_44
-    type: iglesia
-    position: [72, 10]
-    size: [9, 10]
-    texture: church.png
-  - id: obstacle_43
-    type: hotel
-    position: [85, 18]
-    size: [7, 6]
-    texture: hotel.png
-  - id: obstacle_42
-    type: fuente
-    position: [75, 23]
-    size: [3, 3]
-    texture: water_fountain.png
-  - id: obstacle_41
-    type: casa_madera_azul
-    position: [56, 24]
-    size: [4, 3]
-    texture: wooden_house_blue.png
-  - id: obstacle_40
-    type: casa_madera_azul
-    position: [61, 24]
-    size: [4, 3]
-    texture: wooden_house_blue.png
-  - id: obstacle_39
-    type: casa_madera_roja
-    position: [66, 24]
-    size: [4, 3]
-    texture: wooden_house_red.png
-  - id: obstacle_38
-    type: casa_madera_azul
-    position: [86, 28]
-    size: [4, 3]
-    texture: wooden_house_blue.png
-  - id: obstacle_37
-    type: casa_madera_roja
-    position: [91, 28]
-    size: [4, 3]
-    texture: wooden_house_red.png
-  - id: obstacle_36
-    type: cerca_madera
-    position: [57, 31]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_35
-    type: cerca_madera
-    position: [59, 31]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_34
-    type: cerca_madera
-    position: [61, 31]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_33
-    type: cerca_madera
-    position: [63, 31]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_32
-    type: cerca_madera
-    position: [65, 31]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_31
-    type: cerca_madera
-    position: [67, 31]
-    size: [2, 1]
-    texture: wooden_fence.png
-  - id: obstacle_30
-    type: diana
-    position: [58, 32]
-    size: [1, 1]
-    texture: target.png
-  - id: obstacle_29
-    type: diana
-    position: [59, 32]
-    size: [1, 1]
-    texture: target.png
-  - id: obstacle_28
-    type: diana
-    position: [60, 32]
-    size: [1, 1]
-    texture: target.png
-  - id: obstacle_27
-    type: munieco_entrenamiento
-    position: [62, 33]
-    size: [1, 1]
-    texture: training_dummy.png
-  - id: obstacle_26
-    type: herrero
-    position: [64, 32]
-    size: [3, 2]
-    texture: blacksmith.png
-  - id: obstacle_25
-    type: fardo_heno
-    position: [70, 37]
-    size: [1, 1]
-    texture: haybale.png
-  - id: obstacle_24
-    type: elf_bank
-    position: [13, 28]
-    size: [7, 6]
-    texture: elf_bank.png
-  - id: obstacle_23
-    type: iglesia_elf
-    position: [24, 30]
-    size: [6, 4]
-    texture: elf_tall.png
-    texture_anchor: 1
-  - id: obstacle_22
-    type: merchant_elf
-    position: [24, 39]
-    size: [3, 2]
-    texture: elf_merchant.png
-  - id: obstacle_21
-    type: merchant_elf
-    position: [28, 39]
-    size: [3, 2]
-    texture: elf_merchant.png
-  - id: obstacle_20
-    type: elf_house
-    position: [9, 35]
-    size: [3, 2]
-    texture: elf_house.png
-  - id: obstacle_19
-    type: elf_house
-    position: [9, 39]
-    size: [3, 2]
-    texture: elf_house.png
-  - id: obstacle_18
-    type: elf_house
-    position: [9, 43]
-    size: [3, 2]
-    texture: elf_house.png
-  - id: obstacle_17
-    type: lampara_ciudad
-    position: [11, 33]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_16
-    type: lampara_ciudad
-    position: [21, 33]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_15
-    type: lampara_ciudad
-    position: [32, 33]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_14
-    type: lampara_ciudad
-    position: [21, 39]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_13
-    type: lampara_ciudad
-    position: [32, 39]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_12
-    type: lampara_ciudad
-    position: [21, 46]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_11
-    type: lampara_ciudad
-    position: [11, 46]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_10
-    type: lampara_ciudad
-    position: [32, 46]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_9
-    type: fuente
-    position: [15, 37]
-    size: [3, 3]
-    texture: water_fountain.png
-  - id: obstacle_8
-    type: tree_red
-    position: [9, 38]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_7
-    type: tree_red
-    position: [9, 46]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_6
-    type: tree_red
-    position: [30, 36]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_5
-    type: water_pit
-    position: [27, 43]
-    size: [1, 1]
-    texture: water_pit.png
-  - id: obstacle_4
-    type: small_apple_tree
-    position: [23, 40]
-    size: [1, 1]
-    texture: small_apple_tree.png
-  - id: obstacle_3
-    type: tree_red
-    position: [22, 44]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_2
-    type: tree_red
-    position: [29, 45]
-    size: [1, 1]
-    texture: tree_red.png
-    texture_anchor: 1
-  - id: obstacle_1
+  - id: obstacle_228
     type: tree_red
     position: [22, 29]
     size: [1, 1]
     texture: tree_red.png
     texture_anchor: 1
+  - id: obstacle_227
+    type: tree_red
+    position: [29, 45]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_226
+    type: tree_red
+    position: [22, 44]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_225
+    type: small_apple_tree
+    position: [23, 40]
+    size: [1, 1]
+    texture: small_apple_tree.png
+  - id: obstacle_224
+    type: water_pit
+    position: [27, 43]
+    size: [1, 1]
+    texture: water_pit.png
+  - id: obstacle_223
+    type: tree_red
+    position: [30, 36]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_222
+    type: tree_red
+    position: [9, 46]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_221
+    type: tree_red
+    position: [9, 38]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_220
+    type: fuente
+    position: [15, 37]
+    size: [3, 3]
+    texture: water_fountain.png
+  - id: obstacle_219
+    type: lampara_ciudad
+    position: [32, 46]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_218
+    type: lampara_ciudad
+    position: [11, 46]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_217
+    type: lampara_ciudad
+    position: [21, 46]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_216
+    type: lampara_ciudad
+    position: [32, 39]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_215
+    type: lampara_ciudad
+    position: [21, 39]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_214
+    type: lampara_ciudad
+    position: [32, 33]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_213
+    type: lampara_ciudad
+    position: [21, 33]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_212
+    type: lampara_ciudad
+    position: [11, 33]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_211
+    type: elf_house
+    position: [9, 43]
+    size: [3, 2]
+    texture: elf_house.png
+  - id: obstacle_210
+    type: elf_house
+    position: [9, 39]
+    size: [3, 2]
+    texture: elf_house.png
+  - id: obstacle_209
+    type: elf_house
+    position: [9, 35]
+    size: [3, 2]
+    texture: elf_house.png
+  - id: obstacle_208
+    type: merchant_elf
+    position: [28, 39]
+    size: [3, 2]
+    texture: elf_merchant.png
+  - id: obstacle_207
+    type: merchant_elf
+    position: [24, 39]
+    size: [3, 2]
+    texture: elf_merchant.png
+  - id: obstacle_206
+    type: iglesia_elf
+    position: [24, 30]
+    size: [6, 4]
+    texture: elf_tall.png
+    texture_anchor: 1
+  - id: obstacle_205
+    type: elf_bank
+    position: [13, 28]
+    size: [7, 6]
+    texture: elf_bank.png
+  - id: obstacle_204
+    type: fardo_heno
+    position: [70, 37]
+    size: [1, 1]
+    texture: haybale.png
+  - id: obstacle_203
+    type: herrero
+    position: [64, 32]
+    size: [3, 2]
+    texture: blacksmith.png
+  - id: obstacle_202
+    type: munieco_entrenamiento
+    position: [62, 33]
+    size: [1, 1]
+    texture: training_dummy.png
+  - id: obstacle_201
+    type: diana
+    position: [60, 32]
+    size: [1, 1]
+    texture: target.png
+  - id: obstacle_200
+    type: diana
+    position: [59, 32]
+    size: [1, 1]
+    texture: target.png
+  - id: obstacle_199
+    type: diana
+    position: [58, 32]
+    size: [1, 1]
+    texture: target.png
+  - id: obstacle_198
+    type: cerca_madera
+    position: [67, 31]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_197
+    type: cerca_madera
+    position: [65, 31]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_196
+    type: cerca_madera
+    position: [63, 31]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_195
+    type: cerca_madera
+    position: [61, 31]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_194
+    type: cerca_madera
+    position: [59, 31]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_193
+    type: cerca_madera
+    position: [57, 31]
+    size: [2, 1]
+    texture: wooden_fence.png
+  - id: obstacle_192
+    type: casa_madera_roja
+    position: [91, 28]
+    size: [4, 3]
+    texture: wooden_house_red.png
+  - id: obstacle_191
+    type: casa_madera_azul
+    position: [86, 28]
+    size: [4, 3]
+    texture: wooden_house_blue.png
+  - id: obstacle_190
+    type: casa_madera_roja
+    position: [66, 24]
+    size: [4, 3]
+    texture: wooden_house_red.png
+  - id: obstacle_189
+    type: casa_madera_azul
+    position: [61, 24]
+    size: [4, 3]
+    texture: wooden_house_blue.png
+  - id: obstacle_188
+    type: casa_madera_azul
+    position: [56, 24]
+    size: [4, 3]
+    texture: wooden_house_blue.png
+  - id: obstacle_187
+    type: fuente
+    position: [75, 23]
+    size: [3, 3]
+    texture: water_fountain.png
+  - id: obstacle_186
+    type: hotel
+    position: [85, 18]
+    size: [7, 6]
+    texture: hotel.png
+  - id: obstacle_185
+    type: iglesia
+    position: [72, 10]
+    size: [9, 10]
+    texture: church.png
+  - id: obstacle_184
+    type: banco
+    position: [59, 16]
+    size: [8, 4]
+    texture: bank.png
+  - id: obstacle_183
+    type: lampara_ciudad
+    position: [90, 31]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_182
+    type: lampara_ciudad
+    position: [79, 31]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_181
+    type: lampara_ciudad
+    position: [73, 31]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_180
+    type: lampara_ciudad
+    position: [65, 27]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_179
+    type: lampara_ciudad
+    position: [60, 27]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_178
+    type: lampara_ciudad
+    position: [92, 24]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_177
+    type: lampara_ciudad
+    position: [83, 24]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_176
+    type: lampara_ciudad
+    position: [83, 21]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_175
+    type: lampara_ciudad
+    position: [79, 20]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_174
+    type: lampara_ciudad
+    position: [73, 20]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_173
+    type: lampara_ciudad
+    position: [68, 20]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_172
+    type: lampara_ciudad
+    position: [59, 20]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_171
+    type: open_grave_right
+    position: [72, 75]
+    size: [1, 1]
+    texture: open_grave_right.png
+  - id: obstacle_170
+    type: hole
+    position: [74, 75]
+    size: [1, 1]
+    texture: hole.png
+  - id: obstacle_169
+    type: closed_grave
+    position: [76, 75]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_168
+    type: closed_grave
+    position: [78, 75]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_167
+    type: closed_grave
+    position: [80, 75]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_166
+    type: closed_grave
+    position: [82, 75]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_165
+    type: closed_grave
+    position: [76, 77]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_164
+    type: closed_grave
+    position: [79, 77]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_163
+    type: closed_grave
+    position: [73, 77]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_162
+    type: closed_grave
+    position: [72, 79]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_161
+    type: closed_grave
+    position: [74, 80]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_160
+    type: closed_grave
+    position: [78, 80]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_159
+    type: closed_grave
+    position: [81, 81]
+    size: [1, 1]
+    texture: closed_grave.png
+  - id: obstacle_158
+    type: grave
+    position: [72, 82]
+    size: [1, 1]
+    texture: grave.png
+  - id: obstacle_157
+    type: grave
+    position: [80, 74]
+    size: [1, 1]
+    texture: grave.png
+  - id: obstacle_156
+    type: grave
+    position: [80, 79]
+    size: [1, 1]
+    texture: grave.png
+  - id: obstacle_155
+    type: open_grave_right
+    position: [82, 77]
+    size: [1, 1]
+    texture: open_grave_right.png
+  - id: obstacle_154
+    type: open_grave_right
+    position: [75, 82]
+    size: [1, 1]
+    texture: open_grave_right.png
+  - id: obstacle_153
+    type: open_grave_left
+    position: [79, 82]
+    size: [1, 1]
+    texture: open_grave_leftr.png
+  - id: obstacle_152
+    type: open_grave_left
+    position: [84, 79]
+    size: [1, 1]
+    texture: open_grave_leftr.png
+  - id: obstacle_151
+    type: angel_statue
+    position: [76, 79]
+    size: [1, 1]
+    texture: angel_statue.png
+    texture_anchor: 1
+  - id: obstacle_150
+    type: grave
+    position: [85, 75]
+    size: [1, 1]
+    texture: grave.png
+  - id: obstacle_149
+    type: cross
+    position: [70, 77]
+    size: [1, 1]
+    texture: cross.png
+  - id: obstacle_148
+    type: cross
+    position: [87, 77]
+    size: [1, 1]
+    texture: cross.png
+  - id: obstacle_147
+    type: cross
+    position: [77, 83]
+    size: [1, 1]
+    texture: cross.png
+  - id: obstacle_146
+    type: cross
+    position: [85, 82]
+    size: [1, 1]
+    texture: cross.png
+  - id: obstacle_145
+    type: angel_statue
+    position: [89, 80]
+    size: [1, 1]
+    texture: angel_statue.png
+    texture_anchor: 1
+  - id: obstacle_144
+    type: piedra_grande
+    position: [92, 71]
+    size: [6, 4]
+    texture: rock_big.png
+  - id: obstacle_143
+    type: swamp_trash
+    position: [2, 56]
+    size: [2, 2]
+    texture: swamp_trash.png
+  - id: obstacle_142
+    type: swamp_trash
+    position: [26, 61]
+    size: [2, 2]
+    texture: swamp_trash.png
+  - id: obstacle_141
+    type: swamp_trash
+    position: [13, 56]
+    size: [2, 2]
+    texture: swamp_trash.png
+  - id: obstacle_140
+    type: swamp_tree
+    position: [5, 65]
+    size: [1, 1]
+    texture: swamp_tree.png
+    texture_anchor: 1
+  - id: obstacle_139
+    type: swamp_tree
+    position: [10, 56]
+    size: [1, 1]
+    texture: swamp_tree.png
+    texture_anchor: 1
+  - id: obstacle_138
+    type: swamp_tree
+    position: [33, 56]
+    size: [1, 1]
+    texture: swamp_tree.png
+    texture_anchor: 1
+  - id: obstacle_137
+    type: swamp_tree
+    position: [23, 56]
+    size: [1, 1]
+    texture: swamp_tree.png
+    texture_anchor: 1
+  - id: obstacle_136
+    type: swamp_tree
+    position: [34, 64]
+    size: [1, 1]
+    texture: swamp_tree.png
+    texture_anchor: 1
+  - id: obstacle_135
+    type: swamp_wood
+    position: [10, 63]
+    size: [2, 1]
+    texture: swamp_wood.png
+  - id: obstacle_134
+    type: swamp_wood
+    position: [28, 56]
+    size: [2, 1]
+    texture: swamp_wood.png
+  - id: obstacle_133
+    type: swamp_wood
+    position: [38, 58]
+    size: [2, 1]
+    texture: swamp_wood.png
+  - id: obstacle_132
+    type: swamp_skeleton
+    position: [7, 59]
+    size: [1, 1]
+    texture: swamp_skeleton.png
+  - id: obstacle_131
+    type: swamp_skeleton
+    position: [30, 59]
+    size: [1, 1]
+    texture: swamp_skeleton.png
+  - id: obstacle_130
+    type: swamp_skeleton
+    position: [18, 56]
+    size: [1, 1]
+    texture: swamp_skeleton.png
+  - id: obstacle_129
+    type: cactus
+    position: [10, 91]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_128
+    type: cactus
+    position: [53, 106]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_127
+    type: cactus
+    position: [55, 91]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_126
+    type: cactus
+    position: [30, 93]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_125
+    type: cactus
+    position: [38, 108]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_124
+    type: cactus
+    position: [5, 108]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_123
+    type: cactus
+    position: [19, 98]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_122
+    type: cactus
+    position: [17, 112]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_121
+    type: cactus
+    position: [47, 97]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_120
+    type: cactus
+    position: [69, 111]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_119
+    type: cactus
+    position: [63, 98]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_118
+    type: cactus
+    position: [40, 91]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_117
+    type: cactus
+    position: [34, 101]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_116
+    type: cactus
+    position: [48, 113]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_115
+    type: cactus
+    position: [3, 94]
+    size: [1, 1]
+    texture: cactus_big.png
+  - id: obstacle_114
+    type: palm_tree
+    position: [19, 93]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_113
+    type: palm_tree
+    position: [8, 103]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_112
+    type: palm_tree
+    position: [30, 111]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_111
+    type: palm_tree
+    position: [51, 90]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_110
+    type: palm_tree
+    position: [45, 103]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_109
+    type: palm_tree
+    position: [63, 104]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_108
+    type: palm_tree
+    position: [55, 97]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_107
+    type: palm_tree
+    position: [60, 111]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_106
+    type: palm_tree
+    position: [26, 97]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_105
+    type: palm_tree
+    position: [83, 107]
+    size: [1, 1]
+    texture: palm_tree.png
+    texture_anchor: 1
+  - id: obstacle_104
+    type: piedra_pequenia
+    position: [26, 11]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_103
+    type: piedra_pequenia
+    position: [29, 2]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_102
+    type: piedra_grande
+    position: [2, 24]
+    size: [6, 4]
+    texture: rock_big.png
+  - id: obstacle_101
+    type: piedra_grande
+    position: [12, 1]
+    size: [6, 4]
+    texture: rock_big.png
+  - id: obstacle_100
+    type: piedra_pequenia
+    position: [0, 10]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_99
+    type: piedra_pequenia
+    position: [8, 13]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_98
+    type: tree_wide
+    position: [38, 18]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_97
+    type: tree_wide
+    position: [34, 8]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_96
+    type: tree_wide
+    position: [43, 2]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_95
+    type: tree_wide
+    position: [48, 10]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_94
+    type: tree_wide
+    position: [41, 9]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_93
+    type: tree_wide
+    position: [33, 22]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_92
+    type: tree_wide
+    position: [39, 26]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_91
+    type: tree_wide
+    position: [47, 22]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_90
+    type: tree_wide
+    position: [35, 12]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_89
+    type: tree_wide
+    position: [46, 15]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_88
+    type: tree_wide
+    position: [28, 21]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_87
+    type: tree_wide
+    position: [53, 2]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_86
+    type: tree_wide
+    position: [53, 18]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_85
+    type: arbol_alto
+    position: [56, 7]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_84
+    type: arbol_alto
+    position: [53, 35]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_83
+    type: arbol_alto
+    position: [59, 42]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_82
+    type: arbol_alto
+    position: [37, 30]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_81
+    type: arbol_alto
+    position: [37, 37]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_80
+    type: arbol_alto
+    position: [54, 57]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_79
+    type: arbol_alto
+    position: [69, 64]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_78
+    type: arbol_alto
+    position: [74, 48]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_77
+    type: arbol_alto
+    position: [95, 51]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_76
+    type: arbol_alto
+    position: [90, 60]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_75
+    type: arbol_alto
+    position: [86, 42]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_74
+    type: arbol_alto
+    position: [96, 12]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_73
+    type: arbol_alto
+    position: [66, 54]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_72
+    type: arbol_alto
+    position: [61, 67]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_71
+    type: arbol_alto
+    position: [84, 68]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_70
+    type: arbol_alto
+    position: [79, 57]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_69
+    type: piedra_grande
+    position: [71, 54]
+    size: [6, 4]
+    texture: rock_big.png
+  - id: obstacle_68
+    type: piedra_grande
+    position: [85, 46]
+    size: [6, 4]
+    texture: rock_big.png
+  - id: obstacle_67
+    type: piedra_pequenia
+    position: [66, 44]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_66
+    type: piedra_pequenia
+    position: [57, 54]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_65
+    type: piedra_pequenia
+    position: [80, 43]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_64
+    type: piedra_pequenia
+    position: [47, 60]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_63
+    type: piedra_pequenia
+    position: [62, 72]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_62
+    type: piedra_pequenia
+    position: [49, 74]
+    size: [2, 2]
+    texture: rock_medium.png
+  - id: obstacle_61
+    type: tree_wide
+    position: [3, 72]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_60
+    type: tree_wide
+    position: [6, 83]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_59
+    type: tree_wide
+    position: [26, 85]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_58
+    type: tree_wide
+    position: [37, 73]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_57
+    type: tree_wide
+    position: [18, 72]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_56
+    type: tree_wide
+    position: [37, 84]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_55
+    type: tree_wide
+    position: [15, 87]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_54
+    type: tree_wide
+    position: [26, 76]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_53
+    type: tree_wide
+    position: [8, 71]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_52
+    type: tree_wide
+    position: [11, 79]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_51
+    type: tree_wide
+    position: [1, 86]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_50
+    type: tree_wide
+    position: [42, 66]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_49
+    type: tree_wide
+    position: [44, 79]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_48
+    type: tree_wide
+    position: [50, 69]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_47
+    type: tree_wide
+    position: [33, 77]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_46
+    type: tree_wide
+    position: [27, 70]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_45
+    type: tree_wide
+    position: [18, 79]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_44
+    type: tree_wide
+    position: [50, 82]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_43
+    type: arbol_alto
+    position: [6, 78]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_42
+    type: arbol_alto
+    position: [13, 72]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_41
+    type: arbol_alto
+    position: [31, 81]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_40
+    type: arbol_alto
+    position: [20, 84]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_39
+    type: arbol_alto
+    position: [31, 70]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_38
+    type: arbol_alto
+    position: [39, 79]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_37
+    type: arbol_alto
+    position: [44, 69]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_36
+    type: arbol_alto
+    position: [54, 77]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_35
+    type: arbol_alto
+    position: [42, 85]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_34
+    type: arbol_alto
+    position: [85, 4]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_33
+    type: arbol_alto
+    position: [67, 1]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_32
+    type: arbol_alto
+    position: [39, 49]
+    size: [1, 1]
+    texture: tree_tall.png
+    texture_anchor: 1
+  - id: obstacle_31
+    type: tree_wide
+    position: [44, 40]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_30
+    type: tree_wide
+    position: [51, 48]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_29
+    type: tree_wide
+    position: [38, 40]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_28
+    type: box
+    position: [83, 34]
+    size: [1, 1]
+    texture: box.png
+  - id: obstacle_27
+    type: box
+    position: [85, 36]
+    size: [1, 1]
+    texture: box.png
+  - id: obstacle_26
+    type: boxes
+    position: [86, 34]
+    size: [1, 1]
+    texture: boxes.png
+  - id: obstacle_25
+    type: boxes
+    position: [83, 36]
+    size: [1, 1]
+    texture: boxes.png
+  - id: obstacle_24
+    type: tree_wide
+    position: [64, 11]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_23
+    type: tree_wide
+    position: [85, 14]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_22
+    type: tree_wide
+    position: [63, 38]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_21
+    type: tree_wide
+    position: [83, 28]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_20
+    type: tree_wide
+    position: [95, 21]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_19
+    type: tree_wide
+    position: [93, 36]
+    size: [1, 1]
+    texture: tree_wide.png
+    texture_anchor: 1
+  - id: obstacle_18
+    type: water_pit
+    position: [69, 33]
+    size: [1, 1]
+    texture: water_pit.png
+  - id: obstacle_17
+    type: tree_red
+    position: [79, 41]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_16
+    type: tree_red
+    position: [88, 55]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_15
+    type: tree_red
+    position: [69, 41]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_14
+    type: tree_red
+    position: [89, 11]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_13
+    type: tree_red
+    position: [66, 5]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_12
+    type: tree_red
+    position: [62, 49]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_11
+    type: tree_red
+    position: [59, 61]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_10
+    type: tree_red
+    position: [73, 67]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_9
+    type: tree_red
+    position: [96, 64]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_8
+    type: tree_red
+    position: [69, 17]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
+  - id: obstacle_7
+    type: pila_maderas
+    position: [66, 36]
+    size: [1, 1]
+    texture: stacked_logs.png
+  - id: obstacle_6
+    type: angel_statue
+    position: [73, 27]
+    size: [1, 1]
+    texture: angel_statue.png
+    texture_anchor: 1
+  - id: obstacle_5
+    type: angel_statue
+    position: [79, 27]
+    size: [1, 1]
+    texture: angel_statue.png
+    texture_anchor: 1
+  - id: obstacle_4
+    type: fardo_heno
+    position: [72, 38]
+    size: [1, 1]
+    texture: haybale.png
+  - id: obstacle_3
+    type: small_apple_tree
+    position: [65, 19]
+    size: [1, 1]
+    texture: small_apple_tree.png
+  - id: obstacle_2
+    type: small_apple_tree
+    position: [60, 19]
+    size: [1, 1]
+    texture: small_apple_tree.png
+  - id: obstacle_1
+    type: tree_red
+    position: [22, 37]
+    size: [1, 1]
+    texture: tree_red.png
+    texture_anchor: 1
 zones:
-  - id: zone_28
-    type: city
-    template: ullathorpe
-    area:
-      x: 56
-      y: 9
-      width: 40
-      height: 30
-    fixed_npcs:
-      - type: priest
-        name: Sacerdote
-        position: [76, 20]
-      - type: merchant
-        name: Comerciante
-        position: [65, 33]
-      - type: banker
-        name: Banquero
-        position: [63, 20]
   - id: zone_39
     type: city
     template: nix
@@ -1408,50 +1390,108 @@ zones:
       - type: merchant
         name: Comerciante
         position: [25, 41]
-  - id: zone_36
+  - id: zone_28
+    type: city
+    template: ullathorpe
+    area:
+      x: 56
+      y: 9
+      width: 40
+      height: 30
+    fixed_npcs:
+      - type: priest
+        name: Sacerdote
+        position: [76, 20]
+      - type: merchant
+        name: Comerciante
+        position: [65, 33]
+      - type: banker
+        name: Banquero
+        position: [63, 20]
+  - id: zone_26
+    type: biome
+    template: bosque_oscuro
+    area:
+      x: 42
+      y: 40
+      width: 11
+      height: 10
+    texture: bosque_oscuro.png
+    spawns:
+      - creature: zombie
+        max_population: 1
+      - creature: spider
+        max_population: 2
+  - id: zone_23
+    type: biome
+    template: bosque_oscuro
+    area:
+      x: 39
+      y: 4
+      width: 9
+      height: 21
+    texture: bosque_oscuro.png
+    spawns:
+      - creature: zombie
+        max_population: 3
+      - creature: skeleton
+        max_population: 2
+  - id: zone_13
+    type: biome
+    template: pantano_embrujado
+    area:
+      x: 2
+      y: 60
+      width: 35
+      height: 6
+    texture: pantano.png
+    spawns:
+      - creature: goblin
+        max_population: 3
+  - id: zone_12
+    type: biome
+    template: desierto
+    area:
+      x: 3
+      y: 95
+      width: 48
+      height: 18
+    texture: desierto.png
+    spawns:
+      - creature: skeleton
+        max_population: 10
+  - id: zone_1
     type: biome
     template: explanada
     area:
-      x: 1
-      y: 49
-      width: 26
-      height: 2
+      x: 63
+      y: 7
+      width: 32
+      height: 53
     texture: explanada.png
-  - id: zone_35
+  - id: zone_4
     type: biome
-    template: cementerio
+    template: bosque_aranas
     area:
-      x: 81
-      y: 86
-      width: 15
-      height: 3
-    texture: cementerio.png
+      x: 3
+      y: 69
+      width: 40
+      height: 15
+    texture: bosque.png
     spawns:
-      - creature: skeleton
-        max_population: 1
-  - id: zone_34
+      - creature: spider
+        max_population: 7
+      - creature: goblin
+        max_population: 2
+  - id: zone_5
     type: biome
-    template: cementerio
+    template: nieve
     area:
-      x: 68
-      y: 74
-      width: 28
-      height: 12
-    texture: cementerio.png
-    spawns:
-      - creature: skeleton
-        max_population: 1
-      - creature: zombie
-        max_population: 1
-  - id: zone_7
-    type: biome
-    template: rocosas
-    area:
-      x: 18
-      y: 1
-      width: 9
+      x: 0
+      y: 0
+      width: 12
       height: 11
-    texture: rocosa.png
+    texture: nieve.png
     spawns:
       - creature: golem
         max_population: 2
@@ -1467,106 +1507,66 @@ zones:
     spawns:
       - creature: golem
         max_population: 1
-  - id: zone_5
+  - id: zone_7
     type: biome
-    template: nieve
+    template: rocosas
     area:
-      x: 0
-      y: 0
-      width: 12
+      x: 18
+      y: 1
+      width: 9
       height: 11
-    texture: nieve.png
+    texture: rocosa.png
     spawns:
       - creature: golem
         max_population: 2
-  - id: zone_4
+  - id: zone_34
     type: biome
-    template: bosque_aranas
+    template: cementerio
     area:
-      x: 3
-      y: 69
-      width: 40
-      height: 15
-    texture: bosque.png
+      x: 68
+      y: 74
+      width: 28
+      height: 12
+    texture: cementerio.png
     spawns:
-      - creature: spider
-        max_population: 7
-      - creature: goblin
-        max_population: 2
-  - id: zone_1
+      - creature: skeleton
+        max_population: 1
+      - creature: zombie
+        max_population: 1
+  - id: zone_35
+    type: biome
+    template: cementerio
+    area:
+      x: 81
+      y: 86
+      width: 15
+      height: 3
+    texture: cementerio.png
+    spawns:
+      - creature: skeleton
+        max_population: 1
+  - id: zone_36
     type: biome
     template: explanada
     area:
-      x: 63
-      y: 7
-      width: 32
-      height: 53
+      x: 1
+      y: 49
+      width: 26
+      height: 2
     texture: explanada.png
-  - id: zone_12
-    type: biome
-    template: desierto
-    area:
-      x: 3
-      y: 95
-      width: 48
-      height: 18
-    texture: desierto.png
-    spawns:
-      - creature: skeleton
-        max_population: 10
-  - id: zone_13
-    type: biome
-    template: pantano_embrujado
-    area:
-      x: 2
-      y: 60
-      width: 35
-      height: 6
-    texture: pantano.png
-    spawns:
-      - creature: goblin
-        max_population: 3
-  - id: zone_23
-    type: biome
-    template: bosque_oscuro
-    area:
-      x: 39
-      y: 4
-      width: 9
-      height: 21
-    texture: bosque_oscuro.png
-    spawns:
-      - creature: zombie
-        max_population: 3
-      - creature: skeleton
-        max_population: 2
-  - id: zone_26
-    type: biome
-    template: bosque_oscuro
-    area:
-      x: 42
-      y: 40
-      width: 11
-      height: 10
-    texture: bosque_oscuro.png
-    spawns:
-      - creature: zombie
-        max_population: 1
-      - creature: spider
-        max_population: 1
 entries:
-  - id: entry_3
-    type: mazmorra
-    environment: env_3
-    position: [53, 64]
-    size: [3, 3]
-    texture: snake.png
   - id: entry_2
     type: regular_cave
     environment: env_2
     position: [20, 15]
     size: [3, 1]
     texture: cave.png
+  - id: entry_3
+    type: mazmorra
+    environment: env_3
+    position: [53, 64]
+    size: [3, 3]
+    texture: snake.png
 environments:
   - id: env_2
     name: Regular Cave 2

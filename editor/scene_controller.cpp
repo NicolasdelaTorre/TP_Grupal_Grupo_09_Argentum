@@ -72,8 +72,45 @@ QGraphicsItem* SceneController::topLevelItemAtCell(int cell_x, int cell_y) const
     return nullptr;
 }
 
-bool SceneController::placePlayerSpawn(int cell_x, int cell_y, QString& error) {
-    Q_UNUSED(error);
+void SceneController::removeItemsOfType(const QString& type) {
+    std::vector<QGraphicsItem*> to_delete;
+    for (auto* item: scene_->items()) {
+        QGraphicsItem* current = item;
+        while (current->parentItem()) {
+            current = current->parentItem();
+        }
+        if (current->data(DATA_TYPE).toString() != type) {
+            continue;
+        }
+        if (std::find(to_delete.begin(), to_delete.end(), current) == to_delete.end()) {
+            to_delete.push_back(current);
+        }
+    }
+    for (auto* item: to_delete) {
+        scene_->removeItem(item);
+        delete item;
+    }
+}
+
+namespace {
+
+bool blocksPlayerSpawn(const QString& type) {
+    return type == OBSTACLE_TYPE || type == WALL_TYPE || type == EXIT_TYPE || type == ENTRY_TYPE;
+}
+
+}  // namespace
+
+bool SceneController::placePlayerSpawn(int cell_x, int cell_y, QString& error,
+                                       bool validate_position) {
+    if (validate_position) {
+        const QString existing = itemTypeAtCell(cell_x, cell_y);
+        if (blocksPlayerSpawn(existing)) {
+            error = QStringLiteral(
+                    "Player spawn cannot be placed over an obstacle, wall, exit, or entry.");
+            return false;
+        }
+    }
+    removeItemsOfType(PLAYER_SPAWN_TYPE);
     auto* item = item_builder_.buildPlayerSpawn(QStringLiteral("player_spawn"));
     item->setPos(cell_x * CELL_DISPLAY_SIZE, cell_y * CELL_DISPLAY_SIZE);
     item->setZValue(Z_PLAYER_SPAWN);

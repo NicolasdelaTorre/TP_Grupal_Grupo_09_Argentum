@@ -1,22 +1,23 @@
-#ifndef ARGENTUM_EDITOR_DIALOGS_BIOME_SPAWN_DIALOG_H
-#define ARGENTUM_EDITOR_DIALOGS_BIOME_SPAWN_DIALOG_H
+#ifndef ARGENTUM_EDITOR_DIALOGS_CREATURE_SPAWN_DIALOG_H
+#define ARGENTUM_EDITOR_DIALOGS_CREATURE_SPAWN_DIALOG_H
 
 #include <QDialog>
+#include <QString>
 #include <string>
 #include <vector>
 
-#include "assets/templates/template_registry.h"
 #include "map/map_data.h"
 
 class QSlider;
 
-class BiomeSpawnDialog: public QDialog {
+class CreatureSpawnDialog: public QDialog {
     Q_OBJECT
 
 public:
-    explicit BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget* parent = nullptr);
-    BiomeSpawnDialog(const BiomeTemplate& biome_template,
-                     const std::vector<CreatureSpawn>& initial_spawns, QWidget* parent = nullptr);
+    CreatureSpawnDialog(const QString& window_title, const QString& display_title,
+                        const std::vector<std::string>& creatures,
+                        const std::vector<CreatureSpawn>& initial_spawns = {},
+                        QWidget* parent = nullptr);
 
     std::vector<CreatureSpawn> selected_spawns() const;
 

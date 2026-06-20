@@ -1,43 +1,43 @@
-#include "biome_spawn_dialog.h"
+#include "creature_spawn_dialog.h"
 
 #include <QDialogButtonBox>
 #include <QFont>
 #include <QGridLayout>
 #include <QLabel>
+#include <QScrollArea>
 #include <QSlider>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <algorithm>
 
 #include "editor_constants.h"
 
-QString BiomeSpawnDialog::capitalize_first(const QString& text) {
+QString CreatureSpawnDialog::capitalize_first(const QString& text) {
     if (text.isEmpty()) {
         return text;
     }
     return text.left(1).toUpper() + text.mid(1);
 }
 
-int BiomeSpawnDialog::initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
-                                             const std::string& creature) {
+int CreatureSpawnDialog::initial_population_for(const std::vector<CreatureSpawn>& initial_spawns,
+                                                const std::string& creature) {
     const auto it = std::find_if(
             initial_spawns.begin(), initial_spawns.end(),
             [&creature](const CreatureSpawn& spawn) { return spawn.creature == creature; });
     return it == initial_spawns.end() ? CREATURE_SLIDER_DEFAULT : it->max_population;
 }
 
-BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template, QWidget* parent):
-        BiomeSpawnDialog(biome_template, {}, parent) {}
-
-BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template,
-                                   const std::vector<CreatureSpawn>& initial_spawns,
-                                   QWidget* parent):
+CreatureSpawnDialog::CreatureSpawnDialog(const QString& window_title, const QString& display_title,
+                                         const std::vector<std::string>& creatures,
+                                         const std::vector<CreatureSpawn>& initial_spawns,
+                                         QWidget* parent):
         QDialog(parent) {
-    setWindowTitle(QStringLiteral("Biome creatures"));
-    resize(440, 320);
+    setWindowTitle(window_title);
+    resize(440, 360);
 
     auto* layout = new QVBoxLayout(this);
 
-    auto* title = new QLabel(QString::fromStdString(biome_template.name));
+    auto* title = new QLabel(display_title);
     title->setAlignment(Qt::AlignCenter);
     QFont title_font = title->font();
     title_font.setPointSize(title_font.pointSize() + 4);
@@ -54,7 +54,7 @@ BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template,
     grid->setVerticalSpacing(8);
 
     int row = 0;
-    for (const auto& creature: biome_template.allowed_creatures) {
+    for (const auto& creature: creatures) {
         const QString creature_label = capitalize_first(QString::fromStdString(creature));
 
         auto* name_label = new QLabel(creature_label);
@@ -77,8 +77,12 @@ BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template,
         ++row;
     }
 
-    layout->addLayout(grid);
-    layout->addStretch();
+    auto* grid_container = new QWidget();
+    grid_container->setLayout(grid);
+    auto* scroll = new QScrollArea();
+    scroll->setWidgetResizable(true);
+    scroll->setWidget(grid_container);
+    layout->addWidget(scroll, 1);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -86,7 +90,7 @@ BiomeSpawnDialog::BiomeSpawnDialog(const BiomeTemplate& biome_template,
     layout->addWidget(buttons);
 }
 
-std::vector<CreatureSpawn> BiomeSpawnDialog::selected_spawns() const {
+std::vector<CreatureSpawn> CreatureSpawnDialog::selected_spawns() const {
     std::vector<CreatureSpawn> spawns;
     for (const auto& entry: entries_) {
         const int value = entry.population->value();
