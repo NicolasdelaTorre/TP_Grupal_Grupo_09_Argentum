@@ -1,6 +1,9 @@
 target_sources(taller_tests
     PRIVATE
-    # .cpp files
+    test_common_protocol.cpp
+    test_client_events.cpp
+    test_server_events.cpp
+    protocol_loopback.cpp
     PUBLIC
-    # .h files
+    protocol_loopback.h
     )
