@@ -31,7 +31,7 @@ MapCanvas::MapCanvas(const TemplateRegistry& templates, QWidget* parent):
         templates_(templates),
         scene_(new QGraphicsScene(this)),
         view_(new QGraphicsView(this)),
-        controller_(new SceneController(scene_, templates)) {
+        controller_(scene_, templates_) {
     // layout de la ventana
     auto* layout = new QVBoxLayout(this);
     // vista de la escena
@@ -73,7 +73,7 @@ void MapCanvas::initializeScene(const QString& map_id, const QString& map_name, 
     map_height_ = height;
 
     scene_->clear();
-    controller_->reset();
+    controller_.reset();
     drawing_zone_ = false;
     clearZonePreview();
 
@@ -173,7 +173,7 @@ bool MapCanvas::isToolAllowed(EditorTool tool) const {
 }
 
 MapDocument MapCanvas::buildDocument() const {
-    return controller_->buildDocument(map_id_, map_name_, map_width_, map_height_);
+    return controller_.buildDocument(map_id_, map_name_, map_width_, map_height_);
 }
 
 void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) {
@@ -185,7 +185,7 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
 
     QString error;
     if (document.player_spawn.placed) {
-        controller_->placePlayerSpawn(document.player_spawn.x, document.player_spawn.y, error,
+        controller_.placePlayerSpawn(document.player_spawn.x, document.player_spawn.y, error,
                                       false);
     }
 
@@ -193,7 +193,7 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
         ToolInfo tool;
         tool.tool = EditorTool::Obstacle;
         tool.obstacle_template_id = QString::fromStdString(obstacle.type);
-        controller_->placeObstacle(tool, obstacle.x, obstacle.y, error, obstacle.texture_anchor);
+        controller_.placeObstacle(tool, obstacle.x, obstacle.y, error, obstacle.texture_anchor);
     }
 
     for (const auto& zone: document.zones) {
@@ -201,19 +201,19 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
         if (zone.type == ZONE_TYPE_CITY) {
             tool.tool = EditorTool::CityZone;
             tool.city_template_id = QString::fromStdString(zone.template_id);
-            controller_->placeCityZone(tool, zone.area_x, zone.area_y, zone.area_width,
+            controller_.placeCityZone(tool, zone.area_x, zone.area_y, zone.area_width,
                                        zone.area_height, error, QString::fromStdString(zone.id));
         } else if (zone.type == ZONE_TYPE_BIOME) {
             tool.tool = EditorTool::BiomeZone;
             tool.biome_template_id = QString::fromStdString(zone.template_id);
-            controller_->placeBiomeZone(tool, zone.area_x, zone.area_y, zone.area_width,
+            controller_.placeBiomeZone(tool, zone.area_x, zone.area_y, zone.area_width,
                                         zone.area_height, zone.spawns, error,
                                         QString::fromStdString(zone.id));
         }
     }
 
     for (const auto& entry: document.entries) {
-        controller_->placeEntry(QString::fromStdString(entry.id),
+        controller_.placeEntry(QString::fromStdString(entry.id),
                                 QString::fromStdString(entry.environment_id),
                                 QString::fromStdString(entry.type), entry.x, entry.y, error);
     }
@@ -222,14 +222,14 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
         ToolInfo tool;
         tool.tool = EditorTool::Wall;
         tool.wall_template_id = QString::fromStdString(wall.template_id);
-        controller_->placeWall(tool, wall.x, wall.y, error, QString::fromStdString(wall.id));
+        controller_.placeWall(tool, wall.x, wall.y, error, QString::fromStdString(wall.id));
     }
 
     for (const auto& exit: document.exits) {
         ToolInfo tool;
         tool.tool = EditorTool::Exit;
         tool.exit_template_id = QString::fromStdString(exit.template_id);
-        controller_->placeExit(tool, exit.x, exit.y, error, QString::fromStdString(exit.id));
+        controller_.placeExit(tool, exit.x, exit.y, error, QString::fromStdString(exit.id));
     }
 
     loadFloorsFromGrid(document);
@@ -241,7 +241,7 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
 bool MapCanvas::placeEntryItem(const QString& entry_id, const QString& environment_id,
                                const QString& template_id, int cell_x, int cell_y) {
     QString error;
-    if (!controller_->placeEntry(entry_id, environment_id, template_id, cell_x, cell_y, error)) {
+    if (!controller_.placeEntry(entry_id, environment_id, template_id, cell_x, cell_y, error)) {
         QMessageBox::warning(this, QStringLiteral("Entry"), error);
         return false;
     }
@@ -296,7 +296,7 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
     // poner respecitvo item
     switch (active_tool_.tool) {
         case EditorTool::PlayerSpawn:
-            if (!controller_->placePlayerSpawn(cell_x, cell_y, error)) {
+            if (!controller_.placePlayerSpawn(cell_x, cell_y, error)) {
                 QMessageBox box(QMessageBox::NoIcon, QStringLiteral("Spawn"), error,
                                 QMessageBox::Ok, this);
                 box.setMinimumSize(360, 140);
@@ -419,7 +419,7 @@ void MapCanvas::handleHoverMove(const QPoint& view_pos) {
         text += QStringLiteral("\n");
     }
 
-    const auto spawns = controller_->biomeSpawnsFor(zone_id);
+    const auto spawns = controller_.biomeSpawnsFor(zone_id);
     if (spawns.empty()) {
         text += QStringLiteral("No spawns configured.");
     } else {
@@ -446,7 +446,7 @@ void MapCanvas::placeCityAt(int cell_x, int cell_y) {
     }
 
     QString error;
-    if (!controller_->placeCityZone(active_tool_, cell_x, cell_y, city->default_width,
+    if (!controller_.placeCityZone(active_tool_, cell_x, cell_y, city->default_width,
                                     city->default_height, error)) {
         QMessageBox::warning(this, QStringLiteral("City"), error);
         return;
@@ -458,7 +458,7 @@ void MapCanvas::placeCityAt(int cell_x, int cell_y) {
         floor_tool.tool = EditorTool::FloorModifier;
         floor_tool.floor_template_id = QString::fromStdString(fixed.type);
         QString floor_error;
-        controller_->placeFloor(floor_tool, cell_x + fixed.relative_x, cell_y + fixed.relative_y,
+        controller_.placeFloor(floor_tool, cell_x + fixed.relative_x, cell_y + fixed.relative_y,
                                 floor_error);
     }
 
@@ -468,7 +468,7 @@ void MapCanvas::placeCityAt(int cell_x, int cell_y) {
         obstacle_tool.tool = EditorTool::Obstacle;
         obstacle_tool.obstacle_template_id = QString::fromStdString(fixed.type);
         QString obstacle_error;
-        controller_->placeObstacle(obstacle_tool, cell_x + fixed.relative_x,
+        controller_.placeObstacle(obstacle_tool, cell_x + fixed.relative_x,
                                    cell_y + fixed.relative_y, obstacle_error);
     }
 }
@@ -489,7 +489,7 @@ void MapCanvas::placeObstacleAt(int cell_x, int cell_y) {
     }
 
     QString error;
-    if (!controller_->placeObstacle(active_tool_, cell_x, cell_y, error)) {
+    if (!controller_.placeObstacle(active_tool_, cell_x, cell_y, error)) {
         QMessageBox::warning(this, QStringLiteral("Obstacle"), error);
     }
 }
@@ -508,7 +508,7 @@ void MapCanvas::placeWallAt(int cell_x, int cell_y) {
     }
 
     QString error;
-    if (!controller_->placeWall(active_tool_, cell_x, cell_y, error)) {
+    if (!controller_.placeWall(active_tool_, cell_x, cell_y, error)) {
         QMessageBox::warning(this, QStringLiteral("Wall"), error);
         return;
     }
@@ -529,7 +529,7 @@ void MapCanvas::placeExitAt(int cell_x, int cell_y) {
     }
 
     QString error;
-    if (!controller_->placeExit(active_tool_, cell_x, cell_y, error)) {
+    if (!controller_.placeExit(active_tool_, cell_x, cell_y, error)) {
         QMessageBox::warning(this, QStringLiteral("Exit"), error);
         return;
     }
@@ -556,7 +556,7 @@ void MapCanvas::loadFloorsFromGrid(const MapDocument& document) {
             ToolInfo tool;
             tool.tool = EditorTool::FloorModifier;
             tool.floor_template_id = QString::fromStdString(floor->id);
-            controller_->placeFloor(tool, x, y, error);
+            controller_.placeFloor(tool, x, y, error);
         }
     }
 }
@@ -571,7 +571,7 @@ void MapCanvas::placeFloorAt(int cell_x, int cell_y) {
     }
 
     QString error;
-    if (!controller_->placeFloor(active_tool_, cell_x, cell_y, error)) {
+    if (!controller_.placeFloor(active_tool_, cell_x, cell_y, error)) {
         QMessageBox::warning(this, QStringLiteral("Floor"), error);
     }
 }
@@ -609,11 +609,11 @@ void MapCanvas::editBiomeSpawnsAt(int cell_x, int cell_y) {
     const QString zone_id = biome_item->data(DATA_ID).toString();
     CreatureSpawnDialog dialog(QStringLiteral("Biome creatures"),
                                QString::fromStdString(biome->name), biome->allowed_creatures,
-                               controller_->biomeSpawnsFor(zone_id), this);
+                               controller_.biomeSpawnsFor(zone_id), this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
-    controller_->setBiomeSpawns(zone_id, dialog.selected_spawns());
+    controller_.setBiomeSpawns(zone_id, dialog.selected_spawns());
     last_hover_zone_id_.clear();
 }
 
@@ -649,7 +649,7 @@ void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     }
     // colocar zona de bioma
     QString error;
-    if (!controller_->placeBiomeZone(active_tool_, rect.x(), rect.y(), rect.width(), rect.height(),
+    if (!controller_.placeBiomeZone(active_tool_, rect.x(), rect.y(), rect.width(), rect.height(),
                                      spawns, error)) {
         QMessageBox::warning(this, QStringLiteral("Biome"), error);
         return;
@@ -667,7 +667,7 @@ void MapCanvas::handleRightPress(const QPoint& view_pos) {
     int cell_x = 0;
     int cell_y = 0;
     cellFromViewPos(view_pos, cell_x, cell_y);
-    const QString item_type = controller_->itemTypeAtCell(cell_x, cell_y);
+    const QString item_type = controller_.itemTypeAtCell(cell_x, cell_y);
     if (item_type == CITY_ZONE_TYPE || item_type == BIOME_ZONE_TYPE || item_type == ENTRY_TYPE) {
         QMessageBox box(QMessageBox::NoIcon, QStringLiteral("Confirm"),
                         QStringLiteral("Are you sure you want to delete?"),
@@ -685,7 +685,7 @@ void MapCanvas::handleRightPress(const QPoint& view_pos) {
             return;
         }
     }
-    const DeletedItem deleted = controller_->deleteAtCell(cell_x, cell_y);
+    const DeletedItem deleted = controller_.deleteAtCell(cell_x, cell_y);
     if (deleted.deleted && deleted.type == ENTRY_TYPE && !deleted.environment_id.isEmpty()) {
         emit entryDeleted(deleted.environment_id);
     }
@@ -842,15 +842,6 @@ void MapCanvas::rebuildEnvironmentLayers() {
             for (int x = 0; x < W; ++x) {
                 const size_t idx = static_cast<size_t>(y) * W + x;
                 if (is_exterior[idx] || is_wall[idx]) {
-                    overlay.setPixelColor(x, y, QColor(0, 0, 0, 255));
-                }
-            }
-        }
-    } else {
-        for (int y = 0; y < H; ++y) {
-            for (int x = 0; x < W; ++x) {
-                const size_t idx = static_cast<size_t>(y) * W + x;
-                if (is_wall[idx]) {
                     overlay.setPixelColor(x, y, QColor(0, 0, 0, 255));
                 }
             }
