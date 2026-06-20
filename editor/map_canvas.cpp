@@ -21,7 +21,7 @@
 #include <cmath>
 #include <vector>
 
-#include "dialogs/biome_spawn_dialog.h"
+#include "dialogs/creature_spawn_dialog.h"
 #include "map/biome_grid.h"
 
 #include "editor_constants.h"
@@ -185,7 +185,8 @@ void MapCanvas::loadFromDocument(const MapDocument& document, EditingMode mode) 
 
     QString error;
     if (document.player_spawn.placed) {
-        controller_->placePlayerSpawn(document.player_spawn.x, document.player_spawn.y, error);
+        controller_->placePlayerSpawn(document.player_spawn.x, document.player_spawn.y, error,
+                                      false);
     }
 
     for (const auto& obstacle: document.obstacles) {
@@ -295,7 +296,18 @@ void MapCanvas::handleLeftPress(const QPoint& view_pos) {
     // poner respecitvo item
     switch (active_tool_.tool) {
         case EditorTool::PlayerSpawn:
-            controller_->placePlayerSpawn(cell_x, cell_y, error);
+            if (!controller_->placePlayerSpawn(cell_x, cell_y, error)) {
+                QMessageBox box(QMessageBox::NoIcon, QStringLiteral("Spawn"), error,
+                                QMessageBox::Ok, this);
+                box.setMinimumSize(360, 140);
+                if (QLabel* label = box.findChild<QLabel*>("qt_msgbox_label")) {
+                    label->setMinimumWidth(300);
+                    label->setWordWrap(true);
+                    label->setAlignment(Qt::AlignCenter);
+                }
+                box.findChild<QDialogButtonBox*>("qt_msgbox_buttonbox")->setCenterButtons(true);
+                box.exec();
+            }
             break;
         case EditorTool::Obstacle:
             placeObstacleAt(cell_x, cell_y);
@@ -595,7 +607,9 @@ void MapCanvas::editBiomeSpawnsAt(int cell_x, int cell_y) {
     }
 
     const QString zone_id = biome_item->data(DATA_ID).toString();
-    BiomeSpawnDialog dialog(*biome, controller_->biomeSpawnsFor(zone_id), this);
+    CreatureSpawnDialog dialog(QStringLiteral("Biome creatures"),
+                               QString::fromStdString(biome->name), biome->allowed_creatures,
+                               controller_->biomeSpawnsFor(zone_id), this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
@@ -625,7 +639,9 @@ void MapCanvas::finishBiomeZoneDraw(int end_cell_x, int end_cell_y) {
     // si el bioma no tiene criaturas disponibles, saltear el diálogo
     std::vector<CreatureSpawn> spawns;
     if (!biome->allowed_creatures.empty()) {
-        BiomeSpawnDialog dialog(*biome, this);
+        CreatureSpawnDialog dialog(QStringLiteral("Biome creatures"),
+                                   QString::fromStdString(biome->name), biome->allowed_creatures,
+                                   {}, this);
         if (dialog.exec() != QDialog::Accepted) {
             return;
         }

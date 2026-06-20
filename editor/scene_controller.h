@@ -26,7 +26,7 @@ class SceneController {
 public:
     SceneController(QGraphicsScene* scene, const TemplateRegistry& templates);
 
-    bool placePlayerSpawn(int cell_x, int cell_y, QString& error);
+    bool placePlayerSpawn(int cell_x, int cell_y, QString& error, bool validate_position = true);
     bool placeObstacle(const ToolInfo& tool, int cell_x, int cell_y, QString& error,
                        int texture_anchor_override = -1);
     bool placeCityZone(const ToolInfo& tool, int cell_x, int cell_y, int width, int height,
@@ -74,6 +74,7 @@ private:
     static void bumpCounter(int& counter, const QString& id, const QString& prefix);
     QGraphicsItem* topLevelItemAtCell(int cell_x, int cell_y) const;
     QColor resolveZoneColor(const std::string& template_color, bool is_city) const;
+    void removeItemsOfType(const QString& type);
     void deleteItemsInArea(const QString& type, int x, int y, int w, int h);
 };
 

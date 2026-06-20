@@ -15,7 +15,7 @@
 #include <QSpinBox>
 #include <algorithm>
 
-#include "dialogs/environment_spawn_dialog.h"
+#include "dialogs/creature_spawn_dialog.h"
 #include "dialogs/new_environment_dialog.h"
 #include "map/yaml_map_io.h"
 
@@ -633,7 +633,8 @@ void EditorWindow::onEntryPlacementRequested(const QString& template_id, int cel
     std::vector<CreatureSpawn> spawns;
     const auto creatures = templates_.all_creatures();
     if (!creatures.empty()) {
-        EnvironmentSpawnDialog spawn_dialog(dialog.environment_name(), creatures, this);
+        CreatureSpawnDialog spawn_dialog(QStringLiteral("Environment creatures"),
+                                         dialog.environment_name(), creatures, {}, this);
         if (spawn_dialog.exec() != QDialog::Accepted) {
             return;
         }
@@ -700,7 +701,8 @@ void EditorWindow::onEditEnvironmentCreatures() {
         return;
     }
 
-    EnvironmentSpawnDialog dialog(QString::fromStdString(env->name), creatures, env->spawns, this);
+    CreatureSpawnDialog dialog(QStringLiteral("Environment creatures"),
+                               QString::fromStdString(env->name), creatures, env->spawns, this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
