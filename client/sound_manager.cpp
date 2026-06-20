@@ -13,6 +13,7 @@ SoundManager::SoundManager(SDL2pp::Mixer& mixer):
     this->mixer.SetMusicVolume(20);
     this->mixer.PlayMusic(music, -1);  // -1 = loop infinito
     this->mixer.AllocateChannels(SFX_CHANNELS);
+    this->mixer.SetVolume(-1, 30);  
 
 }
 
