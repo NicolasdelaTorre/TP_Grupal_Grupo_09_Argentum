@@ -19,6 +19,7 @@
 #include "dialogs/new_environment_dialog.h"
 #include "map/yaml_map_io.h"
 
+#include "common_biome.h"
 #include "editor_constants.h"
 #include "ui_EditorWindow.h"
 #include "verificator.h"
@@ -48,6 +49,33 @@ EditorWindow::ResizeDelta EditorWindow::computeResizeDelta(ResizeDirection dir, 
 
 bool EditorWindow::fitsInside(int x, int y, int w, int h, int map_w, int map_h) {
     return x >= 0 && y >= 0 && (x + w) <= map_w && (y + h) <= map_h;
+}
+
+static void resizeBiomeGrid(std::vector<uint8_t>& grid, int old_w, int old_h, int new_w, int new_h,
+                            int offset_x, int offset_y) {
+    if (new_w <= 0 || new_h <= 0) {
+        grid.clear();
+        return;
+    }
+    if (old_w <= 0 || old_h <= 0 || grid.empty()) {
+        grid.assign(static_cast<size_t>(new_w) * new_h, static_cast<uint8_t>(BiomeType::NONE));
+        return;
+    }
+
+    std::vector<uint8_t> resized(static_cast<size_t>(new_w) * new_h,
+                                 static_cast<uint8_t>(BiomeType::NONE));
+    for (int y = 0; y < old_h; ++y) {
+        for (int x = 0; x < old_w; ++x) {
+            const int nx = x + offset_x;
+            const int ny = y + offset_y;
+            if (nx < 0 || ny < 0 || nx >= new_w || ny >= new_h) {
+                continue;
+            }
+            resized[static_cast<size_t>(ny) * new_w + nx] =
+                    grid[static_cast<size_t>(y) * old_w + x];
+        }
+    }
+    grid = std::move(resized);
 }
 
 bool EditorWindow::canShrinkDocument(const MapDocument& doc, const ResizeDelta& delta) {
@@ -104,8 +132,15 @@ bool EditorWindow::canShrinkDocument(const MapDocument& doc, const ResizeDelta& 
 }
 
 void EditorWindow::applyResizeToDocument(MapDocument& doc, const ResizeDelta& delta) {
-    doc.map.width += delta.delta_w;
-    doc.map.height += delta.delta_h;
+    const int old_w = doc.map.width;
+    const int old_h = doc.map.height;
+    const int new_w = old_w + delta.delta_w;
+    const int new_h = old_h + delta.delta_h;
+
+    resizeBiomeGrid(doc.biome_grid, old_w, old_h, new_w, new_h, delta.offset_x, delta.offset_y);
+
+    doc.map.width = new_w;
+    doc.map.height = new_h;
 
     if (delta.offset_x == 0 && delta.offset_y == 0) {
         return;
@@ -593,6 +628,7 @@ void EditorWindow::openExistingMap() {
         return ok ? value + 1 : 0;
     };
 
+    //calcular proximos ids de entries y environments libres
     next_entry_index_ = 1;
     next_environment_index_ = 1;
     for (const auto& entry: main_doc_.entries) {
@@ -695,11 +731,6 @@ void EditorWindow::onEditEnvironmentCreatures() {
     }
 
     const auto creatures = templates_.all_creatures();
-    if (creatures.empty()) {
-        QMessageBox::information(this, QStringLiteral("Creatures"),
-                                 QStringLiteral("No creatures available."));
-        return;
-    }
 
     CreatureSpawnDialog dialog(QStringLiteral("Environment creatures"),
                                QString::fromStdString(env->name), creatures, env->spawns, this);

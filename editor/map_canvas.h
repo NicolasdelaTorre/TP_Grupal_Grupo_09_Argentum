@@ -55,7 +55,7 @@ private:
     const TemplateRegistry& templates_;
     QGraphicsScene* scene_;
     QGraphicsView* view_;
-    SceneController* controller_;
+    SceneController controller_;
 
     QString map_id_;
     QString map_name_;
