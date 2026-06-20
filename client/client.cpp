@@ -1,11 +1,15 @@
 #include "client.h"
 
 #include <iostream>
+#include <optional>
 
 #include <SDL.h>
+#include <SDL2pp/Mixer.hh>
+#include <SDL2pp/Music.hh>
 #include <SDL2pp/SDL2pp.hh>
 #include <SDL2pp/SDLTTF.hh>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 
 #include "../common/Communication/events/client_events.h"
 #include "../common/Communication/events/server_events.h"
@@ -15,6 +19,7 @@
 #include "GameScreen.h"
 #include "head_selection_screen.h"
 #include "login_screen.h"
+#include "sound_manager.h"
 
 
 Client::Client(const char* hostname, const char* port, bool fullscreen):
@@ -25,9 +30,18 @@ Client::Client(const char* hostname, const char* port, bool fullscreen):
 
 
 void Client::run() {
-    SDL2pp::SDL sdl(SDL_INIT_VIDEO);
+    SDL2pp::SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     SDL2pp::SDLTTF ttf;
     SDL2pp::SDLImage img(IMG_INIT_PNG);
+
+    // Audio: abrimos el dispositivo y dejamos sonando la música de fondo en loop
+    // durante toda la sesión (login + juego). mixer/music viven a nivel de run()
+    // (no static) para que se destruyan ANTES que `sdl`: el ~Mixer hace
+    // Mix_CloseAudio y necesita el subsistema de audio todavía vivo. Si el audio
+    // falla, seguimos sin sonido en vez de abortar el cliente.
+    SDL2pp::Mixer mixer(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT,
+                        MIX_DEFAULT_CHANNELS, 4096);
+    SoundManager sound(mixer);
 
     SDL2pp::Window window("Argentum", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 900, 600,
                           SDL_WINDOW_SHOWN | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
@@ -96,7 +110,7 @@ void Client::run() {
     sender.start();
     receiver.start();
 
-    GameScreen game(renderer, "AO_IMGS", clientEvents, serverEvents, *mapData, spawn, player);
+    GameScreen game(renderer, "AO_IMGS", clientEvents, serverEvents, *mapData, spawn, player, sound);
     game.run();
 
     // Cleanup: cerramos queues/socket para desbloquear los threads.
