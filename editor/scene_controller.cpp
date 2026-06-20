@@ -279,6 +279,11 @@ bool SceneController::placeBiomeZone(const ToolInfo& tool, int cell_x, int cell_
     return true;
 }
 
+QString SceneController::itemTypeAtCell(int cell_x, int cell_y) const {
+    auto* item = topLevelItemAtCell(cell_x, cell_y);
+    return item ? item->data(DATA_TYPE).toString() : QString();
+}
+
 // eliminar item en celda
 DeletedItem SceneController::deleteAtCell(int cell_x, int cell_y) {
     DeletedItem result;

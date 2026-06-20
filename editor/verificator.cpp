@@ -72,6 +72,11 @@ bool Verificator::checkEnvironments(QString& error_title, QString& error_message
                                     .arg(QString::fromStdString(env.id));
             return false;
         }
+        if (!env.player_spawn.placed) {
+            error_title = QStringLiteral("Missing spawn");
+            error_message = QStringLiteral("You must place at least one player spawn in each environment.");
+            return false;
+        }
         if (env.walls.empty()) {
             continue;
         }

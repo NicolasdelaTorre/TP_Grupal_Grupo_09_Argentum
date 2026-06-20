@@ -1,8 +1,14 @@
 /* Fondo */
 
-QMainWindow,
-QDialog {
+QMainWindow {
     border-image: url(:/ui/background.png) 0 0 0 0 stretch stretch;
+}
+
+QDialog {
+    border-image: none;
+    background-color: rgba(18, 14, 10, 240);
+    border: 1px solid #5a4a3a;
+    min-width: 360px;
 }
 
 /* Contenedores transparentes */
@@ -21,6 +27,7 @@ QWidget#pageToolCities,
 QWidget#pageToolEnvironments,
 QWidget#pageToolDimensions,
 QWidget#pageToolWalls,
+QWidget#pageToolExits,
 QFrame#resizeActionGroupFrame,
 QFrame#resizeActionFrame,
 QFrame#resizeDirectionFrame {
@@ -87,6 +94,33 @@ QComboBox QAbstractItemView {
 QListWidget::item:selected {
     background-color: #6a3030;
     color: #ffffff;
+}
+
+QMessageBox {
+    border-image: none;
+    background-color: rgba(18, 14, 10, 240);
+    border: 1px solid #5a4a3a;
+    min-width: 360px;
+    min-height: 140px;
+}
+
+QMessageBox QLabel#qt_msgboxex_icon_label {
+    qproperty-scaledContents: true;
+    max-width: 32px;
+    max-height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    margin-right: 8px;
+}
+
+QMessageBox QLabel#qt_msgbox_label {
+    min-width: 280px;
+    padding: 12px 16px;
+    qproperty-alignment: AlignCenter;
+}
+
+QMessageBox QDialogButtonBox {
+    qproperty-centerButtons: true;
 }
 
 /* Botones */

@@ -44,6 +44,7 @@ public:
                     const QString& floor_id = QString());
 
     DeletedItem deleteAtCell(int cell_x, int cell_y);
+    QString itemTypeAtCell(int cell_x, int cell_y) const;
 
     MapDocument buildDocument(const QString& map_id, const QString& map_name, int width,
                               int height) const;

@@ -1,11 +1,13 @@
 #include "editor_window.h"
 
+#include <QDialogButtonBox>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QIcon>
 #include <QMessageBox>
 #include <QPainter>
 #include <QPixmap>
@@ -235,13 +237,20 @@ void EditorWindow::setupTemplates() {
     if (ui_->listCityTemplate->count() > 0) {
         ui_->listCityTemplate->setCurrentRow(0);
     }
+    ui_->listObstacleTemplate->setIconSize(QSize(48, 48));
     for (const auto& obstacle: templates_.obstacles()) {
-        const QString label = QStringLiteral("%1 (%2x%3)")
-                                      .arg(QString::fromStdString(obstacle.name))
-                                      .arg(obstacle.width)
-                                      .arg(obstacle.height);
-        auto* item = new QListWidgetItem(label, ui_->listObstacleTemplate);
+        auto* item =
+                new QListWidgetItem(QString::fromStdString(obstacle.name), ui_->listObstacleTemplate);
         item->setData(Qt::UserRole, QString::fromStdString(obstacle.id));
+        if (!obstacle.texture.empty()) {
+            QPixmap pixmap(QString::fromStdString(obstacle.texture));
+            if (!pixmap.isNull()) {
+                const QPixmap scaled =
+                        pixmap.scaled(ui_->listObstacleTemplate->iconSize(), Qt::KeepAspectRatio,
+                                      Qt::SmoothTransformation);
+                item->setIcon(QIcon(scaled));
+            }
+        }
     }
     if (ui_->listObstacleTemplate->count() > 0) {
         ui_->listObstacleTemplate->setCurrentRow(0);
@@ -254,12 +263,14 @@ void EditorWindow::setupTemplates() {
     if (ui_->listFloorTemplate->count() > 0) {
         ui_->listFloorTemplate->setCurrentRow(0);
     }
+    ui_->comboEntryTemplate->setIconSize(QSize(48, 48));
     for (const auto& entry: templates_.entries()) {
-        const QString label = QStringLiteral("%1 (%2x%3)")
-                                      .arg(QString::fromStdString(entry.name))
-                                      .arg(entry.width)
-                                      .arg(entry.height);
-        ui_->comboEntryTemplate->addItem(label, QString::fromStdString(entry.id));
+        QPixmap pixmap(QString::fromStdString(entry.texture));
+        const QPixmap scaled =
+                pixmap.scaled(ui_->comboEntryTemplate->iconSize(), Qt::KeepAspectRatio,
+                              Qt::SmoothTransformation);
+        ui_->comboEntryTemplate->addItem(QIcon(scaled), QString::fromStdString(entry.name),
+                                         QString::fromStdString(entry.id));
     }
 }
 
@@ -295,10 +306,10 @@ void EditorWindow::setupTools() {
             [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
     connect(ui_->comboEntryTemplate, &QComboBox::currentIndexChanged, this,
             [this](int) { applyActiveTool(); });
-    connect(ui_->comboWallTemplate, &QComboBox::currentIndexChanged, this,
-            [this](int) { applyActiveTool(); });
-    connect(ui_->comboExitTemplate, &QComboBox::currentIndexChanged, this,
-            [this](int) { applyActiveTool(); });
+    connect(ui_->listWallTemplate, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
+    connect(ui_->listExitTemplate, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem*, QListWidgetItem*) { applyActiveTool(); });
 
     selectDefaultMode();
 }
@@ -330,8 +341,16 @@ void EditorWindow::applyActiveTool() {
         active_tool_.floor_template_id.clear();
     }
     active_tool_.entry_template_id = ui_->comboEntryTemplate->currentData().toString();
-    active_tool_.wall_template_id = ui_->comboWallTemplate->currentData().toString();
-    active_tool_.exit_template_id = ui_->comboExitTemplate->currentData().toString();
+    if (auto* item = ui_->listWallTemplate->currentItem()) {
+        active_tool_.wall_template_id = item->data(Qt::UserRole).toString();
+    } else {
+        active_tool_.wall_template_id.clear();
+    }
+    if (auto* item = ui_->listExitTemplate->currentItem()) {
+        active_tool_.exit_template_id = item->data(Qt::UserRole).toString();
+    } else {
+        active_tool_.exit_template_id.clear();
+    }
     map_canvas_->setActiveTool(active_tool_);
 }
 
@@ -770,28 +789,42 @@ void EditorWindow::setMainOnlySectionsVisible(bool visible) {
 void EditorWindow::refreshEnvironmentTemplates(const QString& environment_type) {
     const std::string env_type = environment_type.toStdString();
 
-    ui_->comboWallTemplate->clear();
+    ui_->listWallTemplate->setIconSize(QSize(48, 48));
+    ui_->listWallTemplate->clear();
     for (const auto& wall: templates_.walls()) {
         if (wall.environment_type != env_type) {
             continue;
         }
-        const QString label = QStringLiteral("%1 (%2x%3)")
-                                      .arg(QString::fromStdString(wall.name))
-                                      .arg(wall.width)
-                                      .arg(wall.height);
-        ui_->comboWallTemplate->addItem(label, QString::fromStdString(wall.id));
+        QPixmap pixmap(QString::fromStdString(wall.texture));
+        const QPixmap scaled =
+                pixmap.scaled(ui_->listWallTemplate->iconSize(), Qt::KeepAspectRatio,
+                              Qt::SmoothTransformation);
+        auto* item =
+                new QListWidgetItem(QIcon(scaled), QString::fromStdString(wall.name),
+                                    ui_->listWallTemplate);
+        item->setData(Qt::UserRole, QString::fromStdString(wall.id));
+    }
+    if (ui_->listWallTemplate->count() > 0) {
+        ui_->listWallTemplate->setCurrentRow(0);
     }
 
-    ui_->comboExitTemplate->clear();
+    ui_->listExitTemplate->setIconSize(QSize(48, 48));
+    ui_->listExitTemplate->clear();
     for (const auto& exit: templates_.exits()) {
         if (exit.environment_type != env_type) {
             continue;
         }
-        const QString label = QStringLiteral("%1 (%2x%3)")
-                                      .arg(QString::fromStdString(exit.name))
-                                      .arg(exit.width)
-                                      .arg(exit.height);
-        ui_->comboExitTemplate->addItem(label, QString::fromStdString(exit.id));
+        QPixmap pixmap(QString::fromStdString(exit.texture));
+        const QPixmap scaled =
+                pixmap.scaled(ui_->listExitTemplate->iconSize(), Qt::KeepAspectRatio,
+                              Qt::SmoothTransformation);
+        auto* item =
+                new QListWidgetItem(QIcon(scaled), QString::fromStdString(exit.name),
+                                    ui_->listExitTemplate);
+        item->setData(Qt::UserRole, QString::fromStdString(exit.id));
+    }
+    if (ui_->listExitTemplate->count() > 0) {
+        ui_->listExitTemplate->setCurrentRow(0);
     }
 
     applyActiveTool();
@@ -826,18 +859,42 @@ void EditorWindow::saveMap() {
     QString error_title;
     QString error_message;
     if (!verificator.validate(error_title, error_message)) {
-        QMessageBox::warning(this, error_title, error_message);
+        QMessageBox box(QMessageBox::NoIcon, error_title, error_message, QMessageBox::Ok, this);
+        box.setMinimumSize(360, 140);
+        if (QLabel* label = box.findChild<QLabel*>("qt_msgbox_label")) {
+            label->setMinimumWidth(300);
+            label->setWordWrap(true);
+            label->setAlignment(Qt::AlignCenter);
+        }
+        box.findChild<QDialogButtonBox*>("qt_msgbox_buttonbox")->setCenterButtons(true);
+        box.exec();
         return;
     }
 
     const QString path =
             QStringLiteral("%1/%2.yaml").arg(SAVE_MAP, QString::fromStdString(main_doc_.map.id));
     if (!YamlMapIO::save(main_doc_, path.toStdString())) {
-        QMessageBox::warning(this, QStringLiteral("Error"),
-                             QStringLiteral("Could not save the YAML."));
+        QMessageBox box(QMessageBox::NoIcon, QStringLiteral("Error"),
+                        QStringLiteral("Could not save the YAML."), QMessageBox::Ok, this);
+        box.setMinimumSize(360, 140);
+        if (QLabel* label = box.findChild<QLabel*>("qt_msgbox_label")) {
+            label->setMinimumWidth(300);
+            label->setWordWrap(true);
+            label->setAlignment(Qt::AlignCenter);
+        }
+        box.findChild<QDialogButtonBox*>("qt_msgbox_buttonbox")->setCenterButtons(true);
+        box.exec();
         return;
     }
 
-    QMessageBox::information(this, QStringLiteral("Saved"),
-                             QStringLiteral("Map saved at:\n%1").arg(path));
+    QMessageBox box(QMessageBox::NoIcon, QStringLiteral("Saved"),
+                    QStringLiteral("Map saved at:\n%1").arg(path), QMessageBox::Ok, this);
+    box.setMinimumSize(360, 140);
+    if (QLabel* label = box.findChild<QLabel*>("qt_msgbox_label")) {
+        label->setMinimumWidth(300);
+        label->setWordWrap(true);
+        label->setAlignment(Qt::AlignCenter);
+    }
+    box.findChild<QDialogButtonBox*>("qt_msgbox_buttonbox")->setCenterButtons(true);
+    box.exec();
 }
