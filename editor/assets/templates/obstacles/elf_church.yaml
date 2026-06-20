@@ -1,0 +1,7 @@
+template_id: iglesia_elf
+name: "Elf Church"
+size:
+  width: 6
+  height: 4
+texture: "elf_tall.png"
+texture_anchor: 1

@@ -1,0 +1,7 @@
+template_id: merchant_elf
+name: "Elf Merchant"
+size:
+  width: 3
+  height: 2
+texture: "elf_merchant.png"
+texture_anchor: 0

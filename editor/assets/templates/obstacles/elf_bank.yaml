@@ -1,0 +1,7 @@
+template_id: elf_bank
+name: "Elf Bank"
+size:
+  width: 7
+  height: 6
+texture: "elf_bank.png"
+texture_anchor: 0
