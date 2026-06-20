@@ -1293,6 +1293,12 @@ int Game::countNearbyClanMates(int playerId) const {
     return count;
 }
 
+void Game::changeMapId(int playerId, uint8_t newMapId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) return;
+    it->second.changeMapId(newMapId);
+}
+
 Game::~Game() {
     for (const auto& [id, _]: players) {
         updatePlayerData(id);

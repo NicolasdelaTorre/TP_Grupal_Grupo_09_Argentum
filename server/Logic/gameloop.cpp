@@ -261,12 +261,14 @@ void Gameloop::PlayerTurns() {
     std::vector<int> playersToTeleport = turnManager.getPlayersReadyToTeleport();
     for (int playerId : playersToTeleport) {
         game.finishTeleportingState(playerId);
-        Position playerPosition = {0, 0};
+        Position playerPosition = game.getPlayerPosition(playerId);
+
         uint8_t mapId = game.getPlayerMapId(playerId);
         if (mapId > 0) {
+            map.removeEntity(playerPosition.x, playerPosition.y, mapId, true);
+            map.placePlayerIntoTheOverworld(playerId, mapId);
+            game.changeMapId(playerId, 0);
             playerPosition = map.getEntryPosition(mapId);
-        } else {
-            playerPosition = game.getPlayerPosition(playerId);
         }
 
         if (playerPosition.x == -1 || playerPosition.y == -1) {
@@ -277,6 +279,11 @@ void Gameloop::PlayerTurns() {
 
         map.moveEntity(playerId, playerPosition.x, playerPosition.y, priestPosition.x, priestPosition.y + 1, true, 0);
         game.fastTravel(playerId, {priestPosition.x, (int16_t)(priestPosition.y + 1)});
+
+        if (mapId > 0) {
+            sendMapSnapshot(playerId, 0);
+            sendNpcSnapshot(playerId, 0);
+        }
 
         auto r = game.revivePlayer(playerId);
         std::string reply = r.message;
