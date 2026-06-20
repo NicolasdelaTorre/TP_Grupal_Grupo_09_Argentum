@@ -492,7 +492,7 @@ bool Map::moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int
 
     uint16_t currentWidth = getWidth(mapId);
 
-    if (isInBounds(oldX, oldY, mapId) && isInBounds(newX, newY, mapId) && !occupiedByEntity(newX, newY, mapId)) {
+    if (isInBounds(oldX, oldY, mapId) && isInBounds(newX, newY, mapId) && !occupiedByEntity(newX, newY, mapId) && isWalkable(newX, newY, mapId)) {
         if (isPlayer) {
             (*cells)[static_cast<size_t>(oldY) * currentWidth + oldX].playerId = 0;
             (*cells)[static_cast<size_t>(newY) * currentWidth + newX].playerId = static_cast<uint16_t>(entityId);
