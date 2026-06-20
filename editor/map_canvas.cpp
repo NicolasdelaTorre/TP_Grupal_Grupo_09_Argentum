@@ -7,6 +7,8 @@
 #include <QHBoxLayout>
 #include <QImage>
 #include <QInputDialog>
+#include <QDialogButtonBox>
+#include <QLabel>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
@@ -649,6 +651,24 @@ void MapCanvas::handleRightPress(const QPoint& view_pos) {
     int cell_x = 0;
     int cell_y = 0;
     cellFromViewPos(view_pos, cell_x, cell_y);
+    const QString item_type = controller_->itemTypeAtCell(cell_x, cell_y);
+    if (item_type == CITY_ZONE_TYPE || item_type == BIOME_ZONE_TYPE || item_type == ENTRY_TYPE) {
+        QMessageBox box(QMessageBox::NoIcon, QStringLiteral("Confirm"),
+                        QStringLiteral("Are you sure you want to delete?"),
+                        QMessageBox::Yes | QMessageBox::No, this);
+        box.setDefaultButton(QMessageBox::No);
+        box.setMinimumSize(200, 140);
+        if (QLabel* label = box.findChild<QLabel*>("qt_msgbox_label")) {
+            label->setMinimumWidth(300);
+            label->setWordWrap(true);
+            label->setAlignment(Qt::AlignCenter);
+        }
+        box.findChild<QDialogButtonBox*>("qt_msgbox_buttonbox")->setCenterButtons(true);
+        const auto answer = box.exec();
+        if (answer != QMessageBox::Yes) {
+            return;
+        }
+    }
     const DeletedItem deleted = controller_->deleteAtCell(cell_x, cell_y);
     if (deleted.deleted && deleted.type == ENTRY_TYPE && !deleted.environment_id.isEmpty()) {
         emit entryDeleted(deleted.environment_id);

@@ -978,28 +978,28 @@
                <widget class="QWidget" name="pageToolWalls">
                 <layout class="QVBoxLayout" name="wallToolsLayout">
                  <item>
-                  <widget class="QLabel" name="labelWall">
-                   <property name="text">
-                    <string>Wall</string>
+                  <widget class="QListWidget" name="listWallTemplate">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>200</height>
+                    </size>
                    </property>
                   </widget>
-                 </item>
-                 <item>
-                  <widget class="QComboBox" name="comboWallTemplate"/>
                  </item>
                 </layout>
                </widget>
                <widget class="QWidget" name="pageToolExits">
                 <layout class="QVBoxLayout" name="exitToolsLayout">
                  <item>
-                  <widget class="QLabel" name="labelExit">
-                   <property name="text">
-                    <string>Exit</string>
+                  <widget class="QListWidget" name="listExitTemplate">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>200</height>
+                    </size>
                    </property>
                   </widget>
-                 </item>
-                 <item>
-                  <widget class="QComboBox" name="comboExitTemplate"/>
                  </item>
                 </layout>
                </widget>
