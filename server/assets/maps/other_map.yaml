@@ -52,6 +52,21 @@ biome_map:
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    000000000000000000000000000000000000b00000000bb00000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000bbbbbbbbbbbbbbbbbb00000000000000000000000000000000000000000000000000
+    0000000000000000000000000000000bbbbbbbbbbbbbbbbbbb00000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000b999999b000000000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000b999999b000000000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000b999999b000000000000000000000000000000000000000000000000000000000000
+    0000000000000000000000000000000bb999999b000000000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000b999999b000000000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000bbbbbbbbbbbbbbbbbb00000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000bbbbbbbbbbbbbbbbbb00000000000000000000000000000000000000000000000000
+    0000000000000000000000000000000bbbbbbbbb000000000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000bbbbbbbb000000000000000000000000000000000000000000000000000000000000
+    00000000000000000000000000000000bbbbbbbb000000000000000000000000000000000000000000000000000000000000
+    000000000000000000000000000000000bbbbbb0000000000000000000000000000000000000000000000000000000000000
+    000000000000000000000000000000000bbbbbb0000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -61,21 +76,6 @@ biome_map:
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    000000000000000000000000000000000b0000000bb000000000000000000000000000000000000000000000000000000000
-    0000000000000000000000000000000bbbbbbbbbbbbbbb000000000000000000000000000000000000000000000000000000
-    0000000000000000000000000000000bbbbbbbbbbbbbbb0b0b00000000000000000000000000000000000000000000000000
-    00000000000000000000000000000000b00000bbbbbbbbbbbbbb000000000000000000000000000000000000000000000000
-    00000000000000000000000000000000b00000bbbbbbbbbbbbbb000000000000000000000000000000000000000000000000
-    00000000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbb000000000000000000000000000000000000000000000000
-    00000000000000000000000000000bbbbbbbbbbbbbbbbbb0000b000000000000000000000000000000000000000000000000
-    000000000000000000000000000000000000aabbbbbbbb000b00b00000000000000000000000000000000000000000000000
-    00000000000000000000000000000000000000bbbbbbbbbbbbbbb00000000000000000000000000000000000000000000000
-    0000000000000000000000000000000b00bbbbbbbbbbbbbbbbbbb00000000000000000000000000000000000000000000000
-    0000000000000000000000000000000000bbbbbbbbbb00000000000000000000000000000000000000000000000000000000
-    0000000000000000000000000000000000000000bbbb00000000000000000000000000000000000000000000000000000000
-    0000000000000000000000000000000000000000bbbb00000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -111,105 +111,120 @@ biome_map:
 player_spawn:
   position: [26, 25]
 obstacles:
-  - id: obstacle_137
-    type: lampara_ciudad
-    position: [53, 53]
+  - id: obstacle_53
+    type: small_apple_tree
+    position: [42, 51]
     size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_136
-    type: lampara_ciudad
-    position: [53, 59]
+    texture: small_apple_tree.png
+  - id: obstacle_52
+    type: small_apple_tree
+    position: [34, 44]
     size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_128
-    type: lampara_ciudad
-    position: [42, 59]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_127
-    type: lampara_ciudad
-    position: [32, 53]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_126
-    type: lampara_ciudad
-    position: [42, 66]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_125
-    type: lampara_ciudad
-    position: [32, 66]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_120
-    type: lampara_ciudad
-    position: [42, 53]
-    size: [1, 1]
-    texture: street_lamp.png
-  - id: obstacle_118
-    type: fuente
-    position: [37, 57]
-    size: [3, 3]
-    texture: water_fountain.png
-  - id: obstacle_110
+    texture: small_apple_tree.png
+  - id: obstacle_51
     type: water_pit
-    position: [48, 64]
+    position: [46, 54]
     size: [1, 1]
     texture: water_pit.png
-  - id: obstacle_108
+  - id: obstacle_50
     type: tree_red
-    position: [51, 56]
+    position: [49, 47]
     size: [1, 1]
     texture: tree_red.png
     texture_anchor: 1
-  - id: obstacle_103
+  - id: obstacle_49
     type: tree_red
-    position: [30, 58]
+    position: [28, 57]
     size: [1, 1]
     texture: tree_red.png
     texture_anchor: 1
-  - id: obstacle_101
+  - id: obstacle_48
     type: tree_red
-    position: [30, 66]
+    position: [28, 49]
     size: [1, 1]
     texture: tree_red.png
     texture_anchor: 1
-  - id: obstacle_94
-    type: elf_house
-    position: [30, 63]
+  - id: obstacle_47
+    type: fuente
+    position: [34, 48]
     size: [3, 3]
-    texture: elf_house.png
-  - id: obstacle_93
+    texture: water_fountain.png
+  - id: obstacle_46
+    type: lampara_ciudad
+    position: [51, 57]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_45
+    type: lampara_ciudad
+    position: [30, 57]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_44
+    type: lampara_ciudad
+    position: [40, 57]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_43
+    type: lampara_ciudad
+    position: [51, 50]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_42
+    type: lampara_ciudad
+    position: [40, 50]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_41
+    type: lampara_ciudad
+    position: [51, 44]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_40
+    type: lampara_ciudad
+    position: [40, 44]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_39
+    type: lampara_ciudad
+    position: [30, 44]
+    size: [1, 1]
+    texture: street_lamp.png
+  - id: obstacle_38
     type: elf_house
-    position: [30, 59]
-    size: [3, 3]
+    position: [28, 54]
+    size: [3, 2]
     texture: elf_house.png
-  - id: obstacle_91
+  - id: obstacle_37
     type: elf_house
-    position: [30, 55]
-    size: [3, 3]
+    position: [28, 50]
+    size: [3, 2]
     texture: elf_house.png
-  - id: obstacle_84
-    type: elf_bank
-    position: [34, 47]
-    size: [6, 7]
-    texture: elf_bank.png
-  - id: obstacle_79
+  - id: obstacle_36
+    type: elf_house
+    position: [28, 46]
+    size: [3, 2]
+    texture: elf_house.png
+  - id: obstacle_35
     type: merchant_elf
-    position: [45, 58]
+    position: [47, 50]
     size: [3, 2]
     texture: elf_merchant.png
-  - id: obstacle_76
+  - id: obstacle_34
     type: merchant_elf
-    position: [49, 58]
+    position: [43, 50]
     size: [3, 2]
     texture: elf_merchant.png
-  - id: obstacle_69
+  - id: obstacle_33
     type: iglesia_elf
-    position: [45, 48]
-    size: [6, 6]
+    position: [43, 41]
+    size: [6, 4]
     texture: elf_tall.png
     texture_anchor: 1
+  - id: obstacle_32
+    type: elf_bank
+    position: [32, 39]
+    size: [7, 6]
+    texture: elf_bank.png
   - id: obstacle_31
     type: palm_tree
     position: [50, 20]
@@ -365,32 +380,32 @@ obstacles:
   - id: obstacle_2
     type: elf_bank
     position: [47, 7]
-    size: [6, 7]
+    size: [7, 6]
     texture: elf_bank.png
   - id: obstacle_1
     type: elf_house
     position: [38, 5]
-    size: [3, 3]
+    size: [3, 2]
     texture: elf_house.png
 zones:
-  - id: zone_2
+  - id: zone_1
     type: city
     template: nix
     area:
-      x: 29
-      y: 48
+      x: 27
+      y: 39
       width: 25
       height: 20
     fixed_npcs:
       - type: priest
         name: Sacerdote
-        position: [41, 56]
+        position: [39, 47]
       - type: banker
         name: Banquero
-        position: [34, 56]
+        position: [32, 47]
       - type: merchant
         name: Comerciante
-        position: [38, 64]
+        position: [36, 55]
 entries:
   - id: entry_1
     type: regular_cave

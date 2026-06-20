@@ -5,18 +5,18 @@ default_size:
   height: 20
 color: "#5BC0EB"
 fixed_npcs:
-  - { type: priest, name: "Sacerdote", position: [12, 8] }
-  - { type: banker, name: "Banquero", position: [5, 8] }
-  - { type: merchant, name: "Comerciante", position: [9, 16] }
+  - { type: priest, name: "Sacerdote", position: [18, 6] }
+  - { type: banker, name: "Banquero", position: [9, 5] }
+  - { type: merchant, name: "Comerciante", position: [17, 13] }
 fixed_obstacles:
-  - { type: elf_bank, position: [5, 5] }
-  - { type: iglesia_elf, position: [16, 5] }
+  - { type: elf_bank, position: [5, 0] }
+  - { type: iglesia_elf, position: [16, 2] }
   - { type: merchant_elf, position: [16, 11] }
   - { type: merchant_elf, position: [20, 11] }
-  - { type: elf_house, position: [1, 9] }
-  - { type: elf_house, position: [1, 13] }
-  - { type: elf_house, position: [1, 17] }
-  - { type: lampara_ciudad, position: [4, 5] }
+  - { type: elf_house, position: [1, 7] }
+  - { type: elf_house, position: [1, 11] }
+  - { type: elf_house, position: [1, 15] }
+  - { type: lampara_ciudad, position: [3, 5] }
   - { type: lampara_ciudad, position: [13, 5] }
   - { type: lampara_ciudad, position: [24, 5] }
   - { type: lampara_ciudad, position: [13, 11] }
@@ -24,12 +24,187 @@ fixed_obstacles:
   - { type: lampara_ciudad, position: [13, 18] }
   - { type: lampara_ciudad, position: [3, 18] }
   - { type: lampara_ciudad, position: [24, 18] }
-  - { type: fuente, position: [8, 9] }
-  - { type: red_tree, position: [1, 10] }
-  - { type: red_tree, position: [1, 18] }
-  - { type: red_tree, position: [8, 22] }
-  - { type: water_pit, position: [19, 20] }
+  - { type: fuente, position: [7, 9] }
+  - { type: tree_red, position: [1, 10] }
+  - { type: tree_red, position: [1, 18] }
+  - { type: tree_red, position: [22, 8] }
+  - { type: water_pit, position: [19, 15] }
+  - { type: small_apple_tree, position: [15, 12] }
 
 fixed_floors:
-  - { type: wood_planks, position: [0, 12] }
+  - { type: wood_planks, position: [4, 7] }
+  - { type: wood_planks, position: [4, 11] }
+  - { type: wood_planks, position: [4, 15] }
+
+  - { type: wood_planks, position: [5, 6] }
+  - { type: wood_planks, position: [5, 7] }
+  - { type: wood_planks, position: [5, 8] }
+  - { type: wood_planks, position: [5, 9] }
+  - { type: wood_planks, position: [5, 10] }
+  - { type: wood_planks, position: [5, 11] }
+  - { type: wood_planks, position: [5, 12] }
+  - { type: wood_planks, position: [5, 13] }
+  - { type: wood_planks, position: [5, 14] }
+  - { type: wood_planks, position: [5, 15] }
+  - { type: wood_planks, position: [5, 16] }
+  - { type: wood_planks, position: [5, 17] }
+
+  - { type: wood_planks, position: [6, 6] }
+  - { type: wood_planks, position: [6, 7] }
+  - { type: wood_planks, position: [6, 13] }
+  - { type: wood_planks, position: [6, 14] }
+  - { type: wood_planks, position: [6, 15] }
+  - { type: wood_planks, position: [6, 16] }
+  - { type: wood_planks, position: [6, 17] }
+
+  - { type: wood_planks, position: [7, 6] }
+  - { type: wood_planks, position: [7, 7] }
+  - { type: wood_planks, position: [7, 13] }
+  - { type: wood_planks, position: [7, 14] }
+  - { type: wood_planks, position: [7, 15] }
+  - { type: wood_planks, position: [7, 16] }
+  - { type: wood_planks, position: [7, 17] }
+
+  - { type: wood_planks, position: [8, 6] }
+  - { type: wood_planks, position: [8, 7] }
+  - { type: wood_planks, position: [8, 13] }
+  - { type: wood_planks, position: [8, 14] }
+  - { type: wood_planks, position: [8, 15] }
+  - { type: wood_planks, position: [8, 16] }
+  - { type: wood_planks, position: [8, 17] }
+
+  - { type: wood_planks, position: [9, 6] }
+  - { type: wood_planks, position: [9, 7] }
+  - { type: wood_planks, position: [9, 13] }
+  - { type: wood_planks, position: [9, 14] }
+  - { type: wood_planks, position: [9, 15] }
+  - { type: wood_planks, position: [9, 16] }
+  - { type: wood_planks, position: [9, 17] }
+
+  - { type: wood_planks, position: [10, 6] }
+  - { type: wood_planks, position: [10, 7] }
+  - { type: wood_planks, position: [10, 13] }
+  - { type: wood_planks, position: [10, 14] }
+  - { type: wood_planks, position: [10, 15] }
+  - { type: wood_planks, position: [10, 16] }
+  - { type: wood_planks, position: [10, 17] }
+
+  - { type: wood_planks, position: [11, 6] }
+  - { type: wood_planks, position: [11, 7] }
+  - { type: wood_planks, position: [11, 13] }
+  - { type: wood_planks, position: [11, 14] }
+  - { type: wood_planks, position: [11, 15] }
+  - { type: wood_planks, position: [11, 16] }
+  - { type: wood_planks, position: [11, 17] }
+
+  - { type: wood_planks, position: [12, 6] }
+  - { type: wood_planks, position: [12, 7] }
+  - { type: wood_planks, position: [12, 8] }
+  - { type: wood_planks, position: [12, 9] }
+  - { type: wood_planks, position: [12, 10] }
+  - { type: wood_planks, position: [12, 11] }
+  - { type: wood_planks, position: [12, 12] }
+  - { type: wood_planks, position: [12, 13] }
+  - { type: wood_planks, position: [12, 14] }
+  - { type: wood_planks, position: [12, 15] }
+  - { type: wood_planks, position: [12, 16] }
+  - { type: wood_planks, position: [12, 17] }
+
+  - { type: wood_planks, position: [6, 18] }
+  - { type: wood_planks, position: [7, 18] }
+  - { type: wood_planks, position: [8, 18] }
+  - { type: wood_planks, position: [9, 18] }
+  - { type: wood_planks, position: [10, 18] }
+  - { type: wood_planks, position: [11, 18] }
+  - { type: wood_planks, position: [6, 19] }
+  - { type: wood_planks, position: [7, 19] }
+  - { type: wood_planks, position: [8, 19] }
+  - { type: wood_planks, position: [9, 19] }
+  - { type: wood_planks, position: [10, 19] }
+  - { type: wood_planks, position: [11, 19] }
+
+  - { type: wood_planks, position: [13, 13] }
+  - { type: wood_planks, position: [14, 13] }
+  - { type: wood_planks, position: [15, 13] }
+  - { type: wood_planks, position: [16, 13] }
+  - { type: wood_planks, position: [17, 13] }
+  - { type: wood_planks, position: [18, 13] }
+  - { type: wood_planks, position: [19, 13] }
+  - { type: wood_planks, position: [20, 13] }
+  - { type: wood_planks, position: [21, 13] }
+  - { type: wood_planks, position: [22, 13] }
+  - { type: wood_planks, position: [13, 14] }
+  - { type: wood_planks, position: [14, 14] }
+  - { type: wood_planks, position: [15, 14] }
+  - { type: wood_planks, position: [16, 14] }
+  - { type: wood_planks, position: [17, 14] }
+  - { type: wood_planks, position: [18, 14] }
+  - { type: wood_planks, position: [19, 14] }
+  - { type: wood_planks, position: [20, 14] }
+  - { type: wood_planks, position: [21, 14] }
+  - { type: wood_planks, position: [22, 14] }
+
+  - { type: wood_planks, position: [13, 6] }
+  - { type: wood_planks, position: [14, 6] }
+  - { type: wood_planks, position: [15, 6] }
+  - { type: wood_planks, position: [16, 6] }
+  - { type: wood_planks, position: [17, 6] }
+  - { type: wood_planks, position: [18, 6] }
+  - { type: wood_planks, position: [19, 6] }
+  - { type: wood_planks, position: [20, 6] }
+  - { type: wood_planks, position: [21, 6] }
+  - { type: wood_planks, position: [22, 6] }
+  - { type: wood_planks, position: [13, 7] }
+  - { type: wood_planks, position: [14, 7] }
+  - { type: wood_planks, position: [15, 7] }
+  - { type: wood_planks, position: [16, 7] }
+  - { type: wood_planks, position: [17, 7] }
+  - { type: wood_planks, position: [18, 7] }
+  - { type: wood_planks, position: [19, 7] }
+  - { type: wood_planks, position: [20, 7] }
+  - { type: wood_planks, position: [21, 7] }
+  - { type: wood_planks, position: [22, 7] }
+
+  - { type: wood_planks, position: [9, 5] }
+  - { type: wood_planks, position: [18, 5] }
+  - { type: wood_planks, position: [19, 5] }
+
+  - { type: wood_planks, position: [6, 8] }
+  - { type: cobblestone, position: [6, 9] }
+  - { type: cobblestone, position: [6, 10] }
+  - { type: cobblestone, position: [6, 11] }
+  - { type: wood_planks, position: [6, 12] }
+
+  - { type: cobblestone, position: [7, 8] }
+  - { type: cobblestone, position: [7, 9] }
+  - { type: cobblestone, position: [7, 10] }
+  - { type: cobblestone, position: [7, 11] }
+  - { type: cobblestone, position: [7, 12] }
+
+  - { type: cobblestone, position: [8, 8] }
+  - { type: cobblestone, position: [8, 9] }
+  - { type: cobblestone, position: [8, 10] }
+  - { type: cobblestone, position: [8, 11] }
+  - { type: cobblestone, position: [8, 12] }
+
+  - { type: cobblestone, position: [9, 8] }
+  - { type: cobblestone, position: [9, 9] }
+  - { type: cobblestone, position: [9, 10] }
+  - { type: cobblestone, position: [9, 11] }
+  - { type: cobblestone, position: [9, 12] }
+
+  - { type: cobblestone, position: [10, 8] }
+  - { type: cobblestone, position: [10, 9] }
+  - { type: cobblestone, position: [10, 10] }
+  - { type: cobblestone, position: [10, 11] }
+  - { type: cobblestone, position: [10, 12] }
+
+  - { type: wood_planks, position: [11, 8] }
+  - { type: cobblestone, position: [11, 9] }
+  - { type: cobblestone, position: [11, 10] }
+  - { type: cobblestone, position: [11, 11] }
+  - { type: wood_planks, position: [11, 12] }
+
+
+
 
