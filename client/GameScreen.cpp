@@ -85,7 +85,7 @@ static SpriteRow wireDirToSpriteDir(uint8_t wireDir) {
 
 GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                        OutgoingQueue& clientEvents, IncomingQueue& serverEvents,
-                       const MapEvent& mapData, Position spawn, Player_ player):
+                       const MapEvent& mapData, Position spawn, Player_ player, SoundManager& sound) :
         renderer(renderer),
         chatTtf(),
         chatFont(assetsPath + "/font.ttf", 14),
@@ -94,7 +94,8 @@ GameScreen::GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath
         map(convertToGameMap(mapData)),
         clientEvents(clientEvents),
         serverEvents(serverEvents),
-        player(player) {
+        player(player),
+        sound(sound) {
     tileToPlayerCoords(spawn.x, spawn.y, this->player);
     baseSkin = this->player.skin;
 
@@ -197,7 +198,6 @@ void GameScreen::render() {
 
     renderBloodEffects(camX, camY);
 
-    renderStatsBar();
     renderInventoryPanel();
     renderChat();
     renderSafeZoneIndicator();
@@ -623,16 +623,33 @@ void GameScreen::consumeServerEvents() {
             // Solo hay sangre si el golpe conectó. Buscamos la posición visual
             // del target (player u NPC) por su id y soltamos un splatter ahí.
             if (ar->getHit()) {
+                
                 if (ar->getTargetType() == 0) {
                     auto it = otherPlayers.find(ar->getTargetId());
-                    if (it != otherPlayers.end())
+                    if (it != otherPlayers.end()){
                         bloodEffects.push_back({it->second.visual.x, it->second.visual.y,
                                                 BLOOD_DURATION});
+                                      
+                                            
+                        }
                 } else {
                     auto it = npcs.find(ar->getTargetId());
                     if (it != npcs.end() && it->second.alive)
                         bloodEffects.push_back({it->second.visual.x, it->second.visual.y,
                                                 BLOOD_DURATION});
+                }
+
+                // Sonido según el arma del atacante. Si el atacante es otro
+                // jugador conocido usamos su arma equipada; si no (NPC o el
+                // propio jugador local, cuyo id no rastreamos), caemos al arma
+                // local. itemIds (items.toml): 1 = espada; 4/6/7 = báculos MAGIC.
+                auto at = otherPlayers.find(ar->getAttackerId());
+                uint8_t weapon = (at != otherPlayers.end()) ? at->second.equippedItems[0]
+                                                            : equippedItems[0];
+                if (weapon == 1) {
+                    sound.sword_sound();
+                } else if (weapon == 4 || weapon == 6 || weapon == 7) {
+                    sound.explosion_sound();
                 }
             }
         } else if (auto* eq = dynamic_cast<PlayerEquippedEvent*>(ev.get())) {
@@ -818,10 +835,6 @@ void GameScreen::spawnProjectile(float targetX, float targetY) {
     arrows.push_back(p);
 }
 
-void GameScreen::renderStatsBar() {
-    // TODO(team-ui): dibujar barra HP/MP/oro/exp/nivel en la esquina superior
-    // izquierda a partir de health/maxHealth/mana/maxMana/gold/etc.
-}
 
 float GameScreen::uiScale() const {
     int w, h;

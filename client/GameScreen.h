@@ -17,6 +17,7 @@
 #include "map_renderer.h"
 #include "render_constants.h"
 #include "visual_types.h"
+#include "sound_manager.h"
 
 static constexpr float FEET_OFFSET = 0.8f;
 static constexpr float HEAD_OFFSET = 0.5f;
@@ -60,7 +61,7 @@ class GameScreen {
 public:
     GameScreen(SDL2pp::Renderer& renderer, const std::string& assetsPath,
                OutgoingQueue& clientEvents, IncomingQueue& serverEvents, const MapEvent& mapData,
-               Position spawn, Player_ player);
+               Position spawn, Player_ player, SoundManager& sound);
 
     // Retorna false cuando el jugador quiere salir
     bool run();
@@ -95,6 +96,7 @@ private:
     // pushea tipados.
     IncomingQueue& serverEvents;
     Player_ player;
+    SoundManager& sound;
     // Skin de cuerpo "base" (sin armadura), de la creación del personaje. Al
     // desequipar la armadura, player.skin vuelve a este valor.
     int baseSkin = SKIN_DEFAULT;
