@@ -298,6 +298,8 @@ public:
     // Cuenta miembros del mismo clan conectados dentro del radio (excluyendo al propio).
     int countNearbyClanMates(int playerId) const;
 
+    void changeMapId(int playerId, uint8_t newMapId);
+
     ~Game();
 };
 
