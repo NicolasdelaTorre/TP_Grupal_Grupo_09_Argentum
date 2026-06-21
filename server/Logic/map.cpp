@@ -697,9 +697,9 @@ Position Map::getRandomPosition(std::string biomeType, uint8_t mapId) {
     if (mapId > 0) {
         for (const auto& entry : entries) {
             if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-                for (int16_t y = 0; y < entry.height; ++y) {
-                    for (int16_t x = 0; x < entry.width; ++x) {
-                        Cell cell = entry.environment.cells[static_cast<size_t>(y) * entry.width + x];
+                for (int16_t y = 0; y < entry.environment.height; ++y) {
+                    for (int16_t x = 0; x < entry.environment.width; ++x) {
+                        Cell cell = entry.environment.cells[static_cast<size_t>(y) * entry.environment.width + x];
                         if (cell.isWalkable && 
                             !cell.safeZone && 
                             cell.playerId == 0 && 
