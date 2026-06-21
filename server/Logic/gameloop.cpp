@@ -23,11 +23,10 @@ static uint8_t npcTypeFromName(const std::string& name) {
 }
 
 // Broadcast un ItemDroppedEvent por cada drop que generó una muerte.
-static void broadcastDrops(ClientMonitor& monitor,
-                           const std::vector<Game::DroppedItemRecord>& drops) {
+void Gameloop::broadcastDrops(const std::vector<Game::DroppedItemRecord>& drops, uint8_t mapId) {
     for (const auto& d: drops) {
-        monitor.broadcast(std::make_shared<ItemDroppedEvent>(d.dropId, d.itemId, d.x, d.y,
-                                                             d.goldAmount));
+        broadcastToMap(mapId, std::make_shared<ItemDroppedEvent>(d.dropId, d.itemId, d.x, d.y,
+                                                                 d.goldAmount), -1);
     }
 }
 
@@ -289,8 +288,8 @@ void Gameloop::PlayerTurns() {
         std::string reply = r.message;
         if (r.ok) {
             Position p = game.getPlayerPosition(playerId);
-            clientMonitor.broadcast(std::make_shared<PlayerRevivedEvent>(
-                    static_cast<uint16_t>(playerId), p.x, p.y));
+            broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<PlayerRevivedEvent>(
+                    static_cast<uint16_t>(playerId), p.x, p.y), -1);
         }
 
         clientMonitor.sendToClient(playerId,
@@ -332,7 +331,7 @@ void Gameloop::NPCTurns() {
             // cliente solo reacciona si tiene cargado ese NPC (mismo mapa).
             uint8_t dir = wireDirFromDelta(static_cast<int16_t>(newPos.x - oldPos.x),
                                         static_cast<int16_t>(newPos.y - oldPos.y));
-            clientMonitor.broadcast(std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir));
+            broadcastToMap(npc->getMapId(), std::make_shared<NpcMovedEvent>(npcId, newPos.x, newPos.y, dir), -1);
         }
     }
 
@@ -371,8 +370,8 @@ void Gameloop::NPCTurns() {
             }
         }
         if (game.isPlayerGhost(playerId)) {
-            clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
-            broadcastDrops(clientMonitor, game.dropPlayerLootOnDeath(playerId));
+            broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<PlayerDiedEvent>(playerId), -1);
+            broadcastDrops(game.dropPlayerLootOnDeath(playerId), game.getPlayerMapId(playerId));
             auto snap = game.getInventorySnapshot(playerId);
             clientMonitor.sendToClient(playerId,
                                        std::make_shared<InventoryUpdateEvent>(
@@ -399,7 +398,7 @@ void Gameloop::NPCTurns() {
         map.placeEntity(npcId, randomPosition.x, randomPosition.y, npc->getMapId(), false);
         npc->move(randomPosition);
 
-        clientMonitor.broadcast(std::make_shared<NpcRespawnedEvent>(npcId, randomPosition.x, randomPosition.y));
+        broadcastToMap(npc->getMapId(), std::make_shared<NpcRespawnedEvent>(npcId, randomPosition.x, randomPosition.y), -1);
     }
 }
 
@@ -417,9 +416,9 @@ void Gameloop::handleDisconnect(int playerId) {
     std::string playerName = game.getPlayerName(playerId);
     selectedNpc.erase(playerId);
     pendingNewPlayers.erase(playerId);
+    uint8_t mapId = game.getPlayerMapId(playerId);
     game.removePlayer(playerId);
-    clientMonitor.broadcastExcept(
-            playerId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)));
+    broadcastToMap(mapId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)), playerId);
     if (!clanName.empty()) {
         notifyClanMembers(clientMonitor, game, clanName,
                           playerName + " salió de Argentum", playerId);
@@ -487,6 +486,9 @@ void Gameloop::sendPostLoginSnapshots(int playerId) {
     for (int otherId: game.getPlayerIds()) {
         if (otherId == playerId)
             continue;
+
+        if (game.getPlayerMapId(otherId) != mapId) continue;
+
         Position op = game.getPlayerPosition(otherId);
         const std::string& oname = game.getPlayerName(otherId);
         uint8_t odir = game.getPlayerDirection(otherId);
@@ -546,6 +548,7 @@ void Gameloop::handleMovement(int playerId, MoveDirection direction) {
         Position p = game.getPlayerPosition(playerId);
         uint8_t pdir = game.getPlayerDirection(playerId);
         const uint8_t currentMapId = game.getPlayerMapId(playerId);
+
         if (currentMapId != previousMapId) {
             // El cliente, al recibir el MapEvent, limpia jugadores/NPCs/items, así
             // que después le reenviamos los NPCs del nuevo mapa.
@@ -553,11 +556,49 @@ void Gameloop::handleMovement(int playerId, MoveDirection direction) {
             sendNpcSnapshot(playerId, currentMapId);
             clientMonitor.sendToClient(playerId,
                                        std::make_shared<MoveRejectedEvent>(p.x, p.y));
+
+            // Update current Map
+            broadcastToMap(previousMapId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)), playerId);
+
+            // Update new Map
+            uint8_t skin = game.getPlayerSkin(playerId);
+            uint8_t head = game.getPlayerHead(playerId);
+            const std::string& name = game.getPlayerName(playerId);
+            broadcastToMap(currentMapId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId), p.x,
+                                                                      p.y, pdir, skin, head, name), playerId);
+
+            for (int otherId : game.getPlayerIds()) {
+                if (otherId == playerId)
+                    continue;
+
+                if (game.getPlayerMapId(otherId) != currentMapId) continue;
+
+                Position op = game.getPlayerPosition(otherId);
+                const std::string& oname = game.getPlayerName(otherId);
+                uint8_t odir = game.getPlayerDirection(otherId);
+                uint8_t oskin = game.getPlayerSkin(otherId);
+                uint8_t ohead = game.getPlayerHead(otherId);
+                clientMonitor.sendToClient(
+                        playerId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(otherId), op.x,
+                                                                  op.y, odir, oskin, ohead, oname));
+                
+                sendEquipmentSnapshot(playerId, -1);
+
+                if (game.isPlayerGhost(otherId)) {
+                    clientMonitor.sendToClient(
+                            playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(otherId)));
+                }
+            }
+
+            for (const auto& drop : game.getDroppedItems()) {
+                clientMonitor.sendToClient(playerId, std::make_shared<ItemDroppedEvent>(drop.dropId, drop.itemId, drop.x, drop.y));
+            }
+
             return;
         }
-        clientMonitor.broadcastExcept(playerId,
-                                      std::make_shared<PlayerMovedEvent>(
-                                              static_cast<uint16_t>(playerId), p.x, p.y, pdir));
+
+        broadcastToMap(currentMapId, std::make_shared<PlayerMovedEvent>(
+                static_cast<uint16_t>(playerId), p.x, p.y, pdir), playerId);
     } else {
         // El server rechazo la prediccion del cliente. Le mandamos la posicion autoritativa para que reconcilie.
         Position p = game.getPlayerPosition(playerId);
@@ -571,9 +612,8 @@ void Gameloop::handleTurn(int playerId, MoveDirection direction) {
     if (success) {
         Position p = game.getPlayerPosition(playerId);
         uint8_t pdir = game.getPlayerDirection(playerId);
-        clientMonitor.broadcastExcept(playerId,
-                                      std::make_shared<PlayerMovedEvent>(
-                                              static_cast<uint16_t>(playerId), p.x, p.y, pdir));
+        broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<PlayerMovedEvent>(
+                static_cast<uint16_t>(playerId), p.x, p.y, pdir), playerId);
     }
 }
 
@@ -635,7 +675,7 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
         return;
     }
 
-    clientMonitor.broadcast(outcome.event);
+    broadcastToMap(game.getPlayerMapId(playerId), outcome.event, -1);
     notifyAttackOutcome(clientMonitor, game, outcome);
 
     bool hit = outcome.event->getHit();
@@ -649,9 +689,8 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
         // Si el ataque mató al target, broadcast PlayerDiedEvent + drop loot
         // (inventario + oro en exceso).
         if (game.isPlayerGhost(outcome.event->getTargetId())) {
-            clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(outcome.event->getTargetId()));
-            broadcastDrops(clientMonitor,
-                           game.dropPlayerLootOnDeath(outcome.event->getTargetId()));
+            broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<PlayerDiedEvent>(outcome.event->getTargetId()), -1);
+            broadcastDrops(game.dropPlayerLootOnDeath(outcome.event->getTargetId()), game.getPlayerMapId(playerId));
             auto snap = game.getInventorySnapshot(outcome.event->getTargetId());
             clientMonitor.sendToClient(outcome.event->getTargetId(),
                                        std::make_shared<InventoryUpdateEvent>(
@@ -664,9 +703,9 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
     if (hit && outcome.targetType == static_cast<uint8_t>(TargetType::NPC)) {
         Creature* npc = map.getNPC(outcome.event->getTargetId());
         if (npc && npc->isDead()) {
-            clientMonitor.broadcast(std::make_shared<NpcDiedEvent>(outcome.event->getTargetId()));
-            broadcastDrops(clientMonitor,
-                           game.dropCreatureLootOnDeath(outcome.event->getTargetId()));
+            broadcastToMap(npc->getMapId(),
+                       std::make_shared<NpcDiedEvent>(outcome.event->getTargetId()), -1);
+            broadcastDrops(game.dropCreatureLootOnDeath(outcome.event->getTargetId()), npc->getMapId());
         }
     }
 }
@@ -677,9 +716,8 @@ void Gameloop::handleAttack(int playerId, uint8_t targetType, uint16_t targetId)
 // equipado. Después del cambio: INVENTORY_UPDATE al dueño y, si cambió un
 // slot equipado, PLAYER_EQUIPPED a los demás.
 
-static void broadcastInventoryChanges(int playerId, const Game::InventorySnapshot& before,
-                                      const Game::InventorySnapshot& after, Game& /*game*/,
-                                      ClientMonitor& clientMonitor) {
+void Gameloop::broadcastInventoryChanges(int playerId, const Game::InventorySnapshot& before,
+                                      const Game::InventorySnapshot& after) {
     // INVENTORY_UPDATE al dueño.
     clientMonitor.sendToClient(playerId,
                                std::make_shared<InventoryUpdateEvent>(
@@ -693,9 +731,9 @@ static void broadcastInventoryChanges(int playerId, const Game::InventorySnapsho
                                    after.equippedHelmet, after.equippedShield};
     for (uint8_t s = 0; s < 4; s++) {
         if (beforeSlots[s] != afterSlots[s]) {
-            clientMonitor.broadcastExcept(
-                    playerId, std::make_shared<PlayerEquippedEvent>(
-                                      static_cast<uint16_t>(playerId), s, afterSlots[s]));
+            broadcastToMap(game.getPlayerMapId(playerId),
+                         std::make_shared<PlayerEquippedEvent>(
+                                 static_cast<uint16_t>(playerId), s, afterSlots[s]), playerId);
         }
     }
 }
@@ -716,9 +754,9 @@ void Gameloop::handlePickUp(int playerId) {
     if (!r.ok) return;
     // Broadcast a todos que ese drop ya no está en el piso + actualizamos
     // inventario del dueño.
-    clientMonitor.broadcast(std::make_shared<ItemPickedUpEvent>(r.record.dropId));
+    broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<ItemPickedUpEvent>(r.record.dropId), -1);
     auto after = game.getInventorySnapshot(playerId);
-    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+    broadcastInventoryChanges(playerId, before, after);
     // Si era oro, el inventory snapshot no cambia → mandamos stats para que
     // el HUD del dueño refresque la cantidad de oro.
     if (r.record.itemId == GOLD_ITEM_ID) {
@@ -741,10 +779,10 @@ void Gameloop::handleDrop(int playerId, uint8_t invSlot) {
             playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), r.message));
     if (!r.ok) return;
     // Broadcast a todos que apareció un item nuevo en el piso.
-    clientMonitor.broadcast(std::make_shared<ItemDroppedEvent>(
-            r.record.dropId, r.record.itemId, r.record.x, r.record.y));
+    broadcastToMap(game.getPlayerMapId(playerId),
+                 std::make_shared<ItemDroppedEvent>(r.record.dropId, r.record.itemId, r.record.x, r.record.y), -1);
     auto after = game.getInventorySnapshot(playerId);
-    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+    broadcastInventoryChanges(playerId, before, after);
 }
 
 void Gameloop::handleEquip(int playerId, uint8_t invSlot) {
@@ -767,7 +805,7 @@ void Gameloop::handleEquip(int playerId, uint8_t invSlot) {
     clientMonitor.sendToClient(
             playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), "Item equipado"));
     auto after = game.getInventorySnapshot(playerId);
-    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+    broadcastInventoryChanges(playerId, before, after);
 }
 
 void Gameloop::handleUnequip(int playerId, uint8_t slotType) {
@@ -789,7 +827,7 @@ void Gameloop::handleUnequip(int playerId, uint8_t slotType) {
     clientMonitor.sendToClient(
             playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), "Item desequipado"));
     auto after = game.getInventorySnapshot(playerId);
-    broadcastInventoryChanges(playerId, before, after, game, clientMonitor);
+    broadcastInventoryChanges(playerId, before, after);
 }
 
 // ── Helpers privados ─────────────────────────────────────────────────────
@@ -812,7 +850,7 @@ void Gameloop::sendEquipmentSnapshot(int idPlayer, int recipientId) {
         auto ev = std::make_shared<PlayerEquippedEvent>(static_cast<uint16_t>(idPlayer), s,
                                                         slots[s]);
         if (recipientId < 0) {
-            clientMonitor.broadcastExcept(idPlayer, ev);
+            broadcastToMap(game.getPlayerMapId(idPlayer), ev, idPlayer);
         } else {
             clientMonitor.sendToClient(recipientId, ev);
         }
@@ -870,8 +908,8 @@ void Gameloop::handleChat(int playerId, const std::string& text) {
     }
     const std::string& name = game.getPlayerName(playerId);
     std::cout << "CHAT " << name << "(" << playerId << "): " << text << std::endl;
-    clientMonitor.broadcast(
-            std::make_shared<ChatBroadcastEvent>(static_cast<uint16_t>(playerId), name, text));
+    broadcastToMap(game.getPlayerMapId(playerId),
+                 std::make_shared<ChatBroadcastEvent>(static_cast<uint16_t>(playerId), name, text), -1);
 }
 
 // Mensaje privado: "@nick mensaje". Se busca al destinatario por nombre, se le
@@ -957,8 +995,8 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
             refreshStats = true;
             refreshInventory = true;
             if (game.isPlayerGhost(playerId)) {
-                clientMonitor.broadcast(std::make_shared<PlayerDiedEvent>(playerId));
-                broadcastDrops(clientMonitor, game.dropPlayerLootOnDeath(playerId));
+                broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<PlayerDiedEvent>(playerId), -1);
+                broadcastDrops(game.dropPlayerLootOnDeath(playerId), game.getPlayerMapId(playerId));
             }
         } else reply = "Error";
     } else if (cmd == "/levelup") {
@@ -1302,5 +1340,13 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
                                    std::make_shared<InventoryUpdateEvent>(
                                            snap.items, snap.equippedWeapon, snap.equippedArmor,
                                            snap.equippedHelmet, snap.equippedShield));
+    }
+}
+
+void Gameloop::broadcastToMap(uint8_t mapId, std::shared_ptr<ServerEvent> event, int excludeId = -1) {
+    for (int pid : game.getPlayerIds()) {
+        if (pid != excludeId && game.getPlayerMapId(pid) == mapId) {
+            clientMonitor.sendToClient(pid, event);
+        }
     }
 }

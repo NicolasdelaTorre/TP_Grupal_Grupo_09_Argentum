@@ -59,6 +59,13 @@ private:
 
     void PlayerTurns();
 
+    void broadcastToMap(uint8_t mapId, std::shared_ptr<ServerEvent> event, int excludedId);
+
+    void broadcastDrops(const std::vector<Game::DroppedItemRecord>& drops, uint8_t mapId);
+
+    void broadcastInventoryChanges(int playerId, const Game::InventorySnapshot& before,
+                                      const Game::InventorySnapshot& after);
+
 public:
     Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Map& map,
              ServerProtocol& protocol);
