@@ -350,25 +350,14 @@ bool Map::occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const {
 }
 
 uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
-    for (size_t i = 0; i < 4; i++) {
-        // Check position in the current direction
-        int16_t checkX = x;
-        int16_t checkY = y;
+    // All possible directions (up, down, left, right, and diagonals)
+    const int16_t dx[] = {  0,   0,  -1,   1,      -1,       1,      -1,       1 };
+    const int16_t dy[] = { -1,   1,   0,   0,      -1,      -1,       1,       1 };
 
-        switch (i) {
-            case 0:
-                checkY -= 1;
-                break;  // Up
-            case 1:
-                checkY += 1;
-                break;  // Down
-            case 2:
-                checkX -= 1;
-                break;  // Left
-            case 3:
-                checkX += 1;
-                break;  // Right
-        }
+    for (size_t i = 0; i < 8; i++) {
+        // Check position in the current direction
+        int16_t checkX = x + dx[i];
+        int16_t checkY = y + dy[i];
 
         if (!isInBounds(checkX, checkY, mapId)) {
             continue;  // out of bounds
@@ -377,6 +366,7 @@ uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
         uint16_t currentWidth = getWidth(mapId);
 
         Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
+        
         if (isPlayer && cell.playerId != 0) {
             return cell.playerId;  // player in sight
         }
