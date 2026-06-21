@@ -350,10 +350,10 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     uint8_t entityId;
     if (itPlayer->second.hasLongDistanceWeapon())
         entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(),
-                                        targetPlayer, mapId);
+                                        targetPlayer, mapId, targetId);
     else
         entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer,
-                                  mapId);
+                                  mapId, targetId);
 
     if (entityId != targetId) {
         // Antes se rebotaba silencioso: el cliente ya mostró la animación pero
@@ -515,7 +515,7 @@ Game::HealOutcome Game::processHealCast(int casterId, uint16_t targetId) {
     // Chequeo de rango: la Flauta es a distancia, asi que uso entityInDistance.
     uint8_t mapId = itCaster->second.getMapId();
     uint16_t entityId = map.entityInDistance(itCaster->second.getX(), itCaster->second.getY(),
-                                             true, mapId);
+                                             true, mapId, targetId);
     if (entityId != targetId) {
         outcome.blockedReason = "Estás demasiado lejos del objetivo";
         return outcome;

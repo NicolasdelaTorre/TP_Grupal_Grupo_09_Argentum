@@ -345,7 +345,7 @@ void Gameloop::NPCTurns() {
             continue;
 
         uint8_t playerId = map.nextEntity(npc->getPosition().x, npc->getPosition().y, true,
-                                          npc->getMapId());
+                                          npc->getMapId(), -1);
         if (playerId == 0)
             continue;
         if (!game.hasPlayer(playerId)) continue;  // ya están muertos

@@ -145,7 +145,7 @@ public:
 
     bool occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const;
 
-    uint16_t nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
+    uint16_t nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId, int16_t targetId);
 
     // Mueve el entityId de (oldX, oldY) a (newX, newY) actualizando ambas celdas.
     bool moveEntity(int entityId, int16_t oldX, int16_t oldY, int16_t newX, int16_t newY, bool isPlayer, uint8_t mapId);
@@ -153,7 +153,7 @@ public:
     // Limpia el entityId de la celda. Se llama al desconectar / morir.
     void removeEntity(int16_t x, int16_t y, uint8_t mapId, bool isPlayer);
 
-    uint16_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
+    uint16_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId, int16_t targetId);
 
     void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 

@@ -349,7 +349,7 @@ bool Map::occupiedByEntity(int16_t x, int16_t y, uint8_t mapId) const {
            cells[static_cast<size_t>(y) * width + x].npcId != 0;
 }
 
-uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId, int16_t targetId) {
     // All possible directions (up, down, left, right, and diagonals)
     const int16_t dx[] = {  0,   0,  -1,   1,      -1,       1,      -1,       1 };
     const int16_t dy[] = { -1,   1,   0,   0,      -1,      -1,       1,       1 };
@@ -366,12 +366,12 @@ uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
         uint16_t currentWidth = getWidth(mapId);
 
         Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
-        
-        if (isPlayer && cell.playerId != 0) {
+
+        if (isPlayer && cell.playerId == targetId) {
             return cell.playerId;  // player in sight
         }
 
-        if (!isPlayer && cell.npcId != 0) {
+        if (!isPlayer && (cell.npcId == targetId || (targetId == -1 && cell.npcId != 0))) {
             return cell.npcId;  // npc in sight
         }
     }
@@ -379,7 +379,7 @@ uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     return 0;  // no entity in sight
 }
 
-uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId, int16_t targetId) {
     for (int16_t dy = -COMBAT_RANGE; dy <= COMBAT_RANGE; ++dy) {
         for (int16_t dx = -COMBAT_RANGE; dx <= COMBAT_RANGE; ++dx) {
             if (dx == 0 && dy == 0) {
@@ -395,11 +395,11 @@ uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapI
             uint16_t currentWidth = getWidth(mapId);
 
             Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
-            if (isPlayer && cell.playerId != 0) {
+            if (isPlayer && cell.playerId == targetId) {
                 return cell.playerId;  // player in distance
             }
 
-            if (!isPlayer && cell.npcId != 0) {
+            if (!isPlayer && (cell.npcId == targetId || (targetId == -1 && cell.npcId != 0))) {
                 return cell.npcId;  // npc in distance
             }
         }
@@ -539,7 +539,7 @@ bool Map::checkIfNPCIsNextToAPlayer(uint16_t npcId, uint8_t mapId) {
         Creature* creature = dynamic_cast<Creature*>(it->second.get());
         if (creature) {
             Position pos = creature->getPosition();
-            return nextEntity(pos.x, pos.y, true, mapId) != 0;  // Check if there's a player next to the NPC
+            return nextEntity(pos.x, pos.y, true, mapId, -1) != 0;  // Check if there's a player next to the NPC
         }
     }
     return false;  // NPC not found or not a creature
