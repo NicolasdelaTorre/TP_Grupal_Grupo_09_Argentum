@@ -260,6 +260,15 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
 
     Player& player = itPlayer->second;
     Position next = player.getPosition();
+    Position old = player.getPosition();
+    uint8_t mapId = player.getMapId();
+
+    if (itPlayer->second.getTeleportingState()) {
+        std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
+                  << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
+                  << " reason=not_walkable" << std::endl;
+        return false;
+    }
 
     switch (direction) {
         case MoveDirection::TOP: next.y -= 1; break;
@@ -269,8 +278,6 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
         default: return false;
     }
 
-    uint8_t mapId = player.getMapId();
-    Position old = player.getPosition();
     if (!map.isWalkable(next.x, next.y, mapId)) {
         std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
                   << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
