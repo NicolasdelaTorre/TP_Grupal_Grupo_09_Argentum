@@ -567,6 +567,9 @@ void Gameloop::handleMovement(int playerId, MoveDirection direction) {
             broadcastToMap(currentMapId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(playerId), p.x,
                                                                       p.y, pdir, skin, head, name), playerId);
 
+            sendEquipmentSnapshot(playerId, -1);
+
+            // Give the player the info of the other players in the map he just entered
             for (int otherId : game.getPlayerIds()) {
                 if (otherId == playerId)
                     continue;
@@ -582,7 +585,7 @@ void Gameloop::handleMovement(int playerId, MoveDirection direction) {
                         playerId, std::make_shared<NewPlayerEvent>(static_cast<uint16_t>(otherId), op.x,
                                                                   op.y, odir, oskin, ohead, oname));
                 
-                sendEquipmentSnapshot(playerId, -1);
+                sendEquipmentSnapshot(otherId, playerId);
 
                 if (game.isPlayerGhost(otherId)) {
                     clientMonitor.sendToClient(
