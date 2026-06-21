@@ -408,7 +408,7 @@ uint16_t Map::entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapI
     return 0;  // no entity in distance
 }
 
-void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
+Position Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId) {
     if (!isInBounds(x, y, mapId)) {
         throw std::out_of_range("Map Error: trying to place player/NPC out of bounds");
     }
@@ -439,6 +439,8 @@ void Map::placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t
     } else {
         (*cells)[static_cast<size_t>(y) * width + x].npcId = static_cast<uint16_t>(entityId);
     }
+
+    return Position{x, y};
 }
 
 Position Map::searchPlayer(int16_t x, int16_t y, uint8_t mapId, std::string biomeType) {
@@ -584,23 +586,21 @@ bool Map::checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId) {
     return false;  // No entry at the position
 }
 
-void Map::placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId) {
+Position Map::placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId) {
     for (const auto& entry : entries) {
         if (entry.id == mapId) {
             removeEntity(playerPosition.x, playerPosition.y, 0, true);  // Remove player from overworld
-            placeEntity(playerId, entry.environment.playerSpawn.x, entry.environment.playerSpawn.y, true, mapId[mapId.size() - 1] - '0');
-            return;
+            return placeEntity(playerId, entry.environment.playerSpawn.x, entry.environment.playerSpawn.y, true, mapId[mapId.size() - 1] - '0');
         }
     }
 
     throw std::runtime_error("Map Error: trying to place player into a non-existent dungeon with id " + mapId);
 }
 
-void Map::placePlayerIntoTheOverworld(int playerId, uint8_t mapId) {
+Position Map::placePlayerIntoTheOverworld(int playerId, uint8_t mapId) {
     for (const auto& entry: entries) {
         if (entry.id[entry.id.size() - 1] == '0' + mapId) {
-            placeEntity(playerId, entry.x, entry.y + 1, true, 0);
-            return;
+            return placeEntity(playerId, entry.x, entry.y + 1, true, 0);
         }
     }
 

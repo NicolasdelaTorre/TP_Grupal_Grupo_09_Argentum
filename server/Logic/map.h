@@ -155,7 +155,7 @@ public:
 
     uint16_t entityInDistance(int16_t x, int16_t y, bool isPlayer, uint8_t mapId, int16_t targetId);
 
-    void placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
+    Position placeEntity(int entityId, int16_t x, int16_t y, bool isPlayer, uint8_t mapId);
 
     Position searchPlayer(int16_t x, int16_t y, uint8_t mapId, std::string biomeType);
 
@@ -167,9 +167,9 @@ public:
 
     bool checkIfThePositionHasAnEntry(int16_t x, int16_t y, uint8_t mapId);
 
-    void placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId);
+    Position placePlayerIntoTheDungeon(int playerId, Position playerPosition, const std::string& mapId);
 
-    void placePlayerIntoTheOverworld(int playerId, uint8_t mapId);
+    Position placePlayerIntoTheOverworld(int playerId, uint8_t mapId);
 
     // ── NPCs amigos (merchant/banker/priest) ────────────────────────────
     // Registra un amigo en el mapa con id auto-incremental ≥ 10000.

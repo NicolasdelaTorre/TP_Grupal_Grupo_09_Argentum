@@ -38,7 +38,8 @@ bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, Cl
     players.emplace(playerId, Player(name, spawn, race, class_));
     parser.savePlayerData(name, players.at(playerId).getData());
     bank.addPlayer(name);
-    map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    Position currentPosition = map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    players.at(playerId).move(currentPosition);
     std::cout << "Hi " << name << " (" << Race::toString(race) << "/"
               << PlayerClass::toString(class_) << ") spawned at (" << spawn.x << ", " << spawn.y
               << ")" << std::endl;
@@ -46,10 +47,20 @@ bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, Cl
 }
 
 bool Game::loadExistingPlayer(int playerId, const std::string& name) {
-    players.emplace(playerId, Player(parser.loadPlayerData(name), name));
+    PlayerData data = parser.loadPlayerData(name);
+
+    /*
+    // Si el jugador ya inicio sesión, otro no puede usar su cuenta
+    if (players.find("ACA") != players.end()) {
+        return false;  // playerId in use
+    }
+    */
+
+    players.emplace(playerId, Player(data, name));
     Position spawn = players.at(playerId).getPosition();
     bank.addPlayer(name);
-    map.placeEntity(playerId, spawn.x, spawn.y, true, players.at(playerId).getMapId());
+    Position currentPosition = map.placeEntity(playerId, spawn.x, spawn.y, true, players.at(playerId).getMapId());
+    players.at(playerId).move(currentPosition);
     std::cout << "Welcome back " << name << " at (" << spawn.x << ", " << spawn.y << ")"
               << std::endl;
     return true;
@@ -304,15 +315,13 @@ void Game::checkEntry(int playerId) {
             if (mapId.empty()) {
                 return;
             }
-            map.placePlayerIntoTheDungeon(playerId, pos, mapId);
+            Position newPosition = map.placePlayerIntoTheDungeon(playerId, pos, mapId);
             itPlayer->second.changeMapId(static_cast<uint8_t>(mapId[mapId.size() - 1] - '0'));
-            Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
         } else {
-            map.placePlayerIntoTheOverworld(playerId, currentMapId);
+            Position newPosition = map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(0);
-            Position entryPosition = map.getEntryPosition(currentMapId);
-            itPlayer->second.move({entryPosition.x, static_cast<int16_t>(entryPosition.y + 1)});
+            itPlayer->second.move(newPosition);
         }
     }
 }
