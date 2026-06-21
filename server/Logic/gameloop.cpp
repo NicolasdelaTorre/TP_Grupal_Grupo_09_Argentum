@@ -395,7 +395,7 @@ void Gameloop::NPCTurns() {
         npc->resurrect();
 
         Position randomPosition = map.getRandomPosition(npc->getBiomeType(), npc->getMapId());
-        map.placeEntity(npcId, randomPosition.x, randomPosition.y, npc->getMapId(), false);
+        map.placeEntity(npcId, randomPosition.x, randomPosition.y, false, npc->getMapId());
         npc->move(randomPosition);
 
         broadcastToMap(npc->getMapId(), std::make_shared<NpcRespawnedEvent>(npcId, randomPosition.x, randomPosition.y), -1);
