@@ -367,12 +367,16 @@ uint16_t Map::nextEntity(int16_t x, int16_t y, bool isPlayer, uint8_t mapId, int
 
         Cell cell = getCell(static_cast<size_t>(checkY) * currentWidth + checkX, mapId);
 
-        if (isPlayer && cell.playerId == targetId) {
-            return cell.playerId;  // player in sight
+        if (isPlayer && cell.playerId != 0) {
+            if (targetId == -1 || cell.playerId == targetId) {
+                return cell.playerId; 
+            }
         }
 
-        if (!isPlayer && (cell.npcId == targetId || (targetId == -1 && cell.npcId != 0))) {
-            return cell.npcId;  // npc in sight
+        if (!isPlayer && cell.npcId != 0) {
+            if (targetId == -1 || cell.npcId == targetId) {
+                return cell.npcId;
+            }
         }
     }
 
