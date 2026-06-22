@@ -6,8 +6,8 @@
 #include "Communication/client_monitor.h"
 #include "Communication/server_receiver.h"  // IncomingQueue alias
 #include "Logic/gameloop.h"
-#include "Logic/map.h"
-#include "Logic/yaml_map_loader.h"
+#include "Logic/Map/map.h"
+#include "Logic/Map/yaml_map_loader.h"
 #include "Communication/server_protocol.h"
 
 class Server {

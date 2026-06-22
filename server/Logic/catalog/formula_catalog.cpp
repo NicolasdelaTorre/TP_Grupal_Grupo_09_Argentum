@@ -3,7 +3,7 @@
 #include "../toml.hpp"
 
 FormulaCatalog::FormulaCatalog() {
-    const toml::value cfg = toml::parse("server/Logic/config.toml");
+    const toml::value cfg = toml::parse("server/Logic/Stats/config.toml");
 
     formulas.goldSafeBase = toml::find<float>(cfg, "formula", "gold", "safeBase");
     formulas.goldSafeExp = toml::find<float>(cfg, "formula", "gold", "safeExp");

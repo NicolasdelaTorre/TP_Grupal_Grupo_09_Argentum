@@ -6,7 +6,7 @@
 #include "../toml.hpp"
 
 CreatureCatalog::CreatureCatalog() {
-    const toml::value cfg = toml::parse("server/Logic/config.toml");
+    const toml::value cfg = toml::parse("server/Logic/Stats/config.toml");
 
     const auto npcs = toml::find<std::vector<toml::value>>(cfg, "npc");
     for (const auto& npc: npcs) {

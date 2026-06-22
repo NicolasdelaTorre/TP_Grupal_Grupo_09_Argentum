@@ -8,21 +8,21 @@ target_sources(taller_server
         Communication/server_receiver.cpp
         Communication/server_sender.cpp
         Communication/server_protocol.cpp
-        Logic/player.cpp
-        Logic/stats_definition.cpp
-        Logic/map.cpp
+        Logic/Player/player.cpp
+        Logic/Stats/stats_definition.cpp
+        Logic/Map/map.cpp
         Logic/game.cpp
         Logic/gameloop.cpp
-        Logic/yaml_map_loader.cpp
-        Logic/binary_parser.cpp
-        Logic/items.cpp
+        Logic/Map/yaml_map_loader.cpp
+        Logic/Parser/binary_parser.cpp
+        Logic/Items/items.cpp
         Logic/catalog/attribute_catalog.cpp
         Logic/catalog/formula_catalog.cpp
         Logic/catalog/item_catalog.cpp
         Logic/catalog/creature_catalog.cpp
         Logic/catalog/merchant_catalog.cpp
-        Logic/turn_manager.cpp
-        Logic/clan_registry.cpp
+        Logic/Timer/turn_manager.cpp
+        Logic/Clan/clan_registry.cpp
         Logic/NPC/creature.cpp
         Logic/NPC/merchant.cpp
         Logic/NPC/banker.cpp
@@ -35,24 +35,24 @@ target_sources(taller_server
         Communication/server_receiver.h
         Communication/server_sender.h
         Communication/server_protocol.h
-        Logic/player.h
-        Logic/stats_definition.h
-        Logic/map.h
+        Logic/Player/player.h
+        Logic/Stats/stats_definition.h
+        Logic/Map/map.h
         Logic/game.h
         Logic/gameloop.h
-        Logic/yaml_map_loader.h
-        Logic/race.h
-        Logic/class_.h
-        Logic/binary_parser.h
-        Logic/items.h
+        Logic/Map/yaml_map_loader.h
+        Logic/Stats/race.h
+        Logic/Stats/class_.h
+        Logic/Parser/binary_parser.h
+        Logic/Items/items.h
         Logic/catalog/attribute_catalog.h
         Logic/catalog/formula_catalog.h
         Logic/catalog/item_catalog.h
         Logic/catalog/creature_catalog.h
         Logic/catalog/merchant_catalog.h
-        Logic/turn_manager.h
-        Logic/clan.h
-        Logic/clan_registry.h
+        Logic/Timer/turn_manager.h
+        Logic/Clan/clan.h
+        Logic/Clan/clan_registry.h
         Logic/NPC/creature.h
         Logic/NPC/merchant.h
         Logic/NPC/banker.h

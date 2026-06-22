@@ -11,13 +11,13 @@
 #include "../../common/game_constants.h"
 #include "../../common/position.h"
 
-#include "binary_parser.h"
-#include "clan.h"
-#include "clan_registry.h"
-#include "map.h"
+#include "Parser/binary_parser.h"
+#include "Clan/clan.h"
+#include "Clan/clan_registry.h"
+#include "Map/map.h"
 #include "NPC/banker.h"
-#include "player.h"
-#include "yaml_map_loader.h"
+#include "Player/player.h"
+#include "Map/yaml_map_loader.h"
 
 class Game {
 public:

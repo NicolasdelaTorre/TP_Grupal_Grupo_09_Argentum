@@ -9,7 +9,7 @@
 #include <string>
 
 BinaryParser::BinaryParser(): lastOffset(0) {
-    std::ifstream playersFile("server/Logic/players_data.bin", std::ios::binary | std::ios::ate);
+    std::ifstream playersFile("server/Logic/Player/players_data.bin", std::ios::binary | std::ios::ate);
 
     if (playersFile.is_open()) {
         lastOffset = static_cast<uint32_t>(playersFile.tellg());
@@ -17,7 +17,7 @@ BinaryParser::BinaryParser(): lastOffset(0) {
 }
 
 bool BinaryParser::checkPlayerExists(const std::string& name) {
-    std::ifstream playersFile("server/Logic/players.bin", std::ios::binary);
+    std::ifstream playersFile("server/Logic/Player/players.bin", std::ios::binary);
     if (!playersFile.is_open()) {
         return false;
     }
@@ -54,20 +54,20 @@ bool BinaryParser::checkPlayerExists(const std::string& name) {
 void BinaryParser::savePlayerData(const std::string& name, PlayerData data) {
     uint16_t nameLength = name.size();
 
-    std::ofstream playersFile("server/Logic/players.bin", std::ios::binary | std::ios::app);
+    std::ofstream playersFile("server/Logic/Player/players.bin", std::ios::binary | std::ios::app);
     playersFile.write(reinterpret_cast<const char*>(&nameLength), sizeof(nameLength));
     playersFile.write(name.c_str(), nameLength);
     playersFile.write(reinterpret_cast<const char*>(&lastOffset), sizeof(lastOffset));
     playersFile.close();
 
-    std::ofstream dataFile("server/Logic/players_data.bin", std::ios::binary | std::ios::app);
+    std::ofstream dataFile("server/Logic/Player/players_data.bin", std::ios::binary | std::ios::app);
     dataFile.write(reinterpret_cast<const char*>(&data), sizeof(data));
     lastOffset += sizeof(data);
     dataFile.close();
 }
 
 PlayerData BinaryParser::loadPlayerData(const std::string& name) {
-    std::ifstream playersFile("server/Logic/players.bin", std::ios::binary);
+    std::ifstream playersFile("server/Logic/Player/players.bin", std::ios::binary);
     if (!playersFile.is_open()) {
         throw std::runtime_error("BinaryParser Error: could not open players file");
     }
@@ -94,7 +94,7 @@ PlayerData BinaryParser::loadPlayerData(const std::string& name) {
         }
 
         if (storedName == name) {
-            std::ifstream dataFile("server/Logic/players_data.bin", std::ios::binary);
+            std::ifstream dataFile("server/Logic/Player/players_data.bin", std::ios::binary);
             if (!dataFile.is_open()) {
                 throw std::runtime_error("BinaryParser Error: could not open player data file");
             }
@@ -109,7 +109,7 @@ PlayerData BinaryParser::loadPlayerData(const std::string& name) {
 }
 
 void BinaryParser::updatePlayerData(const std::string& name, PlayerData data) {
-    std::ifstream playersFile("server/Logic/players.bin", std::ios::binary);
+    std::ifstream playersFile("server/Logic/Player/players.bin", std::ios::binary);
     if (!playersFile.is_open()) {
         throw std::runtime_error("BinaryParser Error: could not open players file");
     }
@@ -136,7 +136,7 @@ void BinaryParser::updatePlayerData(const std::string& name, PlayerData data) {
         }
 
         if (storedName == name) {
-            std::fstream dataFile("server/Logic/players_data.bin",
+            std::fstream dataFile("server/Logic/Player/players_data.bin",
                                   std::ios::binary | std::ios::in | std::ios::out);
             if (!dataFile.is_open()) {
                 throw std::runtime_error("BinaryParser Error: could not open player data file");

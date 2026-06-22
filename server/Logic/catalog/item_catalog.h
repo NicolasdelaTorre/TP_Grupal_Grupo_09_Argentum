@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-#include "../items.h"
+#include "../Items/items.h"
 
 class ItemCatalog {
 private:

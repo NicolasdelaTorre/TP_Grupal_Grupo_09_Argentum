@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <utility>
 
-#include "stats_definition.h"
+#include "../Stats/stats_definition.h"
 
 Player::Player(const std::string& name, Position position, RaceCode race, ClassCode class_):
         name(name), isMeditating(false) {

@@ -10,9 +10,9 @@
 #include "../../common/DTOs.h"
 #include "../../common/game_constants.h"
 
-#include "class_.h"
-#include "items.h"
-#include "race.h"
+#include "../Stats/class_.h"
+#include "../Items/items.h"
+#include "../Stats/race.h"
 
 struct PlayerData {
     uint32_t experience;

@@ -14,7 +14,7 @@
 #include "catalog/creature_catalog.h"
 #include "catalog/formula_catalog.h"
 #include "catalog/merchant_catalog.h"
-#include "stats_definition.h"
+#include "Stats/stats_definition.h"
 
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),

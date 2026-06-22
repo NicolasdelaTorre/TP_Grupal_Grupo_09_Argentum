@@ -19,7 +19,7 @@ static ItemType parseItemType(const std::string& typeStr) {
 }
 
 ItemCatalog::ItemCatalog() {
-    const toml::value config = toml::parse("server/Logic/config.toml");
+    const toml::value config = toml::parse("server/Logic/Stats/config.toml");
     const auto items = toml::find<std::vector<toml::value>>(config, "item");
 
     for (const auto& entry: items) {

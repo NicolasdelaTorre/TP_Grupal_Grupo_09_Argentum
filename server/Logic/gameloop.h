@@ -14,7 +14,7 @@
 #include "../Communication/server_protocol.h"
 
 #include "game.h"
-#include "turn_manager.h"
+#include "Timer/turn_manager.h"
 
 class Gameloop: public Thread {
 private:

@@ -5,7 +5,7 @@
 #include "../toml.hpp"
 
 MerchantCatalog::MerchantCatalog() {
-    const toml::value cfg = toml::parse("server/Logic/config.toml");
+    const toml::value cfg = toml::parse("server/Logic/Stats/config.toml");
     for (const char* kind: {"trader", "priest"}) {
         const auto& arr =
                 toml::find<std::vector<toml::value>>(cfg, "merchant", kind, "items");

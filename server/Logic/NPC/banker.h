@@ -7,7 +7,7 @@
 
 #include "../../../common/game_constants.h"
 
-#include "../binary_parser.h"
+#include "../Parser/binary_parser.h"
 #include "npc.h"
 
 struct BankAccount {

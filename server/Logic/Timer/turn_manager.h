@@ -7,9 +7,9 @@
 
 #define TIME 30
 
-#include "map.h"
-#include "player.h"
-#include "game.h"
+#include "../Map/map.h"
+#include "../Player/player.h"
+#include "../game.h"
 
 struct NPCTimer {
     int timeToMove; // 600 miliseconds to move

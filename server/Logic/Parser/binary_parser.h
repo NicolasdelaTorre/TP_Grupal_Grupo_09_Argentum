@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "player.h"
+#include "../Player/player.h"
 
 struct BankAccount;
 

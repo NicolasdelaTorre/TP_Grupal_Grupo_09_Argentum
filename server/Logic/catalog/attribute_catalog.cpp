@@ -26,7 +26,7 @@ static ClassAttributes readClass(const toml::value& cfg, const std::string& clas
 }
 
 AttributeCatalog::AttributeCatalog() {
-    const toml::value cfg = toml::parse("server/Logic/config.toml");
+    const toml::value cfg = toml::parse("server/Logic/Stats/config.toml");
 
     human = readRace(cfg, "human");
     elf = readRace(cfg, "elf");
