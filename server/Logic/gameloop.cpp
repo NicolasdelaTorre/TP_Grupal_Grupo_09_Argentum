@@ -260,41 +260,76 @@ void Gameloop::PlayerTurns() {
     std::vector<int> playersToTeleport = turnManager.getPlayersReadyToTeleport();
     for (int playerId : playersToTeleport) {
         game.finishTeleportingState(playerId);
+
+        // Old data
         Position playerPosition = game.getPlayerPosition(playerId);
+        uint8_t previousMapId = game.getPlayerMapId(playerId);
 
-        uint8_t mapId = game.getPlayerMapId(playerId);
-        if (mapId > 0) {
-            map.removeEntity(playerPosition.x, playerPosition.y, mapId, true);
-            map.placePlayerIntoTheOverworld(playerId, mapId);
-            game.changeMapId(playerId, 0);
-            playerPosition = map.getEntryPosition(mapId);
-        }
-
-        if (playerPosition.x == -1 || playerPosition.y == -1) {
+        // Search Priest
+        Position priestPosition{-1, -1};
+        try {
+            priestPosition = map.searchNearestPriest(playerPosition.x, playerPosition.y);
+        } catch (const std::exception& e) {
             continue;
         }
 
-        Position priestPosition = map.searchNearestPriest(playerPosition.x, playerPosition.y);
+        Position newPosition = {priestPosition.x, static_cast<int16_t>(priestPosition.y + 1)};
 
-        map.moveEntity(playerId, playerPosition.x, playerPosition.y, priestPosition.x, priestPosition.y + 1, true, 0);
-        game.fastTravel(playerId, {priestPosition.x, (int16_t)(priestPosition.y + 1)});
-
-        if (mapId > 0) {
-            sendMapSnapshot(playerId, 0);
-            sendNpcSnapshot(playerId, 0);
-        }
+        // Change Position
+        map.removeEntity(playerPosition.x, playerPosition.y, previousMapId, true);
+        map.placeEntity(playerId, newPosition.x, newPosition.y, true, 0);
+        game.changeMapId(playerId, 0);
+        game.fastTravel(playerId, newPosition);
+        game.turnPlayer(playerId, MoveDirection::TOP);
 
         auto r = game.revivePlayer(playerId);
         std::string reply = r.message;
-        if (r.ok) {
-            Position p = game.getPlayerPosition(playerId);
-            broadcastToMap(game.getPlayerMapId(playerId), std::make_shared<PlayerRevivedEvent>(
-                    static_cast<uint16_t>(playerId), p.x, p.y), -1);
+
+        if (previousMapId > 0) {
+            sendMapSnapshot(playerId, 0);
+            sendNpcSnapshot(playerId, 0);
+
+            broadcastToMap(previousMapId, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)), playerId);
+            
+            for (int otherId : game.getPlayerIds()) {
+                if (otherId == playerId) continue;
+                if (game.getPlayerMapId(otherId) != 0) continue;
+
+                Position op = game.getPlayerPosition(otherId);
+                const std::string& oname = game.getPlayerName(otherId);
+                uint8_t odir = game.getPlayerDirection(otherId);
+                uint8_t oskin = game.getPlayerSkin(otherId);
+                uint8_t ohead = game.getPlayerHead(otherId);
+                
+                clientMonitor.sendToClient(playerId, std::make_shared<NewPlayerEvent>(
+                        static_cast<uint16_t>(otherId), op.x, op.y, odir, oskin, ohead, oname));
+                sendEquipmentSnapshot(otherId, playerId);
+                
+                if (game.isPlayerGhost(otherId)) {
+                    clientMonitor.sendToClient(playerId, std::make_shared<PlayerDiedEvent>(static_cast<uint16_t>(otherId)));
+                }
+            }
+
+            for (const auto& drop : game.getDroppedItems()) {
+                clientMonitor.sendToClient(playerId, std::make_shared<ItemDroppedEvent>(drop.dropId, drop.itemId, drop.x, drop.y));
+            }
         }
 
-        clientMonitor.sendToClient(playerId,
-                               std::make_shared<ChatBroadcastEvent>(0, std::string(), reply));
+        clientMonitor.sendToClient(playerId, std::make_shared<PlayerRevivedEvent>(static_cast<uint16_t>(playerId), newPosition.x, newPosition.y));
+        clientMonitor.sendToClient(playerId, std::make_shared<PlayerMovedEvent>(
+                static_cast<uint16_t>(playerId), newPosition.x, newPosition.y, static_cast<uint8_t>(MoveDirection::TOP)));
+        clientMonitor.sendToClient(playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), reply));
         clientMonitor.sendToClient(playerId, buildStatsEvent(playerId));
+
+        broadcastToMap(0, std::make_shared<PlayerDisconnectedEvent>(static_cast<uint16_t>(playerId)), playerId);
+        
+        uint8_t skin = game.getPlayerSkin(playerId);
+        uint8_t head = game.getPlayerHead(playerId);
+        broadcastToMap(0, std::make_shared<NewPlayerEvent>(
+                static_cast<uint16_t>(playerId), newPosition.x, newPosition.y, 
+                static_cast<uint8_t>(MoveDirection::TOP), skin, head, game.getPlayerName(playerId)), playerId);
+        
+        sendEquipmentSnapshot(playerId, -1);
     }
 }
 
