@@ -49,12 +49,9 @@ bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, Cl
 bool Game::loadExistingPlayer(int playerId, const std::string& name) {
     PlayerData data = parser.loadPlayerData(name);
 
-    /*
-    // Si el jugador ya inicio sesión, otro no puede usar su cuenta
-    if (players.find("ACA") != players.end()) {
+    if (playerAlreadyConnected(name)) {
         return false;  // playerId in use
     }
-    */
 
     players.emplace(playerId, Player(data, name));
     Position spawn = players.at(playerId).getPosition();
@@ -64,6 +61,15 @@ bool Game::loadExistingPlayer(int playerId, const std::string& name) {
     std::cout << "Welcome back " << name << " at (" << spawn.x << ", " << spawn.y << ")"
               << std::endl;
     return true;
+}
+
+bool Game::playerAlreadyConnected(const std::string& name) const {
+    for (const auto& [id, player]: players) {
+        if (player.getName() == name) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Game::turnPlayer(int playerId, MoveDirection direction) {
