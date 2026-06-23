@@ -16,7 +16,89 @@ _(pendiente)_
 
 ## Editor
 
-_(pendiente)_
+El editor es la aplicacion que permite armar los mapas del juego y exportarlos como archivos YAML en `server/assets/maps/`, para que el servidor cargue con `YamlMapLoader` y se los mande al cliente.
+
+### Organizacion
+
+La UI se organiza en tres capas: la ventana principal maneja herramientas y navegación, el canvas captura el input y dibuja, y el controlador de escena concentra la lógica de colocar y borrar elementos. El modelo persistente de datos, `MapDocument`, vive en la ventana principal y solo se sincroniza con el canvas cuando hace falta (cambio de entorno, guardado o apertura de mapa).
+
+### Componentes
+
+- **`EditorWindow`**: ventana principal. Mantiene el `MapDocument` del mapa principal, la herramienta activa, la lista de environments y el flujo de pantallas. Crea el `MapCanvas`, carga los templates y conecta señales de la UI.
+- **`MapCanvas`**: widget central de edición. Traduce clicks del mouse en acciones según la herramienta activa y el entorno de edición (`MainMap` o `Environment`).
+- **`SceneController`**: lógica de colocación y borrado en la escena. Valida solapamientos, genera IDs, mantiene spawns de criaturas por zona y reconstruye un `MapDocument` a partir de los ítems gráficos.
+- **`ItemBuilder`**: factory de items graficos. Separa cómo se ve un elemento de cómo se persiste en el documento.
+- **`MapDocument`**: modelo en memoria del mapa completo.
+- **`TemplateRegistry`**: lee los YAML de templates de ciudades, biomas, obstáculos, entradas, paredes, salidas, pisos y los expone al editor para poblar las listas de elementos.
+- **`YamlMapIO`**: serializa y deserializa `MapDocument` ↔ YAML.
+- **`Verificator`**: corre antes de guardar. Verifica que el mapa tenga id y dimensiones válidas, que exista un spawn del jugador en el overworld, que cada entrada apunte a un environment existente y que cada environment tenga tamaño válido, spawn del jugador y que las paredes encierren un área interior donde caiga el spawn.
+
+### Herramientas de edición
+
+Cada herramienta es un `ToolInfo` (tipo + template). La ventana principal lo setea en el canvas cuando el usuario elige un botón del panel lateral.
+
+| Herramienta | Qué coloca | Overworld o Environments |
+|---|---|---|
+| Player spawn | punto de aparición del jugador | ambos |
+| Obstacle | obstáculo con textura | ambos |
+| City zone | zona segura con NPCs y obstáculos fijos del template | overworld |
+| Biome zone | zona de criaturas con textura de piso | overworld |
+| Entry | entrada hacia un environment | overworld |
+| Floor | tile de piso sobre el grid de biomas | overworld |
+| Wall / Exit | paredes y salidas del environment | environments |
+
+En el mapa principal se editan biomas, ciudades, entradas, pisos y el pawn global. Al hacer doble click en un environment de la lista, el canvas carga un sub-documento y pasa a modo `Environment` para editar obstáculos, paredes, salidas, spawn interno y criaturas.
+
+### Flujo completo de edición (simplificado)
+
+Ejemplo de arranque, crear mapa, colocar un obstáculo y guardar:
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant EW as EditorWindow
+    participant MC as MapCanvas
+    participant SC as SceneController
+    participant IB as ItemBuilder
+    participant TR as TemplateRegistry
+    participant VER as Verificator
+    participant IO as YamlMapIO
+
+    Note right of VER: Arranque
+    EW->>TR: load()
+    EW->>MC: new MapCanvas(templates)
+
+    Note right of VER: Crear mapa
+    Usuario->>EW: New map → Create
+    EW->>EW: startNewMainMap (main_doc_)
+    EW->>MC: createMap(id, name, w, h)
+    MC->>MC: initializeScene (grilla, fondo)
+
+    Note right of VER: Colocar obstáculo
+    Usuario->>EW: modo Obstacles + template
+    EW->>MC: setActiveTool(tool)
+    Usuario->>MC: click en celda
+    MC->>SC: placeObstacle(tool, x, y)
+    SC->>TR: find_obstacle
+    SC->>IB: buildObstacle(...)
+    SC->>SC: addItem en QGraphicsScene
+
+    Note right of VER: Guardar
+    Usuario->>MC: Save
+    MC->>EW: saveRequested()
+    EW->>MC: buildDocument()
+    MC->>SC: buildDocument(...) recorre escena
+    SC->>TR: resuelve templates
+    SC-->>MC: MapDocument
+    MC-->>EW: MapDocument
+    EW->>EW: merge en main_doc_
+    EW->>VER: validate(main_doc_)
+    EW->>IO: save(main_doc_, path)
+```
+
+### Relación con el servidor
+
+El editor y el servidor leen el mismo esquema YAML pero con loaders distintos (`YamlMapIO` vs `YamlMapLoader`). El loader del servidor no reconstruye el mapa para editarlo: expande zonas, aplica obstáculos sobre celdas, resuelve spawns de criaturas y arma las entradas con punteros a los environments cargados. Ese `Map` es el que el game loop usa y el que el protocolo serializa hacia el cliente.
 
 ---
 
