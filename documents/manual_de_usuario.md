@@ -223,7 +223,7 @@ Una vez dentro, en el panel lateral derecho vas a ver la información de tu pers
 > **comandos** (ver la sección siguiente). Mientras el chat está abierto, las teclas
 > de movimiento no mueven al personaje.
 
-### 7.7 Combatir, comerciar y banco
+### 6.7 Combatir, comerciar y banco
 
 - **Atacar**: hacé clic sobre un enemigo. El servidor valida si tenés el arma
   adecuada, si estás a distancia (ataque a distancia) o pegado (cuerpo a cuerpo).
@@ -238,7 +238,7 @@ Si morís, soltás tu equipamiento en el suelo y te convertís en fantasma; busc
 
 ---
 
-## 8. Comandos de chat
+## 7. Comandos de chat
 
 Abrí el chat con `Enter`, escribí el comando y presioná `Enter` de nuevo para
 enviarlo.
@@ -300,17 +300,17 @@ enviarlo.
 
 ---
 
-## 9. Cómo crear y editar mapas con el Editor
+## 8. Cómo crear y editar mapas con el Editor
 
 El editor es una aplicación gráfica (Qt) para diseñar los mapas donde se juega.
 
-### 9.1 Abrir el editor
+### 8.1 Abrir el editor
 
 ```sh
 ./build/taller_editor
 ```
 
-### 9.2 Menú principal
+### 8.2 Menú principal
 
 Al abrir vas a ver dos opciones:
 
@@ -319,7 +319,7 @@ Al abrir vas a ver dos opciones:
 - **Abrir mapa** (`Abrir`): te deja elegir un `.yaml` existente de
   `server/assets/maps/` para seguir editándolo.
 
-### 9.3 Herramientas de edición
+### 8.3 Herramientas de edición
 
 El editor trabaja por **modos**. Elegís un modo en la barra de herramientas y luego
 pintás sobre el mapa haciendo clic en las celdas:
@@ -335,7 +335,7 @@ pintás sobre el mapa haciendo clic en las celdas:
 | **Salidas (Exits)** | Puntos de transición/salida del mapa. |
 | **Dimensiones (Dimensions)** | Agranda o achica el mapa (expandir/encoger hacia arriba, abajo, izquierda o derecha). |
 
-### 9.4 Guardar el mapa
+### 8.4 Guardar el mapa
 
 Cuando guardás, el editor escribe el archivo `.yaml` en `server/assets/maps/` con el
 nombre/id que le pusiste al mapa, y te muestra un mensaje con la ruta exacta donde
