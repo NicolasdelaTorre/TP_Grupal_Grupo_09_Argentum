@@ -1,45 +1,64 @@
-# Ejemplo de CMAKE para el TP Final
+# 🛡️⚔️ Argentum Online - Remake ⚔️🛡️
 
-**Importante:** el primer commit de este repositorio tiene el setup
-básico para el TP Final que incluye la instalación de la lib de Google
-Tests, `SDL2` y `SDL2pp` (el wrapper de C++).
+## Requisitos del sistema
 
-El resto de los commits son a modo de ejemplo de como se pueden
-agregar mas código fuente al proyecto.
+- **Sistema Operativo**: Ubuntu 24.04 / Xubuntu 24.04
+- **Compilador**: g++ con soporte C++20
+- **CMake**: 3.24 o superior (se instala automáticamente)
+- **Dependencias**: SDL2, Qt6, Box2D, GoogleTest (se instalan automáticamente)
 
-Este ejemplo **no** incluye instalarse otras libs que son dependencias
-tanto de `SDL2` como de `SDL2pp` (pero si estan documentadas en el
-`CMakeFile` para Xubuntu 24.04).
+## Instalador
 
-Este repo **no** incluye tampoco un instalador.
+El instalador descarga e instala todas las dependencias, por lo cual el usuario solo debe: 
 
-**Se deben agregar las librerias necesarias y el instalador.**
-
-También el ejemplo usa una estructura de carpetas muy simple:
+1. **Clonar el repositorio** 
 
 ```
-client/
-server/
-editor/
-common/
+git clone <URL_DEL_REPO>
+cd TP_Grupal_Grupo_09_Argentum
+
 ```
 
-Bien se puede mejorar (cambiando el cmakefile) agregando mas
-sub-carpetas.
+2. **Luego, correr el instalador** 
 
-Asi tambien **deben** ser cambiados los *targets* del cmake (`taller_client`,
-`taller_server`, ...) por nombres mas acordes al TP que se este
-haciendo.
 
-Tambien, por default solo se compila una version *debug* sin
-optimizar. Si se quiere compilar binarios optimizados
-(lo que cmake llama *release*) se puede, solo hay modificar
-cmake.
+```sh
 
-Aprender del ejemplo para saber como extenderlo!
+sudo make install
 
-**Importante:** este repositorio **no** incluye pre-commits hooks,
-ni scripts adicionales (como correr valgrind).
+```
 
-**Eso esta a cargo de los estudiantes,** tal como fue mostrado
-en los tps individuales, recaps y hands-on.
+Una vez completada toda la instalacion, para abrir el servidor se debe de utilizar por consola 
+
+```sh
+
+./build/taller_server <PORT>
+
+#Como ejemplo puede utilizar el 8080
+
+```
+
+Para abrir los clientes, una vez este inicializado el servidor, se debe ejecutar 
+
+```sh
+
+./build/taller_client localhost <PORT>
+
+# El puerto deber ser el mismo que el del servidor.
+
+```
+
+## Documentacion
+
+Se encuentran dentro del proyecto en el apartado documents la documentacion tecnica, el manual de proyecto y el manual de usuario.
+
+
+
+## 👥   Integrantes (Grupo 09)
+
+| Nombre | GitHub |
+|:--- |:--- |
+| **Nicolas de la Torre** | [@NicolasdelaTorre](https://github.com/NicolasdelaTorre) |
+| **Oliver Weber** | [@Oli03](https://github.com/Oli03) |
+| **Tomás Nahuel Olivera** | [@Tomas-NO](https://github.com/Tomas-NO) |
+| **Joaquin Velurtas** | [@joaquinvelurtas](https://github.com/joaquinvelurtas) |
