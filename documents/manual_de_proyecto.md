@@ -14,7 +14,7 @@ más independiente posible del resto, para que no tuviéramos que
 estar esperando que el otro termine ni pisando los cambios que teniamos que hacer. Tuvimos
 suerte de que la división en módulos del proyecto calzaba bien con cuatro personas:
 
-- **Nicolás de la Torre**: 
+- **Nicolás de la Torre**: En mi caso me hice cargo de la renderizacion en pantalla de todo lo relacionado al juego. Una vez la informacion enviada por el server es decodificada se imprime en pantalla.
 
 - **Oliver Weber**: 
 
@@ -28,7 +28,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 ### Semana 1 — 11 al 17 de mayo
 
-- **Nicolás**: 
+- **Nicolás**: Subi el template y se dividieron distintas branches de trabajo
 - **Oliver**: 
 - **Joaquín**: 
 - **Tomás**: No tuve commits propios esta semana. Estuve leyendo el
@@ -37,7 +37,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 ### Semana 2 — 18 al 24 de mayo
 
-- **Nicolás**: 
+- **Nicolás**: Creo la base de protocolo y primeras conexiones.
 - **Oliver**: 
 - **Joaquín**: 
 - **Tomás**: Me metí a fondo con el protocolo. Definimos en grupo el
@@ -46,7 +46,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 ### Semana 3 — 25 al 31 de mayo
 
-- **Nicolás**: 
+- **Nicolás**: Primer funcionamiento real del juego pudiendose ver las primeras texturas y personajes con sus respectivas armas y animaciones. Tambien se implementa el login y el fullscreen. Como asi tambien las colisiones con objetos.
 - **Oliver**: 
 - **Joaquín**: 
 - **Tomás**: Me ocupé de la integración real, que el servidor parsee
@@ -57,7 +57,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 ### Semana 4 — 1 al 7 de junio
 
-- **Nicolás**: 
+- **Nicolás**: Implemento el feature de convertirse en fantasma una vez muerto y las diferentes skins. Tambien se renderizan los objetos en el suelo como asi la sangre cuando un personaje es atacado.
 - **Oliver**: 
 - **Joaquín**: 
 - **Tomás**: Sumé el mensaje de stats del jugador para el HUD y armé
@@ -69,7 +69,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 ### Semana 5 — 8 al 14 de junio
 
-- **Nicolás**: 
+- **Nicolás**: Implemente el HUD del inventario y la visualizacion del chat. Utilizo los mismos items en inventario que para renderizar en el suelo. Se establecen skins default. Se agregan las stats en la HUD de inventario. Tambien se implementan los hechizos con los baculos. Agrego pantalla de seleccion de raza y clase.
 - **Oliver**: 
 - **Joaquín**: 
 - **Tomás**: Me dediqué casi toda la semana al chat libre con sus
@@ -84,7 +84,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 ### Semana 6 — 15 al 21 de junio
 
-- **Nicolás**: 
+- **Nicolás**: fix de las texturas de los NPC, paths y agrego audio al juego.
 - **Oliver**: 
 - **Joaquín**: 
 - **Tomás**: Implementé el sistema de clanes completo con todos
