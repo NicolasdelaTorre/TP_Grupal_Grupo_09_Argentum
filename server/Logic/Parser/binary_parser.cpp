@@ -114,7 +114,7 @@ PlayerData BinaryParser::loadPlayerData(const std::string& name) {
         throw std::runtime_error("BinaryParser Error: player not found");
     }
 
-    std::ifstream playersFile("server/Logic/Player/players.bin", std::ios::binary);
+    std::ifstream playersFile("server/Logic/Player/players_data.bin", std::ios::binary);
     if (!playersFile.is_open()) {
         throw std::runtime_error("BinaryParser Error: could not open players file");
     }
@@ -131,7 +131,7 @@ void BinaryParser::updatePlayerData(const std::string& name, PlayerData data) {
         throw std::runtime_error("BinaryParser Error: player not found");
     }
     
-    std::fstream playersFile("server/Logic/Player/players.bin", std::ios::binary | std::ios::in | std::ios::out);
+    std::fstream playersFile("server/Logic/Player/players_data.bin", std::ios::binary | std::ios::in | std::ios::out);
     if (!playersFile.is_open()) {
         throw std::runtime_error("BinaryParser Error: could not open players file");
     }

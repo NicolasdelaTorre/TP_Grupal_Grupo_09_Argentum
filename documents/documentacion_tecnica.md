@@ -165,7 +165,227 @@ sequenceDiagram
 
 ## Servidor
 
-_(pendiente)_
+## Servidor
+
+### 1. Representación del Mapa y el Entorno
+El mundo del juego se divide en dos entornos principales: el **Overworld** (mundo abierto) y la **Dungeon** (mazmorra). Cada posición en el escenario se modela mediante la estructura `Cell`, la cual almacena sus coordenadas `(x, y)` junto con los atributos requeridos para validar la colisión y transitabilidad de las entidades.
+
+Una entidad se puede posicionar en una `Cell` si cumple con lo siguiente:
+- No hay ningún obstáculo encima.
+- No hay ninguna entidad encima (se guarda el ID de la entidad para identificar si está ocupada la `Cell` o no). Los fantasmas (jugadores muertos) cuentan como entidad posicionada en una `Cell`.
+- La entidad está en proceso de resurrección (solo aplica esto hacia los jugadores).
+
+La clase `Map` gestiona el escenario completo a través de un vector unidimensional de objetos `Cell`. Para optimizar el acceso a la información de una coordenada específica, se transforma la posición bidimensional a un índice lineal mediante la siguiente ecuación de indexación:
+
+`índice = y * width + x`
+
+### 2. Diseño de los Atributos
+Un jugador posee los siguientes atributos (en algunos se incluye la fórmula para calcularlo):
+- Nivel
+- Experiencia
+- Constitución
+- Inteligencia
+- Fuerza
+- Agilidad
+- FRazaVida
+- FRazaMana
+- FRazaRecuperacion
+- FClaseVida
+- FClaseMana
+- FClaseMeditacion
+- Vida Máxima (Constitución * FClaseVida * FRazaVida * Nivel)
+- Maná Máxima (Inteligencia * FClaseMana * FRazaMana * Nivel)
+- Oro Máximo Seguro (100 * Nivel^1.1)
+
+La única información visible que tiene el jugador es el nivel, experiencia actual, vida actual, maná actual y oro actual. Las criaturas poseen algunos de estos atributos, los cuales son: Vida Máxima y Agilidad.
+
+Desde el atributo Constitución hasta FClaseMeditacion, su valor depende de la raza y clase elegida. Se pueden elegir 4 razas distintas:
+- Humano
+- Elfo
+- Enano
+- Gnomo
+
+Y se pueden elegir 4 clases distintas:
+- Mago
+- Clérigo
+- Paladín/Campeón
+- Guerrero
+
+Para los jugadores que seleccionen la clase Guerrero, todos los atributos relacionados a la magia serán anulados.
+
+Si los jugadores son asesinados, pierden todas sus cosas y la posibilidad de realizar la mayoría de acciones, ya que para el juego son jugadores muertos. Las únicas acciones que pueden realizar son trucos (no recomendable, alto riesgo de romper el juego) y mensajes (ya sean públicos o respecto al clan). Para resucitar, deben escribir el comando `/resucitar`, el cual durante unos segundos los teletransportará al sacerdote más cercano, apareciendo con toda su salud y maná a la máxima capacidad.
+
+### 3. Ciclo de Juego y Gestión de Turnos
+El flujo de la partida se administra mediante un **bucle de juego (Game Loop)** continuo que procesa las acciones en un orden secuencial estricto:
+1. **Peticiones de los Jugadores:** Se extraen de forma continua las solicitudes enviadas por los clientes y se despachan las instrucciones correspondientes a la clase maestra `Game`.
+2. **Acciones Pasivas:** Se actualizan los estados temporales de los jugadores, tales como la regeneración de salud y maná (incluida el maná regenerado a través de la *meditación*), o los contadores de tiempo para la resurrección.
+3. **Turno de los NPCs:** Se procesa la lógica de las entidades no jugables. Esto incluye rutinas de persecución, ejecución de ataques a jugadores dentro del rango o tiempos de reaparición (*respawn*).
+
+### 4. Sistema Económico
+La moneda del juego es el *oro*. Cada jugador tendrá una cantidad segura de oro, lo cual quiere decir que no va a perder esa cantidad al ser asesinado, y una cantidad en exceso. El exceso es la cantidad de oro que el jugador va a perder si es asesinado, que sería como máximo un 50% de la cantidad máxima de oro seguro.
+
+Las criaturas también tienen oro y lo pueden dejar caer tras ser eliminadas. La cantidad de oro está determinada por esta ecuación:
+
+`rand(0, 0.2) * VidaMaxNPC`
+
+De los tres NPCs pasivos (comerciante, sacerdote y banquero), el único que puede tener oro es el banquero, pero lo guarda en la cuenta del respectivo jugador y se mantendrá constante durante el tiempo, aunque el servidor esté inactivo, hasta que el jugador quiera retirar esa cantidad. El sistema bancario permite depositar y retirar desde cualquier sucursal en el mundo. Con respecto al comerciante y al sacerdote, a pesar de que se utiliza el oro como moneda de intercambio, internamente no tienen ningún depósito de oro. Por lo tanto, pueden comprar una cantidad infinita de ítems.
+
+### 5. Administración del Inventario
+Todos los jugadores poseen un inventario con capacidad máxima de 20 ranuras. En esas ranuras pueden almacenar todos los ítems existentes del juego (exceptuando el oro, el cual se coloca en su ranura específica), los cuales pueden conseguir a través de compras, encontrándolos en el suelo o con el uso de trucos.
+
+Todos los ítems pueden ser equipados, pudiendo equipar a la vez estos 4 tipos:
+- Arma (ya sea ofensiva/sanadora o cuerpo a cuerpo/a distancia)
+- Casco
+- Armadura (Torso superior e inferior)
+- Escudo
+
+Las pociones, al ser equipadas, se consumen automáticamente aplicando el efecto correspondiente.
+
+Si el jugador es asesinado, todos los ítems del inventario caen al suelo, teniendo la posibilidad de ser robados por otros jugadores o de desaparecer tras el cierre del servidor.
+
+### 6. Sistema de Niveles
+Todos los jugadores y todas las criaturas poseen un número que determina su nivel. Cuanto mayor es el nivel, mayores son sus estadísticas base como la vida, el maná (solo para los jugadores no guerreros) y el daño (solo para las criaturas).
+
+Con respecto a los jugadores, el límite para alcanzar el próximo nivel está determinado por la siguiente ecuación:
+
+`1000 * Nivel^1.8`
+
+Para poder alcanzar ese límite y subir de nivel, se debe atacar a una criatura o a otro jugador no aliado permitido. La experiencia obtenida se basa en esta ecuación:
+
+`Daño * max(NivelDelOtro - Nivel + 10, 0)`
+
+Si se logra matar a la entidad, se recibe una cantidad de experiencia extra determinada por esta ecuación:
+
+`rand(0, 0.1) * VidaMaxDelOtro * max(NivelDelOtro - Nivel + 10, 0)`
+
+El jugador no pierde experiencia tras ser asesinado.
+
+### 7. Jerarquía de Entidades
+El sistema de personajes y criaturas se organiza mediante clases que separan los datos lógicos de su comportamiento:
+- **Jugadores:** Representados por la clase `Player`. Esta actúa como la clase maestra que expone los métodos de acción del personaje y encapsula una estructura interna llamada `PlayerData`, encargada exclusivamente de almacenar los datos que requieren persistencia.
+- **Enemigos y NPCs:** La clase `NPC` define el comportamiento base de los personajes no jugables. Los NPCs pasivos se configuran como entidades estáticas para garantizar que los usuarios conozcan su ubicación en todo momento. Por otro lado, los NPCs agresivos se modelan mediante la clase derivada `Creature`, la cual hereda de `NPC` e implementa capacidades ofensivas y de combate.
+
+### 8. Sistema de Ítems y Atributos
+Las estadísticas base de los personajes se determinan a partir de la combinación de su raza y clase. Tanto estos valores iniciales como las propiedades de todos los ítems del juego se parametrizan en un **archivo de constantes de configuración en formato TOML**. La lógica del juego lee este archivo para calcular las ecuaciones de combate y atributos en tiempo de ejecución, transformando los datos estáticos en eventos dinámicos dentro del entorno.
+
+### 9. Movimiento e Inteligencia Artificial (IA) de NPCs
+Las criaturas hostiles (`Creature`) poseen una lógica de persecución básica determinada por un **rango de proximidad**:
+- Los NPCs pasivos permanecen inmóviles.
+- Las criaturas agresivas activan su rutina de movimiento cuando detectan a un jugador vivo en un radio de 3 celdas en cualquier dirección. La IA fija como objetivo al primer jugador válido detectado dentro de este rango y comienza la persecución.
+
+Las criaturas solo aparecen en los biomas del Overworld o en las Dungeon, y cada uno de estos lugares posee una cantidad limitada de criaturas que pueden aparecer en el entorno. Si una criatura muere, con el tiempo va a revivir y aparecer en alguna posición aleatoria del entorno.
+
+Las criaturas al morir pueden dejar caer algunos objetos, los cuales son los siguientes junto a sus probabilidades:
+- 0.80 Nada
+- 0.08 Oro, una cantidad igual a `rand(0.01, 0.2) * VidaMaxNPC`
+- 0.01 Una poción de vida o maná elegida al azar
+- 0.01 Cualquier otro objeto al azar
+
+Tipos de criaturas que existen en el juego:
+- Goblin
+- Esqueleto
+- Zombie
+- Araña
+- Orco
+- Golem
+
+### 10. Sistema de Combate
+Los jugadores tienen dos formas de atacar a criaturas o a otros jugadores:
+- **Cuerpo a Cuerpo:** Siempre se debe estar al lado de la víctima, incluyendo las posiciones diagonales, y se puede emplear con cualquier tipo de ítem ofensivo.
+- **A Distancia:** Se puede atacar a una entidad dentro de un rango de radio 3, pero solo con una cantidad de ítems específicos limitados los cuales permiten atacar a distancia.
+
+Los jugadores pueden atacar a cualquier criatura sin ningún tipo de limitación, excluyendo cuando están muertos o si no tienen el maná suficiente para emplear el hechizo en cuestión. Con respecto al ataque hacia otros jugadores, solo se puede aplicar el ataque si la víctima no pertenece al mismo clan que el atacante, no es un jugador *newbie*, la diferencia de niveles es menor a 10 y si el atacante no se encuentra en la ciudad (*safe zone*).
+
+El daño realizado está determinado por esta ecuación:
+
+`Fuerza * rand(DañoArmaMin, DañoArmaMax)`
+
+El ataque realizado puede ser un golpe crítico.
+
+Las entidades se pueden defender esquivando el ataque o recibiendo una menor cantidad de daño de la que deberían recibir. La evasión está determinada por esta ecuación:
+
+`rand(0, 1) ^ Agilidad < 0.001`
+
+Y la defensa está determinada por esta ecuación:
+
+`rand(ArmaduraMin, ArmaduraMax) + rand(EscudoMin, EscudoMax) + rand(CascoMin, CascoMax)`
+
+### 11. Ítems
+En total hay 19 ítems diferentes los cuales pueden ser almacenados en el inventario y usados por el jugador. Los ítems son los siguientes:
+
+1. **Armas ofensivas:**
+- Espada
+- Hacha
+- Martillo
+- Arco simple
+- Arco compuesto
+
+2. **Armas ofensivas mágicas:**
+- Vara de fresno
+- Báculo nudoso
+- Báculo engarzado
+
+3. **Armas curativas:**
+- Flauta élfica
+
+4. **Armaduras:**
+- Armadura de cuero
+- Armadura de placas
+- Túnica azul
+
+5. **Cascos:**
+- Capucha
+- Casco de hierro
+- Sombrero mágico
+
+6. **Escudos:**
+- Escudo de tortuga
+- Escudo de hierro
+
+7. **Pociones:**
+- Poción de Salud
+- Poción de Maná
+
+### 12. Sistema de Clanes
+Un jugador de nivel 6 o más puede fundar un clan con nombre único. En el clan, otros jugadores se pueden unir, y si unos miembros del mismo clan se encuentran juntos, reciben bonificaciones de ataque y defensa.
+
+### 13. Persistencia
+Se utilizan en total 3 archivos binarios: 2 para los datos de los jugadores y uno para las cuentas bancarias de los jugadores.
+- **Archivo 1:** Se guardan todos los nombres de los jugadores que una vez se conectaron al servidor y la posición (*offset*) donde se encuentran los datos de este mismo jugador en el Archivo 2.
+- **Archivo 2:** Se guarda toda la información de un jugador que debe persistir. En esta información se incluye la ubicación, sus ítems, su oro, su salud máxima actual, su maná actual, nivel, experiencia, raza, clase, su equipamiento actual y si está vivo o muerto.
+- **Archivo 3:** Se guarda el nombre del jugador y al lado la cantidad de oro y los ítems depositados.
+
+### 14. Mini-Chat
+Todos los jugadores pueden acceder al mini-chat del servidor, y acá pueden enviar mensajes, ejecutar comandos/trucos y ver los eventos que ocurren en su entorno.
+
+Estos son todos los comandos que puede escribir un jugador:
+- `/meditar`
+- `/resucitar`
+- `/curar` (se tiene que estar al lado de un sacerdote)
+- `/depositar <objeto>` (se tiene que estar al lado de un banquero)
+- `/retirar <objeto>` (se tiene que estar al lado de un banquero)
+- `/listar` (se tiene que estar al lado de un sacerdote o comerciante)
+- `/comprar <objeto>` (se tiene que estar al lado de un sacerdote o comerciante)
+- `/vender <objeto>` (se tiene que estar al lado de un comerciante)
+- `/tomar`
+- `/tirar`
+- `@<nick> <msj>`
+- `/fundar-clan <nombre del clan>`
+- `/unirse <nombre del clan>`
+- `/revisar-clan`
+- `/clan-aceptar <nick>`
+- `/clan-rechazar <nick>`
+- `/clan-ban <nick>`
+- `/dejar-clan`
+- `/clan-kick <nick>`
+
+Estos son todos los trucos disponibles:
+- `/levelup`
+- `/item <número del ítem>`
+- `/vidainf`
+- `/manainf`
+- `/suicidio`
+- `/gold <cantidad>`
 
 ## Editor
 
