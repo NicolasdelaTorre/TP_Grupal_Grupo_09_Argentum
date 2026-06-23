@@ -38,7 +38,8 @@ bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, Cl
     players.emplace(playerId, Player(name, spawn, race, class_));
     parser.savePlayerData(name, players.at(playerId).getData());
     bank.addPlayer(name);
-    map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    Position currentPosition = map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
+    players.at(playerId).move(currentPosition);
     std::cout << "Hi " << name << " (" << Race::toString(race) << "/"
               << PlayerClass::toString(class_) << ") spawned at (" << spawn.x << ", " << spawn.y
               << ")" << std::endl;
@@ -46,13 +47,29 @@ bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, Cl
 }
 
 bool Game::loadExistingPlayer(int playerId, const std::string& name) {
-    players.emplace(playerId, Player(parser.loadPlayerData(name), name));
+    PlayerData data = parser.loadPlayerData(name);
+
+    if (playerAlreadyConnected(name)) {
+        return false;  // playerId in use
+    }
+
+    players.emplace(playerId, Player(data, name));
     Position spawn = players.at(playerId).getPosition();
     bank.addPlayer(name);
-    map.placeEntity(playerId, spawn.x, spawn.y, true, players.at(playerId).getMapId());
+    Position currentPosition = map.placeEntity(playerId, spawn.x, spawn.y, true, players.at(playerId).getMapId());
+    players.at(playerId).move(currentPosition);
     std::cout << "Welcome back " << name << " at (" << spawn.x << ", " << spawn.y << ")"
               << std::endl;
     return true;
+}
+
+bool Game::playerAlreadyConnected(const std::string& name) const {
+    for (const auto& [id, player]: players) {
+        if (player.getName() == name) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Game::turnPlayer(int playerId, MoveDirection direction) {
@@ -249,6 +266,15 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
 
     Player& player = itPlayer->second;
     Position next = player.getPosition();
+    Position old = player.getPosition();
+    uint8_t mapId = player.getMapId();
+
+    if (itPlayer->second.getTeleportingState()) {
+        std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
+                  << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
+                  << " reason=not_walkable" << std::endl;
+        return false;
+    }
 
     switch (direction) {
         case MoveDirection::TOP: next.y -= 1; break;
@@ -258,8 +284,6 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
         default: return false;
     }
 
-    uint8_t mapId = player.getMapId();
-    Position old = player.getPosition();
     if (!map.isWalkable(next.x, next.y, mapId)) {
         std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
                   << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
@@ -304,15 +328,13 @@ void Game::checkEntry(int playerId) {
             if (mapId.empty()) {
                 return;
             }
-            map.placePlayerIntoTheDungeon(playerId, pos, mapId);
+            Position newPosition = map.placePlayerIntoTheDungeon(playerId, pos, mapId);
             itPlayer->second.changeMapId(static_cast<uint8_t>(mapId[mapId.size() - 1] - '0'));
-            Position newPosition = map.getEntrySpawnPosition(mapId);
             itPlayer->second.move(newPosition);
         } else {
-            map.placePlayerIntoTheOverworld(playerId, currentMapId);
+            Position newPosition = map.placePlayerIntoTheOverworld(playerId, currentMapId);
             itPlayer->second.changeMapId(0);
-            Position entryPosition = map.getEntryPosition(currentMapId);
-            itPlayer->second.move({entryPosition.x, static_cast<int16_t>(entryPosition.y + 1)});
+            itPlayer->second.move(newPosition);
         }
     }
 }
@@ -350,10 +372,10 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     uint8_t entityId;
     if (itPlayer->second.hasLongDistanceWeapon())
         entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(),
-                                        targetPlayer, mapId);
+                                        targetPlayer, mapId, targetId);
     else
         entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer,
-                                  mapId);
+                                  mapId, targetId);
 
     if (entityId != targetId) {
         // Antes se rebotaba silencioso: el cliente ya mostró la animación pero
@@ -455,9 +477,9 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         uint8_t tgtLvl = npc->getLevel();
         uint16_t tgtMaxHp = npc->getMaxHealth();
         outcome.targetName = npc->getName();
-        npc->receiveDamage(damage);
+        uint16_t damageReceived = npc->receiveDamage(damage);
         int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
-        itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
+        itPlayer->second.grantExp(static_cast<uint32_t>(damageReceived) * factor);
         outcome.killed = npc->isDead();
         if (outcome.killed) {
             // Sacar la creature del mapa para que deje de bloquear celda.
@@ -469,9 +491,9 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
         }
         outcome.valid = true;
         outcome.critical = isCritical;
-        outcome.damage = damage;
+        outcome.damage = damageReceived;
         outcome.event = std::make_shared<AttackResultEvent>(attackerId, targetType, targetId,
-                                                            damage, true);
+                                                            damageReceived, true);
     }
 
     uint8_t atkLvlAfter = itPlayer->second.getData().level;
@@ -515,7 +537,7 @@ Game::HealOutcome Game::processHealCast(int casterId, uint16_t targetId) {
     // Chequeo de rango: la Flauta es a distancia, asi que uso entityInDistance.
     uint8_t mapId = itCaster->second.getMapId();
     uint16_t entityId = map.entityInDistance(itCaster->second.getX(), itCaster->second.getY(),
-                                             true, mapId);
+                                             true, mapId, targetId);
     if (entityId != targetId) {
         outcome.blockedReason = "Estás demasiado lejos del objetivo";
         return outcome;

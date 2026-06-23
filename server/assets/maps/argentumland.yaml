@@ -8,51 +8,51 @@ biome_map:
   width: 100
   height: 115
   data: |
-    6666666666666666777777777777777772222222222222222211111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777772222222222222222221111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777772222222222222222221111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666667777777777777777722222222222222222222111111111111111111111111111111111111111111111111
-    6666666666666777777777777777777222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777777777222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777777772222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777777772222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777777722222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777777222222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777777222222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777772222222222222222222222222111111111111111111111111111111111111111111111111
-    7777777777777777777777777772222222222222222222222222111111111199111111111119991111111111111111111111
-    7777777777777777777777777722222222222222222222222222111111199999999999999999999999911111111111111111
-    7777777777777777777777772222222222222222222222222222111111199999999999999999999999911111911111111111
-    7777777777777777777777772222222222222222222222222222111111111111111111999999999999911191111111111111
-    7777777777777777777777722222222222222222222222222222111111111111111111999999999999911191111111111111
-    7777777777777777777777111222222222222222222222222221111111111111111111999999999999999999999991111111
-    7777777777777777777771111112222222222222222222222211111111111111111111999999999999999999999991111111
-    7777777777777777777711111111122222222222222222222111111111991119911199999999999999999999999991111111
-    7777777777777777777111111111111222222222222222222111191199999999999999999999999999911111111111111111
-    7777777777777777771111111111111112222222222222221111a11199999999999999999999999999911111111111111111
-    77777777777777777111111111111111111222222222221111a1119111111111111111999999999999911111111111111111
-    7777777777777777111111111111111111111222222111119a11111111111111111111999999999999911111991119911111
-    7777777777777711111111111111111111111112111a11111111111111111111111111999999999999999999999999911111
-    77777777711111111b11111111bb1111111111a191a11a911111111111111111999911999999999999999999999999911111
-    7777711111111bbbbbbbbbbbbbbbbbbbbb1191a1111111111111111111111111999999999999999111111111111111111111
-    711111111111bbbbbbbbbbbbbbbbbbbbb11a1111112211111111111111111111999999999999999111111111111111111111
-    1111111111111bb9999bb1111111111111111111222222221111111111111111111111111199999111111111111111111111
-    1111111111111b999999b1111111111111111122222222222222111111111111111111111199999111111111111111111111
-    1111111111111b999999b1111111111111111222222222222222211111111111111111111199999111111111111111111111
-    111111111111bb999999b1111111111111122222222222222222221111111111111111111111111111111111111111111111
-    1111111111111bb9999bb1111111111112222222222222222222222111111111111111111111111111111111111111111111
-    1111111111111bbbbbbbbbbbbbbbbbb112222222222222222222222111111111111111111111111111111111111111111111
-    1111111111111bbbbbbbbbbbbbbbbbb112222222222222222222222111111111111111111111111111111111111111111111
-    111111111111bbbbbbbbb1111111111122222222222222222222222111111111111111111111111111111111111111111111
-    1111111111111bbbbbbbb1111111111122222222222222222222222111111111111111111111111111111111111111111111
+    6666666666666666667777777777777772222222222222222211111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777772222222222222222221111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777772222222222222222221111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777722222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666667777777777777222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666677777777777222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666777777772222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666667777772222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666666677662222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666666666662222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666666666662222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666666666662222222222222222222222111111111111111111111111111111111111111111111111
+    6666666666666666666666666666662222222222222222222222111111111199111111111119991111111111111111111111
+    6666666666666666666666666666662222222222222222222222111111199999999999999999999999911111111111111111
+    6666666666666666666666666666662222222222222222222222111111199999999999999999999999911111911111111111
+    6666666666666666666666666666662222222222222222222222111111111111111111999999999999911191111111111111
+    6666666666666666666666666666662222222222222222222222111111111111111111999999999999911191111111111111
+    6666666666666666666666666666666222222222222222222221111111111111111111999999999999999999999991111111
+    6666666666666666666666666666666222222222222222222211111111111111111111999999999999999999999991111111
+    6666666666666666666666666666666622222222222222222111111111991119911199999999999999999999999991111111
+    6666666666666666666666666666666622222222222222222111191199999999999999999999999999911111111111111111
+    6666666666666666666666666666666612222222222222221111a11199999999999999999999999999911111111111111111
+    66666666666666666666666666666661111222222222221111a1119111111111111111999999999999911111111111111111
+    6666666666666666666666666666661111111222222111119a11111111111111111111999999999999911111991119911111
+    6666666666666666666666666666611111111112111a11111111111111111111111111999999999999999999999999911111
+    66666666666666666b66666666bb1111111111a191a11a911111111111111111999911999999999999999999999999911111
+    6666666666666bbbbbbbbbbbbbbbbbbbbb1191a1111111111111111111111111999999999999999111111111111111111111
+    666666666666bbbbbbbbbbbbbbbbbbbbb11a1111112211111111111111111111999999999999999111111111111111111111
+    6666666666666bb9999bb6666611111111111111222222221111111111111111111111111199999111111111111111111111
+    6666666666666b999999b6666611111111111122222222222222111111111111111111111199999111111111111111111111
+    6666666666666b999999b6666611111111111222222222222222211111111111111111111199999111111111111111111111
+    666666666666bb999999b6666111111111122222222222222222221111111111111111111111111111111111111111111111
+    6666666666666bb9999bb6666111111112222222222222222222222111111111111111111111111111111111111111111111
+    6666666666666bbbbbbbbbbbbbbbbbb112222222222222222222222111111111111111111111111111111111111111111111
+    6666666666666bbbbbbbbbbbbbbbbbb112222222222222222222222111111111111111111111111111111111111111111111
+    666666666666bbbbbbbbb1111111111122222222222222222222222111111111111111111111111111111111111111111111
+    6111111111111bbbbbbbb1111111111122222222222222222222222111111111111111111111111111111111111111111111
     1111111111111bbbbbbbb1111111111122222222222222222222222111111111111111111111111111111111111111111111
     11111111111111bbbbbb11111111111822222222222222222222222111111111111111111111111111111111111111111111
     11111111111111bbbbbb11111111111882222222222222222222222111111111111111111111111111111111111111111111
@@ -124,7 +124,7 @@ biome_map:
     4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
     4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
 player_spawn:
-  position: [19, 35]
+  position: [6, 47]
 obstacles:
   - id: obstacle_228
     type: tree_red
@@ -1408,6 +1408,15 @@ zones:
       - type: banker
         name: Banquero
         position: [63, 20]
+  - id: zone_40
+    type: biome
+    template: nieve
+    area:
+      x: 0
+      y: 1
+      width: 16
+      height: 27
+    texture: nieve.png
   - id: zone_26
     type: biome
     template: bosque_oscuro
@@ -1431,11 +1440,6 @@ zones:
       width: 9
       height: 21
     texture: bosque_oscuro.png
-    spawns:
-      - creature: zombie
-        max_population: 3
-      - creature: skeleton
-        max_population: 2
   - id: zone_13
     type: biome
     template: pantano_embrujado
@@ -1445,9 +1449,6 @@ zones:
       width: 35
       height: 6
     texture: pantano.png
-    spawns:
-      - creature: goblin
-        max_population: 3
   - id: zone_12
     type: biome
     template: desierto
@@ -1478,11 +1479,6 @@ zones:
       width: 40
       height: 15
     texture: bosque.png
-    spawns:
-      - creature: spider
-        max_population: 7
-      - creature: goblin
-        max_population: 2
   - id: zone_5
     type: biome
     template: nieve
@@ -1492,9 +1488,6 @@ zones:
       width: 12
       height: 11
     texture: nieve.png
-    spawns:
-      - creature: golem
-        max_population: 2
   - id: zone_6
     type: biome
     template: rocosas
@@ -1504,9 +1497,6 @@ zones:
       width: 16
       height: 6
     texture: rocosa.png
-    spawns:
-      - creature: golem
-        max_population: 1
   - id: zone_7
     type: biome
     template: rocosas
@@ -1516,9 +1506,6 @@ zones:
       width: 9
       height: 11
     texture: rocosa.png
-    spawns:
-      - creature: golem
-        max_population: 2
   - id: zone_34
     type: biome
     template: cementerio
@@ -1528,11 +1515,6 @@ zones:
       width: 28
       height: 12
     texture: cementerio.png
-    spawns:
-      - creature: skeleton
-        max_population: 1
-      - creature: zombie
-        max_population: 1
   - id: zone_35
     type: biome
     template: cementerio
@@ -1576,469 +1558,74 @@ environments:
       position: [5, 6]
     obstacles:
       - id: obstacle_11
-        type: box
-        position: [14, 2]
+        type: stalagmite
+        position: [2, 8]
         size: [1, 1]
-        texture: box.png
+        texture: stalagmite.png
       - id: obstacle_10
-        type: boxes
-        position: [20, 2]
+        type: stalagmite
+        position: [12, 7]
         size: [1, 1]
-        texture: boxes.png
+        texture: stalagmite.png
       - id: obstacle_9
-        type: boxes
-        position: [18, 2]
+        type: stalagmite
+        position: [20, 12]
         size: [1, 1]
-        texture: boxes.png
+        texture: stalagmite.png
       - id: obstacle_8
-        type: minecart
-        position: [16, 3]
+        type: stalagmite
+        position: [15, 20]
         size: [1, 1]
-        texture: minecart.png
+        texture: stalagmite.png
       - id: obstacle_7
-        type: fallen_minecart
-        position: [21, 4]
+        type: stalagmite
+        position: [7, 17]
         size: [1, 1]
-        texture: fallen_minecart.png
+        texture: stalagmite.png
       - id: obstacle_6
         type: piedra_pequenia
         position: [19, 18]
         size: [2, 2]
         texture: rock_medium.png
       - id: obstacle_5
-        type: stalagmite
-        position: [7, 17]
+        type: fallen_minecart
+        position: [21, 4]
         size: [1, 1]
-        texture: stalagmite.png
+        texture: fallen_minecart.png
       - id: obstacle_4
-        type: stalagmite
-        position: [15, 20]
+        type: minecart
+        position: [16, 3]
         size: [1, 1]
-        texture: stalagmite.png
+        texture: minecart.png
       - id: obstacle_3
-        type: stalagmite
-        position: [20, 12]
+        type: boxes
+        position: [18, 2]
         size: [1, 1]
-        texture: stalagmite.png
+        texture: boxes.png
       - id: obstacle_2
-        type: stalagmite
-        position: [12, 7]
+        type: boxes
+        position: [20, 2]
         size: [1, 1]
-        texture: stalagmite.png
+        texture: boxes.png
       - id: obstacle_1
-        type: stalagmite
-        position: [2, 8]
+        type: box
+        position: [14, 2]
         size: [1, 1]
-        texture: stalagmite.png
+        texture: box.png
     walls:
-      - id: wall_9
-        template: pared_cueva_vertical
-        position: [4, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_10
-        template: pared_cueva_vertical
-        position: [5, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_11
-        template: pared_cueva_vertical
-        position: [6, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_13
-        template: pared_cueva_vertical
-        position: [7, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_14
-        template: pared_cueva_vertical
-        position: [8, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_15
-        template: pared_cueva_vertical
-        position: [9, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_16
-        template: pared_cueva_vertical
-        position: [10, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_17
-        template: pared_cueva_vertical
-        position: [11, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_18
-        template: pared_cueva_vertical
+      - id: wall_130
+        template: pared_cueva_izquierda
+        position: [12, 13]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_129
+        template: pared_cueva_izquierda
         position: [12, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_27
-        template: pared_cueva_vertical
-        position: [12, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_28
-        template: pared_cueva_vertical
-        position: [11, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_30
-        template: pared_cueva_vertical
-        position: [10, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_31
-        template: pared_cueva_vertical
-        position: [9, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_32
-        template: pared_cueva_vertical
-        position: [8, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_33
-        template: pared_cueva_vertical
-        position: [7, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_34
-        template: pared_cueva_vertical
-        position: [6, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_35
-        template: pared_cueva_vertical
-        position: [5, 15]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_39
-        template: pared_cueva_izquierda
-        position: [4, 14]
         size: [1, 2]
         texture: cave_left.png
-      - id: wall_40
-        template: pared_cueva_izquierda
-        position: [4, 16]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_41
-        template: pared_cueva_izquierda
-        position: [4, 18]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_42
-        template: pared_cueva_izquierda
-        position: [4, 20]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_43
-        template: pared_cueva_izquierda
-        position: [4, 22]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_45
+      - id: wall_120
         template: pared_cueva_vertical
-        position: [5, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_46
-        template: pared_cueva_vertical
-        position: [6, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_47
-        template: pared_cueva_vertical
-        position: [7, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_48
-        template: pared_cueva_vertical
-        position: [8, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_49
-        template: pared_cueva_vertical
-        position: [9, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_50
-        template: pared_cueva_vertical
-        position: [10, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_51
-        template: pared_cueva_vertical
-        position: [11, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_52
-        template: pared_cueva_vertical
-        position: [13, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_53
-        template: pared_cueva_vertical
-        position: [12, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_54
-        template: pared_cueva_vertical
-        position: [14, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_55
-        template: pared_cueva_vertical
-        position: [15, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_56
-        template: pared_cueva_vertical
-        position: [16, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_57
-        template: pared_cueva_vertical
-        position: [17, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_58
-        template: pared_cueva_vertical
-        position: [18, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_59
-        template: pared_cueva_vertical
-        position: [19, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_60
-        template: pared_cueva_vertical
-        position: [20, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_61
-        template: pared_cueva_vertical
-        position: [21, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_62
-        template: pared_cueva_vertical
-        position: [22, 23]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_63
-        template: pared_cueva_derecha
-        position: [23, 22]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_64
-        template: pared_cueva_derecha
-        position: [23, 20]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_65
-        template: pared_cueva_derecha
-        position: [23, 18]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_66
-        template: pared_cueva_derecha
-        position: [23, 16]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_67
-        template: pared_cueva_derecha
-        position: [23, 14]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_68
-        template: pared_cueva_derecha
-        position: [23, 12]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_69
-        template: pared_cueva_derecha
-        position: [23, 10]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_70
-        template: pared_cueva_derecha
-        position: [23, 8]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_71
-        template: pared_cueva_derecha
-        position: [23, 6]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_72
-        template: pared_cueva_derecha
-        position: [23, 4]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_73
-        template: pared_cueva_vertical
-        position: [4, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_74
-        template: pared_cueva_vertical
-        position: [5, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_75
-        template: pared_cueva_vertical
-        position: [6, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_76
-        template: pared_cueva_vertical
-        position: [7, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_77
-        template: pared_cueva_vertical
-        position: [8, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_78
-        template: pared_cueva_vertical
-        position: [9, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_79
-        template: pared_cueva_vertical
-        position: [10, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_80
-        template: pared_cueva_vertical
-        position: [11, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_81
-        template: pared_cueva_vertical
-        position: [12, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_82
-        template: pared_cueva_vertical
-        position: [13, 5]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_92
-        template: pared_cueva_izquierda
-        position: [13, 4]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_93
-        template: pared_cueva_izquierda
-        position: [13, 2]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_95
-        template: pared_cueva_izquierda
-        position: [13, 0]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_96
-        template: pared_cueva_vertical
-        position: [14, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_97
-        template: pared_cueva_vertical
-        position: [15, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_98
-        template: pared_cueva_vertical
-        position: [16, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_99
-        template: pared_cueva_vertical
-        position: [17, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_100
-        template: pared_cueva_vertical
-        position: [18, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_101
-        template: pared_cueva_vertical
-        position: [19, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_102
-        template: pared_cueva_vertical
-        position: [20, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_103
-        template: pared_cueva_vertical
-        position: [21, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_104
-        template: pared_cueva_vertical
-        position: [22, 1]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_106
-        template: pared_cueva_derecha
-        position: [23, 0]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_107
-        template: pared_cueva_derecha
-        position: [23, 2]
-        size: [1, 2]
-        texture: cave_right.png
-      - id: wall_111
-        template: pared_cueva_izquierda
-        position: [0, 4]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_112
-        template: pared_cueva_izquierda
-        position: [0, 6]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_113
-        template: pared_cueva_izquierda
-        position: [0, 8]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_114
-        template: pared_cueva_izquierda
-        position: [0, 10]
-        size: [1, 2]
-        texture: cave_left.png
-      - id: wall_115
-        template: pared_cueva_vertical
-        position: [1, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_116
-        template: pared_cueva_vertical
-        position: [2, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_117
-        template: pared_cueva_vertical
-        position: [3, 11]
-        size: [1, 1]
-        texture: cave_vertical.png
-      - id: wall_118
-        template: pared_cueva_vertical
-        position: [1, 5]
+        position: [3, 5]
         size: [1, 1]
         texture: cave_vertical.png
       - id: wall_119
@@ -2046,37 +1633,432 @@ environments:
         position: [2, 5]
         size: [1, 1]
         texture: cave_vertical.png
-      - id: wall_120
+      - id: wall_118
         template: pared_cueva_vertical
-        position: [3, 5]
+        position: [1, 5]
         size: [1, 1]
         texture: cave_vertical.png
-      - id: wall_129
+      - id: wall_117
+        template: pared_cueva_vertical
+        position: [3, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_116
+        template: pared_cueva_vertical
+        position: [2, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_115
+        template: pared_cueva_vertical
+        position: [1, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_114
         template: pared_cueva_izquierda
-        position: [12, 11]
+        position: [0, 10]
         size: [1, 2]
         texture: cave_left.png
-      - id: wall_130
+      - id: wall_113
         template: pared_cueva_izquierda
-        position: [12, 13]
+        position: [0, 8]
         size: [1, 2]
         texture: cave_left.png
-    exits:
-      - id: exit_1
-        template: salida_cueva
+      - id: wall_112
+        template: pared_cueva_izquierda
+        position: [0, 6]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_111
+        template: pared_cueva_izquierda
+        position: [0, 4]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_107
+        template: pared_cueva_derecha
+        position: [23, 2]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_106
+        template: pared_cueva_derecha
+        position: [23, 0]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_104
+        template: pared_cueva_vertical
+        position: [22, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_103
+        template: pared_cueva_vertical
+        position: [21, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_102
+        template: pared_cueva_vertical
+        position: [20, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_101
+        template: pared_cueva_vertical
+        position: [19, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_100
+        template: pared_cueva_vertical
+        position: [18, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_99
+        template: pared_cueva_vertical
+        position: [17, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_98
+        template: pared_cueva_vertical
+        position: [16, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_97
+        template: pared_cueva_vertical
+        position: [15, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_96
+        template: pared_cueva_vertical
+        position: [14, 1]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_95
+        template: pared_cueva_izquierda
+        position: [13, 0]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_93
+        template: pared_cueva_izquierda
+        position: [13, 2]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_92
+        template: pared_cueva_izquierda
+        position: [13, 4]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_82
+        template: pared_cueva_vertical
+        position: [13, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_81
+        template: pared_cueva_vertical
+        position: [12, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_80
+        template: pared_cueva_vertical
+        position: [11, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_79
+        template: pared_cueva_vertical
+        position: [10, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_78
+        template: pared_cueva_vertical
+        position: [9, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_77
+        template: pared_cueva_vertical
+        position: [8, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_76
+        template: pared_cueva_vertical
+        position: [7, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_75
+        template: pared_cueva_vertical
+        position: [6, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_74
+        template: pared_cueva_vertical
         position: [5, 5]
         size: [1, 1]
-        texture: exit_cueva.png
+        texture: cave_vertical.png
+      - id: wall_73
+        template: pared_cueva_vertical
+        position: [4, 5]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_72
+        template: pared_cueva_derecha
+        position: [23, 4]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_71
+        template: pared_cueva_derecha
+        position: [23, 6]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_70
+        template: pared_cueva_derecha
+        position: [23, 8]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_69
+        template: pared_cueva_derecha
+        position: [23, 10]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_68
+        template: pared_cueva_derecha
+        position: [23, 12]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_67
+        template: pared_cueva_derecha
+        position: [23, 14]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_66
+        template: pared_cueva_derecha
+        position: [23, 16]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_65
+        template: pared_cueva_derecha
+        position: [23, 18]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_64
+        template: pared_cueva_derecha
+        position: [23, 20]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_63
+        template: pared_cueva_derecha
+        position: [23, 22]
+        size: [1, 2]
+        texture: cave_right.png
+      - id: wall_62
+        template: pared_cueva_vertical
+        position: [22, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_61
+        template: pared_cueva_vertical
+        position: [21, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_60
+        template: pared_cueva_vertical
+        position: [20, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_59
+        template: pared_cueva_vertical
+        position: [19, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_58
+        template: pared_cueva_vertical
+        position: [18, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_57
+        template: pared_cueva_vertical
+        position: [17, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_56
+        template: pared_cueva_vertical
+        position: [16, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_55
+        template: pared_cueva_vertical
+        position: [15, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_54
+        template: pared_cueva_vertical
+        position: [14, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_53
+        template: pared_cueva_vertical
+        position: [12, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_52
+        template: pared_cueva_vertical
+        position: [13, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_51
+        template: pared_cueva_vertical
+        position: [11, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_50
+        template: pared_cueva_vertical
+        position: [10, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_49
+        template: pared_cueva_vertical
+        position: [9, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_48
+        template: pared_cueva_vertical
+        position: [8, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_47
+        template: pared_cueva_vertical
+        position: [7, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_46
+        template: pared_cueva_vertical
+        position: [6, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_45
+        template: pared_cueva_vertical
+        position: [5, 23]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_43
+        template: pared_cueva_izquierda
+        position: [4, 22]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_42
+        template: pared_cueva_izquierda
+        position: [4, 20]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_41
+        template: pared_cueva_izquierda
+        position: [4, 18]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_40
+        template: pared_cueva_izquierda
+        position: [4, 16]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_39
+        template: pared_cueva_izquierda
+        position: [4, 14]
+        size: [1, 2]
+        texture: cave_left.png
+      - id: wall_35
+        template: pared_cueva_vertical
+        position: [5, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_34
+        template: pared_cueva_vertical
+        position: [6, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_33
+        template: pared_cueva_vertical
+        position: [7, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_32
+        template: pared_cueva_vertical
+        position: [8, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_31
+        template: pared_cueva_vertical
+        position: [9, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_30
+        template: pared_cueva_vertical
+        position: [10, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_28
+        template: pared_cueva_vertical
+        position: [11, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_27
+        template: pared_cueva_vertical
+        position: [12, 15]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_18
+        template: pared_cueva_vertical
+        position: [12, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_17
+        template: pared_cueva_vertical
+        position: [11, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_16
+        template: pared_cueva_vertical
+        position: [10, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_15
+        template: pared_cueva_vertical
+        position: [9, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_14
+        template: pared_cueva_vertical
+        position: [8, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_13
+        template: pared_cueva_vertical
+        position: [7, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_11
+        template: pared_cueva_vertical
+        position: [6, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_10
+        template: pared_cueva_vertical
+        position: [5, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+      - id: wall_9
+        template: pared_cueva_vertical
+        position: [4, 11]
+        size: [1, 1]
+        texture: cave_vertical.png
+    exits:
       - id: exit_2
         template: salida_cueva
         position: [9, 23]
         size: [1, 1]
         texture: exit_cueva.png
+      - id: exit_1
+        template: salida_cueva
+        position: [5, 5]
+        size: [1, 1]
+        texture: exit_cueva.png
     spawns:
-      - creature: golem
-        max_population: 2
+      - creature: goblin
+        max_population: 8
       - creature: skeleton
-        max_population: 1
+        max_population: 10
     floor_texture: tiles/cueva.png
   - id: env_3
     name: Mazmorra serpiente 3
@@ -2091,259 +2073,9 @@ environments:
         size: [3, 3]
         texture: water_fountain.png
     walls:
-      - id: wall_1
-        template: pared_mazmorra_izquierda
-        position: [2, 2]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_2
-        template: pared_mazmorra_izquierda
-        position: [2, 4]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_3
-        template: pared_mazmorra_izquierda
-        position: [2, 6]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_4
-        template: pared_mazmorra_izquierda
-        position: [2, 8]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_5
-        template: pared_mazmorra_izquierda
-        position: [2, 10]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_6
-        template: pared_mazmorra_izquierda
-        position: [2, 12]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_7
-        template: pared_mazmorra_izquierda
-        position: [2, 14]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_8
-        template: pared_mazmorra_izquierda
-        position: [2, 16]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_9
-        template: pared_mazmorra_izquierda
-        position: [2, 18]
-        size: [1, 2]
-        texture: left_mazmorra.png
-      - id: wall_13
-        template: pared_mazmorra_derecha
-        position: [13, 2]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_14
-        template: pared_mazmorra_derecha
-        position: [13, 4]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_15
-        template: pared_mazmorra_derecha
-        position: [13, 6]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_16
-        template: pared_mazmorra_derecha
-        position: [13, 8]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_17
-        template: pared_mazmorra_derecha
-        position: [13, 10]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_19
-        template: pared_mazmorra_derecha
-        position: [20, 14]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_20
-        template: pared_mazmorra_derecha
-        position: [20, 16]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_21
-        template: pared_mazmorra_derecha
-        position: [20, 18]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_22
+      - id: wall_59
         template: pared_mazmorra_vertical
-        position: [3, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_23
-        template: pared_mazmorra_vertical
-        position: [4, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_24
-        template: pared_mazmorra_vertical
-        position: [5, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_25
-        template: pared_mazmorra_vertical
-        position: [6, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_26
-        template: pared_mazmorra_vertical
-        position: [7, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_27
-        template: pared_mazmorra_vertical
-        position: [8, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_28
-        template: pared_mazmorra_vertical
-        position: [9, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_29
-        template: pared_mazmorra_vertical
-        position: [10, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_30
-        template: pared_mazmorra_vertical
-        position: [11, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_31
-        template: pared_mazmorra_vertical
-        position: [12, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_32
-        template: pared_mazmorra_vertical
-        position: [13, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_33
-        template: pared_mazmorra_vertical
-        position: [14, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_34
-        template: pared_mazmorra_vertical
-        position: [15, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_35
-        template: pared_mazmorra_vertical
-        position: [16, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_36
-        template: pared_mazmorra_vertical
-        position: [17, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_37
-        template: pared_mazmorra_vertical
-        position: [18, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_38
-        template: pared_mazmorra_vertical
-        position: [19, 19]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_40
-        template: pared_mazmorra_vertical
-        position: [14, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_41
-        template: pared_mazmorra_vertical
-        position: [15, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_42
-        template: pared_mazmorra_vertical
-        position: [16, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_43
-        template: pared_mazmorra_vertical
-        position: [17, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_44
-        template: pared_mazmorra_vertical
-        position: [18, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_45
-        template: pared_mazmorra_vertical
-        position: [19, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_46
-        template: pared_mazmorra_vertical
-        position: [13, 11]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_47
-        template: pared_mazmorra_derecha
-        position: [20, 12]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_48
-        template: pared_mazmorra_derecha
-        position: [20, 10]
-        size: [1, 2]
-        texture: right_mazmorra.png
-      - id: wall_49
-        template: pared_mazmorra_vertical
-        position: [3, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_50
-        template: pared_mazmorra_vertical
-        position: [5, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_51
-        template: pared_mazmorra_vertical
-        position: [4, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_52
-        template: pared_mazmorra_vertical
-        position: [6, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_54
-        template: pared_mazmorra_vertical
-        position: [9, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_55
-        template: pared_mazmorra_vertical
-        position: [7, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_56
-        template: pared_mazmorra_vertical
-        position: [8, 3]
-        size: [1, 1]
-        texture: mazmorra.png
-      - id: wall_57
-        template: pared_mazmorra_vertical
-        position: [10, 3]
+        position: [12, 3]
         size: [1, 1]
         texture: mazmorra.png
       - id: wall_58
@@ -2351,20 +2083,270 @@ environments:
         position: [11, 3]
         size: [1, 1]
         texture: mazmorra.png
-      - id: wall_59
+      - id: wall_57
         template: pared_mazmorra_vertical
-        position: [12, 3]
+        position: [10, 3]
         size: [1, 1]
         texture: mazmorra.png
-    exits:
-      - id: exit_1
-        template: salida_mazmorra
+      - id: wall_56
+        template: pared_mazmorra_vertical
+        position: [8, 3]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_55
+        template: pared_mazmorra_vertical
+        position: [7, 3]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_54
+        template: pared_mazmorra_vertical
+        position: [9, 3]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_52
+        template: pared_mazmorra_vertical
+        position: [6, 3]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_51
+        template: pared_mazmorra_vertical
         position: [4, 3]
         size: [1, 1]
-        texture: exit_mazmorra.png
+        texture: mazmorra.png
+      - id: wall_50
+        template: pared_mazmorra_vertical
+        position: [5, 3]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_49
+        template: pared_mazmorra_vertical
+        position: [3, 3]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_48
+        template: pared_mazmorra_derecha
+        position: [20, 10]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_47
+        template: pared_mazmorra_derecha
+        position: [20, 12]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_46
+        template: pared_mazmorra_vertical
+        position: [13, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_45
+        template: pared_mazmorra_vertical
+        position: [19, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_44
+        template: pared_mazmorra_vertical
+        position: [18, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_43
+        template: pared_mazmorra_vertical
+        position: [17, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_42
+        template: pared_mazmorra_vertical
+        position: [16, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_41
+        template: pared_mazmorra_vertical
+        position: [15, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_40
+        template: pared_mazmorra_vertical
+        position: [14, 11]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_38
+        template: pared_mazmorra_vertical
+        position: [19, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_37
+        template: pared_mazmorra_vertical
+        position: [18, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_36
+        template: pared_mazmorra_vertical
+        position: [17, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_35
+        template: pared_mazmorra_vertical
+        position: [16, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_34
+        template: pared_mazmorra_vertical
+        position: [15, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_33
+        template: pared_mazmorra_vertical
+        position: [14, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_32
+        template: pared_mazmorra_vertical
+        position: [13, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_31
+        template: pared_mazmorra_vertical
+        position: [12, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_30
+        template: pared_mazmorra_vertical
+        position: [11, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_29
+        template: pared_mazmorra_vertical
+        position: [10, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_28
+        template: pared_mazmorra_vertical
+        position: [9, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_27
+        template: pared_mazmorra_vertical
+        position: [8, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_26
+        template: pared_mazmorra_vertical
+        position: [7, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_25
+        template: pared_mazmorra_vertical
+        position: [6, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_24
+        template: pared_mazmorra_vertical
+        position: [5, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_23
+        template: pared_mazmorra_vertical
+        position: [4, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_22
+        template: pared_mazmorra_vertical
+        position: [3, 19]
+        size: [1, 1]
+        texture: mazmorra.png
+      - id: wall_21
+        template: pared_mazmorra_derecha
+        position: [20, 18]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_20
+        template: pared_mazmorra_derecha
+        position: [20, 16]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_19
+        template: pared_mazmorra_derecha
+        position: [20, 14]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_17
+        template: pared_mazmorra_derecha
+        position: [13, 10]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_16
+        template: pared_mazmorra_derecha
+        position: [13, 8]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_15
+        template: pared_mazmorra_derecha
+        position: [13, 6]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_14
+        template: pared_mazmorra_derecha
+        position: [13, 4]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_13
+        template: pared_mazmorra_derecha
+        position: [13, 2]
+        size: [1, 2]
+        texture: right_mazmorra.png
+      - id: wall_9
+        template: pared_mazmorra_izquierda
+        position: [2, 18]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_8
+        template: pared_mazmorra_izquierda
+        position: [2, 16]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_7
+        template: pared_mazmorra_izquierda
+        position: [2, 14]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_6
+        template: pared_mazmorra_izquierda
+        position: [2, 12]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_5
+        template: pared_mazmorra_izquierda
+        position: [2, 10]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_4
+        template: pared_mazmorra_izquierda
+        position: [2, 8]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_3
+        template: pared_mazmorra_izquierda
+        position: [2, 6]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_2
+        template: pared_mazmorra_izquierda
+        position: [2, 4]
+        size: [1, 2]
+        texture: left_mazmorra.png
+      - id: wall_1
+        template: pared_mazmorra_izquierda
+        position: [2, 2]
+        size: [1, 2]
+        texture: left_mazmorra.png
+    exits:
       - id: exit_2
         template: salida_mazmorra
         position: [15, 19]
+        size: [1, 1]
+        texture: exit_mazmorra.png
+      - id: exit_1
+        template: salida_mazmorra
+        position: [4, 3]
         size: [1, 1]
         texture: exit_mazmorra.png
     spawns:

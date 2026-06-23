@@ -13,13 +13,22 @@ SoundManager::SoundManager(SDL2pp::Mixer& mixer):
     this->mixer.SetMusicVolume(20);
     this->mixer.PlayMusic(music, -1);  // -1 = loop infinito
     this->mixer.AllocateChannels(SFX_CHANNELS);
+    this->mixer.SetVolume(-1, 30);  
 
 }
 
 void SoundManager::sword_sound() {
-    mixer.PlayChannel(-1, swordChunk, 0);
+    try {
+        mixer.PlayChannel(-1, swordChunk, 0);
+    } catch (const std::exception& e) {
+        std::cerr << "Sound suppress" << std::endl;
+    }
 }
 
 void SoundManager::explosion_sound() {
-    mixer.PlayChannel(-1, explosionChunk, 0);
+    try {
+        mixer.PlayChannel(-1, explosionChunk, 0);
+    } catch (const std::exception& e) {
+        std::cerr << "Sound suppress" << std::endl;
+    }
 }

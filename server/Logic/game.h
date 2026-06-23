@@ -56,6 +56,8 @@ private:
 
     void checkEntry(int playerId);
 
+    bool playerAlreadyConnected(const std::string& name) const;
+
 public:
     explicit Game(Map& world);
 

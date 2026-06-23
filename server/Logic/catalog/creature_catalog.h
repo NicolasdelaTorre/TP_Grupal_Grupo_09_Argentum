@@ -10,6 +10,13 @@ struct CreatureAttributes {
     std::string name;
     uint16_t maxHealth;
     uint16_t damage;
+    uint8_t agility;
+    uint8_t minArmor;
+    uint8_t maxArmor;
+    uint8_t minShield;
+    uint8_t maxShield;
+    uint8_t minHelmet;
+    uint8_t maxHelmet;
 };
 
 // Rangos de nivel cuando spawnea una criatura segun la zona.
