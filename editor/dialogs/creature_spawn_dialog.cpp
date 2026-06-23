@@ -33,7 +33,7 @@ CreatureSpawnDialog::CreatureSpawnDialog(const QString& window_title, const QStr
                                          QWidget* parent):
         QDialog(parent) {
     setWindowTitle(window_title);
-    resize(440, 360);
+    setMinimumSize(440, 360);
 
     auto* layout = new QVBoxLayout(this);
 
@@ -77,12 +77,7 @@ CreatureSpawnDialog::CreatureSpawnDialog(const QString& window_title, const QStr
         ++row;
     }
 
-    auto* grid_container = new QWidget();
-    grid_container->setLayout(grid);
-    auto* scroll = new QScrollArea();
-    scroll->setWidgetResizable(true);
-    scroll->setWidget(grid_container);
-    layout->addWidget(scroll, 1);
+    layout->addLayout(grid, 1);
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
