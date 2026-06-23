@@ -18,7 +18,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Oliver Weber**: 
 
-- **Joaquín Velurtas**: 
+- **Joaquín Velurtas**: Me enfoque principalmente en todo lo relacionado con el editor de mapas, desde su funcionamiento hasta las herramientas para construir los escenarios del juego. Tambien colabore con parte de la lectura de esos mapas desde el servidor, para integrarlos correctamente al mundo jugable. Ademas, prepare las texturas de los distintos obstaculos y tiles usando Photoshop.
 
 - **Tomás Olivera**: Me hice cargo del protocolo de comunicación entre cliente y servidor: el formato binario que viaja por la red, las clases comunes que lo serializan y la definición de cada uno de los mensajes que cliente y servidor intercambian.
 
@@ -30,7 +30,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Nicolás**: Subi el template y se dividieron distintas branches de trabajo
 - **Oliver**: 
-- **Joaquín**: 
+- **Joaquín**: Sin commits, arrancando la version base del editor, investigando un poco mas sobre la herramienta e implementando la logica de las pantallas, elementos de edicion, vistas y el grid del mapa.
 - **Tomás**: No tuve commits propios esta semana. Estuve leyendo el
   enunciado y pensando con el resto cómo iba a ser la comunicación
   entre cliente y servidor.
@@ -39,7 +39,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Nicolás**: Creo la base de protocolo y primeras conexiones.
 - **Oliver**: 
-- **Joaquín**: 
+- **Joaquín**: Creado y logica de lectura de templates YAML para ciudades y biomas, verificator para asegurar que todos los elementos esten dentro del mapa y guardado del mapa completo en formato YAML.
 - **Tomás**: Me metí a fondo con el protocolo. Definimos en grupo el
   formato general y yo lo implementé junto con los primeros mensajes
   de login para probar que cerraba. No era nada complejo pero ya teníamos una conexión entre cliente y servidor. Solo restaba expandir para las nuevas features.
@@ -48,7 +48,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Nicolás**: Primer funcionamiento real del juego pudiendose ver las primeras texturas y personajes con sus respectivas armas y animaciones. Tambien se implementa el login y el fullscreen. Como asi tambien las colisiones con objetos.
 - **Oliver**: 
-- **Joaquín**: 
+- **Joaquín**: Renderizado de obstaculos y tiles con texturas reales, actualizacion del layout de los elementos en pantalla, mostrar criaturas configuradas para cada bioma colocado y permitir editarlas, logica de entradas a environments y los propios environments con obstaculos y paredes, algoritmo de Dijkstra para definir las texturas de las celdas que no estan directamente dentro de un bioma creado.
 - **Tomás**: Me ocupé de la integración real, que el servidor parsee
   los mapas que iba armando Joaco con el editor, los mande al cliente
   y distribuya los movimientos entre los jugadores. Lo más difícil de
@@ -59,7 +59,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Nicolás**: Implemento el feature de convertirse en fantasma una vez muerto y las diferentes skins. Tambien se renderizan los objetos en el suelo como asi la sangre cuando un personaje es atacado.
 - **Oliver**: 
-- **Joaquín**: 
+- **Joaquín**: Preparar mas texturas, lectura de los biomas en el YAML desde el servidor y actualizacion en la lectura de los environments, nueva herramienta para poner tiles con texturas especificas en el mapa, pop-up en la creacion de environments para definir las criaturas del mismo, salidas de los environments y flood-fill para definir el exterior de los environments creados, permitir la modificacion de las dimensiones del mapa y los entornos.
 - **Tomás**: Sumé el mensaje de stats del jugador para el HUD y armé
   con Oliver la mecánica de ataque (yo el mensaje del wire, él la lógica
   de daño y evasión del servidor). Lo más importante de la semana fue
@@ -71,7 +71,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Nicolás**: Implemente el HUD del inventario y la visualizacion del chat. Utilizo los mismos items en inventario que para renderizar en el suelo. Se establecen skins default. Se agregan las stats en la HUD de inventario. Tambien se implementan los hechizos con los baculos. Agrego pantalla de seleccion de raza y clase.
 - **Oliver**: 
-- **Joaquín**: 
+- **Joaquín**: Actualizacion de logica en el servidor para mover el cliente del overworld a los environments. Hacer que el cliente use directamente las texturas enviadas por el servidor y renderice los elementos ordenados en el eje Y para evitar solapamientos incorrectos.
 - **Tomás**: Me dediqué casi toda la semana al chat libre con sus
   comandos (los del mercader, banquero, sanador, los privados con
   @nick, los cheats). En paralelo trabajé con Oli para cerrar el
@@ -86,7 +86,7 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 
 - **Nicolás**: fix de las texturas de los NPC, paths y agrego audio al juego.
 - **Oliver**: 
-- **Joaquín**: 
+- **Joaquín**: Muchas mas texturas y templates, cambio en la logica de renderizacion de imagenes (usar un anchor distinto a la esquina inferior izquierda si se necesita), actualizaciones visuales del hud del editor.
 - **Tomás**: Implementé el sistema de clanes completo con todos
   los comandos, las notificaciones, el bonus de cercanía y la
   persistencia. Después le di una mano a Oliver con unos
@@ -94,4 +94,8 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
   flauta élfica. Cerré con un refactor de la configuración del 
   toml (teníamos cuatro archivos  sueltos pasaron a uno solo) 
   y la documentación.
+
+## Herramientas usadas
+## Problematicas encontradas
+## Faltantes
 
