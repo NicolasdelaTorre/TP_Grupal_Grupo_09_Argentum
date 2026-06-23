@@ -117,6 +117,3 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 - **Profundidad del bestiario:** Aumentar la variedad de atributos y comportamientos de las criaturas. Actualmente, la única variable que diferencia a dos criaturas del mismo tipo es su nivel.
 - **Escalado dinámico de daño:** Implementar una mecánica que incremente el rango de daño base de las armas ofensivas en proporción directa al nivel del jugador que las porta.
 - **Refinamiento del balance general:** Realizar ajustes iterativos sobre las fórmulas de daño, evasión, experiencia, etc para mejorar la curva de dificultad.
-
-### 4. Interfaz Gráfica y Herramientas (Cliente y Editor)
-- *(Espacio reservado para agregar faltantes de UI/UX, renderizado gráfico en SDL, o funcionalidades del Editor de Mapas)*
