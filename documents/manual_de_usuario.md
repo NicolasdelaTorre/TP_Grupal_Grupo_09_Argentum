@@ -302,47 +302,192 @@ enviarlo.
 
 ## 8. Cómo crear y editar mapas con el Editor
 
-El editor es una aplicación gráfica (Qt) para diseñar los mapas donde se juega.
+El editor de mapas te permite armar los mapas del juego: el **mapa principal** con biomas, ciudades, obstáculos y entradas a dungeons, y los **environments** internos de cada entrada. Al guardar, el mapa se exporta como YAML en `server/assets/maps/` para que el servidor lo cargue.
 
-### 8.1 Abrir el editor
+## Pantalla principal
 
-```sh
-./build/taller_editor
-```
+Al abrir el editor aparecen dos opciones:
 
-### 8.2 Menú principal
+- **New map**: crea un mapa en blanco.
+- **Open map**: abre un `.yaml` existente.
 
-Al abrir vas a ver dos opciones:
+## Crear un mapa nuevo
 
-- **Nuevo mapa** (`Nuevo`): creás un mapa desde cero. Te pide un **id/nombre** y las
-  **dimensiones** (ancho y alto en celdas).
-- **Abrir mapa** (`Abrir`): te deja elegir un `.yaml` existente de
-  `server/assets/maps/` para seguir editándolo.
+1. Elegí **New map**.
+2. Completá los campos:
+   - **Id**: identificador del archivo. Es el nombre con el que se va a guardar.
+   - **Name**: nombre visible del mapa.
+   - **Size**: ancho y alto en celdas (entre 1 y 250).
+3. Presioná **Create**.
 
-### 8.3 Herramientas de edición
+Se abre la pantalla de edición con una grilla vacía.
 
-El editor trabaja por **modos**. Elegís un modo en la barra de herramientas y luego
-pintás sobre el mapa haciendo clic en las celdas:
+## Abrir un mapa existente
 
-| Modo | Para qué sirve |
-|------|----------------|
-| **Spawn** | Define dónde aparecen los jugadores al entrar. |
-| **Pisos (Floors)** | Pinta el terreno base (pasto, arena, tierra, agua, etc.). |
-| **Biomas (Biomes)** | Zonas con su ambiente y criaturas que aparecen (spawns). |
-| **Obstáculos (Obstacles)** | Rocas, árboles, cactus y demás elementos que bloquean el paso. |
-| **Ciudades (Cities)** | Coloca edificios y estructuras (iglesia, banco, herrería…). |
-| **Ambientes (Environments)** | Decoración y criaturas de ambiente. |
-| **Salidas (Exits)** | Puntos de transición/salida del mapa. |
-| **Dimensiones (Dimensions)** | Agranda o achica el mapa (expandir/encoger hacia arriba, abajo, izquierda o derecha). |
+1. Elegí **Open map**.
+2. Seleccioná un archivo `.yaml`.
 
-### 8.4 Guardar el mapa
+El editor carga el mapa principal y todos sus environments para seguir editando.
 
-Cuando guardás, el editor escribe el archivo `.yaml` en `server/assets/maps/` con el
-nombre/id que le pusiste al mapa, y te muestra un mensaje con la ruta exacta donde
-quedó guardado.
+## Pantalla de edición
 
-> 🎮 **Para jugar tu mapa**: recordá que el servidor carga por defecto
-> `server/assets/maps/argentumland.yaml`. Guardá tu mapa con ese id (o renombrá el
-> archivo) para que el servidor lo levante la próxima vez que lo inicies.
+La interfaz se divide en tres zonas:
+
+| Zona | Para qué sirve |
+|---|---|
+| Barra superior | Cambiar de herramienta, volver al menú o al mapa principal |
+| Panel lateral Izquierdo | Elegir template y ver datos del elemento activo |
+| Grilla del mapa | Ver y editar el mapa |
+
+Debajo del mapa hay tres controles:
+
+- **Save map**: guarda el mapa.
+- **+** / **–**: acercar y alejar el zoom.
+
+**Exit** vuelve al menú principal (sin guardar).
+**Back to map** aparece solo cuando estás dentro de un environment y
+te devuelve al mapa principal.
+
+## Herramientas disponibles
+
+En la barra superior, cada botón activa un modo de edición, cambiando el panel lateral según cambia el modo elegido.
+
+### 👤 Player Spawn
+
+Coloca el punto donde aparece el jugador al entrar al mapa principal.
+
+1. Activá **Player Spawn**.
+2. Hacé click en una celda libre del mapa.
+
+Solo puede haber un spawn a la vez: si colocás otro, reemplaza al anterior. No se puede poner sobre obstáculos.
+
+### 🪨 Obstacles
+
+Coloca obstáculos con textura (árboles, casas, rocas, etc.).
+
+1. Activá **Obstacles**.
+2. Elegí un template en la lista del panel.
+3. Hacé click en el mapa para colocarlo.
+
+También podés usar obstáculos dentro de un environment (mismo botón, misma mecánica).
+
+### 🌿 Biomes
+
+Define zonas con una textura de piso y criaturas que spawnean ahí.
+
+1. Activá **Biomes**.
+2. Elegí un bioma en la lista.
+3. **Arrastrá** con el botón izquierdo para dibujar un rectángulo.
+4. Al soltar, se abre un diálogo para configurar la población de cada criatura (sliders de 0 a 50). Las que queden en 0 no spawnean.
+5. Las celdas fuera del rectángulo pero cerca reciben la textura del bioma más cercano automáticamente.
+
+**Tips:**
+
+- Pasar el mouse sobre un bioma existente muestra sus criaturas en el panel lateral.
+- **Click** sobre un bioma ya colocado (sin arrastrar) abre de nuevo el diálogo de criaturas para editarlo.
+- **Click derecho** mientras dibujás cancela el rectángulo en curso.
+
+### 🏙️ Cities
+
+Coloca una ciudad (zona segura) con tamaño fijo según el template.
+
+1. Activá **Cities**.
+2. Elegí una ciudad en la lista.
+3. Hacé click en el mapa.
+
+La ciudad se coloca con sus NPCs, obstáculos y pisos predefinidos del template. Ocupa el área indicada por el template, y si no entra en el mapa, no se coloca.
+
+### 🟫 Floors
+
+Modifica el piso de una celda individual sin bloquear el paso.
+
+1. Activá **Floors**.
+2. Elegí un tile en la lista.
+3. Hacé click en la celda deseada.
+
+Si ya había un piso en esa celda, se reemplaza. Podes usarlo para armar caminos.
+
+### 🚪 Environments
+
+Permite crear entradas al overworld que llevan a mazmorras o cuevas, y ver la lista de environments del mapa.
+
+1. Activá **Environments**.
+2. Elegí un template de **Entry** en el desplegable.
+3. Hacé click en el mapa donde querés la entrada.
+
+Se abren dos diálogos en secuencia:
+
+1. **New environment**: tipo (cueva/mazmorra, según la entrada) y nombre del environment.
+2. **Environment creatures**: población de criaturas dentro del environment (mismos sliders que en biomas).
+
+Al confirmar, se crea la entrada visible en el mapa y un environment interno de 30×30 celdas asociado. El environment aparece en la lista **Environments** del panel.
+Para editar el interior, hacé **doble click** sobre él en esa lista.
+
+### 📐 Dimensions
+
+Cambia el tamaño del mapa principal (o del environment, si estás editando uno).
+
+1. Activá **Dimensions**.
+2. Elegí **Expand** o **Reduce**.
+3. Elegí la dirección.
+4. Indicá cuántas **Cells** agregar o quitar.
+5. Presioná **Apply**.
+
+Al **reducir**, el editor no permite achicar si algún elemento quedaría fuera del nuevo tamaño. El tamaño actual se muestra en **Map Size**.
+
+## Editar un environment
+
+Al entrar a un environment (doble click en la lista), la barra superior cambia, aparecen nuevos botones y se van otros. Dentro podés colocar:
+
+- **Player Spawn**: dónde aparece el jugador al entrar.
+- **Obstacles**: obstáculos internos.
+- **Walls**: paredes que delimitan el recinto.
+- **Exits**: salidas hacia el overworld.
+
+El piso del environment es fijo y se define por su tipo (cueva/mazmorra).
+
+### 🧱 Paredes y salidas
+
+1. Activá **Walls** (el botón que antes decía Environments).
+2. Elegí un template de pared y hacé click para colocar.
+3. Activá **Exits**, elegí un template y colocá la salida dentro del recinto.
+
+
+### 🧟‍♂️ Criaturas del environment
+
+Con el botón **Environment creatures** podés reabrir el diálogo de población y cambiar qué criaturas habitan el environment.
+
+### Volver al mapa principal
+
+Presioná **Back to map**. Los cambios del environment se incorporan al
+documento antes de volver.
+
+## Eliminar elementos
+
+**Click derecho** sobre un elemento del mapa lo borra.
+
+Para ciudades, biomas y entradas, el editor pide confirmación antes de borrar, y si eliminás una entrada, también se elimina el environment asociado de la lista.
+
+Al borrar una ciudad, se eliminan también los obstáculos y pisos que estaban dentro de su área, incluso los que hayas colocado por tu cuenta.
+
+## Guardar el mapa
+
+1. Presioná **Save map** , abajo del mapa principal.
+2. ESi todo está bien, guarda en `server/assets/maps/<id>.yaml`, donde `<id>` es el id que pusiste al principio.
+
+### Requisitos para poder guardar
+
+El editor no guarda si falta algo de esta lista:
+
+| Requisito | Detalle |
+|---|---|
+| Id y tamaño del mapa | El mapa debe tener id y dimensiones válidas |
+| Spawn en el overworld | Debe haber exactamente un **Player Spawn** en el mapa principal |
+| Entradas válidas | Cada entrada debe apuntar a un environment existente |
+| Tamaño de cada environment | Ancho y alto mayores a cero |
+| Spawn en cada environment | Cada environment debe tener su **Player Spawn** |
+| Paredes que encierran | Si un environment tiene paredes, deben formar un recinto con interior; el spawn debe quedar adentro |
+
+Si algo falla, aparece un mensaje indicando qué corregir.
 
 ---
