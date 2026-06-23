@@ -8,7 +8,160 @@ Nicolás de la Torre, Oliver Weber, Joaquín Velurtas, Tomás Nahuel Olivera.
 
 ## Cliente
 
-_(pendiente)_
+El cliente es la aplicación gráfica (SDL2/SDL2pp) con la que el jugador entra al juego. Se ocupa de tres cosas: las pantallas previas (login y creación de personaje), el render del mundo en tiempo real y la traducción del input del usuario en mensajes del protocolo. La parte de red (los dos hilos de I/O, las colas y `ClientProtocol`) está descripta en [Capa de comunicación del cliente](#capa-de-comunicación-del-cliente). Este apartado se encarga de explicar las pantallas y el renderizado.
+
+### Organización
+
+El `Client` arma la conexión y orquesta el arranque: corre las pantallas previas una por una, hace el handshake con el server y, recién cuando tiene el spawn y el mapa, levanta los hilos de I/O y entra a `GameScreen`. Totalmente abstraido de la comunicacion, solamente manejandose con eventos.
+
+`GameScreen` es el corazón del cliente y corre el game loop  **input → update → render** a ~60 FPS. Mantiene todo el estado visual del mundo y lo dibuja delegando en `MapRenderer`, que sabe traducir cada entidad a sprites. El estado se actualiza de dos fuentes: el input local (con **predicción**: el cliente mueve su sprite sin esperar al server) y los `ServerEvent`s que llegan por la cola, que son la verdad autoritativa.
+
+### Componentes
+
+- **`Client`**: orquesta el ciclo de vida. Abre la conexión, corre las pantallas previas, hace el handshake, levanta `ClientSender`/`ClientReceiver` y lanza `GameScreen`. 
+- **`LoginScreen`**: primera pantalla. Captura el nombre de usuario y devuelve un `LoginResult`.
+- **`CharacterCreationScreen`**: si el server responde `FIRST_LOGIN`, elige raza y clase en dos fases.
+- **`HeadSelectionScreen`**: Luego de la eleccion de raza y clase, entra a esta pantalla donde elige la cabeza de su personaje para una mayor personalizacón.
+- **`GameScreen`**: pantalla principal de juego. Corre el game loop (input/update/render), mantiene el estado del mundo, aplica predicción local y reconciliación, y construye los `ClientEvent`s que van a la cola de salida para la comunicacion con el servidor.
+- **`MapRenderer`**: GameScreen delega el dibujo en esta clase. Tiles del piso, obstáculos, jugadores (cuerpo + cabeza + arma + escudo + casco), NPCs, items en el piso, sangre y proyectiles.
+- **`TextureCache`**: cachea las texturas por nombre de archivo.
+- **`SoundManager`**: música de fondo en loop y efectos de sonido.
+- **`GameMap` / `TileData` / `MapObstacle`**: modelo en memoria del mapa que recibe el cliente en el evento `MAP`.
+
+### Pantallas y ciclo de vida
+
+`Client` posee la conexión y los hilos de I/O, y corre las pantallas previas en orden antes de entrar al juego. Cada pantalla previa expone un `run()` bloqueante que devuelve su resultado (`confirmed=false` si el usuario cancela).
+
+```mermaid
+classDiagram
+    class Client {
+        -ClientProtocol protocol
+        -OutgoingQueue clientEvents
+        -IncomingQueue serverEvents
+        -ClientSender sender
+        -ClientReceiver receiver
+        +run()
+    }
+
+    class LoginScreen {
+        +run() LoginResult
+    }
+    class CharacterCreationScreen {
+        +run() CharacterCreationResult
+    }
+    class HeadSelectionScreen {
+        +run() HeadSelectionResult
+    }
+    class GameScreen {
+        +run() bool
+    }
+
+    Client ..> LoginScreen : corre
+    Client ..> CharacterCreationScreen : corre (si FIRST_LOGIN)
+    Client ..> HeadSelectionScreen : corre (si FIRST_LOGIN)
+    Client ..> GameScreen : corre
+    Client *-- ClientSender
+    Client *-- ClientReceiver
+```
+
+### Pantalla de juego y render
+
+`GameScreen` concentra el estado del mundo y delega todo el dibujo en `MapRenderer`, que a su vez resuelve las texturas con `TextureCache`. Los sonidos pasan por `SoundManager`. La entrada y salida de mensajes son las dos colas compartidas con los hilos de I/O.
+
+```mermaid
+classDiagram
+    class GameScreen {
+        -GameMap map
+        -Player_ player
+        -map~int,OtherPlayer~ otherPlayers
+        -map~int,RemoteNpc~ npcs
+        -vector~DroppedItem~ droppedItems
+        -OutgoingQueue clientEvents
+        -IncomingQueue serverEvents
+        +run() bool
+        -handleEvents(dt) bool
+        -update(dt)
+        -render()
+        -consumeServerEvents()
+    }
+
+    class MapRenderer {
+        +render(map, camX, camY)
+        +renderObstacle(obs, camX, camY)
+        +renderPlayer(player, camX, camY)
+        +renderNpcEntity(npc, camX, camY)
+        +renderDroppedItems(items, camX, camY)
+        +renderArrows(arrows, camX, camY)
+    }
+
+    class GameMap {
+        +int width
+        +int height
+        +vector~TileData~ tiles
+        +vector~MapObstacle~ obstacles
+    }
+
+    GameScreen *-- GameMap
+
+```
+
+### Flujo de arranque (handshake + entrada al juego)
+
+El handshake es en dos fases: primero solo se manda el nombre. Si el jugador ya existe, el server contesta `LOGIN_OK` directo; si es nuevo, manda `FIRST_LOGIN` y el cliente corre creación + selección de cabeza antes de mandar `CHARACTER_CREATED`. Recién después de `LOGIN_OK` + `MAP` se levantan los hilos de I/O y se entra a `GameScreen`.
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant CL as Client
+    participant Login as LoginScreen
+    participant Screens as CharacterCreation / HeadSelection
+    participant Proto as ClientProtocol
+    participant Server
+    participant GS as GameScreen
+
+    CL->>Login: run()
+    Login-->>CL: LoginResult(name)
+    CL->>Proto: send(UserArrivalEvent(name))
+    Proto->>Server: USER_ARRIVAL
+
+    Server-->>Proto: FIRST_LOGIN (jugador nuevo)
+    CL-->>Screens: run()
+    Screens-->>CL: raza, clase, head
+    CL->>Proto: send(CharacterCreatedEvent)
+    Proto->>Server: CHARACTER_CREATED
+
+    Server-->>Proto: LOGIN_OK (spawn, skin, head)
+    Server-->>Proto: MAP (dimensiones + tiles)
+    CL->>CL: sender.start() + receiver.start()
+    CL->>GS: new GameScreen(map, spawn, player)
+    GS->>GS: run() (game loop)
+```
+
+### Game loop de un frame
+
+Cada frame de `GameScreen` repite **input → update → render**. El input local mueve el sprite por predicción y empuja `ClientEvent`s a la cola saliente; el update drena los `ServerEvent`s que dejó el receiver y reconcilia el estado (por ejemplo, ante un `MOVE_REJECTED` "snapea" a la posición autoritativa).
+
+```mermaid
+sequenceDiagram
+    participant GS as GameScreen.run()
+    participant In as handleEvents
+    participant Up as update
+    participant Rd as render
+    participant OutQ as OutgoingQueue
+    participant InQ as IncomingQueue
+    participant MR as MapRenderer
+
+    loop cada frame (~60 FPS)
+        GS->>In: handleEvents(dt)
+        In->>OutQ: push(MovementEvent / AttackEvent / ...)
+        GS->>Up: update(dt)
+        Up->>InQ: consumeServerEvents() → pop()
+        InQ-->>Up: ServerEvents (PlayerMoved, NpcMoved, MoveRejected...)
+        Up->>Up: reconcilia estado (snap, interpola, anima)
+        GS->>Rd: render()
+        Rd->>MR: dibuja mapa, jugadores, NPCs, items, proyectiles
+    end
+```
 
 ## Servidor
 
