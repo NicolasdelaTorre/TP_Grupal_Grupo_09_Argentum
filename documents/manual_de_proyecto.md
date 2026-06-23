@@ -95,6 +95,8 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
   toml (teníamos cuatro archivos  sueltos pasaron a uno solo) 
   y la documentación.
 
+---
+
 ## Trabajo Futuro y Limitaciones Conocidas (Faltantes)
 
 ### 1. Arquitectura y Deuda Técnica (Lógica del Servidor)
