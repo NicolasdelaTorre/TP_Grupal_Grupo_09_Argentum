@@ -95,8 +95,6 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
   toml (teníamos cuatro archivos  sueltos pasaron a uno solo) 
   y la documentación.
 
-## Herramientas usadas
-## Problematicas encontradas
 ## Trabajo Futuro y Limitaciones Conocidas (Faltantes)
 
 ### 1. Arquitectura y Deuda Técnica (Lógica del Servidor)
@@ -117,3 +115,12 @@ suerte de que la división en módulos del proyecto calzaba bien con cuatro pers
 - **Profundidad del bestiario:** Aumentar la variedad de atributos y comportamientos de las criaturas. Actualmente, la única variable que diferencia a dos criaturas del mismo tipo es su nivel.
 - **Escalado dinámico de daño:** Implementar una mecánica que incremente el rango de daño base de las armas ofensivas en proporción directa al nivel del jugador que las porta.
 - **Refinamiento del balance general:** Realizar ajustes iterativos sobre las fórmulas de daño, evasión, experiencia, etc para mejorar la curva de dificultad.
+
+### 4. Editor
+- **QOL:** Undo/Redo seria util y es una herramienta comun en los editores de mapas reales. No hay ninguna advertencia cuando se vuelve al menu sin guardar, se puede perder todo el contenido trabajado por el usuario.
+- **Variedad:** Poca variedad de templates y texturas disponibles (ciudades, biomas, criaturas, pisos, obstaculos, entradas y salidas a entornos).
+- **Biomas:** Las texturas de piso de los biomas son unicas, una por bioma, seria clave agregar variedad para que se coloquen de manera aleatoria y no sea tan monotono. Mismo tener alugnos obstaculos asociados a cada bioma y que se coloquen de forma aleatoria cuando se genera el bioma.
+- **Ciudades:** Hacer que se visualicen los npcs de las mismas. Mejorar la logica de templates de ciudades, crar una nueva implica un YAML con cientos de lineas de pisos.
+- **NPCs:** Solo existen fijos dentro de los templates de ciudades. Si bien tiene sentido para el sistema de templates de ciudades, seria clave permitir que el usuario pueda colocarlos a gusto e incluso crear sus propios.
+- **Entornos:** Actualmente la unica distincion entre cuevas y mazmorras son las texturas (entradas, pisos, paredes y salidas), estaria bueno agregar distinciones mas significaticas, como tipos de criaturas y obstaculos especiales. Ademas, falta la verificacion de que haya al menos una salida del entorno y no se puede modificar el nombre de un entorno ya colocado.
+- **Floors:** Si bien las texturas usadas actualmente no bloquean el paso, existen otras que quizas si deberian hacerlo (ejemplo: agua profunda).
