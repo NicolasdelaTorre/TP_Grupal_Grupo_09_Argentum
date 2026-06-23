@@ -19,6 +19,7 @@ static uint8_t npcTypeFromName(const std::string& name) {
     if (name == "goblin") return static_cast<uint8_t>(NpcCode::GOBLIN);
     if (name == "orc") return static_cast<uint8_t>(NpcCode::ORC);
     if (name == "golem") return static_cast<uint8_t>(NpcCode::GOLEM);
+
     return static_cast<uint8_t>(NpcCode::SPIDER);
 }
 
@@ -35,10 +36,12 @@ static void notifyClanMembers(ClientMonitor& monitor, Game& game, const std::str
                               const std::string& msg, int exceptId = -1) {
     if (clanName.empty())
         return;
+
     auto members = game.getClanMembers(clanName);
     for (int pid: game.getPlayerIds()) {
         if (pid == exceptId)
             continue;
+
         const std::string& name = game.getPlayerName(pid);
         for (const auto& m: members) {
             if (m == name) {
@@ -65,6 +68,7 @@ static void notifyAttackOutcome(ClientMonitor& monitor, Game& game,
     } else {
         toAttacker = "Le hiciste " + std::to_string(o.damage) + " de daño a " + o.targetName;
     }
+
     monitor.sendToClient(o.attackerId,
                          std::make_shared<ChatBroadcastEvent>(0, std::string(), toAttacker));
 
@@ -73,6 +77,7 @@ static void notifyAttackOutcome(ClientMonitor& monitor, Game& game,
                              std::make_shared<ChatBroadcastEvent>(
                                      0, std::string(), "Mataste a " + o.targetName));
     }
+
     if (o.leveledUp) {
         monitor.sendToClient(o.attackerId,
                              std::make_shared<ChatBroadcastEvent>(
@@ -82,6 +87,7 @@ static void notifyAttackOutcome(ClientMonitor& monitor, Game& game,
 
     // Target: solo si es player (NPCs no leen chat).
     if (o.targetType != 0 || o.targetId < 0) return;
+
     std::string toTarget;
     if (o.evaded) {
         toTarget = "Esquivaste el ataque de " + o.attackerName;
@@ -90,8 +96,10 @@ static void notifyAttackOutcome(ClientMonitor& monitor, Game& game,
     } else {
         toTarget = o.attackerName + " te atacó por " + std::to_string(o.damage);
     }
+
     monitor.sendToClient(o.targetId,
                          std::make_shared<ChatBroadcastEvent>(0, std::string(), toTarget));
+
     if (o.killed) {
         monitor.sendToClient(o.targetId,
                              std::make_shared<ChatBroadcastEvent>(
@@ -112,8 +120,10 @@ static uint8_t wireDirFromDelta(int16_t dx, int16_t dy) {
         if (dx > 0) return static_cast<uint8_t>(MoveDirection::RIGHT);
         if (dx < 0) return static_cast<uint8_t>(MoveDirection::LEFT);
     }
+
     if (dy > 0) return static_cast<uint8_t>(MoveDirection::BOTTOM);
     if (dy < 0) return static_cast<uint8_t>(MoveDirection::TOP);
+
     return static_cast<uint8_t>(MoveDirection::BOTTOM);
 }
 
@@ -130,6 +140,7 @@ Gameloop::Gameloop(IncomingQueue& clientEvents, ClientMonitor& clientMonitor, Ma
 void Gameloop::sendMapSnapshot(int playerId, uint8_t mapId) {
     std::vector<MapCellData> cells;
     cells.reserve(map.getCellCount(mapId));
+
     for (size_t i = 0; i < map.getCellCount(mapId); i++) {
         Cell c = map.getCell(i, mapId);
         cells.push_back({c.textureId, c.obstacleId, c.safeZone});
@@ -138,6 +149,7 @@ void Gameloop::sendMapSnapshot(int playerId, uint8_t mapId) {
     std::vector<MapObstacleData> obstacles;
     const auto& placed = map.getObstacles(mapId);
     obstacles.reserve(placed.size());
+
     for (const auto& o: placed) {
         obstacles.push_back({o.x, o.y, o.w, o.h, o.texture, o.texture_anchor});
     }
@@ -152,11 +164,15 @@ void Gameloop::sendNpcSnapshot(int playerId, uint8_t mapId) {
     // muertos (alive=false) para que el id quede registrado de cara a respawns.
     for (uint16_t npcId: map.getAllNPCIds()) {
         Creature* npc = map.getNPC(npcId);
+
         if (!npc || npc->getMapId() != mapId)
             continue;
+
         Position np = npc->getPosition();
         uint8_t type = npcTypeFromName(npc->getName());
+
         bool alive = !npc->isDead();
+
         clientMonitor.sendToClient(
                 playerId, std::make_shared<NewNpcEvent>(npcId, np.x, np.y, type, alive));
     }
@@ -345,6 +361,7 @@ void Gameloop::NPCTurns() {
 
         Position oldPos = npc->getPosition();
         Position target = map.searchPlayer(oldPos.x, oldPos.y, npc->getMapId(), npc->getBiomeType());
+
         // Si el player es fantasma no se persigue
         if (target.x != -1) {
             int pid = game.getPlayerIdAt(target.x, target.y, npc->getMapId());
@@ -352,13 +369,16 @@ void Gameloop::NPCTurns() {
                 target = {-1, -1};
             }
         }
+
         Position newPos = npc->stalkPlayer(target);
 
         if (newPos.x == -1 || (newPos.x == oldPos.x && newPos.y == oldPos.y))
             continue;
+
         // Zona segura: los NPCs hostiles no pueden entrar.
         if (map.isSafeZone(newPos.x, newPos.y, npc->getMapId()))
             continue;
+
         if (map.moveEntity(npcId, oldPos.x, oldPos.y, newPos.x, newPos.y, false, npc->getMapId())) {
             npc->move(newPos);
 
@@ -383,9 +403,12 @@ void Gameloop::NPCTurns() {
                                           npc->getMapId(), -1);
         if (playerId == 0)
             continue;
+
         if (!game.hasPlayer(playerId)) continue;  // ya están muertos
+
         // No pegar a fantasmas
         if (game.isPlayerGhost(playerId)) continue;
+
         uint16_t finalDmg = game.applyNPCAttack(playerId, npc->getDamage());
         auto atkEv = std::make_shared<AttackResultEvent>(npcId, 0, playerId, finalDmg, true);
         clientMonitor.broadcast(atkEv);
@@ -1285,7 +1308,7 @@ void Gameloop::handleChatCommand(int playerId, const std::string& text) {
                 }
                 reply = "Fin de la lista";
             } else if (sel->type == BANKER) {
-                auto lines = game.listBankAccount(playerId, sel->type);
+                auto lines = game.listBankAccount(playerId);
                 for (const auto& l : lines) {
                     clientMonitor.sendToClient(
                             playerId, std::make_shared<ChatBroadcastEvent>(0, std::string(), l));

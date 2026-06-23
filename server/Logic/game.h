@@ -52,11 +52,13 @@ private:
     bool isPositionFree(Position pos) const;
 
 
-    bool tryEvade(int attackerId, int targetId) const;
+    bool tryEvade(int attackerId, int targetId);
 
     void checkEntry(int playerId);
 
     bool playerAlreadyConnected(const std::string& name) const;
+
+    Player* getPlayer(int playerId);
 
 public:
     explicit Game(Map& world);
@@ -78,37 +80,37 @@ public:
 
     bool processMovement(int playerId, const std::string& direction);
 
-    Position getPlayerPosition(int playerId) const;
+    Position getPlayerPosition(int playerId);
 
-    const std::string& getPlayerName(int playerId) const;
+    const std::string& getPlayerName(int playerId);
 
-    uint8_t getPlayerDirection(int playerId) const;
+    uint8_t getPlayerDirection(int playerId);
 
-    uint8_t getPlayerSkin(int playerId) const;
+    uint8_t getPlayerSkin(int playerId);
 
-    uint16_t getPlayerHealth(int playerId) const;
+    uint16_t getPlayerHealth(int playerId);
 
-    uint16_t getPlayerMaxHealth(int playerId) const;
+    uint16_t getPlayerMaxHealth(int playerId);
 
-    uint16_t getPlayerMana(int playerId) const;
+    uint16_t getPlayerMana(int playerId);
 
-    uint16_t getPlayerMaxMana(int playerId) const;
+    uint16_t getPlayerMaxMana(int playerId);
 
-    uint32_t getPlayerGold(int playerId) const;
+    uint32_t getPlayerGold(int playerId);
 
-    uint32_t getPlayerExperience(int playerId) const;
+    uint32_t getPlayerExperience(int playerId);
 
     // Limite = 1000 * Nivel^1.8 (sección "Puntos de experiencia" del enunciado).
-    uint32_t getPlayerNextLevelExp(int playerId) const;
+    uint32_t getPlayerNextLevelExp(int playerId);
 
-    uint8_t getPlayerLevel(int playerId) const;
+    uint8_t getPlayerLevel(int playerId);
 
-    uint8_t getPlayerMapId(int playerId) const;
+    uint8_t getPlayerMapId(int playerId);
 
     bool hasPlayer(int playerId) const;
 
     // True si el jugador está muerto (fantasma).
-    bool isPlayerGhost(int playerId) const;
+    bool isPlayerGhost(int playerId);
 
     // Devuelve el playerId que está en (x, y, mapId), o -1 si no hay player.
     int getPlayerIdAt(int16_t x, int16_t y, uint8_t mapId) const;
@@ -119,7 +121,7 @@ public:
 
     void setSkin(int playerId, uint8_t bodySkinId, uint8_t headSkinId);
 
-    uint8_t getPlayerHead(int playerId) const;
+    uint8_t getPlayerHead(int playerId);
 
     // Resumen de lo que pasó en un ataque. Lo arma processAttack y lo usa
     // gameloop para decidir broadcasts y notificaciones al chat.
@@ -146,7 +148,7 @@ public:
     // targetType: 0 = player, 1 = npc.
     AttackOutcome processAttack(int playerId, uint8_t targetType, uint16_t targetId);
 
-    bool hasHealWeaponEquipped(int playerId) const;
+    bool hasHealWeaponEquipped(int playerId);
 
     // Resumen del cast de curacion para que gameloop arme chats y stats updates.
     struct HealOutcome {
@@ -165,10 +167,15 @@ public:
 
     // ── Cheats invocables desde el chat (/vidainf, /gold, etc.)
     bool cheatToggleInfiniteHealth(int playerId);
+
     bool cheatToggleInfiniteMana(int playerId);
+
     bool cheatSuicide(int playerId);
+
     bool cheatLevelUp(int playerId);
+
     bool cheatAddGold(int playerId, uint32_t amount);
+
     bool cheatSpawnItem(int playerId, uint8_t itemId);
 
     // ── Interacción con NPCs amigos ─────────────────────────────────────
@@ -182,7 +189,8 @@ public:
     // Dirigido a un banker: items y oro guardados en la cuenta del jugador.
     // Devuelve líneas de texto listas para mostrar (1 por item).
     std::vector<std::string> listMerchantInventory(uint8_t npcType);
-    std::vector<std::string> listBankAccount(int playerId, uint8_t npcType);
+
+    std::vector<std::string> listBankAccount(int playerId);
 
     // /comprar <item>: merchant o priest (priest vende hechizos/pociones).
     InteractionResult buyFromNpc(int playerId, uint8_t npcType, const std::string& itemName);
@@ -192,10 +200,12 @@ public:
 
     // /depositar <item> o /depositar oro <N>: solo banker.
     InteractionResult depositItemToBank(int playerId, const std::string& itemName);
+
     InteractionResult depositGoldToBank(int playerId, uint32_t amount);
 
     // /retirar <item> o /retirar oro <N>: solo banker.
     InteractionResult withdrawItemFromBank(int playerId, const std::string& itemName);
+
     InteractionResult withdrawGoldFromBank(int playerId, uint32_t amount);
 
     // /resucitar (priest): solo si el jugador es fantasma.
@@ -234,13 +244,9 @@ public:
     std::vector<DroppedItemRecord> dropCreatureLootOnDeath(uint16_t npcId);
 
     // Equipa o usa el item del slot según su tipo (ver ADR-002).
-    // TODO(team-gameplay): si arma/armor/casco/escudo → player.equipItem(slot).
-    // Si poción → consumir y aplicar efecto (heal / mana). Hoy stub.
     bool equipOrUseItem(int playerId, uint8_t invSlot);
 
     // Desequipa el slot indicado. slotType: 0=arma, 1=armor, 2=casco, 3=escudo.
-    // TODO(team-gameplay): mapear slotType → ItemType y llamar a
-    // player.unequipItem. Hoy stub.
     bool unequipSlot(int playerId, uint8_t slotType);
 
     // Devuelve el inventario actual del jugador para serializar INVENTORY_UPDATE.
@@ -253,13 +259,13 @@ public:
         uint8_t equippedShield = 0;
     };
 
-    InventorySnapshot getInventorySnapshot(int playerId) const;
+    InventorySnapshot getInventorySnapshot(int playerId);
 
     uint16_t applyNPCAttack(uint8_t playerId, uint16_t rawDamage);
 
-    bool checkIfPlayerIsMeditating(int playerId) const;
+    bool checkIfPlayerIsMeditating(int playerId);
 
-    bool checkIfPlayerIsTeleporting(int playerId) const;
+    bool checkIfPlayerIsTeleporting(int playerId);
 
     void restorePlayerManaForMeditation(int playerId);
 
@@ -282,23 +288,32 @@ public:
     // ── Clanes ──────────────────────────────────────────────────────────
     // Cada try* delega en ClanRegistry y devuelve un mensaje listo para chat.
     ClanOutcome tryFoundClan(int playerId, const std::string& clanName);
+
     ClanOutcome tryRequestJoinClan(int playerId, const std::string& clanName);
+
     ClanOutcome tryAcceptClanRequest(int playerId, const std::string& applicantNick);
+
     ClanOutcome tryRejectClanRequest(int playerId, const std::string& applicantNick);
+
     ClanOutcome tryBanFromClan(int playerId, const std::string& targetNick);
+
     ClanOutcome tryKickFromClan(int playerId, const std::string& targetNick);
+
     ClanOutcome tryLeaveClan(int playerId);
 
     // Lineas para mostrar en /revisar-clan. Vacio si el jugador no es fundador.
-    std::vector<std::string> reviewClan(int playerId) const;
+    std::vector<std::string> reviewClan(int playerId);
 
     // Devuelve el nombre del clan del jugador, vacio si no esta en ninguno.
-    std::string getClanOf(int playerId) const;
+    std::string getClanOf(int playerId);
+
     // Lista de miembros del clan (nicks).
     std::vector<std::string> getClanMembers(const std::string& clanName) const;
-    bool areInSameClan(int playerA, int playerB) const;
+
+    bool areInSameClan(int playerA, int playerB);
+
     // Cuenta miembros del mismo clan conectados dentro del radio (excluyendo al propio).
-    int countNearbyClanMates(int playerId) const;
+    int countNearbyClanMates(int playerId);
 
     void changeMapId(int playerId, uint8_t newMapId);
 

@@ -11,6 +11,10 @@ class BinaryParser {
 private:
     uint32_t lastOffset;
 
+    bool findPlayerOffset(const std::string& name, uint32_t& offset);
+
+    bool findBankAccountOffset(const std::string& name, std::streampos& offset);
+
 public:
     BinaryParser();
 

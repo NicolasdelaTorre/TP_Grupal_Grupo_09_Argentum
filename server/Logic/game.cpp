@@ -19,7 +19,7 @@
 Game::Game(Map& world):
         map(world), playerSpawn(map.getPlayerSpawn(0)), parser(BinaryParser()),
         bank(0, "global", 0, 0) {
-    // Seedeamos el rand() del server una sola vez aca asi todas las corridas arrancan con una secuencia random distinta.
+    // Random Seed
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 
     const auto& cc = FormulaCatalog::instance().getClan();
@@ -35,14 +35,20 @@ bool Game::playerExistsInRecords(const std::string& name) {
 
 bool Game::addNewPlayer(int playerId, const std::string& name, RaceCode race, ClassCode class_) {
     Position spawn = findSpawnPosition();
+
+    // Set new player data
     players.emplace(playerId, Player(name, spawn, race, class_));
     parser.savePlayerData(name, players.at(playerId).getData());
     bank.addPlayer(name);
+
+    // Place new player
     Position currentPosition = map.placeEntity(playerId, spawn.x, spawn.y, true, 0);
     players.at(playerId).move(currentPosition);
+
     std::cout << "Hi " << name << " (" << Race::toString(race) << "/"
               << PlayerClass::toString(class_) << ") spawned at (" << spawn.x << ", " << spawn.y
               << ")" << std::endl;
+
     return true;
 }
 
@@ -53,13 +59,17 @@ bool Game::loadExistingPlayer(int playerId, const std::string& name) {
         return false;  // playerId in use
     }
 
+    // Set player
     players.emplace(playerId, Player(data, name));
     Position spawn = players.at(playerId).getPosition();
     bank.addPlayer(name);
+
     Position currentPosition = map.placeEntity(playerId, spawn.x, spawn.y, true, players.at(playerId).getMapId());
     players.at(playerId).move(currentPosition);
+
     std::cout << "Welcome back " << name << " at (" << spawn.x << ", " << spawn.y << ")"
               << std::endl;
+    
     return true;
 }
 
@@ -69,15 +79,26 @@ bool Game::playerAlreadyConnected(const std::string& name) const {
             return true;
         }
     }
+
     return false;
 }
 
-bool Game::turnPlayer(int playerId, MoveDirection direction) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        return false;
+Player* Game::getPlayer(int playerId) {
+    auto it = players.find(playerId);
+    if (it == players.end()) {
+        return nullptr;
     }
-    itPlayer->second.setDirection(static_cast<uint8_t>(direction));
+
+    return &(it->second);
+}
+
+bool Game::turnPlayer(int playerId, MoveDirection direction) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    player->setDirection(static_cast<uint8_t>(direction));
+
     return true;
 }
 
@@ -88,8 +109,10 @@ Position Game::findSpawnPosition() const {
             for (int offsetX = -radius; offsetX <= radius; offsetX++) {
                 if (radius > 0 && std::abs(offsetX) != radius && std::abs(offsetY) != radius)
                     continue;
+                
                 Position candidate{static_cast<int16_t>(playerSpawn.x + offsetX),
                                    static_cast<int16_t>(playerSpawn.y + offsetY)};
+                
                 if (map.isWalkable(candidate.x, candidate.y, 0) && isPositionFree(candidate)) {
                     return candidate;
                 }
@@ -106,119 +129,122 @@ bool Game::isPositionFree(Position pos) const {
             return false;
         }
     }
+
     return true;
 }
 
-Position Game::getPlayerPosition(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        return {-1, -1};
-    }
-    return it->second.getPosition();
+Position Game::getPlayerPosition(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {-1, -1};
+
+    return player->getPosition();
 }
 
-const std::string& Game::getPlayerName(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getName();
+const std::string& Game::getPlayerName(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getName();
 }
 
-uint8_t Game::getPlayerDirection(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getDirection();
+uint8_t Game::getPlayerDirection(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getDirection();
 }
 
-uint8_t Game::getPlayerSkin(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().bodySkinId;
+uint8_t Game::getPlayerSkin(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().bodySkinId;
 }
 
-uint16_t Game::getPlayerHealth(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().health;
+uint16_t Game::getPlayerHealth(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().health;
 }
 
-uint16_t Game::getPlayerMaxHealth(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getMaxHealth();
+uint16_t Game::getPlayerMaxHealth(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getMaxHealth();
 }
 
-uint8_t Game::getPlayerLevel(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().level;
+uint8_t Game::getPlayerLevel(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().level;
 }
 
-uint16_t Game::getPlayerMana(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().mana;
+uint16_t Game::getPlayerMana(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().mana;
 }
 
-uint16_t Game::getPlayerMaxMana(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getMaxMana();
+uint16_t Game::getPlayerMaxMana(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getMaxMana();
 }
 
-uint32_t Game::getPlayerGold(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().gold;
+uint32_t Game::getPlayerGold(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().gold;
 }
 
-uint32_t Game::getPlayerExperience(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().experience;
+uint32_t Game::getPlayerExperience(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().experience;
 }
 
-uint32_t Game::getPlayerNextLevelExp(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return StatsDefinition().nextLevelExp(it->second.getData().level);
+uint32_t Game::getPlayerNextLevelExp(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return StatsDefinition().nextLevelExp(player->getData().level);
 }
 
-uint8_t Game::getPlayerMapId(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().mapId;
+uint8_t Game::getPlayerMapId(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().mapId;
 }
 
 bool Game::hasPlayer(int playerId) const { return players.find(playerId) != players.end(); }
 
-bool Game::isPlayerGhost(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    return it->second.getData().isGhost;
+bool Game::isPlayerGhost(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    return player->getData().isGhost;
 }
 
 int Game::getPlayerIdAt(int16_t x, int16_t y, uint8_t mapId) const {
@@ -227,49 +253,52 @@ int Game::getPlayerIdAt(int16_t x, int16_t y, uint8_t mapId) const {
             return id;
         }
     }
+
     return -1;
 }
 
 std::vector<int> Game::getPlayerIds() const {
     std::vector<int> ids;
     ids.reserve(players.size());
+
     for (const auto& [id, _]: players) {
         ids.push_back(id);
     }
+
     return ids;
 }
 
 void Game::updatePlayerData(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
+    Player* player = getPlayer(playerId);
 
-    parser.updatePlayerData(it->second.getName(), it->second.getData());
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    parser.updatePlayerData(player->getName(), player->getData());
 }
 
 void Game::removePlayer(int playerId) {
-    auto it = players.find(playerId);
-    if (it != players.end()) {
-        Position p = it->second.getPosition();
-        map.removeEntity(p.x, p.y, it->second.getMapId(), true);
-    }
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    Position p = player->getPosition();
+    map.removeEntity(p.x, p.y, player->getMapId(), true);
+
     updatePlayerData(playerId);
     players.erase(playerId);
 }
 
 bool Game::movePlayer(int playerId, MoveDirection direction) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
+    Player* currentPlayer = getPlayer(playerId);
 
-    Player& player = itPlayer->second;
+    if (!currentPlayer) throw std::runtime_error("Game Error: player not found");
+
+    Player& player = *currentPlayer;
     Position next = player.getPosition();
     Position old = player.getPosition();
     uint8_t mapId = player.getMapId();
 
-    if (itPlayer->second.getTeleportingState()) {
+    if (currentPlayer->getTeleportingState()) {
         std::cout << "MOVE rejected player=" << playerId << " from (" << old.x << "," << old.y
                   << ") to (" << next.x << "," << next.y << ") map=" << static_cast<int>(mapId)
                   << " reason=not_walkable" << std::endl;
@@ -290,6 +319,7 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
                   << " reason=not_walkable" << std::endl;
         return false;
     }
+
     // moveEntity valida internamente que la celda destino no este ocupada por
     // NPC ni por player y devuelve false si lo esta.
     if (!map.moveEntity(playerId, old.x, old.y, next.x, next.y, true, mapId)) {
@@ -308,17 +338,16 @@ bool Game::movePlayer(int playerId, MoveDirection direction) {
 }
 
 void Game::checkEntry(int playerId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
+    Player* player = getPlayer(playerId);
 
-    Position pos = itPlayer->second.getPosition();
+    if (!player) throw std::runtime_error("Game Error: player not found");
 
-    if (map.checkIfThePositionHasAnEntry(pos.x, pos.y, itPlayer->second.getMapId())) {
+    Position pos = player->getPosition();
+
+    if (map.checkIfThePositionHasAnEntry(pos.x, pos.y, player->getMapId())) {
         // El jugador pisó una entrada a dungeon o una salida (si ya está en
         // una dungeon). Lo sacamos del mapa actual y lo metemos al destino.
-        uint8_t currentMapId = itPlayer->second.getMapId();
+        uint8_t currentMapId = player->getMapId();
         map.removeEntity(pos.x, pos.y, currentMapId, true);
 
         // Si veníamos del overworld vamos a la dungeon; si veníamos de una
@@ -328,13 +357,14 @@ void Game::checkEntry(int playerId) {
             if (mapId.empty()) {
                 return;
             }
+
             Position newPosition = map.placePlayerIntoTheDungeon(playerId, pos, mapId);
-            itPlayer->second.changeMapId(static_cast<uint8_t>(mapId[mapId.size() - 1] - '0'));
-            itPlayer->second.move(newPosition);
+            player->changeMapId(static_cast<uint8_t>(mapId[mapId.size() - 1] - '0'));
+            player->move(newPosition);
         } else {
             Position newPosition = map.placePlayerIntoTheOverworld(playerId, currentMapId);
-            itPlayer->second.changeMapId(0);
-            itPlayer->second.move(newPosition);
+            player->changeMapId(0);
+            player->move(newPosition);
         }
     }
 }
@@ -344,14 +374,11 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     outcome.attackerId = playerId;
     outcome.targetType = targetType;
 
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
+    Player* player = getPlayer(playerId);
 
-    if (!itPlayer->second.isEquipped() || !itPlayer->second.isAlive()) {
-        return outcome;
-    }
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    if (!player->isEquipped() || !player->isAlive()) return outcome;
 
     if (targetType != static_cast<uint8_t>(TargetType::PLAYER) &&
         targetType != static_cast<uint8_t>(TargetType::NPC)) {
@@ -359,22 +386,22 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
                 "Game Error: malformed attack command (expected player.id or npc.id)");
     }
 
-    outcome.attackerName = itPlayer->second.getName();
+    outcome.attackerName = player->getName();
 
     // Sin mana suficiente para el hechizo
-    if (!itPlayer->second.hasEnoughManaForAttack()) {
+    if (!player->hasEnoughManaForAttack()) {
         outcome.blockedReason = "No tenés maná suficiente para lanzar el hechizo";
         return outcome;
     }
 
     bool targetPlayer = (targetType == static_cast<uint8_t>(TargetType::PLAYER));
-    uint8_t mapId = itPlayer->second.getMapId();
+    uint8_t mapId = player->getMapId();
     uint8_t entityId;
-    if (itPlayer->second.hasLongDistanceWeapon())
-        entityId = map.entityInDistance(itPlayer->second.getX(), itPlayer->second.getY(),
+    if (player->hasLongDistanceWeapon())
+        entityId = map.entityInDistance(player->getX(), player->getY(),
                                         targetPlayer, mapId, targetId);
     else
-        entityId = map.nextEntity(itPlayer->second.getX(), itPlayer->second.getY(), targetPlayer,
+        entityId = map.nextEntity(player->getX(), player->getY(), targetPlayer,
                                   mapId, targetId);
 
     if (entityId != targetId) {
@@ -385,51 +412,62 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
     }
 
     uint16_t attackerId = static_cast<uint16_t>(playerId);
-    uint8_t atkLvl = itPlayer->second.getData().level;
+    uint8_t atkLvl = player->getData().level;
     uint8_t atkLvlBefore = atkLvl;
 
     const auto& f = FormulaCatalog::instance().getFormulas();
     bool isCritical = (std::rand() % 100) < f.criticalChancePct;
 
     if (targetType == static_cast<uint8_t>(TargetType::PLAYER)) {
-        auto itTarget = players.find(entityId);
-        if (itTarget == players.end()) {
-            throw std::runtime_error("Game Error: player in sight not found");
-        }
-        if (!itTarget->second.isAlive()) {
+        Player* targetPlayer = getPlayer(static_cast<int>(targetId));
+
+        if (!targetPlayer) throw std::runtime_error("Game Error: player in sight not found");
+
+        if (!targetPlayer->isAlive()) {
             return outcome;
         }
-        outcome.targetName = itTarget->second.getName();
+
+        outcome.targetName = targetPlayer->getName();
         outcome.targetId = static_cast<int>(targetId);
+
         // Zona segura: nada de PvP si atacante o target están adentro.
-        Position atkPos = itPlayer->second.getPosition();
-        Position tgtPos = itTarget->second.getPosition();
+        Position atkPos = player->getPosition();
+        Position tgtPos = targetPlayer->getPosition();
+
         if (map.isSafeZone(atkPos.x, atkPos.y, mapId) ||
             map.isSafeZone(tgtPos.x, tgtPos.y, mapId)) {
             outcome.blockedReason = "No podés atacar dentro de una zona segura";
             return outcome;
         }
+
         // Fair play: newbies (lvl <= newbieLevel) no participan en PvP y la
         // diferencia de niveles no puede pasar maxLevelDiff.
-        uint8_t tgtLvlFP = itTarget->second.getData().level;
+        uint8_t tgtLvlFP = targetPlayer->getData().level;
+
         if (atkLvl <= f.fairPlayNewbieLevel || tgtLvlFP <= f.fairPlayNewbieLevel) {
             outcome.blockedReason = "Los newbies no pueden participar en PvP";
             return outcome;
         }
+
         uint8_t diff = (atkLvl > tgtLvlFP) ? (atkLvl - tgtLvlFP) : (tgtLvlFP - atkLvl);
+
         if (diff > f.fairPlayMaxLevelDiff) {
             outcome.blockedReason =
                     "Diferencia de niveles demasiado grande para atacar a " + outcome.targetName;
             return outcome;
         }
+
         // Mismo clan: no se pueden atacar entre si.
         if (areInSameClan(playerId, static_cast<int>(targetId))) {
             outcome.blockedReason = "No podés atacar a un miembro de tu clan";
             return outcome;
         }
+
         // dealDamage primero: gasta el mana del hechizo aunque después esquive
-        uint16_t rawDamage = itPlayer->second.dealDamage();
+        uint16_t rawDamage = player->dealDamage();
+
         if (isCritical) rawDamage *= 2;
+
         // Solo se intenta esquivar si NO es crítico.
         if (!isCritical && tryEvade(playerId, static_cast<int>(targetId))) {
             outcome.valid = true;
@@ -438,33 +476,43 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
                                                                 0, false);
             return outcome;
         }
+
         // Bonus de clan
         const auto& cc = FormulaCatalog::instance().getClan();
+
         int nearAtk = countNearbyClanMates(playerId);
         int nearTgt = countNearbyClanMates(static_cast<int>(targetId));
         if (nearAtk > 0)
             rawDamage = static_cast<uint16_t>(rawDamage * (1.0f + cc.bonusPctPerMember * nearAtk));
-        uint16_t def = itTarget->second.rollDefense();
+
+        uint16_t def = targetPlayer->rollDefense();
         if (nearTgt > 0)
             def = static_cast<uint16_t>(def * (1.0f + cc.bonusPctPerMember * nearTgt));
+
         uint16_t damage = (def >= rawDamage) ? 0 : (rawDamage - def);
-        uint8_t tgtLvl = itTarget->second.getData().level;
-        uint16_t tgtMaxHp = itTarget->second.getMaxHealth();
-        itTarget->second.receiveDamage(damage);
+
+        uint8_t tgtLvl = targetPlayer->getData().level;
+        uint16_t tgtMaxHp = targetPlayer->getMaxHealth();
+
+        targetPlayer->receiveDamage(damage);
+
         int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
-        itPlayer->second.grantExp(static_cast<uint32_t>(damage) * factor);
-        outcome.killed = !itTarget->second.isAlive();
+        player->grantExp(static_cast<uint32_t>(damage) * factor);
+
+        outcome.killed = !targetPlayer->isAlive();
         if (outcome.killed) {
             uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
-            itPlayer->second.grantExp(kill * factor);
+            player->grantExp(kill * factor);
         }
+
         outcome.valid = true;
         outcome.critical = isCritical;
         outcome.damage = damage;
         outcome.event = std::make_shared<AttackResultEvent>(attackerId, targetType, targetId,
                                                             damage, true);
     } else {
-        uint16_t damage = itPlayer->second.dealDamage();
+        uint16_t damage = player->dealDamage();
+
         if (isCritical) damage *= 2;
         // Bonus de clan al atacar NPCs
         {
@@ -473,22 +521,27 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
             if (near > 0)
                 damage = static_cast<uint16_t>(damage * (1.0f + cc.bonusPctPerMember * near));
         }
+
         Creature* npc = map.getNPC(targetId);
         uint8_t tgtLvl = npc->getLevel();
         uint16_t tgtMaxHp = npc->getMaxHealth();
         outcome.targetName = npc->getName();
+
         uint16_t damageReceived = npc->receiveDamage(damage);
+
         int factor = std::max(0, static_cast<int>(tgtLvl) - static_cast<int>(atkLvl) + f.expLevelDiffBase);
-        itPlayer->second.grantExp(static_cast<uint32_t>(damageReceived) * factor);
+        player->grantExp(static_cast<uint32_t>(damageReceived) * factor);
+
         outcome.killed = npc->isDead();
         if (outcome.killed) {
             // Sacar la creature del mapa para que deje de bloquear celda.
             Position npcPos = npc->getPosition();
-            map.removeEntity(npcPos.x, npcPos.y, itPlayer->second.getMapId(), false);
+            map.removeEntity(npcPos.x, npcPos.y, player->getMapId(), false);
 
             uint32_t kill = (std::rand() % (f.expKillBonusMaxPct + 1)) * tgtMaxHp / 100;
-            itPlayer->second.grantExp(kill * factor);
+            player->grantExp(kill * factor);
         }
+
         outcome.valid = true;
         outcome.critical = isCritical;
         outcome.damage = damageReceived;
@@ -496,37 +549,42 @@ Game::AttackOutcome Game::processAttack(int playerId, uint8_t targetType, uint16
                                                             damageReceived, true);
     }
 
-    uint8_t atkLvlAfter = itPlayer->second.getData().level;
+    uint8_t atkLvlAfter = player->getData().level;
+
     if (atkLvlAfter > atkLvlBefore) {
         outcome.leveledUp = true;
         outcome.newLevel = atkLvlAfter;
     }
+
     return outcome;
 }
 
-bool Game::hasHealWeaponEquipped(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    return it->second.hasHealWeapon();
+bool Game::hasHealWeaponEquipped(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    return player->hasHealWeapon();
 }
 
 Game::HealOutcome Game::processHealCast(int casterId, uint16_t targetId) {
     HealOutcome outcome;
     outcome.casterId = casterId;
 
-    auto itCaster = players.find(casterId);
-    if (itCaster == players.end()) return outcome;
-    if (!itCaster->second.isAlive()) return outcome;
-    if (!itCaster->second.hasHealWeapon()) return outcome;
-    outcome.casterName = itCaster->second.getName();
+    Player* caster = getPlayer(casterId);
+    if (!caster) return outcome;
+    if (!caster->isAlive()) return outcome;
+    if (!caster->hasHealWeapon()) return outcome;
+    outcome.casterName = caster->getName();
 
     // Auto-curarse: el cliente no manda clicks sobre uno mismo, pero por las dudas.
     if (static_cast<int>(targetId) == casterId) {
-        uint16_t healed = itCaster->second.castHealOn(itCaster->second);
+        uint16_t healed = caster->castHealOn(*caster);
         if (healed == 0) {
             outcome.blockedReason = "No tenés maná suficiente para curar";
             return outcome;
         }
+
         outcome.valid = true;
         outcome.healAmount = healed;
         outcome.targetName = outcome.casterName;
@@ -535,99 +593,124 @@ Game::HealOutcome Game::processHealCast(int casterId, uint16_t targetId) {
     }
 
     // Chequeo de rango: la Flauta es a distancia, asi que uso entityInDistance.
-    uint8_t mapId = itCaster->second.getMapId();
-    uint16_t entityId = map.entityInDistance(itCaster->second.getX(), itCaster->second.getY(),
+    uint8_t mapId = caster->getMapId();
+    uint16_t entityId = map.entityInDistance(caster->getX(), caster->getY(),
                                              true, mapId, targetId);
     if (entityId != targetId) {
         outcome.blockedReason = "Estás demasiado lejos del objetivo";
         return outcome;
     }
 
-    auto itTarget = players.find(static_cast<int>(targetId));
-    if (itTarget == players.end()) return outcome;
-    if (!itTarget->second.isAlive()) {
+    Player* target = getPlayer(targetId);
+    if (!target) return outcome;
+    if (!target->isAlive()) {
         outcome.blockedReason = "No podés curar a un jugador muerto";
         return outcome;
     }
-    outcome.targetName = itTarget->second.getName();
+    outcome.targetName = target->getName();
     outcome.targetId = static_cast<int>(targetId);
 
-    uint16_t healed = itCaster->second.castHealOn(itTarget->second);
+    uint16_t healed = caster->castHealOn(*target);
     if (healed == 0) {
         outcome.blockedReason = "No tenés maná suficiente para curar";
         return outcome;
     }
+
     outcome.valid = true;
     outcome.healAmount = healed;
     return outcome;
 }
 
-bool Game::tryEvade(int /*attackerId*/, int targetId) const {
+bool Game::tryEvade(int /*attackerId*/, int targetId) {
     // Formula del enunciado: rand(0,1)^Agilidad < evadeThreshold.
-    auto it = players.find(targetId);
-    if (it == players.end()) return false;
-    const auto& r = AttributeCatalog::instance().getRace(it->second.getData().race);
+    Player* target = getPlayer(targetId);
+
+    if (!target) return false;
+
+    const auto& r = AttributeCatalog::instance().getRace(target->getData().race);
     if (r.agility == 0) return false;
+
     float thr = FormulaCatalog::instance().getFormulas().evadeThreshold;
     float roll = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+
     return std::pow(roll, static_cast<float>(r.agility)) < thr;
 }
 
 void Game::setSkin(int playerId, uint8_t bodySkinId, uint8_t headSkinId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    itPlayer->second.setSkin(bodySkinId, headSkinId);
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    player->setSkin(bodySkinId, headSkinId);
 }
 
-uint8_t Game::getPlayerHead(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
-    return it->second.getData().headSkinId;
+uint8_t Game::getPlayerHead(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    return player->getData().headSkinId;
 }
 
 // ── Cheats invocables desde el chat ──────────────────────────────────────
 
 bool Game::cheatToggleInfiniteHealth(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    bool on = it->second.toggleInfiniteHealth();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    bool on = player->toggleInfiniteHealth();
+
     std::cout << "CHEAT vidainf " << (on ? "ON" : "OFF") << " para player=" << playerId << std::endl;
+
     return true;
 }
 
 bool Game::cheatToggleInfiniteMana(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    bool on = it->second.toggleInfiniteMana();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    bool on = player->toggleInfiniteMana();
+
     std::cout << "CHEAT manainf " << (on ? "ON" : "OFF") << " para player=" << playerId << std::endl;
+
     return true;
 }
 
 bool Game::cheatSuicide(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    it->second.kill();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    player->kill();
+
     std::cout << "CHEAT suicidio aplicado a player=" << playerId << std::endl;
+
     return true;
 }
 
 bool Game::cheatLevelUp(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    it->second.levelUp();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    player->levelUp();
+
     std::cout << "CHEAT levelup aplicado a player=" << playerId << std::endl;
+
     return true;
 }
 
 bool Game::cheatAddGold(int playerId, uint32_t amount) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
-    it->second.addGold(amount);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    player->addGold(amount);
+
     std::cout << "CHEAT gold +" << amount << " para player=" << playerId << std::endl;
+
     return true;
 }
 
@@ -662,27 +745,34 @@ static const char* itemNameById(uint8_t id) {
 // hace falta lowercasear el input. Devuelve 0 si no existe.
 static uint8_t itemIdByName(std::string name) {
     for (char& c : name) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+
     for (uint8_t id = 1; id <= 19; id++) {
         const char* n = itemNameById(id);
         if (n && name == n) return id;
     }
+
     return 0;
 }
 
 bool Game::cheatSpawnItem(int playerId, uint8_t itemId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return false;
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
     const char* name = itemNameById(itemId);
     if (!name) {
         std::cout << "CHEAT spawn item id=" << (int)itemId << " desconocido" << std::endl;
         return false;
     }
-    if (!it->second.addItem(name)) {
+
+    if (!player->addItem(name)) {
         std::cout << "CHEAT spawn item id=" << (int)itemId << " inventario lleno" << std::endl;
         return false;
     }
+
     std::cout << "CHEAT spawn item id=" << (int)itemId << " (" << name << ") para player="
               << playerId << std::endl;
+
     return true;
 }
 
@@ -700,21 +790,27 @@ std::vector<std::string> Game::listMerchantInventory(uint8_t npcType) {
     if (!items || items->empty()) {
         return {"Sin items en venta"};
     }
+
     std::vector<std::string> lines;
     for (const auto& [id, price]: *items) {
         const char* name = itemNameById(id);
         if (!name) continue;
         lines.push_back(std::string("- ") + name + " ($" + std::to_string(price) + ")");
     }
+
     return lines;
 }
 
-std::vector<std::string> Game::listBankAccount(int playerId, uint8_t /*npcType*/) {
+std::vector<std::string> Game::listBankAccount(int playerId) {
     std::vector<std::string> lines;
-    auto it = players.find(playerId);
-    if (it == players.end()) return lines;
-    const std::string& name = it->second.getName();
+
+    Player* player = getPlayer(playerId);
+
+    if (!player) return lines;
+
+    const std::string& name = player->getName();
     lines.push_back("Oro guardado: " + std::to_string(bank.getGold(name)));
+
     auto items = bank.getItems(name);
     if (items.empty()) {
         lines.push_back("Sin items guardados");
@@ -724,6 +820,7 @@ std::vector<std::string> Game::listBankAccount(int playerId, uint8_t /*npcType*/
             lines.push_back(std::string("- ") + (n ? n : "(desconocido)"));
         }
     }
+
     return lines;
 }
 
@@ -738,10 +835,13 @@ static const std::vector<MerchantCatalog::ItemPrice>* catalogFor(uint8_t npcType
 
 Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
                                          const std::string& itemName) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
     uint8_t itemId = itemIdByName(itemName);
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
+
     std::string canonical = itemNameById(itemId);
 
     const auto* catalog = catalogFor(npcType);
@@ -752,163 +852,210 @@ Game::InteractionResult Game::buyFromNpc(int playerId, uint8_t npcType,
     for (const auto& [id, p] : *catalog) {
         if (id == itemId) { price = p; found = true; break; }
     }
+
     if (!found) return {false, "No vende " + canonical};
-    if (it->second.getData().gold < price) {
-        return {false, "Te faltan " + std::to_string(price - it->second.getData().gold) + " de oro"};
+
+    if (player->getData().gold < price) {
+        return {false, "Te faltan " + std::to_string(price - player->getData().gold) + " de oro"};
     }
-    if (!it->second.addItem(canonical)) {
+
+    if (!player->addItem(canonical)) {
         return {false, "Tu inventario esta lleno"};
     }
-    it->second.removeGold(price);
+
+    player->removeGold(price);
+
     return {true, "Compraste " + canonical + " por " + std::to_string(price)};
 }
 
 Game::InteractionResult Game::sellToNpc(int playerId, uint8_t npcType,
                                         const std::string& itemName) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
     // Solo el comerciante compra. El sacerdote no.
     if (npcType != static_cast<uint8_t>(NpcCode::MERCHANT)) {
         return {false, "Solo el comerciante compra items"};
     }
+
     uint8_t itemId = itemIdByName(itemName);
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
+
     std::string canonical = itemNameById(itemId);
 
     // El precio de venta es la mitad del precio de compra del trader.
     const auto* catalog = catalogFor(npcType);
     if (!catalog) return {false, "Este NPC no compra"};
+
     uint32_t buyPrice = 0;
     for (const auto& [id, p] : *catalog) {
         if (id == itemId) { buyPrice = p; break; }
     }
+
     if (buyPrice == 0) return {false, "No compra " + canonical};
+    
     uint32_t sellPrice = buyPrice / 2;
 
-    if (it->second.isItemEquipped(itemId)) {
+    if (player->isItemEquipped(itemId)) {
         return {false, "Tenes " + canonical + " equipado, desequipalo primero"};
     }
-    if (it->second.removeItemByName(canonical) == 0) {
+
+    if (player->removeItemByName(canonical) == 0) {
         return {false, "No tenes " + canonical + " en el inventario"};
     }
-    it->second.addGold(sellPrice);
+
+    player->addGold(sellPrice);
+
     return {true, "Vendiste " + canonical + " por " + std::to_string(sellPrice)};
 }
 
 Game::InteractionResult Game::depositItemToBank(int playerId, const std::string& itemName) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
 
     uint8_t itemId = itemIdByName(itemName);
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
 
     std::string canonical = itemNameById(itemId);
-    if (it->second.isItemEquipped(itemId)) {
+    if (player->isItemEquipped(itemId)) {
         return {false, "Tenes " + canonical + " equipado, desequipalo primero"};
     }
-    if (it->second.removeItemByName(canonical) == 0) {
+
+    if (player->removeItemByName(canonical) == 0) {
         return {false, "No tenes " + canonical + " en el inventario"};
     }
     
-    if (!bank.depositItem(it->second.getName(), itemId)) {
+    if (!bank.depositItem(player->getName(), itemId)) {
         // cuenta llena: lo devolvemos al inventario para no perderlo.
-        it->second.addItem(canonical);
+        player->addItem(canonical);
         return {false, "El banco esta lleno"};
     }
+
     return {true, "Depositaste " + canonical};
 }
 
 Game::InteractionResult Game::depositGoldToBank(int playerId, uint32_t amount) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
     if (amount == 0) return {false, "Cantidad invalida"};
-    if (!it->second.removeGold(amount)) {
+
+    if (!player->removeGold(amount)) {
         return {false, "No tenes suficiente oro"};
     }
-    if (!bank.depositGold(it->second.getName(), amount)) {
+
+    if (!bank.depositGold(player->getName(), amount)) {
         // overflow en la cuenta: devolvemos el oro al jugador para no perderlo.
-        it->second.addGold(amount);
+        player->addGold(amount);
         return {false, "No se pudo depositar (cuenta llena)"};
     }
+
     return {true, "Depositaste " + std::to_string(amount) + " de oro"};
 }
 
 Game::InteractionResult Game::withdrawItemFromBank(int playerId, const std::string& itemName) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
     uint8_t itemId = itemIdByName(itemName);
     if (itemId == 0) return {false, "Item desconocido: " + itemName};
+
     std::string canonical = itemNameById(itemId);
-    uint8_t got = bank.withdrawItem(it->second.getName(), itemId);
+
+    uint8_t got = bank.withdrawItem(player->getName(), itemId);
     if (got == 0) return {false, "No tenes " + canonical + " en el banco"};
-    if (!it->second.addItem(canonical)) {
+
+    if (!player->addItem(canonical)) {
         // inventario lleno: lo devolvemos al banco para no perderlo.
-        bank.depositItem(it->second.getName(), got);
+        bank.depositItem(player->getName(), got);
         return {false, "Tu inventario esta lleno"};
     }
+
     return {true, "Retiraste " + canonical};
 }
 
 Game::InteractionResult Game::withdrawGoldFromBank(int playerId, uint32_t amount) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
     if (amount == 0) return {false, "Cantidad invalida"};
-    uint32_t got = bank.withdrawGold(it->second.getName(), amount);
+
+    uint32_t got = bank.withdrawGold(player->getName(), amount);
     if (got == 0) return {false, "No tenes esa cantidad en el banco"};
+
     // addGold respeta el cap OroMax = 100 * Nivel^1.1. El sobrante se pierde
     // o queda en el banco (aca devolvemos al banco lo que no entro).
-    uint32_t before = it->second.getData().gold;
-    it->second.addGold(got);
-    uint32_t added = it->second.getData().gold - before;
+    uint32_t before = player->getData().gold;
+
+    player->addGold(got);
+
+    uint32_t added = player->getData().gold - before;
     if (added < got) {
-        bank.depositGold(it->second.getName(), got - added);
+        bank.depositGold(player->getName(), got - added);
         if (added == 0) return {false, "Ya tenes el oro maximo encima"};
         return {true, "Retiraste " + std::to_string(added) +
                        " (no entraba mas por el cap)"};
     }
+
     return {true, "Retiraste " + std::to_string(got) + " de oro"};
 }
 
 Game::InteractionResult Game::revivePlayer(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
+    Player* player = getPlayer(playerId);
 
-    it->second.revive();
-    
-    // it->second.resetStats();
+    if (!player) return {false, "Jugador no existe"};
+
+    player->revive();
 
     return {true, "Volviste a la vida"};
 }
 
 
 Game::InteractionResult Game::healPlayer(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
-    if (it->second.getData().isGhost) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
+    if (player->getData().isGhost) {
         return {false, "Estás muerto, primero resucitá"};
     }
+
     // resetStats restaura HP/MP a su máximo. Sirve como cura completa.
-    it->second.resetStats();
+    player->resetStats();
+
     return {true, "Te curaste"};
 }
 
 Game::InteractionResult Game::meditatePlayer(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe"};
-    if (it->second.getData().isGhost) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe"};
+
+    if (player->getData().isGhost) {
         return {false, "Estás muerto, no podés meditar"};
     }
+
     // Toggle. El tick de mana lo maneja TurnManager + gameloop::PlayerTurns.
-    it->second.switchMeditationState();
-    bool nowMeditating = it->second.getMeditationState();
+    player->switchMeditationState();
+    bool nowMeditating = player->getMeditationState();
+
     std::cout << "MEDITATE player=" << playerId << " on=" << nowMeditating << std::endl;
+
     return {true, nowMeditating ? "Empezaste a meditar" : "Saliste de meditación"};
 }
 
 Game::DropResult Game::pickUpItemAt(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe", {}};
-    Position pos = it->second.getPosition();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe", {}};
+
+    Position pos = player->getPosition();
+
     // Buscamos el primer drop en la celda del jugador.
     for (size_t i = 0; i < droppedItems.size(); i++) {
         if (droppedItems[i].x == pos.x && droppedItems[i].y == pos.y) {
@@ -917,143 +1064,174 @@ Game::DropResult Game::pickUpItemAt(int playerId) {
 
             // Drop de oro: se suma al gold del jugador (respetando cap).
             if (rec.itemId == GOLD_ITEM_ID) {
-                it->second.addGold(rec.goldAmount);
+                player->addGold(rec.goldAmount);
                 return {true, "Levantaste " + std::to_string(rec.goldAmount) + " de oro", rec};
             }
 
             // Item normal: addItem por nombre canonico.
             const char* name = itemNameById(rec.itemId);
+
             if (!name) return {false, "Item desconocido", {}};
-            if (!it->second.addItem(name)) {
+
+            if (!player->addItem(name)) {
                 // Inventario lleno: lo devolvemos al piso para no perderlo.
                 droppedItems.insert(droppedItems.begin() + i, rec);
                 return {false, "Tu inventario esta lleno", {}};
             }
+
             return {true, std::string("Levantaste ") + name, rec};
         }
     }
+
     return {false, "No hay nada para levantar acá", {}};
 }
 
 Game::DropResult Game::dropItem(int playerId, uint8_t invSlot) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return {false, "Jugador no existe", {}};
-    auto inv = it->second.getInventory();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no existe", {}};
+
+    auto inv = player->getInventory();
     if (invSlot >= inv.size()) return {false, "Slot inválido", {}};
-    Position pos = it->second.getPosition();
+
+    Position pos = player->getPosition();
+
     uint8_t itemId = inv[invSlot].getId();
     std::string itemName = inv[invSlot].getName();
-    if (it->second.isItemEquipped(itemId)) {
+
+    if (player->isItemEquipped(itemId)) {
         return {false, "Tenes " + itemName + " equipado, desequipalo primero", {}};
     }
+
     // Sacamos el item del inventario para que no quede duplicado.
-    if (it->second.removeItemByName(itemName) == 0) {
+    if (player->removeItemByName(itemName) == 0) {
         return {false, "No se pudo tirar (no estaba en inventario)", {}};
     }
+
     DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y, 0};
     droppedItems.push_back(rec);
+
     return {true, "Tiraste " + itemName, rec};
 }
 
 std::vector<Game::DroppedItemRecord> Game::dropPlayerLootOnDeath(int playerId) {
     std::vector<DroppedItemRecord> drops;
-    auto it = players.find(playerId);
-    if (it == players.end()) return drops;
-    Player& p = it->second;
-    Position pos = p.getPosition();
+
+    Player* player = getPlayer(playerId);
+
+    if (!player) return drops;
+
+    Position pos = player->getPosition();
 
     // Iteramos el inventario y tiramos cada item. Usamos getInventory() una
     // vez y vamos sacando uno a uno con removeItemByName: cada llamada baja el
     // tamaño, asi que iteramos sobre la copia inicial.
-    auto inv = p.getInventory();
+    auto inv = player->getInventory();
     for (const Item& item: inv) {
         std::string name = item.getName();
         uint8_t id = item.getId();
-        if (p.removeItemByName(name) == 0) continue;
+        if (player->removeItemByName(name) == 0) continue;
         DroppedItemRecord rec{nextDropId++, id, pos.x, pos.y, 0};
         droppedItems.push_back(rec);
         drops.push_back(rec);
     }
+
     // Desequipar todo: equipItem solo copia al slot equipado sin sacar del
     // inventario, asi que removeItemByName arriba no toca los equipped slots.
     // Al revivir el player no puede atacar/defender sin volver a equipar.
-    p.unequipItem(ItemType::WEAPON);
-    p.unequipItem(ItemType::ARMOR);
-    p.unequipItem(ItemType::HELMET);
-    p.unequipItem(ItemType::SHIELD);
+    player->unequipItem(ItemType::WEAPON);
+    player->unequipItem(ItemType::ARMOR);
+    player->unequipItem(ItemType::HELMET);
+    player->unequipItem(ItemType::SHIELD);
 
     // Oro en exceso del cap (= 100 * Nivel^1.1). Se queda con safeGold y tira
     // el resto.
-    uint32_t cap = StatsDefinition().safeGold(p.getData().level);
-    uint32_t gold = p.getData().gold;
+    uint32_t cap = StatsDefinition().safeGold(player->getData().level);
+    uint32_t gold = player->getData().gold;
     if (gold > cap) {
         uint32_t excess = gold - cap;
-        p.removeGold(excess);
+        player->removeGold(excess);
+
         DroppedItemRecord rec{nextDropId++, GOLD_ITEM_ID, pos.x, pos.y, excess};
         droppedItems.push_back(rec);
         drops.push_back(rec);
+
         std::cout << "DEATH-DROP gold player=" << playerId << " excess=" << excess << std::endl;
     }
+
     return drops;
 }
 
 std::vector<Game::DroppedItemRecord> Game::dropCreatureLootOnDeath(uint16_t npcId) {
     std::vector<DroppedItemRecord> drops;
+
     Creature* npc = map.getNPC(npcId);
     if (!npc) return drops;
+
     Position pos = npc->getPosition();
 
     // Probabilidades acumuladas: nothing, gold, potion, item. Lo que sobre
     // hasta 100 cae como "nada" (efectivo).
     const auto& L = CreatureCatalog::instance().getLoot();
+
     int roll = std::rand() % 100;
+
     int goldCut = L.nothingChance + L.goldChance;
     int potionCut = goldCut + L.potionChance;
     int itemCut = potionCut + L.itemChance;
+
     if (roll < L.nothingChance) {
         // nada
     } else if (roll < goldCut) {
         // Oro = rand(min, max) / 100 * VidaMaxNPC. Min = 1 para asegurar
         // que el monto nunca sea 0.
         uint16_t vidaMax = npc->getMaxHealth();
+
         uint8_t span = L.goldFactorMaxPct - L.goldFactorMinPct + 1;
         uint32_t factorPct = L.goldFactorMinPct + std::rand() % span;
         uint32_t amount = (vidaMax * factorPct) / 100;
+
         if (amount == 0) amount = 1;
+
         DroppedItemRecord rec{nextDropId++, GOLD_ITEM_ID, pos.x, pos.y, amount};
+
         droppedItems.push_back(rec);
         drops.push_back(rec);
     } else if (roll < potionCut) {
         uint8_t potionId = (std::rand() & 1) ? L.potionHealthId : L.potionManaId;
         DroppedItemRecord rec{nextDropId++, potionId, pos.x, pos.y, 0};
+
         droppedItems.push_back(rec);
         drops.push_back(rec);
     } else if (roll < itemCut) {
         uint8_t poolSize = L.itemIdMax - L.itemIdMin + 1;
         uint8_t itemId = L.itemIdMin + (std::rand() % poolSize);
         DroppedItemRecord rec{nextDropId++, itemId, pos.x, pos.y, 0};
+
         droppedItems.push_back(rec);
         drops.push_back(rec);
     }
+
     if (!drops.empty()) {
         std::cout << "CREATURE-DROP npc=" << npcId << " drops=" << drops.size() << std::endl;
     }
+
     return drops;
 }
 
 bool Game::equipOrUseItem(int playerId, uint8_t invSlot) {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        return false;
-    }
-    return it->second.equipItem(static_cast<int>(invSlot));
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
+    return player->equipItem(static_cast<int>(invSlot));
 }
 
 bool Game::unequipSlot(int playerId, uint8_t slotType) {
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        return false;
-    }
+    Player* player = getPlayer(playerId);
+
+    if (!player) return false;
+
     ItemType type;
     switch (static_cast<EquipmentSlot>(slotType)) {
         case EquipmentSlot::WEAPON: type = ItemType::WEAPON; break;
@@ -1062,214 +1240,234 @@ bool Game::unequipSlot(int playerId, uint8_t slotType) {
         case EquipmentSlot::SHIELD: type = ItemType::SHIELD; break;
         default: return false;
     }
-    return it->second.unequipItem(type);
+
+    return player->unequipItem(type);
 }
 
-Game::InventorySnapshot Game::getInventorySnapshot(int playerId) const {
+Game::InventorySnapshot Game::getInventorySnapshot(int playerId) {
     InventorySnapshot snap;
-    auto it = players.find(playerId);
-    if (it == players.end()) {
-        return snap;
-    }
-    auto inv = it->second.getInventory();
+
+    Player* player = getPlayer(playerId);
+
+    if (!player) return snap;
+
+    auto inv = player->getInventory();
     snap.items.reserve(inv.size());
     for (const auto& item: inv) {
         snap.items.push_back(item.getId());
     }
-    PlayerData d = it->second.getData();
+
+    PlayerData d = player->getData();
     snap.equippedWeapon = d.equippedWeapon;
     snap.equippedArmor = d.equippedArmor;
     snap.equippedHelmet = d.equippedHelmet;
     snap.equippedShield = d.equippedShield;
+
     return snap;
 }
 
 uint16_t Game::applyNPCAttack(uint8_t playerId, uint16_t rawDamage) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return 0;
-    uint16_t def = it->second.rollDefense();
+    Player* player = getPlayer(playerId);
+
+    if (!player) return 0;
+
+    uint16_t def = player->rollDefense();
     uint16_t finalDmg = (def >= rawDamage) ? 0 : (rawDamage - def);
-    it->second.receiveDamage(finalDmg);
+    player->receiveDamage(finalDmg);
+
     return finalDmg;
 }
 
-bool Game::checkIfPlayerIsMeditating(int playerId) const {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
+bool Game::checkIfPlayerIsMeditating(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) {
         // It's ok if the player is not found. The player has disconnected
         return false;
     }
 
-    return itPlayer->second.getMeditationState() ? 1 : 0;
+    return player->getMeditationState() ? 1 : 0;
 }
 
-bool Game::checkIfPlayerIsTeleporting(int playerId) const {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
+bool Game::checkIfPlayerIsTeleporting(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) {
         // It's ok if the player is not found. The player has disconnected
         return false;
     }
 
-    return itPlayer->second.getTeleportingState() ? 1 : 0;
+    return player->getTeleportingState() ? 1 : 0;
 }
 
 void Game::finishTeleportingState(int playerId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        return;
-    }
+    Player* player = getPlayer(playerId);
 
-    itPlayer->second.finishTeleporting();
+    if (!player) return;
+
+    player->finishTeleporting();
 }
 
 void Game::restorePlayerManaForMeditation(int playerId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        return;
-    }
+    Player* player = getPlayer(playerId);
 
-    itPlayer->second.restoreManaForMeditation();
+    if (!player) return;
+
+    player->restoreManaForMeditation();
 }
 
 bool Game::startPlayerResurrect(int playerId) {
-    auto itPlayer = players.find(playerId);
-    if (itPlayer == players.end()) {
-        throw std::runtime_error("Game Error: player not found");
-    }
+    Player* player = getPlayer(playerId);
 
-    if (itPlayer->second.isAlive()) {
+    if (!player) throw std::runtime_error("Game Error: player not found");
+
+    if (player->isAlive()) {
         return false;
     }
 
-    itPlayer->second.startTeleporting();
+    player->startTeleporting();
 
     return true;
 }
 
 bool Game::lowerHealth(int playerId) {
-    auto player = players.find(playerId);
-    if (player == players.end()) {
-        return false;
-    }
+    Player* player = getPlayer(playerId);
 
-    return player->second.isAlive() && player->second.getCurrentHealth() < player->second.getMaxHealth();
+    if (!player) return false;
+
+    return player->isAlive() && player->getCurrentHealth() < player->getMaxHealth();
 }
 
 bool Game::lowerMana(int playerId) {
-    auto player = players.find(playerId);
-    if (player == players.end()) {
-        return false;
-    }
+    Player* player = getPlayer(playerId);
 
-    return player->second.isAlive() && player->second.getCurrentMana() < player->second.getMaxMana();
+    if (!player) return false;
+
+    return player->isAlive() && player->getCurrentMana() < player->getMaxMana();
 }
 
 void Game::restorePlayerHealth(int playerId) {
-    auto player = players.find(playerId);
-    if (player == players.end()) {
-        return;
-    }
+    Player* player = getPlayer(playerId);
 
-    player->second.restoreHealthThroughTime();
+    if (!player) return;
+
+    player->restoreHealthThroughTime();
 }
 
 void Game::restorePlayerMana(int playerId) {
-    auto player = players.find(playerId);
-    if (player == players.end()) {
-        return;
-    }
+    Player* player = getPlayer(playerId);
 
-    player->second.restoreManaThroughTime();
+    if (!player) return;
+
+    player->restoreManaThroughTime();
 }
 
 void Game::fastTravel(int playerId, Position newPosition) {
-    auto player = players.find(playerId);
-    if (player == players.end()) {
-        return;
-    }
+    Player* player = getPlayer(playerId);
 
-    player->second.move(newPosition);
+    if (!player) return;
+
+    player->move(newPosition);
 }
 
 // ── Clanes ──────────────────────────────────────────────────────────────
 
 ClanOutcome Game::tryFoundClan(int playerId, const std::string& clanName) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryFound(clanName, it->second.getName(), it->second.getData().level);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryFound(clanName, player->getName(), player->getData().level);
 }
 
 ClanOutcome Game::tryRequestJoinClan(int playerId, const std::string& clanName) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryRequestJoin(clanName, it->second.getName());
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryRequestJoin(clanName, player->getName());
 }
 
 ClanOutcome Game::tryAcceptClanRequest(int playerId, const std::string& applicantNick) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryAccept(it->second.getName(), applicantNick);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryAccept(player->getName(), applicantNick);
 }
 
 ClanOutcome Game::tryRejectClanRequest(int playerId, const std::string& applicantNick) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryReject(it->second.getName(), applicantNick);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryReject(player->getName(), applicantNick);
 }
 
 ClanOutcome Game::tryBanFromClan(int playerId, const std::string& targetNick) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryBan(it->second.getName(), targetNick);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryBan(player->getName(), targetNick);
 }
 
 ClanOutcome Game::tryKickFromClan(int playerId, const std::string& targetNick) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryKick(it->second.getName(), targetNick);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryKick(player->getName(), targetNick);
 }
 
 ClanOutcome Game::tryLeaveClan(int playerId) {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {false, "Jugador no encontrado"};
-    return clans.tryLeave(it->second.getName());
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {false, "Jugador no encontrado"};
+
+    return clans.tryLeave(player->getName());
 }
 
-std::vector<std::string> Game::reviewClan(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return {};
-    const std::string& nick = it->second.getName();
+std::vector<std::string> Game::reviewClan(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return {};
+
+    const std::string& nick = player->getName();
+
     auto clanName = clans.getClanOf(nick);
     if (!clanName)
         return {"No estás en ningún clan"};
+
     if (!clans.isFounder(nick))
         return {"Solo el fundador puede revisar el clan"};
+
     std::vector<std::string> lines;
     lines.push_back("Clan " + *clanName + ":");
+
     auto members = clans.getMembersOf(*clanName);
     lines.push_back("Miembros (" + std::to_string(members.size()) + "):");
+
     for (const auto& m: members)
         lines.push_back("  - " + m);
+
     auto pending = clans.getPendingOf(*clanName);
+
     lines.push_back("Pedidos pendientes (" + std::to_string(pending.size()) + "):");
+
     for (const auto& p: pending)
         lines.push_back("  - " + p);
+
     return lines;
 }
 
-std::string Game::getClanOf(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return "";
-    auto c = clans.getClanOf(it->second.getName());
+std::string Game::getClanOf(int playerId) {
+    Player* player = getPlayer(playerId);
+    
+    if (!player) return "";
+
+    auto c = clans.getClanOf(player->getName());
+
     return c.value_or("");
 }
 
@@ -1277,48 +1475,60 @@ std::vector<std::string> Game::getClanMembers(const std::string& clanName) const
     return clans.getMembersOf(clanName);
 }
 
-bool Game::areInSameClan(int playerA, int playerB) const {
-    auto itA = players.find(playerA);
-    auto itB = players.find(playerB);
-    if (itA == players.end() || itB == players.end())
-        return false;
-    return clans.areInSameClan(itA->second.getName(), itB->second.getName());
+bool Game::areInSameClan(int playerA, int playerB) {
+    Player* playerA_ptr = getPlayer(playerA);
+    Player* playerB_ptr = getPlayer(playerB);
+
+    if (!playerA_ptr || !playerB_ptr) return false;
+
+    return clans.areInSameClan(playerA_ptr->getName(), playerB_ptr->getName());
 }
 
-int Game::countNearbyClanMates(int playerId) const {
-    auto it = players.find(playerId);
-    if (it == players.end())
-        return 0;
-    auto myClan = clans.getClanOf(it->second.getName());
-    if (!myClan)
-        return 0;
+int Game::countNearbyClanMates(int playerId) {
+    Player* player = getPlayer(playerId);
+
+    if (!player) return 0;
+
+    auto myClan = clans.getClanOf(player->getName());
+    if (!myClan) return 0;
+
     const auto& cc = FormulaCatalog::instance().getClan();
-    Position myPos = it->second.getPosition();
-    uint8_t myMap = it->second.getMapId();
+
+    Position myPos = player->getPosition();
+    uint8_t myMap = player->getMapId();
+
     auto mates = clans.getMembersOf(*myClan);
+
     int count = 0;
     for (const auto& mateNick: mates) {
-        if (mateNick == it->second.getName())
+        if (mateNick == player->getName())
             continue;
+
         for (const auto& [otherId, other]: players) {
             if (other.getName() != mateNick)
                 continue;
+
             if (other.getMapId() != myMap)
                 break;
+
             Position op = other.getPosition();
             int dist = std::abs(op.x - myPos.x) + std::abs(op.y - myPos.y);
             if (dist <= cc.bonusRadius)
                 count++;
+
             break;
         }
     }
+
     return count;
 }
 
 void Game::changeMapId(int playerId, uint8_t newMapId) {
-    auto it = players.find(playerId);
-    if (it == players.end()) return;
-    it->second.changeMapId(newMapId);
+    Player* player = getPlayer(playerId);
+
+    if (!player) return;
+    
+    player->changeMapId(newMapId);
 }
 
 Game::~Game() {
